@@ -20,7 +20,7 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import bpy
-from . import enum
+from . import bl_enum
 
 
 def bone_update_callback(m3, bone):
@@ -52,7 +52,7 @@ class M3VolumePropertyGroup(bpy.types.PropertyGroup):
     bl_display: bpy.props.BoolProperty(default=False)
     bl_update: bpy.props.BoolProperty(options=set(), default=True)
     bone: bpy.props.StringProperty(options=set(), update=bone_update_event)
-    shape: bpy.props.EnumProperty(options=set(), items=enum.volume_shape)
+    shape: bpy.props.EnumProperty(options=set(), items=bl_enum.volume_shape)
     size: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0, default=(1, 1, 1))
     location: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3)
     rotation: bpy.props.FloatVectorProperty(options=set(), subtype='EULER', unit='ROTATION', size=3)
