@@ -1,0 +1,39 @@
+{
+  "python.autoComplete.extraPaths": [
+    "blender_autocomplete/3.0"
+  ],
+  "python.linting.pylintArgs": [
+      "--init-hook",
+      "import sys; sys.path.append('blender_autocomplete/3.0')"
+  ],
+  "python.languageServer": "Default",
+
+  "python.linting.enabled": true,
+  "python.linting.flake8Enabled": true,
+  "python.linting.flake8CategorySeverity.F": "Warning",
+  "python.linting.flake8CategorySeverity.E": "Warning",
+  "python.linting.flake8CategorySeverity.W": "Hint",
+  "python.linting.flake8Args": [
+    "--max-line-length=160",
+    "--extend-ignore=F722,F821",
+  ],
+
+  "python.formatting.provider": "autopep8",
+  "python.formatting.autopep8Args": [
+      "--max-line-length=160",
+  ],
+
+  "[python]": {
+      "editor.formatOnSave": false,
+  },
+
+  "files.exclude": {
+      "**/build": true,
+      "**/dist": true,
+      "**/blender_autocomplete": true,
+  },
+  "search.exclude": {
+      "**/test": true,
+  },
+  "python.pythonPath": "C:\\Python39\\python.exe",
+}
