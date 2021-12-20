@@ -21,7 +21,7 @@
 
 import bpy
 from . import shared
-from . import enum
+from . import bl_enum
 
 
 def register_props():
@@ -142,7 +142,7 @@ class Properties(bpy.types.PropertyGroup):
     location2: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3)
     rotation1: bpy.props.FloatVectorProperty(options=set(), subtype='EULER', size=3)
     rotation2: bpy.props.FloatVectorProperty(options=set(), subtype='EULER', size=3)
-    joint_type: bpy.props.EnumProperty(options=set(), items=enum.physics_joint_type)
+    joint_type: bpy.props.EnumProperty(options=set(), items=bl_enum.physics_joint_type)
     limit_bool: bpy.props.BoolProperty(options=set())
     limit_min: bpy.props.FloatProperty(options=set())
     limit_max: bpy.props.FloatProperty(options=set())

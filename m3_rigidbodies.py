@@ -21,7 +21,7 @@
 
 import bpy
 from . import shared
-from . import enum
+from . import bl_enum
 
 
 def register_props():
@@ -72,7 +72,7 @@ def draw_props(rigidbody, layout):
     col.label(text='World Forces:')
     col = col.column_flow(align=True, columns=2)
     col.use_property_split = False
-    for ii, val in enum.world_forces:
+    for ii, val in bl_enum.world_forces:
         col.prop(rigidbody, 'world_forces', index=ii, text=val)
     col = layout.column_flow(align=True, columns=2)
     col.use_property_split = False
@@ -87,7 +87,7 @@ def draw_props(rigidbody, layout):
 
 class ShapeProperties(bpy.types.PropertyGroup):
     bl_display: bpy.props.BoolProperty(default=False)
-    shape: bpy.props.EnumProperty(options=set(), items=enum.physics_shape)
+    shape: bpy.props.EnumProperty(options=set(), items=bl_enum.physics_shape)
     mesh: bpy.props.StringProperty(options=set())
     size: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0)
     location: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3)
@@ -98,7 +98,7 @@ class ShapeProperties(bpy.types.PropertyGroup):
 class Properties(shared.M3BoneUserPropertyGroup):
     shapes: bpy.props.CollectionProperty(type=ShapeProperties)
     simulation_type: bpy.props.IntProperty(options=set())
-    material: bpy.props.EnumProperty(options=set(), items=enum.physics_materials)
+    material: bpy.props.EnumProperty(options=set(), items=bl_enum.physics_materials)
     density: bpy.props.FloatProperty(options=set())
     friction: bpy.props.FloatProperty(options=set())
     restitution: bpy.props.FloatProperty(options=set())

@@ -21,7 +21,7 @@
 
 import bpy
 from . import shared
-from . import enum
+from . import bl_enum
 
 
 def register_props():
@@ -52,8 +52,8 @@ def draw_props(force, layout):
 
 
 class Properties(shared.M3BoneUserPropertyGroup):
-    force_type: bpy.props.EnumProperty(options=set(), items=enum.force_type)
-    shape: bpy.props.EnumProperty(options=set(), items=enum.force_shape)
+    force_type: bpy.props.EnumProperty(options=set(), items=bl_enum.force_type)
+    shape: bpy.props.EnumProperty(options=set(), items=bl_enum.force_shape)
     size: bpy.props.FloatVectorProperty(name='M3 Force Size', subtype='XYZ', size=3, min=0.001, default=tuple(3 * [1]))
     channels: bpy.props.BoolVectorProperty(options=set(), subtype='LAYER', size=32)
     strength: bpy.props.FloatProperty(name='M3 Force Strength', default=1)

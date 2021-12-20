@@ -21,7 +21,7 @@
 
 import bpy
 from . import shared
-from . import enum
+from . import bl_enum
 
 
 def register_props():
@@ -54,7 +54,7 @@ def draw_props(light, layout):
 
 
 class Properties(shared.M3BoneUserPropertyGroup):
-    shape: bpy.props.EnumProperty(options=set(), items=enum.light_shape)
+    shape: bpy.props.EnumProperty(options=set(), items=bl_enum.light_shape)
     unknownAt1: bpy.props.IntProperty(options=set())
     unknownAt8: bpy.props.IntProperty(options=set())
     unknownAt12: bpy.props.IntProperty(options=set(), default=-1)

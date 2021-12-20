@@ -21,7 +21,7 @@
 
 import bpy
 from . import shared
-from . import enum
+from . import bl_enum
 
 
 def register_props():
@@ -40,7 +40,7 @@ def draw_props(billboard, layout):
 
 
 class Properties(shared.M3BoneUserPropertyGroup):
-    billboard_type: bpy.props.EnumProperty(options=set(), items=enum.billboard_type, default='FULL')
+    billboard_type: bpy.props.EnumProperty(options=set(), items=bl_enum.billboard_type, default='FULL')
     look: bpy.props.BoolProperty(options=set())
 
 

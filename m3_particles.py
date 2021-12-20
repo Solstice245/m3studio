@@ -21,7 +21,7 @@
 
 import bpy
 from . import shared
-from . import enum
+from . import bl_enum
 
 
 def register_props():
@@ -276,13 +276,13 @@ class CopyProperties(shared.M3BoneUserPropertyGroup):
 class Properties(shared.M3BoneUserPropertyGroup):
     material: bpy.props.StringProperty(options=set())
     copies: bpy.props.CollectionProperty(type=CopyProperties)
-    particle_type: bpy.props.EnumProperty(options=set(), items=enum.particle_type)
+    particle_type: bpy.props.EnumProperty(options=set(), items=bl_enum.particle_type)
     length_width_ratio: bpy.props.FloatProperty(default=1)
     distance_limit: bpy.props.FloatProperty(options=set(), min=0)
-    lod_cut: bpy.props.EnumProperty(options=set(), items=enum.lod)
-    lod_reduce: bpy.props.EnumProperty(options=set(), items=enum.lod)
-    emit_type: bpy.props.EnumProperty(options=set(), items=enum.particle_emit_type)
-    emit_shape: bpy.props.EnumProperty(options=set(), items=enum.particle_shape)
+    lod_cut: bpy.props.EnumProperty(options=set(), items=bl_enum.lod)
+    lod_reduce: bpy.props.EnumProperty(options=set(), items=bl_enum.lod)
+    emit_type: bpy.props.EnumProperty(options=set(), items=bl_enum.particle_emit_type)
+    emit_shape: bpy.props.EnumProperty(options=set(), items=bl_enum.particle_shape)
     emit_shape_cutout: bpy.props.BoolProperty(options=set())
     emit_shape_size: bpy.props.FloatVectorProperty(name='Particle Emission Area Size', subtype='XYZ', size=3, default=tuple(3 * [1]))
     emit_shape_size_cutout: bpy.props.FloatVectorProperty(name='Particle Emission Area Size Cutout', subtype='XYZ', size=3)
@@ -327,9 +327,9 @@ class Properties(shared.M3BoneUserPropertyGroup):
     alpha_hold: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0, max=1, default=0.5)
     rotation_hold: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0, max=1, default=0.5)
     size_hold: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0, max=1, default=0.5)
-    color_smooth: bpy.props.EnumProperty(options=set(), items=enum.anim_smoothing)
-    rotation_smooth: bpy.props.EnumProperty(options=set(), items=enum.anim_smoothing)
-    size_smooth: bpy.props.EnumProperty(options=set(), items=enum.anim_smoothing)
+    color_smooth: bpy.props.EnumProperty(options=set(), items=bl_enum.anim_smoothing)
+    rotation_smooth: bpy.props.EnumProperty(options=set(), items=bl_enum.anim_smoothing)
+    size_smooth: bpy.props.EnumProperty(options=set(), items=bl_enum.anim_smoothing)
     noise_amplitude: bpy.props.FloatProperty(options=set())
     noise_frequency: bpy.props.FloatProperty(options=set())
     noise_cohesion: bpy.props.FloatProperty(options=set())

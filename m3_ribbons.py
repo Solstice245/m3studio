@@ -21,7 +21,7 @@
 
 import bpy
 from . import shared
-from . import enum
+from . import bl_enum
 
 
 def register_props():
@@ -190,10 +190,10 @@ class SplineProperties(shared.M3BoneUserPropertyGroup):
 class Properties(shared.M3BoneUserPropertyGroup):
     material: bpy.props.StringProperty(options=set())
     splines: bpy.props.CollectionProperty(type=SplineProperties)
-    ribbon_type: bpy.props.EnumProperty(options=set(), items=enum.ribbon_type)
-    cull: bpy.props.EnumProperty(options=set(), items=enum.ribbon_cull)
-    lod_cut: bpy.props.EnumProperty(options=set(), items=enum.lod)
-    lod_reduce: bpy.props.EnumProperty(options=set(), items=enum.lod)
+    ribbon_type: bpy.props.EnumProperty(options=set(), items=bl_enum.ribbon_type)
+    cull: bpy.props.EnumProperty(options=set(), items=bl_enum.ribbon_cull)
+    lod_cut: bpy.props.EnumProperty(options=set(), items=bl_enum.lod)
+    lod_reduce: bpy.props.EnumProperty(options=set(), items=bl_enum.lod)
     active: bpy.props.BoolProperty(name='M3 Ribbon Active', default=True)  # TODO
     lifespan: bpy.props.FloatProperty(name='M3 Ribbon Lifespan', min=0, default=5)
     length: bpy.props.FloatProperty(name='M3 Ribbon Length', min=0)
