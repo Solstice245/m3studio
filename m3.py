@@ -84,7 +84,6 @@ def load_sections(filepath):
             index_bytes = file.read(int(md34v11_index_entry['size']))
             section_tag = read_struct(md34v11_index_entry, index_bytes)
             file.seek(section_tag['offset'])
-            print('section tag =', '"' + section_tag['tag'] + '"')
             section_struct = load_struct(section_tag['tag'], section_tag['version'])
             section_entries = [read_struct(section_struct, file.read(section_struct['size'])) for jj in range(section_tag['repetitions'])]
             sections.append({'tag': section_tag['tag'], 'version': section_tag['version'], 'entries': section_entries})

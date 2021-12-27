@@ -327,7 +327,7 @@ def draw_subcollection_list(data, layout, collection_id, subcollection_id, subco
                 op.shift = 1
 
 
-def collection_find_unused_name(scene, collections=[], suggestedNames=[], prefix=''):
+def collection_find_unused_name(collections=[], suggestedNames=[], prefix=''):
     usedNames = set()
     for collection in collections:
         for item in collection:

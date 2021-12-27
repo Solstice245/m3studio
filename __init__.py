@@ -35,6 +35,7 @@ from . import m3_particles
 from . import m3_physicsjoints
 from . import m3_ribbons
 from . import m3_rigidbodies
+from . import m3_turrets
 from . import m3_warps
 from . import m3_import
 
@@ -78,11 +79,11 @@ class M3ImportOperator(bpy.types.Operator):
     test_vertexalpha = 'C:\\Users\\John Wharton\\Documents\\_Base Assets\\Protoss\\Effects\\Mothership_Taldarim_Shield.m3'
 
     def invoke(self, context, event):
-        m3_import.M3Import(self.test_vertexalpha)
+        m3_import.M3Import(self.test_goliath)
         return {'RUNNING_MODAL'}
 
     def execute(self, context):
-        m3_import.M3Import(self.test_vertexalpha)
+        m3_import.M3Import(self.test_goliath)
         return {'FINISHED'}
 
 
@@ -106,6 +107,7 @@ m3_collection_modules = (
     m3_physicsjoints,
     m3_ribbons,
     m3_rigidbodies,
+    m3_turrets,
     m3_warps,
 )
 
@@ -113,8 +115,8 @@ m3_collection_modules = (
 def m3_collection_module_classes():
     classes = []
     for collection in m3_collection_modules:
-        for cls in collection.classes:
-            classes.append(cls)
+        for clss in collection.classes:
+            classes.append(clss)
     return classes
 
 
@@ -137,8 +139,8 @@ def init_msgbus(*args):
 
 
 def register():
-    for cls in classes:
-        bpy.utils.register_class(cls)
+    for clss in classes:
+        bpy.utils.register_class(clss)
     for collection in m3_collection_modules:
         collection.register_props()
     bpy.types.TOPBAR_MT_file_import.append(top_bar_import)
@@ -147,10 +149,11 @@ def register():
 
 
 def unregister():
-    for cls in reversed(classes):
-        bpy.utils.register_class(cls)
+    for clss in reversed(classes):
+        bpy.utils.register_class(clss)
     bpy.types.TOPBAR_MT_file_import.remove(top_bar_import)
     bpy.types.TOPBAR_MT_file_export.remove(top_bar_export)
+    bpy.app.handlers.load_post.remove(init_msgbus)
 
 
 if __name__ == '__main__':

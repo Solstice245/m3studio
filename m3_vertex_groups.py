@@ -81,11 +81,9 @@ class SignOpSelect(bpy.types.Operator):
     def invoke(self, context, event):
         mesh = context.object.data
         bm = bmesh.from_edit_mesh(mesh)
-
         group = m3_get_vertex_sign(bm)
         for face in bm.faces:
             face.select = True if face[group] else face.select
-
         bmesh.update_edit_mesh(mesh)
 
         return {'FINISHED'}

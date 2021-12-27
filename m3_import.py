@@ -24,6 +24,8 @@ import bpy
 import bmesh
 import mathutils
 from . import m3
+from . import shared
+from . import bl_enum
 
 
 def m3BitToBl(m3, key, bit):
@@ -56,8 +58,8 @@ def m3AnimColorToBl(m3, key):
     return (m3InitValue['red'], m3InitValue['blue'], m3InitValue['green'], m3InitValue['alpha'])
 
 
-def m3ToBlEnum(m3, key, enumerator):
-    return enumerator[m3[key]][0]
+def m3ToBlEnum(m3, key, enum):
+    return enum[m3[key]][0]
 
 
 def m3ToBlVec(m3, keys):
@@ -169,27 +171,27 @@ class M3Import:
         # Currently using seperate layers for color and alpha even though
         # vertex color layers have an alpha channel because as of 3.0, Blender's
         # support for displaying actual vertex alphas is very poor.
+
         if self.vertex_struct['fields'].get('col'):
             color = mesh.vertex_colors.new(name='Col')
             alpha = mesh.vertex_colors.new(name='Alpha')
 
             for poly in mesh.polygons:
-                for jj in range(3):
-                    m3_vert = self.m3_vertices[poly.vertices[jj]]
-                    print(m3_vert['col'])
+                for ii in range(3):
+                    m3_vert = self.m3_vertices[poly.vertices[ii]]
                     for coord in coords:
-                        mesh.uv_layers[coord].data[poly.loop_start + jj].uv = (
+                        mesh.uv_layers[coord].data[poly.loop_start + ii].uv = (
                             m3_vert[coord]['x'] * (m3_vert.get('uvwMult', 1) / 2048) + m3_vert.get('uvwOffset', 0),
                             1 - (m3_vert[coord]['y'] * (m3_vert.get('uvwMult', 1) / 2048)) + m3_vert.get('uvwOffset', 0)
                         )
-                    color.data[poly.loop_start + jj].color = (m3_vert['col']['r'] / 255, m3_vert['col']['g'] / 255, m3_vert['col']['b'] / 255, 1)
-                    alpha.data[poly.loop_start + jj].color = (m3_vert['col']['a'] / 255, m3_vert['col']['a'] / 255, m3_vert['col']['a'] / 255, 1)
+                    color.data[poly.loop_start + ii].color = (m3_vert['col']['r'] / 255, m3_vert['col']['g'] / 255, m3_vert['col']['b'] / 255, 1)
+                    alpha.data[poly.loop_start + ii].color = (m3_vert['col']['a'] / 255, m3_vert['col']['a'] / 255, m3_vert['col']['a'] / 255, 1)
         else:
             for poly in mesh.polygons:
-                for jj in range(3):
-                    m3_vert = self.m3_vertices[poly.vertices[jj]]
+                for ii in range(3):
+                    m3_vert = self.m3_vertices[poly.vertices[ii]]
                     for coord in coords:
-                        mesh.uv_layers[coord].data[poly.loop_start + jj].uv = (
+                        mesh.uv_layers[coord].data[poly.loop_start + ii].uv = (
                             m3_vert[coord]['x'] * (m3_vert.get('uvwMult', 1) / 2048) + m3_vert.get('uvwOffset', 0),
                             1 - (m3_vert[coord]['y'] * (m3_vert.get('uvwMult', 1) / 2048)) + m3_vert.get('uvwOffset', 0)
                         )
@@ -199,8 +201,6 @@ class M3Import:
         bpy.context.scene.view_layers[0].objects.active = meshOb
         meshOb.select_set(True)
         bpy.ops.object.mode_set(mode='EDIT')
-
-        # TODO Investigate possibility of using mesh data attributes to avoid having to use bmesh module
 
         bm = bmesh.from_edit_mesh(mesh)
         group = bm.faces.layers.int.new('m3_vertex_sign')
@@ -214,128 +214,30 @@ class M3Import:
         bpy.ops.object.mode_set(mode='OBJECT')
 
     def create_particle_systems(self):
-        pass
-        # ! Outdated code below
-        # for m3ParticleSystem in self.m3_particle_systems['entries']:
-        #
-        #     bone = self.armatureOb.data.bones[m3ParticleSystem['bone']]
-        #     bone.m3BONEtype = 'PAR_'
-        #
-        #     if self.m3_particle_systems['version'] <= 12:
-        #         bone.m3PAR_emitSpeedRandom = m3ParticleSystem['randomizeWithEmissionSpeed2'] > 0
-        #         bone.m3PAR_lifespanRandom = m3ParticleSystem['randomizeWithLifespan2'] > 0
-        #         # bone.m3PAR_massRandom = m3ParticleSystem['randomizeWithMass2'] > 0
-        #         bone.m3PAR_flagTrailingEnabled = m3ParticleSystem['trailingEnabled'] > 0
-        #
-        #     if self.m3_particle_systems['version'] >= 17:
-        #         bone.m3PAR_emitSpeedRandom = m3BitToBl(m3ParticleSystem, 'additionalFlags', 0)
-        #         bone.m3PAR_lifespanRandom = m3BitToBl(m3ParticleSystem, 'additionalFlags', 1)
-        #         bone.m3PAR_massRandom = m3BitToBl(m3ParticleSystem, 'additionalFlags', 2)
-        #         bone.m3PAR_flagTrailingEnabled = m3BitToBl(m3ParticleSystem, 'additionalFlags', 3)
-        #
-        #         bone.m3PAR_colorHold = m3ParticleSystem['colorHoldTime']
-        #         bone.m3PAR_alphaHold = m3ParticleSystem['alphaHoldTime']
-        #         bone.m3PAR_rotationHold = m3ParticleSystem['rotationHoldTime']
-        #         bone.m3PAR_sizeHold = m3ParticleSystem['sizeHoldTime']
-        #         bone.m3PAR_colorSmooth = m3ToBlEnum(m3ParticleSystem, 'colorSmoothingType', enum.m3AnimSmoothType)
-        #         bone.m3PAR_sizeSmooth = m3ToBlEnum(m3ParticleSystem, 'sizeSmoothingType', enum.m3AnimSmoothType)
-        #         bone.m3PAR_rotationSmooth = m3ToBlEnum(m3ParticleSystem, 'rotationSmoothingType', enum.m3AnimSmoothType)
-        #
-        #     bone.m3PAR_type = m3ToBlEnum(m3ParticleSystem, 'particleType', enum.m3ParticleType)
-        #     bone.m3PAR_lengthWidthRatio = m3ParticleSystem['lengthWidthRatio']
-        #     bone.m3PAR_material = str(m3ParticleSystem['materialReferenceIndex'])
-        #     bone.m3PAR_distanceLimit = m3ParticleSystem['killSphere']
-        #     bone.m3PAR_lodCut = m3ToBlEnum(m3ParticleSystem, 'lodCut', enum.lod)
-        #     bone.m3PAR_lodReduce = m3ToBlEnum(m3ParticleSystem, 'lodReduce', enum.lod)
-        #     bone.m3PAR_emitMax = m3ParticleSystem['maxParticles']
-        #     bone.m3PAR_emitRate = m3Anim1ToBl(m3ParticleSystem, 'emissionRate')
-        #     bone.m3PAR_emitAmount = m3Anim1ToBl(m3ParticleSystem, 'partEmit')
-        #     bone.m3PAR_emitArea = m3ToBlEnum(m3ParticleSystem, 'emissionAreaType', enum.m3ParticleEmitArea)
-        #     bone.m3PAR_emitAreaSize = m3AnimVec3ToBl(m3ParticleSystem, 'emissionAreaSize')
-        #     bone.m3PAR_emitAreaRadius = m3Anim1ToBl(m3ParticleSystem, 'emissionAreaRadius')
-        #     bone.m3PAR_emitAreaSizeCutout = m3AnimVec3ToBl(m3ParticleSystem, 'emissionAreaCutoutSize')
-        #     bone.m3PAR_emitAreaRadiusCutout = m3Anim1ToBl(m3ParticleSystem, 'emissionAreaCutoutRadius')
-        #     bone.m3PAR_emitSpeed = m3Anim1ToBl(m3ParticleSystem, 'emissionSpeed1')
-        #     bone.m3PAR_emitSpeedMax = m3Anim1ToBl(m3ParticleSystem, 'emissionSpeed2')
-        #     bone.m3PAR_emitAngle = m3AnimToBlVec(m3ParticleSystem, ['emissionAngleX', 'emissionAngleY'])
-        #     bone.m3PAR_emitSpread = m3AnimToBlVec(m3ParticleSystem, ['emissionSpreadX', 'emissionSpreadY'])
-        #     bone.m3PAR_lifespan = m3Anim1ToBl(m3ParticleSystem, 'lifespan1')
-        #     bone.m3PAR_lifespanMax = m3Anim1ToBl(m3ParticleSystem, 'lifespan2')
-        #     bone.m3PAR_gravity = m3ParticleSystem['zAcceleration']
-        #     bone.m3PAR_mass = m3ParticleSystem['mass']
-        #     bone.m3PAR_massMax = m3ParticleSystem['mass2']
-        #     bone.m3PAR_friction = m3ParticleSystem['friction']
-        #     bone.m3PAR_bounce = m3ParticleSystem['bounce']
-        #     bone.m3PAR_windMultiplier = m3ParticleSystem['windMultiplier']
-        #     bone.m3PAR_initColor1 = m3AnimColorToBl(m3ParticleSystem, 'initialColor1')
-        #     bone.m3PAR_middleColor1 = m3AnimColorToBl(m3ParticleSystem, 'middleColor1')
-        #     bone.m3PAR_finalColor1 = m3AnimColorToBl(m3ParticleSystem, 'finalColor1')
-        #     bone.m3PAR_colorRandom = m3ParticleSystem['randomizeWithColor2']
-        #     bone.m3PAR_initColor2 = m3AnimColorToBl(m3ParticleSystem, 'initialColor2')
-        #     bone.m3PAR_middleColor2 = m3AnimColorToBl(m3ParticleSystem, 'middleColor2')
-        #     bone.m3PAR_finalColor2 = m3AnimColorToBl(m3ParticleSystem, 'finalColor2')
-        #     bone.m3PAR_colorMiddle = m3ParticleSystem['colorAnimationMiddle']
-        #     bone.m3PAR_alphaMiddle = m3ParticleSystem['alphaAnimationMiddle']
-        #     bone.m3PAR_rotation1 = m3AnimVec3ToBl(m3ParticleSystem, 'rotationValues1')
-        #     bone.m3PAR_rotationRandom = m3ParticleSystem['randomizeWithRotationValues2']
-        #     bone.m3PAR_rotation2 = m3AnimVec3ToBl(m3ParticleSystem, 'rotationValues2')
-        #     bone.m3PAR_rotationMiddle = m3ParticleSystem['rotationAnimationMiddle']
-        #     bone.m3PAR_size1 = m3AnimVec3ToBl(m3ParticleSystem, 'particleSizes1')
-        #     bone.m3PAR_sizeRandom = m3ParticleSystem['randomizeWithParticleSizes2']
-        #     bone.m3PAR_size2 = m3AnimVec3ToBl(m3ParticleSystem, 'particleSizes2')
-        #     bone.m3PAR_sizeMiddle = m3ParticleSystem['sizeAnimationMiddle']
-        #     bone.m3PAR_noiseAmplitude = m3ParticleSystem['noiseAmplitude']
-        #     bone.m3PAR_noiseFrequency = m3ParticleSystem['noiseFrequency']
-        #     bone.m3PAR_noiseCohesion = m3ParticleSystem['noiseCohesion']
-        #     bone.m3PAR_noiseEdge = m3ParticleSystem['noiseEdge']
-        #     bone.m3PAR_trailParticleName = ''  # TODO Needs function for getting bone name from index, including -1
-        #     bone.m3PAR_trailParticleChance = m3ParticleSystem['trailingParticlesChance']
-        #     bone.m3PAR_trailParticleRate = m3Anim1ToBl(m3ParticleSystem, 'trailingParticlesRate')
-        #     bone.m3PAR_flipbookCols = m3ParticleSystem['numberOfColumns']
-        #     bone.m3PAR_flipbookRows = m3ParticleSystem['numberOfRows']
-        #     bone.m3PAR_flipbookColWidth = m3ParticleSystem['columnWidth']
-        #     bone.m3PAR_flipbookRowHeight = m3ParticleSystem['rowHeight']
-        #     bone.m3PAR_phase1Start = m3ParticleSystem['phase1StartImageIndex']
-        #     bone.m3PAR_phase1End = m3ParticleSystem['phase1EndImageIndex']
-        #     bone.m3PAR_phase2Start = m3ParticleSystem['phase2StartImageIndex']
-        #     bone.m3PAR_phase2End = m3ParticleSystem['phase2EndImageIndex']
-        #     bone.m3PAR_phase1Length = m3ParticleSystem['relativePhase1Length']
-        #     bone.m3PAR_localForces = m3ToBlBoolVec(m3ParticleSystem, 'localForceChannels', 16)
-        #     bone.m3PAR_worldForces = m3ToBlBoolVec(m3ParticleSystem, 'worldForceChannels', 16)
-        #     bone.m3PAR_flagSort = m3BitToBl(m3ParticleSystem, 'flags', 0)
-        #     bone.m3PAR_flagCollideTerrain = m3BitToBl(m3ParticleSystem, 'flags', 1)
-        #     bone.m3PAR_flagCollideObjects = m3BitToBl(m3ParticleSystem, 'flags', 2)
-        #     bone.m3PAR_flagSpawnOnBounce = m3BitToBl(m3ParticleSystem, 'flags', 3)
-        #     bone.m3PAR_flagInheritEmitArea = m3BitToBl(m3ParticleSystem, 'flags', 4)
-        #     bone.m3PAR_flagInheritEmitParams = m3BitToBl(m3ParticleSystem, 'flags', 5)
-        #     bone.m3PAR_flagInheritParentVel = m3BitToBl(m3ParticleSystem, 'flags', 6)
-        #     bone.m3PAR_flagSortByZHeight = m3BitToBl(m3ParticleSystem, 'flags', 7)
-        #     bone.m3PAR_flagReverseIteration = m3BitToBl(m3ParticleSystem, 'flags', 8)
-        #     bone.m3PAR_flagRotationSmooth = m3BitToBl(m3ParticleSystem, 'flags', 9)
-        #     bone.m3PAR_flagRotationSmoothBezier = m3BitToBl(m3ParticleSystem, 'flags', 10)
-        #     bone.m3PAR_flagSizeSmooth = m3BitToBl(m3ParticleSystem, 'flags', 11)
-        #     bone.m3PAR_flagSizeSmoothBezier = m3BitToBl(m3ParticleSystem, 'flags', 12)
-        #     bone.m3PAR_flagColorSmooth = m3BitToBl(m3ParticleSystem, 'flags', 13)
-        #     bone.m3PAR_flagColorSmoothBezier = m3BitToBl(m3ParticleSystem, 'flags', 14)
-        #     bone.m3PAR_flagLitParts = m3BitToBl(m3ParticleSystem, 'flags', 15)
-        #     bone.m3PAR_flagFlipbookStart = m3BitToBl(m3ParticleSystem, 'flags', 16)
-        #     bone.m3PAR_flagMultiplyByGravity = m3BitToBl(m3ParticleSystem, 'flags', 17)
-        #     bone.m3PAR_flagClampTailParts = m3BitToBl(m3ParticleSystem, 'flags', 18)
-        #     bone.m3PAR_flagSpawnTrailingParts = m3BitToBl(m3ParticleSystem, 'flags', 19)
-        #     bone.m3PAR_flagFixLengthTailParts = m3BitToBl(m3ParticleSystem, 'flags', 20)
-        #     bone.m3PAR_flagUseVertexAlpha = m3BitToBl(m3ParticleSystem, 'flags', 21)
-        #     bone.m3PAR_flagModelParts = m3BitToBl(m3ParticleSystem, 'flags', 22)
-        #     bone.m3PAR_flagSwapYZOnModelParts = m3BitToBl(m3ParticleSystem, 'flags', 23)
-        #     bone.m3PAR_flagScaleTimeByParent = m3BitToBl(m3ParticleSystem, 'flags', 24)
-        #     bone.m3PAR_flagUseLocalTime = m3BitToBl(m3ParticleSystem, 'flags', 25)
-        #     bone.m3PAR_flagSimulateOnInit = m3BitToBl(m3ParticleSystem, 'flags', 26)
-        #     bone.m3PAR_flagCopy = m3BitToBl(m3ParticleSystem, 'flags', 27)
-        #
-        #     for m3ParticleCopy in self.dict_from_ref(m3ParticleSystem['copyIndices']):
-        #         copyBone = self.armatureOb.data.bones[m3ParticleCopy['bone']]
-        #
-        #         copyBone.m3BONEtype = 'PARC'
-        #
-        #         copyBone.m3PARCsystem = bone.name
-        #         copyBone.m3PARCemitRate = m3ParticleCopy['emissionRate']
-        #         copyBone.m3PARCemitAmount = m3ParticleCopy['partEmit']
+        for m3_particle in self.m3_particle_systems['entries']:
+            print(m3_particle)
+            bone = self.armature.bones[m3_particle['bone']]
+            particle = self.armature.m3_particles.add()
+            particle.name = shared.collection_find_unused_name([self.armature.m3_particles], [], bone.name if bone.name else 'particle')
+            particle.bone = bone.name
+            particle.particle_type = bl_enum.particle_type[m3_particle['particle_type']][0]
+            particle.length_width_ratio = m3_particle['length_width_ratio']
+            particle.distance_limit = m3_particle['distance_limit']
+            particle.lod_cut = bl_enum.lod[m3_particle['lod_cut']][0]
+            particle.lod_reduce = bl_enum.lod[m3_particle['lod_reduce']][0]
+            particle.emit_type = bl_enum.particle_emit_type[m3_particle['emit_type']][0]
+            particle.emit_shape = bl_enum.particle_shape[m3_particle['emit_shape']][0]
+            particle.emit_shape_cutout = bool(m3_particle['flags'][4])
+            # particle.emit_shape_size # TODO
+            # particle.emit_shape_size_cutout # TODO
+            particle.emit_radius = m3_particle['emit_radius']
+            particle.emit_radius_cutout = m3_particle['emit_radius_cutout']
+            particle.emit_max = m3_particle['emit_max']
+            particle.emit_rate = m3_particle['emit_rate']
+            particle.emit_amount = m3_particle['emit_amount']
+            particle.emit_speed = m3_particle['emit_speed']
+            particle.emit_speed_random = m3_particle['emit_speed_random']
+            particle.emit_speed_randomize = bool(m3_particle['flags'][0])  # TODO
+            particle.friction = m3_particle['friction']
+            particle.bounce = m3_particle['bounce']
+            particle.wind_multiplier = m3_particle['wind_multiplier']
