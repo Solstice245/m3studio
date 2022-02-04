@@ -1,6 +1,3 @@
-#!/usr/bin/python3
-# -*- coding: utf-8 -*-
-
 # ##### BEGIN GPL LICENSE BLOCK #####
 #
 #  This program is free software; you can redistribute it and/or
@@ -89,22 +86,6 @@ def draw_props(chain, layout):
 
     shared.draw_bone_prop(chain, bpy.context.object.pose, col, 'bone1', 'Bone Chain Start')
     shared.draw_bone_prop(chain, bpy.context.object.pose, col, 'bone2', 'Bone Chain End')
-
-    # col.prop_search(chain, 'bone1', bpy.context.object.pose, 'bones', text='Bone Chain Start')
-    #
-    # if not chain.bone1:
-    #     row = col.row()
-    #     row.label(text='')
-    #     row.label(text='Invalid bone.', icon='ERROR')
-    #     row.label(text='')
-    #
-    # col.prop_search(chain, 'bone2', bpy.context.object.pose, 'bones', text='Bone Chain End')
-    #
-    # if not chain.bone2:
-    #     row = col.row()
-    #     row.label(text='')
-    #     row.label(text='Invalid bone.', icon='ERROR')
-    #     row.label(text='')
 
     col = layout.column(align=True)
     col.prop(chain, 'max_search_up', text='Max Search Up')

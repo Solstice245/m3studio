@@ -1,6 +1,3 @@
-#!/usr/bin/python3
-# -*- coding: utf-8 -*-
-
 # ##### BEGIN GPL LICENSE BLOCK #####
 #
 #  This program is free software; you can redistribute it and/or
@@ -21,8 +18,6 @@
 
 import bpy
 import bmesh
-
-# TODO Investigate possibility of using mesh data attributes instead of bmesh layers
 
 
 def m3_get_vertex_sign(bm):

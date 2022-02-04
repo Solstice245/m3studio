@@ -1,6 +1,3 @@
-#!/usr/bin/python3
-# -*- coding: utf-8 -*-
-
 # ##### BEGIN GPL LICENSE BLOCK #####
 #
 #  This program is free software; you can redistribute it and/or
@@ -85,7 +82,7 @@ def draw_props(ribbon, layout):
     col.prop(ribbon, 'pitch', text='Pitch')
     col.separator()
 
-    shared.draw_subcollection_list(bpy.context.object.data, layout, 'm3_ribbons', 'splines', 'Spline', draw_spline_props)
+    shared.draw_subcollection_list(ribbon, layout, 'm3_ribbons', 'splines', 'Spline', draw_spline_props)
 
     col = layout.column(align=True)
     col.prop(ribbon, 'gravity', text='Gravity')
@@ -256,17 +253,9 @@ class Properties(shared.M3BoneUserPropertyGroup):
     length_time: bpy.props.BoolProperty(options=set())
 
 
-class Panel(bpy.types.Panel):
+class Panel(shared.ArmatureDataPanel, bpy.types.Panel):
     bl_idname = 'DATA_PT_M3_RIBBONS'
     bl_label = 'M3 Ribbons'
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = 'data'
-    bl_options = {'DEFAULT_CLOSED'}
-
-    @classmethod
-    def poll(cls, context):
-        return context.object.type == 'ARMATURE'
 
     def draw(self, context):
         shared.draw_collection_list_active(context.object.data, self.layout, 'm3_ribbons', draw_props)

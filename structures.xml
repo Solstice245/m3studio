@@ -1,3 +1,5 @@
+<!-- This file will be phased out, but will remain here for reference -->
+
 <!--
     This file describes the m3 model format and gets used by
     the script generateM3Library.py to generate the the file m3.py

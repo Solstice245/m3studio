@@ -1,6 +1,3 @@
-#!/usr/bin/python3
-# -*- coding: utf-8 -*-
-
 # ##### BEGIN GPL LICENSE BLOCK #####
 #
 #  This program is free software; you can redistribute it and/or
@@ -53,30 +50,16 @@ def draw_volume_props(volume, layout):
 
 
 def draw_props(point, layout):
-    shared.draw_subcollection_list(
-        bpy.context.object.data, layout,
-        'm3_attachmentpoints',
-        'volumes',
-        'Volume',
-        draw_volume_props
-    )
+    shared.draw_subcollection_list(point, layout, 'm3_attachmentpoints', 'volumes', 'Volume', draw_volume_props)
 
 
 class Properties(shared.M3BoneUserPropertyGroup):
     volumes: bpy.props.CollectionProperty(type=shared.M3VolumePropertyGroup)
 
 
-class Panel(bpy.types.Panel):
+class Panel(shared.ArmatureDataPanel, bpy.types.Panel):
     bl_idname = 'DATA_PT_M3_ATTACHMENTPOINTS'
     bl_label = 'M3 Attachment Points'
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = 'data'
-    bl_options = {'DEFAULT_CLOSED'}
-
-    @classmethod
-    def poll(cls, context):
-        return context.object.type == 'ARMATURE'
 
     def draw(self, context):
         shared.draw_collection_list_active(context.object.data, self.layout, 'm3_attachmentpoints', draw_props)

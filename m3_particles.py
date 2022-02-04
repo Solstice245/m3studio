@@ -1,6 +1,3 @@
-#!/usr/bin/python3
-# -*- coding: utf-8 -*-
-
 # ##### BEGIN GPL LICENSE BLOCK #####
 #
 #  This program is free software; you can redistribute it and/or
@@ -85,7 +82,7 @@ def draw_props(particle, layout):
     col.prop(particle, 'emit_rate', text='Rate')
     col.prop(particle, 'emit_amount', text='Amount')
     col.separator()
-    shared.draw_subcollection_list(bpy.context.object.data, layout, 'm3_particles', 'copies', 'Particle Copy', draw_copy_props)
+    shared.draw_subcollection_list(particle, layout, 'm3_particles', 'copies', 'Particle Copy', draw_copy_props)
     col.separator()
     col = layout.column(align=True)
     col.prop(particle, 'emit_type', text='Emission Type')
@@ -379,17 +376,9 @@ class Properties(shared.M3BoneUserPropertyGroup):
     flag_copy: bpy.props.BoolProperty(options=set())
 
 
-class Panel(bpy.types.Panel):
+class Panel(shared.ArmatureDataPanel, bpy.types.Panel):
     bl_idname = 'DATA_PT_M3_PARTICLES'
     bl_label = 'M3 Particles'
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = 'data'
-    bl_options = {'DEFAULT_CLOSED'}
-
-    @classmethod
-    def poll(cls, context):
-        return context.object.type == 'ARMATURE'
 
     def draw(self, context):
         shared.draw_collection_list_active(context.object.data, self.layout, 'm3_particles', draw_props)

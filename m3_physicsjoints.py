@@ -1,6 +1,3 @@
-#!/usr/bin/python3
-# -*- coding: utf-8 -*-
-
 # ##### BEGIN GPL LICENSE BLOCK #####
 #
 #  This program is free software; you can redistribute it and/or
@@ -87,26 +84,16 @@ def bone2_update_event(self, context):
 
 def draw_props(joint, layout):
     col = layout.column()
-    col.prop_search(joint, 'bone1', bpy.context.object.pose, 'bones', text='Bone Joint Start')
+    shared.draw_bone_prop(joint, bpy.context.object.pose, col, 'bone1', 'Bone Joint Start')
 
-    if not joint.bone1:
-        row = col.row()
-        row.label(text='')
-        row.label(text='Invalid bone.', icon='ERROR')
-        row.label(text='')
-    else:
+    if joint.bone1:
         col.prop(joint, 'location1', text='Location')
         col.prop(joint, 'rotation1', text='Rotation')
 
     col = layout.column()
-    col.prop_search(joint, 'bone2', bpy.context.object.pose, 'bones', text='Bone Joint End')
+    shared.draw_bone_prop(joint, bpy.context.object.pose, col, 'bone2', 'Bone Joint End')
 
-    if not joint.bone2:
-        row = col.row()
-        row.label(text='')
-        row.label(text='Invalid bone.', icon='ERROR')
-        row.label(text='')
-    else:
+    if joint.bone2:
         col.prop(joint, 'location2', text='Location')
         col.prop(joint, 'rotation2', text='Rotation')
 
@@ -153,17 +140,9 @@ class Properties(bpy.types.PropertyGroup):
     angular_freq: bpy.props.FloatProperty(options=set(), min=0, default=5)
 
 
-class Panel(bpy.types.Panel):
+class Panel(shared.ArmatureDataPanel, bpy.types.Panel):
     bl_idname = 'DATA_PT_M3_PHYSICSJOINTS'
     bl_label = 'M3 Physics Joints'
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = 'data'
-    bl_options = {'DEFAULT_CLOSED'}
-
-    @classmethod
-    def poll(cls, context):
-        return context.object.type == 'ARMATURE'
 
     def draw(self, context):
         shared.draw_collection_list_active(context.object.data, self.layout, 'm3_physicsjoints', draw_props)

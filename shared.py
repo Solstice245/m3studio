@@ -1,6 +1,3 @@
-#!/usr/bin/python3
-# -*- coding: utf-8 -*-
-
 # ##### BEGIN GPL LICENSE BLOCK #####
 #
 #  This program is free software; you can redistribute it and/or
@@ -33,8 +30,7 @@ def bone_update_event(self, context):
     if not self.bl_update:
         return
 
-    data = context.object.data
-    bone = data.bones[self.bone]
+    bone = context.object.data.bones[self.bone]
     if bone:
         bpy.msgbus.clear_by_owner(self.bone)
         bpy.msgbus.subscribe_rna(
@@ -46,6 +42,17 @@ def bone_update_event(self, context):
         )
     else:
         bpy.msgbus.clear_by_owner(self.bone)
+
+
+class ArmatureDataPanel(bpy.types.Panel):
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = 'data'
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.object.type == 'ARMATURE'
 
 
 class M3VolumePropertyGroup(bpy.types.PropertyGroup):
@@ -189,8 +196,8 @@ class M3SubCollectionOpMove(bpy.types.Operator):
             subcollection_item = subcollection[self.index]
             subcollection_itemshift = subcollection[self.index + self.shift]
             subcollection.move(self.index, self.index + self.shift)
-            subcollection_item.name = collection_item.name + ' ' + self.subcollection + ' ' + str(self.index + 1)
-            subcollection_itemshift.name = collection_item.name + ' ' + self.subcollection + ' ' + str(self.index + self.shift + 1)
+            subcollection_item.name = '{} {} {}'.format(collection_item.name, self.subcollection, self.index + 1)
+            subcollection_itemshift.name = '{} {} {}'.format(collection_item.name, self.subcollection, self.index + self.shift + 1)
             swap_m3_action_keyframes(ob, '{}[{}].{}'.format(self.collection, collection_index, self.subcollection), self.index, self.shift)
 
         return {'FINISHED'}
@@ -249,11 +256,9 @@ def draw_collection_list_active(data, layout, collection, draw_func):
     if rows == 5:
         sub = col.column(align=True)
         op = sub.operator('m3.collection_move', icon='TRIA_UP', text='')
-        op.collection = collection
-        op.shift = -1
+        op.collection, op.shift = (collection, -1)
         op = sub.operator('m3.collection_move', icon='TRIA_DOWN', text='')
-        op.collection = collection
-        op.shift = 1
+        op.collection, op.shift = (collection, -1)
 
     index = getattr(data, collection + '_index')
 
@@ -266,21 +271,16 @@ def draw_collection_list_active(data, layout, collection, draw_func):
     box.use_property_split = True
     col = box.column()
     col.prop(item, 'name', text='Identifier')
-
     draw_bone_prop(item, data, col)
-
     draw_func(item, box)
 
 
 def draw_subcollection_list(data, layout, collection_id, subcollection_id, subcollection_name, draw_func):
-    collection = getattr(data, collection_id)
-    collection_index = getattr(data, collection_id + '_index')
-    subcollection = getattr(collection[collection_index], subcollection_id)
+    subcollection = getattr(data, subcollection_id)
 
     box = layout.box()
     op = box.operator('m3.subcollection_add', text='Add ' + subcollection_name)
-    op.collection = collection_id
-    op.subcollection = subcollection_id
+    op.collection, op.subcollection = (collection_id, subcollection_id)
 
     items = []
 
@@ -288,74 +288,52 @@ def draw_subcollection_list(data, layout, collection_id, subcollection_id, subco
         for index, item in enumerate(subcollection):
             items.append(item)
 
-            row = box.row()
+            row = box.row(align=True)
             col = row.column(align=True)
 
             if not item.bl_display:
                 op = col.operator('m3.subcollection_displaytoggle', icon='TRIA_RIGHT', text='Toggle ' + subcollection_name + ' Display')
-                op.collection = collection_id
-                op.subcollection = subcollection_id
-                op.index = index
+                op.collection, op.subcollection, op.index = (collection_id, subcollection_id, index)
             else:
                 op = col.operator('m3.subcollection_displaytoggle', icon='TRIA_DOWN', text='')
-                op.collection = collection_id
-                op.subcollection = subcollection_id
-                op.index = index
+                op.collection, op.subcollection, op.index = (collection_id, subcollection_id, index)
                 col = row.column()
-
                 draw_bone_prop(item, bpy.context.object.pose, col)
-
                 draw_func(item, col)
 
-            col = row.column()
-            op = col.operator('m3.subcollection_remove', icon='REMOVE', text='')
-            op.collection = collection_id
-            op.subcollection = subcollection_id
-            op.index = index
+            col = row.column(align=True)
+            op = col.operator('m3.subcollection_remove', icon='X', text='')
+            op.collection, op.subcollection, op.index = (collection_id, subcollection_id, index)
 
             if item.bl_display and len(subcollection) > 1:
                 sub = col.column(align=True)
                 op = sub.operator('m3.subcollection_move', icon='TRIA_UP', text='')
-                op.collection = collection_id
-                op.subcollection = subcollection_id
-                op.index = index
-                op.shift = -1
+                op.collection, op.subcollection, op.index, op.shift = (collection_id, subcollection_id, index, -1)
                 op = sub.operator('m3.subcollection_move', icon='TRIA_DOWN', text='')
-                op.collection = collection_id
-                op.subcollection = subcollection_id
-                op.index = index
-                op.shift = 1
+                op.collection, op.subcollection, op.index, op.shift = (collection_id, subcollection_id, index, 1)
 
 
-def collection_find_unused_name(collections=[], suggestedNames=[], prefix=''):
-    usedNames = set()
-    for collection in collections:
-        for item in collection:
-            usedNames.add(item.name)
-
+def collection_find_unused_name(collections=[], suggested_names=[], prefix=''):
+    used_names = [item.name for item in collection for collection in collections]
     num = 1
-    unusedName = None
-    while unusedName is None:
-        for name in suggestedNames:
-            if name not in usedNames:
-                return name
+    while True:
+        for name in [name for name in suggested_names if name not in used_names]:
+            return name
 
         counter = '0' + str(num) if num < 10 else str(num)
         name = prefix + counter
-        unusedName = name if name not in usedNames else None
+
+        if name not in used_names:
+            return name
 
         num += 1
 
-    return unusedName
-
 
 def shift_m3_action_keyframes(arm, prefix, index):
-    for action in bpy.data.actions:
-        if arm.name in action.name:
-            path = '{}[{}]'.format(prefix, str(index))
-            for fcurve in action.fcurves:
-                if prefix in fcurve.data_path and path in fcurve.data_path:
-                    fcurve.data_path = fcurve.data_path.replace(path, '{}[{}]'.format(prefix, str(index - 1)))
+    for action in [action for action in bpy.data.actions if arm.name in action.name]:
+        path = '%s[%d]' % (prefix, index)
+        for fcurve in [fcurve for fcurve in action.fcurves if prefix in fcurve.data_path and path in fcurve.data_path]:
+            fcurve.data_path = fcurve.data_path.replace(path, '%s[%d]' % (prefix, index - 1))
 
 
 def swap_m3_action_keyframes(arm, prefix, old, shift):
@@ -363,29 +341,17 @@ def swap_m3_action_keyframes(arm, prefix, old, shift):
         if arm.name not in action.name:
             continue
 
-        fcurves = []
-        fcurves_shift = []
+        path = '%s[%d]' % (prefix, old)
+        path_shift = '%s[%d]' % (prefix, old + shift)
 
-        path = '{}[{}]'.format(prefix, old)
-        path_shift = '{}[{}]'.format(prefix, old + shift)
-
-        for fcurve in action.fcurves:
-            if prefix not in fcurve.data_path:
-                continue
-
-            if path in fcurve.data_path:
-                fcurve.data_path = fcurve.data_path.replace(path, prefix + '[temp]')
-                fcurves.append(fcurve)
-
-            if path_shift in fcurve.data_path:
-                fcurve.data_path = fcurve.data_path.replace(path_shift, prefix + '[temp_shift]')
-                fcurves_shift.append(fcurve)
+        fcurves = [fcurve for fcurve in action.fcurves if path in fcurve.data_path]
+        fcurves_shift = [fcurve for fcurve in action.fcurves if path_shift in fcurve.data_path]
 
         for fcurve in fcurves:
-            fcurve.data_path = fcurve.data_path.replace(prefix + '[temp]', path_shift)
+            fcurve.data_path = fcurve.data_path.replace(path, path_shift)
 
         for fcurve in fcurves_shift:
-            fcurve.data_path = fcurve.data_path.replace(prefix + '[temp_shift]', path)
+            fcurve.data_path = fcurve.data_path.replace(path_shift, path)
 
 
 classes = {

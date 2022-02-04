@@ -1,6 +1,3 @@
-#!/usr/bin/python3
-# -*- coding: utf-8 -*-
-
 # ##### BEGIN GPL LICENSE BLOCK #####
 #
 #  This program is free software; you can redistribute it and/or
@@ -19,6 +16,7 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
+from timeit import timeit
 import bpy
 from bpy.app.handlers import persistent
 from . import shared
@@ -79,11 +77,11 @@ class M3ImportOperator(bpy.types.Operator):
     test_vertexalpha = 'C:\\Users\\John Wharton\\Documents\\_Base Assets\\Protoss\\Effects\\Mothership_Taldarim_Shield.m3'
 
     def invoke(self, context, event):
-        m3_import.M3Import(self.test_goliath)
+        print(timeit(lambda: m3_import.M3Import(self.test_goliath), number=1))
         return {'RUNNING_MODAL'}
 
     def execute(self, context):
-        m3_import.M3Import(self.test_goliath)
+        print(timeit(lambda: m3_import.M3Import(self.test_goliath), number=1))
         return {'FINISHED'}
 
 
@@ -132,10 +130,9 @@ classes = (
 
 @persistent
 def init_msgbus(*args):
-    for arm in [ob if ob.type == 'ARMATURE' else None for ob in bpy.context.scene.objects]:
-        if arm:
-            for collection in m3_collection_modules:
-                collection.init_msgbus(arm, bpy.context)
+    for arm in [ob for ob in bpy.context.scene.objects if ob.type == 'ARMATURE']:
+        for collection in m3_collection_modules:
+            collection.init_msgbus(arm, bpy.context)
 
 
 def register():
@@ -150,7 +147,7 @@ def register():
 
 def unregister():
     for clss in reversed(classes):
-        bpy.utils.register_class(clss)
+        bpy.utils.unregister_class(clss)
     bpy.types.TOPBAR_MT_file_import.remove(top_bar_import)
     bpy.types.TOPBAR_MT_file_export.remove(top_bar_export)
     bpy.app.handlers.load_post.remove(init_msgbus)

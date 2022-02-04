@@ -1,6 +1,3 @@
-#!/usr/bin/python3
-# -*- coding: utf-8 -*-
-
 # ##### BEGIN GPL LICENSE BLOCK #####
 #
 #  This program is free software; you can redistribute it and/or
@@ -21,71 +18,42 @@
 
 from os import path
 import xml.etree.ElementTree as ET
-import struct as struct_mod
+import struct
 
 
-def read_int(buffer): return int.from_bytes(buffer, 'little', signed=True)
-def read_uint(buffer): return int.from_bytes(buffer, 'little', signed=False)
-def read_fixed(buffer): return int.from_bytes(buffer, 'little') * 2 / 255 - 1
-def read_float(buffer): return struct_mod.unpack('f', buffer)[0]
-def read_char(buffer): return str(buffer, 'ascii')
-def read_tag(buffer): return str(buffer, 'ascii')[::-1].replace('\00', '')
+m3_structs_xml = {struct.get('tag'): struct for struct in ET.parse(path.join(path.dirname(__file__), 'structs.xml')).getroot().findall('struct')}
+m3_structs = {}
+for tag, val in m3_structs_xml.items():
+    m3_structs[tag] = {}
+    for version in val.findall('version'):
+        num = int(version.get('num'))
+        m3_structs[tag][num] = []
+        for field in val.findall('field'):
+            if (int(field.get('vermin')) if field.get('vermin') else 0) > num:
+                continue
+            if (int(field.get('vermax')) if field.get('vermax') else 255) < num:
+                continue
+            m3_structs[tag][num].append({'name': field.get('name'), 'bin': field.get('bin'), 'size': struct.calcsize(field.get('bin'))})
 
 
-structs_dict = {struct.get('name'): struct for struct in ET.parse(path.join(path.dirname(__file__), 'structures.xml')).getroot().findall('structure')}
-primitive = {
-    'int8': {'size': 1, 'read': read_int}, 'int16': {'size': 2, 'read': read_int}, 'int32': {'size': 4, 'read': read_int},
-    'uint8': {'size': 1, 'read': read_uint}, 'uint16': {'size': 2, 'read': read_uint}, 'uint32': {'size': 4, 'read': read_uint},
-    'fixed8': {'size': 1, 'read': read_fixed}, 'float': {'size': 4, 'read': read_float},
-    'char': {'size': 1, 'read': read_char}, 'tag': {'size': 4, 'read': read_tag}
-}
+def read_m3(dirname):
+    m3 = open(dirname, 'rb') if path.isfile(dirname) else None
+    if not m3:
+        return
 
+    md34 = struct.unpack('4s5I', m3.read(24))
+    m3.seek(md34[1])
+    index = [struct.unpack('4s3I', m3.read(16)) for ii in range(md34[2])]
 
-def read_struct(struct, buffer):
-    entry = {}
-    offset = 0
-
-    for field in [field[1] for field in struct.get('fields').items()]:
-        if field['type'] in primitive.keys():
-            entry[field['name']] = primitive[field['type']]['read'](buffer[offset:offset + primitive[field['type']]['size']])
-            offset += primitive[field['type']]['size']
-        else:
-            f_struct = load_struct(field['type'], int(field.get('type-version', '0')))
-            entry[field['name']] = read_struct(f_struct, buffer[offset:offset + f_struct['size']])
-            offset += f_struct['size']
-
-    return entry
-
-
-def load_struct(struct, get_version=0):
-    version_dict = {'type': struct, 'version': None, 'size': None, 'fields': {}}
-
-    for version in structs_dict[struct].findall('versions')[0]:
-        if int(version.get('number')) == get_version:
-            version_dict['version'] = int(version.get('number'))
-            version_dict['size'] = int(version.get('size'))
-
-    for field in structs_dict[struct].findall('fields')[0]:
-        if get_version >= int(field.get('since-version', '0')) and get_version <= int(field.get('till-version', '99')):
-            version_dict['fields'][field.get('name')] = {key: field.get(key) for key in field.keys()}
-
-    return version_dict
-
-
-def load_sections(filepath):
     sections = []
-    with open(filepath, 'rb') as file:
-        md34v11 = load_struct('MD34', 11)
-        header_bytes = file.read(int(md34v11['size']))
-        header = read_struct(md34v11, header_bytes)
-        md34v11_index_entry = load_struct('MD34IndexEntry')
-        for ii in range(header.get('indexSize')):
-            file.seek(header.get('indexOffset') + ii * (int(md34v11_index_entry['size'])))
-            index_bytes = file.read(int(md34v11_index_entry['size']))
-            section_tag = read_struct(md34v11_index_entry, index_bytes)
-            file.seek(section_tag['offset'])
-            section_struct = load_struct(section_tag['tag'], section_tag['version'])
-            section_entries = [read_struct(section_struct, file.read(section_struct['size'])) for jj in range(section_tag['repetitions'])]
-            sections.append({'tag': section_tag['tag'], 'version': section_tag['version'], 'entries': section_entries})
+    for indice in index:
+        m3.seek(indice[1])
+        m3_struct = m3_structs.get(indice[0].decode('ascii')[::-1])[indice[3]]
+        sections.append([{field['name']: struct.unpack(field['bin'], m3.read(field['size'])) for field in m3_struct} for ii in range(indice[2])])
 
     return sections
+
+
+from timeit import timeit
+timenum = 1
+print(timeit(lambda: read_m3('C:\\Users\\John Wharton\\Documents\\_Base Assets\\Terran\\Units\\Goliath\\Goliath.m3'), number=timenum) / timenum)

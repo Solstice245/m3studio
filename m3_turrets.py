@@ -1,6 +1,3 @@
-#!/usr/bin/python3
-# -*- coding: utf-8 -*-
-
 # ##### BEGIN GPL LICENSE BLOCK #####
 #
 #  This program is free software; you can redistribute it and/or
@@ -71,14 +68,7 @@ def draw_part_props(part, layout):
 
 
 def draw_props(turret, layout):
-    shared.draw_subcollection_list(
-        bpy.context.object.data,
-        layout,
-        'm3_turrets',
-        'parts',
-        'Turret Part',
-        draw_part_props
-    )
+    shared.draw_subcollection_list(turret, layout, 'm3_turrets', 'parts', 'Turret Part', draw_part_props)
 
 
 class PartProperties(shared.M3BoneUserPropertyGroup):
@@ -112,17 +102,9 @@ class Properties(bpy.types.PropertyGroup):
     parts: bpy.props.CollectionProperty(type=PartProperties)
 
 
-class Panel(bpy.types.Panel):
+class Panel(shared.ArmatureDataPanel, bpy.types.Panel):
     bl_idname = 'DATA_PT_M3_turrets'
     bl_label = 'M3 Turrets'
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = 'data'
-    bl_options = {'DEFAULT_CLOSED'}
-
-    @classmethod
-    def poll(cls, context):
-        return context.object.type == 'ARMATURE'
 
     def draw(self, context):
         shared.draw_collection_list_active(context.object.data, self.layout, 'm3_turrets', draw_props)

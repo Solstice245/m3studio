@@ -1,6 +1,3 @@
-#!/usr/bin/python3
-# -*- coding: utf-8 -*-
-
 # ##### BEGIN GPL LICENSE BLOCK #####
 #
 #  This program is free software; you can redistribute it and/or
@@ -59,7 +56,7 @@ def draw_shape_props(shape, layout):
 
 def draw_props(rigidbody, layout):
 
-    shared.draw_subcollection_list(bpy.context.object.data, layout, 'm3_rigidbodies', 'shapes', 'Shape', draw_shape_props)
+    shared.draw_subcollection_list(rigidbody, layout, 'm3_rigidbodies', 'shapes', 'Shape', draw_shape_props)
 
     col = layout.column()
     col.prop(rigidbody, 'material', text='Physics Material')
@@ -117,17 +114,9 @@ class Properties(shared.M3BoneUserPropertyGroup):
     do_not_simulate: bpy.props.BoolProperty(options=set())
 
 
-class Panel(bpy.types.Panel):
+class Panel(shared.ArmatureDataPanel, bpy.types.Panel):
     bl_idname = 'DATA_PT_M3_RIGIDBODIES'
     bl_label = 'M3 Rigid Bodies'
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = 'data'
-    bl_options = {'DEFAULT_CLOSED'}
-
-    @classmethod
-    def poll(cls, context):
-        return context.object.type == 'ARMATURE'
 
     def draw(self, context):
         shared.draw_collection_list_active(context.object.data, self.layout, 'm3_rigidbodies', draw_props)
