@@ -27,13 +27,18 @@ for tag, val in m3_structs_xml.items():
     m3_structs[tag] = {}
     for version in val.findall('version'):
         num = int(version.get('num'))
-        m3_structs[tag][num] = []
+        m3_structs[tag][num] = {}
+        m3_structs[tag][num]['bin'] = ''
+        m3_structs[tag][num]['size'] = 0
+        m3_structs[tag][num]['keys'] = []
         for field in val.findall('field'):
             if (int(field.get('vermin')) if field.get('vermin') else 0) > num:
                 continue
             if (int(field.get('vermax')) if field.get('vermax') else 255) < num:
                 continue
-            m3_structs[tag][num].append({'name': field.get('name'), 'bin': field.get('bin'), 'size': struct.calcsize(field.get('bin'))})
+            m3_structs[tag][num]['bin'] += field.get('bin')
+            m3_structs[tag][num]['size'] += struct.calcsize(field.get('bin'))
+            m3_structs[tag][num]['keys'].append({'name': field.get('name'), 'bin': field.get('bin'), 'size': struct.calcsize(field.get('bin'))})
 
 
 def read_m3(dirname):
@@ -43,17 +48,16 @@ def read_m3(dirname):
 
     md34 = struct.unpack('4s5I', m3.read(24))
     m3.seek(md34[1])
-    index = [struct.unpack('4s3I', m3.read(16)) for ii in range(md34[2])]
 
     sections = []
-    for indice in index:
+    for indice in [struct.unpack('4s3I', m3.read(16)) for ii in range(md34[2])]:
         m3.seek(indice[1])
         m3_struct = m3_structs.get(indice[0].decode('ascii')[::-1])[indice[3]]
-        sections.append([{field['name']: struct.unpack(field['bin'], m3.read(field['size'])) for field in m3_struct} for ii in range(indice[2])])
+        sections.append(tuple(struct.iter_unpack(m3_struct['bin'], m3.read(m3_struct['size'] * indice[2]))))
 
     return sections
 
 
-from timeit import timeit
-timenum = 1
-print(timeit(lambda: read_m3('C:\\Users\\John Wharton\\Documents\\_Base Assets\\Terran\\Units\\Goliath\\Goliath.m3'), number=timenum) / timenum)
+# from timeit import timeit
+# timenum = 50
+# print(timeit(lambda: read_m3('C:\\Users\\John Wharton\\Documents\\_Base Assets\\Terran\\Units\\Goliath\\Goliath.m3'), number=timenum) / timenum)
