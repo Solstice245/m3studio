@@ -22,12 +22,12 @@ from . import bl_enum
 
 
 def register_props():
-    bpy.types.Armature.m3_ribbons = bpy.props.CollectionProperty(type=Properties)
-    bpy.types.Armature.m3_ribbons_index = bpy.props.IntProperty(options=set(), default=-1)
+    bpy.types.Object.m3_ribbons = bpy.props.CollectionProperty(type=Properties)
+    bpy.types.Object.m3_ribbons_index = bpy.props.IntProperty(options=set(), default=-1)
 
 
-def init_msgbus(arm, context):
-    for ribbon in arm.data.m3_ribbons:
+def init_msgbus(ob, context):
+    for ribbon in ob.m3_ribbons:
         shared.bone_update_event(ribbon, context)
         trail_update_event(ribbon, context)
         for spline in ribbon.splines:
@@ -253,12 +253,12 @@ class Properties(shared.M3BoneUserPropertyGroup):
     length_time: bpy.props.BoolProperty(options=set())
 
 
-class Panel(shared.ArmatureDataPanel, bpy.types.Panel):
-    bl_idname = 'DATA_PT_M3_RIBBONS'
+class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_M3_RIBBONS'
     bl_label = 'M3 Ribbons'
 
     def draw(self, context):
-        shared.draw_collection_list_active(context.object.data, self.layout, 'm3_ribbons', draw_props)
+        shared.draw_collection_list_active(context.object, self.layout, 'm3_ribbons', draw_props)
 
 
 classes = (

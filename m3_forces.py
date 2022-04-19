@@ -22,12 +22,12 @@ from . import bl_enum
 
 
 def register_props():
-    bpy.types.Armature.m3_forces = bpy.props.CollectionProperty(type=Properties)
-    bpy.types.Armature.m3_forces_index = bpy.props.IntProperty(options=set(), default=-1)
+    bpy.types.Object.m3_forces = bpy.props.CollectionProperty(type=Properties)
+    bpy.types.Object.m3_forces_index = bpy.props.IntProperty(options=set(), default=-1)
 
 
-def init_msgbus(arm, context):
-    for force in arm.data.m3_forces:
+def init_msgbus(ob, context):
+    for force in ob.m3_forces:
         shared.bone_update_event(force, context)
 
 
@@ -59,12 +59,12 @@ class Properties(shared.M3BoneUserPropertyGroup):
     unbounced: bpy.props.BoolProperty(options=set())
 
 
-class Panel(shared.ArmatureDataPanel, bpy.types.Panel):
-    bl_idname = 'DATA_PT_M3_FORCES'
+class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_M3_FORCES'
     bl_label = 'M3 Forces'
 
     def draw(self, context):
-        shared.draw_collection_list_active(context.object.data, self.layout, 'm3_forces', draw_props)
+        shared.draw_collection_list_active(context.object, self.layout, 'm3_forces', draw_props)
 
 
 classes = (

@@ -21,12 +21,12 @@ from . import shared
 
 
 def register_props():
-    bpy.types.Armature.m3_attachmentpoints = bpy.props.CollectionProperty(type=Properties)
-    bpy.types.Armature.m3_attachmentpoints_index = bpy.props.IntProperty(options=set(), default=-1)
+    bpy.types.Object.m3_attachmentpoints = bpy.props.CollectionProperty(type=Properties)
+    bpy.types.Object.m3_attachmentpoints_index = bpy.props.IntProperty(options=set(), default=-1)
 
 
-def init_msgbus(arm, context):
-    for point in arm.data.m3_attachmentpoints:
+def init_msgbus(ob, context):
+    for point in ob.m3_attachmentpoints:
         shared.bone_update_event(point, context)
         for volume in point.volumes:
             shared.bone_update_event(volume, context)
@@ -57,12 +57,12 @@ class Properties(shared.M3BoneUserPropertyGroup):
     volumes: bpy.props.CollectionProperty(type=shared.M3VolumePropertyGroup)
 
 
-class Panel(shared.ArmatureDataPanel, bpy.types.Panel):
-    bl_idname = 'DATA_PT_M3_ATTACHMENTPOINTS'
+class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_M3_ATTACHMENTPOINTS'
     bl_label = 'M3 Attachment Points'
 
     def draw(self, context):
-        shared.draw_collection_list_active(context.object.data, self.layout, 'm3_attachmentpoints', draw_props)
+        shared.draw_collection_list_active(context.object, self.layout, 'm3_attachmentpoints', draw_props)
 
 
 classes = (

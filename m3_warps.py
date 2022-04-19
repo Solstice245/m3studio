@@ -21,12 +21,12 @@ from . import shared
 
 
 def register_props():
-    bpy.types.Armature.m3_warps = bpy.props.CollectionProperty(type=Properties)
-    bpy.types.Armature.m3_warps_index = bpy.props.IntProperty(options=set(), default=-1)
+    bpy.types.Object.m3_warps = bpy.props.CollectionProperty(type=Properties)
+    bpy.types.Object.m3_warps_index = bpy.props.IntProperty(options=set(), default=-1)
 
 
-def init_msgbus(arm, context):
-    for warp in arm.data.m3_warps:
+def init_msgbus(ob, context):
+    for warp in ob.m3_warps:
         shared.bone_update_event(warp, context)
 
 
@@ -41,12 +41,12 @@ class Properties(shared.M3BoneUserPropertyGroup):
     strength: bpy.props.FloatProperty(name='M3 Warp Strength', min=0, default=1)
 
 
-class Panel(shared.ArmatureDataPanel, bpy.types.Panel):
-    bl_idname = 'DATA_PT_M3_WARPS'
+class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_M3_WARPS'
     bl_label = 'M3 Vertex Warpers'
 
     def draw(self, context):
-        shared.draw_collection_list_active(context.object.data, self.layout, 'm3_warps', draw_props)
+        shared.draw_collection_list_active(context.object, self.layout, 'm3_warps', draw_props)
 
 
 classes = (

@@ -21,12 +21,12 @@ from . import shared
 
 
 def register_props():
-    bpy.types.Armature.m3_turrets = bpy.props.CollectionProperty(type=Properties)
-    bpy.types.Armature.m3_turrets_index = bpy.props.IntProperty(options=set(), default=-1)
+    bpy.types.Object.m3_turrets = bpy.props.CollectionProperty(type=Properties)
+    bpy.types.Object.m3_turrets_index = bpy.props.IntProperty(options=set(), default=-1)
 
 
-def init_msgbus(arm, context):
-    for turret in arm.data.m3_turrets:
+def init_msgbus(ob, context):
+    for turret in ob.m3_turrets:
         for part in turret.parts:
             shared.bone_update_event(part, context)
 
@@ -102,12 +102,12 @@ class Properties(bpy.types.PropertyGroup):
     parts: bpy.props.CollectionProperty(type=PartProperties)
 
 
-class Panel(shared.ArmatureDataPanel, bpy.types.Panel):
-    bl_idname = 'DATA_PT_M3_turrets'
+class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_M3_turrets'
     bl_label = 'M3 Turrets'
 
     def draw(self, context):
-        shared.draw_collection_list_active(context.object.data, self.layout, 'm3_turrets', draw_props)
+        shared.draw_collection_list_active(context.object, self.layout, 'm3_turrets', draw_props)
 
 
 classes = (

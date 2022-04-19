@@ -21,12 +21,12 @@ from . import shared
 
 
 def register_props():
-    bpy.types.Armature.m3_ikchains = bpy.props.CollectionProperty(type=Properties)
-    bpy.types.Armature.m3_ikchains_index = bpy.props.IntProperty(options=set(), default=-1)
+    bpy.types.Object.m3_ikchains = bpy.props.CollectionProperty(type=Properties)
+    bpy.types.Object.m3_ikchains_index = bpy.props.IntProperty(options=set(), default=-1)
 
 
-def init_msgbus(arm, context):
-    for chain in arm.data.m3_ikchains:
+def init_msgbus(ob, context):
+    for chain in ob.m3_ikchains:
         shared.bone1_update_event(chain, context)
         shared.bone2_update_event(chain, context)
 
@@ -105,20 +105,12 @@ class Properties(bpy.types.PropertyGroup):
     goal_threshold: bpy.props.FloatProperty(options=set(), min=0)
 
 
-class Panel(bpy.types.Panel):
-    bl_idname = 'DATA_PT_M3_IKCHAINS'
+class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_M3_IKCHAINS'
     bl_label = 'M3 Inverse Kinematics'
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = 'data'
-    bl_options = {'DEFAULT_CLOSED'}
-
-    @classmethod
-    def poll(cls, context):
-        return context.object.type == 'ARMATURE'
 
     def draw(self, context):
-        shared.draw_collection_list_active(context.object.data, self.layout, 'm3_ikchains', draw_props)
+        shared.draw_collection_list_active(context.object, self.layout, 'm3_ikchains', draw_props)
 
 
 classes = (

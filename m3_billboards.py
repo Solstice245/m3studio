@@ -17,17 +17,17 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import bpy
-from . import shared
-from . import bl_enum
+
+from . import bl_enum, shared
 
 
 def register_props():
-    bpy.types.Armature.m3_billboards = bpy.props.CollectionProperty(type=Properties)
-    bpy.types.Armature.m3_billboards_index = bpy.props.IntProperty(options=set(), default=-1)
+    bpy.types.Object.m3_billboards = bpy.props.CollectionProperty(type=Properties)
+    bpy.types.Object.m3_billboards_index = bpy.props.IntProperty(options=set(), default=-1)
 
 
 def init_msgbus(arm, context):
-    for billboard in arm.data.m3_billboards:
+    for billboard in arm.m3_billboards:
         shared.bone_update_event(billboard, context)
 
 
@@ -41,12 +41,12 @@ class Properties(shared.M3BoneUserPropertyGroup):
     look: bpy.props.BoolProperty(options=set())
 
 
-class Panel(shared.ArmatureDataPanel, bpy.types.Panel):
-    bl_idname = 'DATA_PT_M3_BILLBOARDS'
+class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_M3_BILLBOARDS'
     bl_label = 'M3 Billboards'
 
     def draw(self, context):
-        shared.draw_collection_list_active(context.object.data, self.layout, 'm3_billboards', draw_props)
+        shared.draw_collection_list_active(context.object, self.layout, 'm3_billboards', draw_props)
 
 
 classes = (

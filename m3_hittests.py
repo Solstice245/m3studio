@@ -21,14 +21,14 @@ from . import shared
 
 
 def register_props():
-    bpy.types.Armature.m3_tighthittest = bpy.props.PointerProperty(type=shared.M3VolumePropertyGroup)
-    bpy.types.Armature.m3_hittests = bpy.props.CollectionProperty(type=shared.M3VolumePropertyGroup)
-    bpy.types.Armature.m3_hittests_index = bpy.props.IntProperty(options=set(), default=-1)
+    bpy.types.Object.m3_tighthittest = bpy.props.PointerProperty(type=shared.M3VolumePropertyGroup)
+    bpy.types.Object.m3_hittests = bpy.props.CollectionProperty(type=shared.M3VolumePropertyGroup)
+    bpy.types.Object.m3_hittests_index = bpy.props.IntProperty(options=set(), default=-1)
 
 
-def init_msgbus(arm, context):
-    shared.bone_update_event(arm.data.m3_tighthittest)
-    for hittest in arm.data.m3_hittests:
+def init_msgbus(ob, context):
+    shared.bone_update_event(ob.m3_tighthittest)
+    for hittest in ob.m3_hittests:
         shared.bone_update_event(hittest, context)
 
 
@@ -49,18 +49,18 @@ def draw_props(hittest, layout):
     col.prop(hittest, 'scale', text='Scale')
 
 
-class Panel(shared.ArmatureDataPanel, bpy.types.Panel):
-    bl_idname = 'DATA_PT_M3_HITTESTS'
+class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_M3_HITTESTS'
     bl_label = 'M3 Hit Test Volumes'
 
     def draw(self, context):
         layout = self.layout
         layout.use_property_split = True
         layout.label(text='Tight Hit Test:')
-        shared.draw_bone_prop(context.object.data.m3_tighthittest, context.object.data, layout)
-        draw_props(context.object.data.m3_tighthittest, layout)
+        shared.draw_bone_prop(context.object.m3_tighthittest, context.object, layout)
+        draw_props(context.object.m3_tighthittest, layout)
         layout.label(text='Fuzzy Hit Tests:')
-        shared.draw_collection_list_active(context.object.data, layout, 'm3_hittests', draw_props)
+        shared.draw_collection_list_active(context.object, layout, 'm3_hittests', draw_props)
 
 
 classes = (

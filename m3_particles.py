@@ -22,8 +22,8 @@ from . import bl_enum
 
 
 def register_props():
-    bpy.types.Armature.m3_particles = bpy.props.CollectionProperty(type=Properties)
-    bpy.types.Armature.m3_particles_index = bpy.props.IntProperty(options=set(), default=-1)
+    bpy.types.Object.m3_particles = bpy.props.CollectionProperty(type=Properties)
+    bpy.types.Object.m3_particles_index = bpy.props.IntProperty(options=set(), default=-1)
 
 
 def trail_update_callback(particle, otherparticle):
@@ -36,8 +36,7 @@ def trail_update_event(self, context):
     if not self.bl_update:
         return
 
-    data = context.object.data
-    otherparticle = data.m3_particles[self.trail_particle_name]
+    otherparticle = context.object.m3_particles[self.trail_particle_name]
     if otherparticle:
         bpy.msgbus.clear_by_owner(self.trail_particle_name)
         bpy.msgbus.subscribe_rna(
@@ -52,7 +51,7 @@ def trail_update_event(self, context):
 
 
 def init_msgbus(arm, context):
-    for particle in arm.data.m3_particles:
+    for particle in arm.m3_particles:
         shared.bone_update_event(particle, context)
         trail_update_event(particle, context)
         for copy in particle.copies:
@@ -225,7 +224,7 @@ def draw_props(particle, layout):
     sub = col.column(align=True)
     sub.prop(particle, 'phase1_length', text='Phase 1 Length')
     col = layout.column(align=True)
-    col.prop_search(particle, 'trail_particle_name', bpy.context.object.data, 'm3_particles', text='Trailing Particle Name')
+    col.prop_search(particle, 'trail_particle_name', bpy.context.object, 'm3_particles', text='Trailing Particle Name')
     col.prop(particle, 'trail_particle_chance', text='Chance')
     col.prop(particle, 'trail_particle_rate', text='Rate')
     col = layout.column()
@@ -376,12 +375,12 @@ class Properties(shared.M3BoneUserPropertyGroup):
     flag_copy: bpy.props.BoolProperty(options=set())
 
 
-class Panel(shared.ArmatureDataPanel, bpy.types.Panel):
-    bl_idname = 'DATA_PT_M3_PARTICLES'
+class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_M3_PARTICLES'
     bl_label = 'M3 Particles'
 
     def draw(self, context):
-        shared.draw_collection_list_active(context.object.data, self.layout, 'm3_particles', draw_props)
+        shared.draw_collection_list_active(context.object, self.layout, 'm3_particles', draw_props)
 
 
 classes = (

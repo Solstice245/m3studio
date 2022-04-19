@@ -22,12 +22,12 @@ from . import bl_enum
 
 
 def register_props():
-    bpy.types.Armature.m3_lights = bpy.props.CollectionProperty(type=Properties)
-    bpy.types.Armature.m3_lights_index = bpy.props.IntProperty(options=set(), default=-1)
+    bpy.types.Object.m3_lights = bpy.props.CollectionProperty(type=Properties)
+    bpy.types.Object.m3_lights_index = bpy.props.IntProperty(options=set(), default=-1)
 
 
-def init_msgbus(arm, context):
-    for light in arm.data.m3_lights:
+def init_msgbus(ob, context):
+    for light in ob.m3_lights:
         shared.bone_update_event(light, context)
 
 
@@ -68,12 +68,12 @@ class Properties(shared.M3BoneUserPropertyGroup):
     transparent_objects: bpy.props.BoolProperty(options=set())
 
 
-class Panel(shared.ArmatureDataPanel, bpy.types.Panel):
-    bl_idname = 'DATA_PT_M3_LIGHTS'
+class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_M3_LIGHTS'
     bl_label = 'M3 Lights'
 
     def draw(self, context):
-        shared.draw_collection_list_active(context.object.data, self.layout, 'm3_lights', draw_props)
+        shared.draw_collection_list_active(context.object, self.layout, 'm3_lights', draw_props)
 
 
 classes = (

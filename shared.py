@@ -44,10 +44,10 @@ def bone_update_event(self, context):
         bpy.msgbus.clear_by_owner(self.bone)
 
 
-class ArmatureDataPanel(bpy.types.Panel):
+class ArmatureObjectPanel(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
-    bl_context = 'data'
+    bl_context = 'object'
     bl_options = {'DEFAULT_CLOSED'}
 
     @classmethod
@@ -82,9 +82,9 @@ class M3CollectionOpAdd(bpy.types.Operator):
     collection: bpy.props.StringProperty(default='m3_generics')
 
     def invoke(self, context, event):
-        data = context.object.data
-        getattr(data, self.collection).add()
-        setattr(data, self.collection + '_index', len(getattr(data, self.collection)) - 1)
+        ob = context.object
+        getattr(ob, self.collection).add()
+        setattr(ob, self.collection + '_index', len(getattr(ob, self.collection)) - 1)
 
         return {'FINISHED'}
 
@@ -98,13 +98,13 @@ class M3CollectionOpRemove(bpy.types.Operator):
     collection: bpy.props.StringProperty()
 
     def invoke(self, context, event):
-        data = context.object.data
-        getattr(data, self.collection).remove(getattr(data, self.collection + '_index'))
+        ob = context.object
+        getattr(ob, self.collection).remove(getattr(ob, self.collection + '_index'))
 
-        for ii in range(getattr(data, self.collection + '_index'), len(getattr(data, self.collection))):
+        for ii in range(getattr(ob, self.collection + '_index'), len(getattr(ob, self.collection))):
             shift_m3_action_keyframes(context.object, self.collection, ii + 1)
 
-        setattr(data, self.collection + '_index', len(getattr(data, self.collection)) - 1)
+        setattr(ob, self.collection + '_index', len(getattr(ob, self.collection)) - 1)
 
         return {'FINISHED'}
 
@@ -120,13 +120,12 @@ class M3CollectionOpMove(bpy.types.Operator):
 
     def invoke(self, context, event):
         ob = context.object
-        data = ob.data
-        ii = getattr(data, self.collection + '_index')
+        ii = getattr(ob, self.collection + '_index')
 
-        if (ii < len(getattr(data, self.collection)) - self.shift and ii >= -self.shift):
-            getattr(data, self.collection).move(ii, ii + self.shift)
+        if (ii < len(getattr(ob, self.collection)) - self.shift and ii >= -self.shift):
+            getattr(ob, self.collection).move(ii, ii + self.shift)
             swap_m3_action_keyframes(ob, self.collection, ii, self.shift)
-            setattr(data, self.collection + '_index', ii + self.shift)
+            setattr(ob, self.collection + '_index', ii + self.shift)
 
         return {'FINISHED'}
 
@@ -141,9 +140,9 @@ class M3SubCollectionOpAdd(bpy.types.Operator):
     subcollection: bpy.props.StringProperty()
 
     def invoke(self, context, event):
-        data = context.object.data
-        collection = getattr(data, self.collection)
-        collection_index = getattr(data, self.collection + '_index')
+        ob = context.object
+        collection = getattr(ob, self.collection)
+        collection_index = getattr(ob, self.collection + '_index')
         collection_item = collection[collection_index]
         subcollection = getattr(collection_item, self.subcollection)
         subcollection_item = subcollection.add()
@@ -164,9 +163,9 @@ class M3SubCollectionOpRemove(bpy.types.Operator):
     index: bpy.props.IntProperty()
 
     def invoke(self, context, event):
-        data = context.object.data
-        collection = getattr(data, self.collection)
-        collection_index = getattr(data, self.collection + '_index')
+        ob = context.object
+        collection = getattr(ob, self.collection)
+        collection_index = getattr(ob, self.collection + '_index')
         collection_item = collection[collection_index]
         subcollection = getattr(collection_item, self.subcollection)
         subcollection.remove(self.index)
@@ -187,9 +186,8 @@ class M3SubCollectionOpMove(bpy.types.Operator):
 
     def invoke(self, context, event):
         ob = context.object
-        data = ob.data
-        collection = getattr(data, self.collection)
-        collection_index = getattr(data, self.collection + '_index')
+        collection = getattr(ob, self.collection)
+        collection_index = getattr(ob, self.collection + '_index')
         collection_item = collection[collection_index]
         subcollection = getattr(collection_item, self.subcollection)
         if (self.index < len(subcollection) - self.shift and self.index >= -self.shift):
@@ -214,9 +212,9 @@ class M3SubCollectionOpDisplayToggle(bpy.types.Operator):
     index: bpy.props.IntProperty()
 
     def invoke(self, context, event):
-        data = context.object.data
-        collection = getattr(data, self.collection)
-        collection_index = getattr(data, self.collection + '_index')
+        ob = context.object
+        collection = getattr(ob, self.collection)
+        collection_index = getattr(ob, self.collection + '_index')
         collection_item = collection[collection_index]
         subcollection = getattr(collection_item, self.subcollection)
         subcollection_item = subcollection[self.index]
@@ -225,31 +223,31 @@ class M3SubCollectionOpDisplayToggle(bpy.types.Operator):
         return {'FINISHED'}
 
 
-def draw_bone_prop(item, data, layout, bone_prop='bone', prop_text='Bone'):
+def draw_bone_prop(item, ob, layout, bone_prop='bone', prop_text='Bone'):
     if getattr(item, bone_prop, None) is not None:
-        layout.prop_search(item, bone_prop, data, 'bones', text=prop_text)
+        layout.prop_search(item, bone_prop, ob.data, 'bones', text=prop_text)
 
-        if not data.bones.get(getattr(item, bone_prop)):
+        if not ob.data.bones.get(getattr(item, bone_prop)):
             row = layout.row()
             row.label(text='')
             row.label(text='No bone match.', icon='ERROR')
             row.label(text='')
 
 
-def draw_collection_list_active(data, layout, collection, draw_func):
+def draw_collection_list_active(ob, layout, collection, draw_func):
 
-    count = len(getattr(data, collection))
+    count = len(getattr(ob, collection))
     rows = 5 if count > 1 else 3
 
     row = layout.row()
     col = row.column()
-    col.template_list('UI_UL_list', collection, data, collection, data, collection + '_index', rows=rows)
+    col.template_list('UI_UL_list', collection, ob, collection, ob, collection + '_index', rows=rows)
     col = row.column()
     sub = col.column(align=True)
     op = sub.operator('m3.collection_add', icon='ADD', text='')
     op.collection = collection
     sub2 = sub.column(align=True)
-    sub2.active = bool(len(getattr(data, collection)))
+    sub2.active = bool(len(getattr(ob, collection)))
     op = sub2.operator('m3.collection_remove', icon='REMOVE', text='')
     op.collection = collection
 
@@ -258,25 +256,25 @@ def draw_collection_list_active(data, layout, collection, draw_func):
         op = sub.operator('m3.collection_move', icon='TRIA_UP', text='')
         op.collection, op.shift = (collection, -1)
         op = sub.operator('m3.collection_move', icon='TRIA_DOWN', text='')
-        op.collection, op.shift = (collection, -1)
+        op.collection, op.shift = (collection, 1)
 
-    index = getattr(data, collection + '_index')
+    index = getattr(ob, collection + '_index')
 
     if index < 0:
         return (None, None)
 
-    item = getattr(data, collection)[index]
+    item = getattr(ob, collection)[index]
 
     box = layout.box()
     box.use_property_split = True
     col = box.column()
     col.prop(item, 'name', text='Identifier')
-    draw_bone_prop(item, data, col)
+    draw_bone_prop(item, ob, col)
     draw_func(item, box)
 
 
-def draw_subcollection_list(data, layout, collection_id, subcollection_id, subcollection_name, draw_func):
-    subcollection = getattr(data, subcollection_id)
+def draw_subcollection_list(ob, layout, collection_id, subcollection_id, subcollection_name, draw_func):
+    subcollection = getattr(ob, subcollection_id)
 
     box = layout.box()
     op = box.operator('m3.subcollection_add', text='Add ' + subcollection_name)
@@ -298,7 +296,7 @@ def draw_subcollection_list(data, layout, collection_id, subcollection_id, subco
                 op = col.operator('m3.subcollection_displaytoggle', icon='TRIA_DOWN', text='')
                 op.collection, op.subcollection, op.index = (collection_id, subcollection_id, index)
                 col = row.column()
-                draw_bone_prop(item, bpy.context.object.pose, col)
+                draw_bone_prop(item, bpy.context.object, col)
                 draw_func(item, col)
 
             col = row.column(align=True)

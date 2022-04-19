@@ -22,12 +22,12 @@ from . import bl_enum
 
 
 def register_props():
-    bpy.types.Armature.m3_physicsjoints = bpy.props.CollectionProperty(type=Properties)
-    bpy.types.Armature.m3_physicsjoints_index = bpy.props.IntProperty(options=set(), default=-1)
+    bpy.types.Object.m3_physicsjoints = bpy.props.CollectionProperty(type=Properties)
+    bpy.types.Object.m3_physicsjoints_index = bpy.props.IntProperty(options=set(), default=-1)
 
 
-def init_msgbus(arm, context):
-    for joint in arm.data.m3_physicsjoints:
+def init_msgbus(ob, context):
+    for joint in ob.m3_physicsjoints:
         shared.bone1_update_event(joint, context)
         shared.bone2_update_event(joint, context)
 
@@ -140,12 +140,12 @@ class Properties(bpy.types.PropertyGroup):
     angular_freq: bpy.props.FloatProperty(options=set(), min=0, default=5)
 
 
-class Panel(shared.ArmatureDataPanel, bpy.types.Panel):
-    bl_idname = 'DATA_PT_M3_PHYSICSJOINTS'
+class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_M3_PHYSICSJOINTS'
     bl_label = 'M3 Physics Joints'
 
     def draw(self, context):
-        shared.draw_collection_list_active(context.object.data, self.layout, 'm3_physicsjoints', draw_props)
+        shared.draw_collection_list_active(context.object, self.layout, 'm3_physicsjoints', draw_props)
 
 
 classes = (

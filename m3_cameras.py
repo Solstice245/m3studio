@@ -21,12 +21,12 @@ from . import shared
 
 
 def register_props():
-    bpy.types.Armature.m3_cameras = bpy.props.CollectionProperty(type=Properties)
-    bpy.types.Armature.m3_cameras_index = bpy.props.IntProperty(options=set(), default=-1)
+    bpy.types.Object.m3_cameras = bpy.props.CollectionProperty(type=Properties)
+    bpy.types.Object.m3_cameras_index = bpy.props.IntProperty(options=set(), default=-1)
 
 
-def init_msgbus(arm, context):
-    for camera in arm.data.m3_cameras:
+def init_msgbus(ob, context):
+    for camera in ob.m3_cameras:
         shared.bone_update_event(camera, context)
 
 
@@ -55,12 +55,12 @@ class Properties(shared.M3BoneUserPropertyGroup):
     unknowne35db92d: bpy.props.IntProperty(options=set(), default=1)
 
 
-class Panel(shared.ArmatureDataPanel, bpy.types.Panel):
-    bl_idname = 'DATA_PT_M3_CAMERAS'
+class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_M3_CAMERAS'
     bl_label = 'M3 Cameras'
 
     def draw(self, context):
-        shared.draw_collection_list_active(context.object.data, self.layout, 'm3_cameras', draw_props)
+        shared.draw_collection_list_active(context.object, self.layout, 'm3_cameras', draw_props)
 
 
 classes = (
