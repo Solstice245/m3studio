@@ -97,8 +97,8 @@ def draw_props(chain, layout):
 
 class Properties(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(options=set())
-    bone1: bpy.props.StringProperty(options=set())
-    bone2: bpy.props.StringProperty(options=set())
+    bone1: bpy.props.StringProperty(options=set(), update=bone1_update_event)
+    bone2: bpy.props.StringProperty(options=set(), update=bone2_update_event)
     max_search_up: bpy.props.FloatProperty(options=set())
     max_search_down: bpy.props.FloatProperty(options=set())
     max_search_speed: bpy.props.FloatProperty(options=set(), min=0)

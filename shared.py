@@ -73,110 +73,9 @@ class M3BoneUserPropertyGroup(bpy.types.PropertyGroup):
     bone: bpy.props.StringProperty(options=set(), update=bone_update_event)
 
 
-class M3CollectionOpAdd(bpy.types.Operator):
-    bl_idname = 'm3.collection_add'
-    bl_label = 'Add Collection Item'
-    bl_description = 'Adds a new item to the collection'
-    bl_options = {'UNDO'}
-
-    collection: bpy.props.StringProperty(default='m3_generics')
-
-    def invoke(self, context, event):
-        ob = context.object
-        getattr(ob, self.collection).add()
-        setattr(ob, self.collection + '_index', len(getattr(ob, self.collection)) - 1)
-
-        return {'FINISHED'}
-
-
-class M3CollectionOpRemove(bpy.types.Operator):
-    bl_idname = 'm3.collection_remove'
-    bl_label = 'Remove Collection Item'
-    bl_description = 'Removes the active item from the collection'
-    bl_options = {'UNDO'}
-
-    collection: bpy.props.StringProperty()
-
-    def invoke(self, context, event):
-        ob = context.object
-        getattr(ob, self.collection).remove(getattr(ob, self.collection + '_index'))
-
-        for ii in range(getattr(ob, self.collection + '_index'), len(getattr(ob, self.collection))):
-            shift_m3_action_keyframes(context.object, self.collection, ii + 1)
-
-        setattr(ob, self.collection + '_index', len(getattr(ob, self.collection)) - 1)
-
-        return {'FINISHED'}
-
-
-class M3CollectionOpMove(bpy.types.Operator):
-    bl_idname = 'm3.collection_move'
-    bl_label = 'Move Collection Item'
-    bl_description = 'Moves the active item up/down in the list'
-    bl_options = {'UNDO'}
-
-    collection: bpy.props.StringProperty(default='m3_generics')
-    shift: bpy.props.IntProperty(default=0)
-
-    def invoke(self, context, event):
-        ob = context.object
-        ii = getattr(ob, self.collection + '_index')
-
-        if (ii < len(getattr(ob, self.collection)) - self.shift and ii >= -self.shift):
-            getattr(ob, self.collection).move(ii, ii + self.shift)
-            swap_m3_action_keyframes(ob, self.collection, ii, self.shift)
-            setattr(ob, self.collection + '_index', ii + self.shift)
-
-        return {'FINISHED'}
-
-
-class M3SubCollectionOpAdd(bpy.types.Operator):
-    bl_idname = 'm3.subcollection_add'
-    bl_label = 'Add Collection Item'
-    bl_description = 'Adds a new item to the collection'
-    bl_options = {'UNDO'}
-
-    collection: bpy.props.StringProperty(default='m3_generics')
-    subcollection: bpy.props.StringProperty()
-
-    def invoke(self, context, event):
-        ob = context.object
-        collection = getattr(ob, self.collection)
-        collection_index = getattr(ob, self.collection + '_index')
-        collection_item = collection[collection_index]
-        subcollection = getattr(collection_item, self.subcollection)
-        subcollection_item = subcollection.add()
-        subcollection_item.bl_display = True
-        subcollection_item.name = collection_item.name + ' ' + self.subcollection + ' ' + str(len(subcollection))
-
-        return {'FINISHED'}
-
-
-class M3SubCollectionOpRemove(bpy.types.Operator):
-    bl_idname = 'm3.subcollection_remove'
-    bl_label = 'Remove Collection Item'
-    bl_description = 'Removes the item from the collection'
-    bl_options = {'UNDO'}
-
-    collection: bpy.props.StringProperty(default='m3_generics')
-    subcollection: bpy.props.StringProperty()
-    index: bpy.props.IntProperty()
-
-    def invoke(self, context, event):
-        ob = context.object
-        collection = getattr(ob, self.collection)
-        collection_index = getattr(ob, self.collection + '_index')
-        collection_item = collection[collection_index]
-        subcollection = getattr(collection_item, self.subcollection)
-        subcollection.remove(self.index)
-
-        return {'FINISHED'}
-
-
-class M3SubCollectionOpMove(bpy.types.Operator):
-    bl_idname = 'm3.subcollection_move'
-    bl_label = 'Move Collection Item'
-    bl_description = 'Moves the item up/down in the list'
+class M3CollectionOpBase(bpy.types.Operator):
+    bl_idname = 'm3.collection_base'
+    bl_label = 'Base Collection Operator'
     bl_options = {'UNDO'}
 
     collection: bpy.props.StringProperty(default='m3_generics')
@@ -184,41 +83,123 @@ class M3SubCollectionOpMove(bpy.types.Operator):
     index: bpy.props.IntProperty()
     shift: bpy.props.IntProperty()
 
+
+class M3CollectionOpAdd(M3CollectionOpBase):
+    bl_idname = 'm3.collection_add'
+    bl_label = 'Add Collection Item'
+    bl_description = 'Adds a new item to the collection'
+
     def invoke(self, context, event):
         ob = context.object
-        collection = getattr(ob, self.collection)
-        collection_index = getattr(ob, self.collection + '_index')
-        collection_item = collection[collection_index]
-        subcollection = getattr(collection_item, self.subcollection)
-        if (self.index < len(subcollection) - self.shift and self.index >= -self.shift):
-            subcollection_item = subcollection[self.index]
-            subcollection_itemshift = subcollection[self.index + self.shift]
-            subcollection.move(self.index, self.index + self.shift)
-            subcollection_item.name = '{} {} {}'.format(collection_item.name, self.subcollection, self.index + 1)
-            subcollection_itemshift.name = '{} {} {}'.format(collection_item.name, self.subcollection, self.index + self.shift + 1)
-            swap_m3_action_keyframes(ob, '{}[{}].{}'.format(self.collection, collection_index, self.subcollection), self.index, self.shift)
+        col = getattr(ob, self.collection)
+
+        col.add()
+        setattr(ob, self.collection + '_index', len(col) - 1)
 
         return {'FINISHED'}
 
 
-class M3SubCollectionOpDisplayToggle(bpy.types.Operator):
-    bl_idname = 'm3.subcollection_displaytoggle'
-    bl_label = 'Toggle Collection Item Visibility'
-    bl_description = 'Shows/hides the properties of the item in the list'
-    bl_options = {'UNDO'}
-
-    collection: bpy.props.StringProperty(default='m3_generics')
-    subcollection: bpy.props.StringProperty()
-    index: bpy.props.IntProperty()
+class M3CollectionOpRemove(M3CollectionOpBase):
+    bl_idname = 'm3.collection_remove'
+    bl_label = 'Remove Collection Item'
+    bl_description = 'Removes the active item from the collection'
 
     def invoke(self, context, event):
         ob = context.object
-        collection = getattr(ob, self.collection)
-        collection_index = getattr(ob, self.collection + '_index')
-        collection_item = collection[collection_index]
-        subcollection = getattr(collection_item, self.subcollection)
-        subcollection_item = subcollection[self.index]
-        subcollection_item.bl_display = not subcollection_item.bl_display
+        col = getattr(ob, self.collection)
+        col_ii = getattr(ob, self.collection + '_index')
+
+        col.remove(col_ii)
+
+        remove_m3_action_keyframes(ob, self.collection, col_ii)
+        for ii in range(col_ii, len(col)):
+            shift_m3_action_keyframes(ob, self.collection, ii + 1)
+
+        setattr(ob, self.collection + '_index', len(col) - 1)
+
+        return {'FINISHED'}
+
+
+class M3CollectionOpMove(M3CollectionOpBase):
+    bl_idname = 'm3.collection_move'
+    bl_label = 'Move Collection Item'
+    bl_description = 'Moves the active item up/down in the list'
+
+    def invoke(self, context, event):
+        ob = context.object
+        col = getattr(ob, self.collection)
+        ii = getattr(ob, self.collection + '_index')
+
+        if (ii < len(col) - self.shift and ii >= -self.shift):
+            col.move(ii, ii + self.shift)
+            swap_m3_action_keyframes(ob, self.collection, ii, self.shift)
+            setattr(ob, self.collection + '_index', ii + self.shift)
+
+        return {'FINISHED'}
+
+
+class M3SubCollectionOpAdd(M3CollectionOpBase):
+    bl_idname = 'm3.subcollection_add'
+    bl_label = 'Add Collection Item'
+    bl_description = 'Adds a new item to the collection'
+
+    def invoke(self, context, event):
+        ob = context.object
+        prop = getattr(ob, self.collection)[getattr(ob, self.collection + '_index')]
+        subcol = getattr(prop, self.subcollection)
+        subprop = subcol.add()
+        subprop.bl_display = True
+        subprop.name = prop.name + ' ' + self.subcollection + ' ' + str(len(subcol))
+
+        return {'FINISHED'}
+
+
+class M3SubCollectionOpRemove(M3CollectionOpBase):
+    bl_idname = 'm3.subcollection_remove'
+    bl_label = 'Remove Collection Item'
+    bl_description = 'Removes the item from the collection'
+
+    def invoke(self, context, event):
+        ob = context.object
+        prop = getattr(ob, self.collection)[getattr(ob, self.collection + '_index')]
+        subcol = getattr(prop, self.subcollection)
+        subcol.remove(self.index)
+
+        remove_m3_action_keyframes(ob, self.subcollection, self.index)
+        for ii in range(self.index, len(subcol)):
+            shift_m3_action_keyframes(ob, self.subcollection, ii + 1)
+
+        return {'FINISHED'}
+
+
+class M3SubCollectionOpMove(M3CollectionOpBase):
+    bl_idname = 'm3.subcollection_move'
+    bl_label = 'Move Collection Item'
+    bl_description = 'Moves the item up/down in the list'
+
+    def invoke(self, context, event):
+        ob = context.object
+        prop = getattr(ob, self.collection)[getattr(ob, self.collection + '_index')]
+        subcol = getattr(prop, self.subcollection)
+        if (self.index < len(subcol) - self.shift and self.index >= -self.shift):
+            subcol.move(self.index, self.index + self.shift)
+            subcol[self.index].name = '{} {} {}'.format(prop.name, self.subcollection, self.index + 1)
+            subcol[self.index + self.shift].name = '{} {} {}'.format(prop.name, self.subcollection, self.index + self.shift + 1)
+            swap_m3_action_keyframes(ob, self.subcollection, self.index, self.shift)
+
+        return {'FINISHED'}
+
+
+class M3SubCollectionOpDisplayToggle(M3CollectionOpBase):
+    bl_idname = 'm3.subcollection_displaytoggle'
+    bl_label = 'Toggle Collection Item Visibility'
+    bl_description = 'Shows/hides the properties of the item in the list'
+
+    def invoke(self, context, event):
+        ob = context.object
+        prop = getattr(ob, self.collection)[getattr(ob, self.collection + '_index')]
+        subprop = getattr(prop, self.subcollection)[self.index]
+        subprop.bl_display = not subprop.bl_display
 
         return {'FINISHED'}
 
@@ -318,8 +299,7 @@ def collection_find_unused_name(collections=[], suggested_names=[], prefix=''):
         for name in [name for name in suggested_names if name not in used_names]:
             return name
 
-        counter = '0' + str(num) if num < 10 else str(num)
-        name = prefix + counter
+        name = prefix + '0' + str(num) if num < 10 else str(num)
 
         if name not in used_names:
             return name
@@ -327,16 +307,23 @@ def collection_find_unused_name(collections=[], suggested_names=[], prefix=''):
         num += 1
 
 
-def shift_m3_action_keyframes(arm, prefix, index):
-    for action in [action for action in bpy.data.actions if arm.name in action.name]:
+def remove_m3_action_keyframes(ob, prefix, index):
+    for action in [action for action in bpy.data.actions if ob.name in action.name]:
         path = '%s[%d]' % (prefix, index)
         for fcurve in [fcurve for fcurve in action.fcurves if prefix in fcurve.data_path and path in fcurve.data_path]:
-            fcurve.data_path = fcurve.data_path.replace(path, '%s[%d]' % (prefix, index - 1))
+            action.fcurves.remove(fcurve)
 
 
-def swap_m3_action_keyframes(arm, prefix, old, shift):
+def shift_m3_action_keyframes(ob, prefix, index, offset=-1):
+    for action in [action for action in bpy.data.actions if ob.name in action.name]:
+        path = '%s[%d]' % (prefix, index)
+        for fcurve in [fcurve for fcurve in action.fcurves if prefix in fcurve.data_path and path in fcurve.data_path]:
+            fcurve.data_path = fcurve.data_path.replace(path, '%s[%d]' % (prefix, index + offset))
+
+
+def swap_m3_action_keyframes(ob, prefix, old, shift):
     for action in bpy.data.actions:
-        if arm.name not in action.name:
+        if ob.name not in action.name:
             continue
 
         path = '%s[%d]' % (prefix, old)
@@ -355,6 +342,7 @@ def swap_m3_action_keyframes(arm, prefix, old, shift):
 classes = {
     M3VolumePropertyGroup,
     M3BoneUserPropertyGroup,
+    M3CollectionOpBase,
     M3CollectionOpAdd,
     M3CollectionOpRemove,
     M3CollectionOpMove,

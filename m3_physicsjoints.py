@@ -123,8 +123,8 @@ def draw_props(joint, layout):
 
 class Properties(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(options=set())
-    bone1: bpy.props.StringProperty(options=set())
-    bone2: bpy.props.StringProperty(options=set())
+    bone1: bpy.props.StringProperty(options=set(), update=bone1_update_event)
+    bone2: bpy.props.StringProperty(options=set(), update=bone2_update_event)
     location1: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3)
     location2: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3)
     rotation1: bpy.props.FloatVectorProperty(options=set(), subtype='EULER', size=3)
