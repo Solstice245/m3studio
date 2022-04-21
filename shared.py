@@ -17,31 +17,58 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import bpy
+import random
 from . import bl_enum
 
 
-def bone_update_callback(m3, bone):
-    m3.bl_update = False
-    m3.bone = bone.name
-    m3.bl_update = True
+def m3_item_new(col):
+    item = col.add()
+    item.bl_handle = '%030x' % random.getrandbits(60)
+    return item
+
+
+def m3_msgbus_callback(self, context, owner, sub, key):
+    self.bl_update = False
+    setattr(self, owner, getattr(sub, key))
+    self.bl_update = True
+
+
+def m3_msgbus_sub(self, context, owner, sub, key):
+    if sub:
+        bpy.msgbus.subscribe_rna(
+            key=sub.path_resolve(key, False),
+            owner=self.bl_handle + owner,
+            args=(self, context, owner, sub, key),
+            notify=m3_msgbus_callback,
+            options={'PERSISTENT'}
+        )
 
 
 def bone_update_event(self, context):
     if not self.bl_update:
         return
 
-    bone = context.object.data.bones[self.bone]
-    if bone:
-        bpy.msgbus.clear_by_owner(self.bone)
-        bpy.msgbus.subscribe_rna(
-            key=bone.path_resolve('name', False),
-            owner=self.bone,
-            args=(self, bone),
-            notify=bone_update_callback,
-            options={'PERSISTENT'}
-        )
-    else:
-        bpy.msgbus.clear_by_owner(self.bone)
+    bpy.msgbus.clear_by_owner(self.bl_handle + 'bone')
+    bone = context.object.data.bones.get(self.bone)
+    m3_msgbus_sub(self, context, 'bone', bone, 'name')
+
+
+def bone1_update_event(self, context):
+    if not self.bl_update:
+        return
+
+    bpy.msgbus.clear_by_owner(self.bl_handle + 'bone1')
+    bone = context.object.data.bones.get(self.bone1)
+    m3_msgbus_sub(self, context, 'bone1', bone, 'name')
+
+
+def bone2_update_event(self, context):
+    if not self.bl_update:
+        return
+
+    bpy.msgbus.clear_by_owner(self.bl_handle + 'bone2')
+    bone = context.object.data.bones.get(self.bone2)
+    m3_msgbus_sub(self, context, 'bone2', bone, 'name')
 
 
 class ArmatureObjectPanel(bpy.types.Panel):
@@ -58,6 +85,7 @@ class ArmatureObjectPanel(bpy.types.Panel):
 class M3VolumePropertyGroup(bpy.types.PropertyGroup):
     bl_display: bpy.props.BoolProperty(default=False)
     bl_update: bpy.props.BoolProperty(options=set(), default=True)
+    bl_handle: bpy.props.StringProperty(options=set())
     bone: bpy.props.StringProperty(options=set(), update=bone_update_event)
     shape: bpy.props.EnumProperty(options=set(), items=bl_enum.volume_shape)
     size: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0, default=(1, 1, 1))
@@ -69,6 +97,7 @@ class M3VolumePropertyGroup(bpy.types.PropertyGroup):
 class M3BoneUserPropertyGroup(bpy.types.PropertyGroup):
     bl_display: bpy.props.BoolProperty(default=False)
     bl_update: bpy.props.BoolProperty(options=set(), default=True)
+    bl_handle: bpy.props.StringProperty(options=set())
     name: bpy.props.StringProperty(options=set())
     bone: bpy.props.StringProperty(options=set(), update=bone_update_event)
 
@@ -93,7 +122,7 @@ class M3CollectionOpAdd(M3CollectionOpBase):
         ob = context.object
         col = getattr(ob, self.collection)
 
-        col.add()
+        m3_item_new(col)
         setattr(ob, self.collection + '_index', len(col) - 1)
 
         return {'FINISHED'}
@@ -138,6 +167,35 @@ class M3CollectionOpMove(M3CollectionOpBase):
         return {'FINISHED'}
 
 
+class M3CollectionOpDuplicate(M3CollectionOpBase):
+    bl_idname = 'm3.collection_duplicate'
+    bl_label = 'Duplicate Collection Item'
+    bl_description = 'Duplicates the active item in the list'
+
+    def invoke(self, context, event):
+        ob = context.object
+        col = getattr(ob, self.collection)
+        ii = getattr(ob, self.collection + '_index')
+
+        if ii < 0:
+            return {'FINISHED'}
+
+        item = col[ii]
+        new_item = m3_item_new(col)
+        copy_props(new_item, item)
+        setattr(ob, self.collection + '_index', len(col) - 1)
+
+        return {'FINISHED'}
+
+
+class M3CollectionMenu(bpy.types.Menu):
+    bl_idname = 'OBJECT_MT_M3_COLLECTION'
+    bl_label = 'Select'
+
+    def draw(self, context):
+        pass
+
+
 class M3SubCollectionOpAdd(M3CollectionOpBase):
     bl_idname = 'm3.subcollection_add'
     bl_label = 'Add Collection Item'
@@ -147,7 +205,7 @@ class M3SubCollectionOpAdd(M3CollectionOpBase):
         ob = context.object
         prop = getattr(ob, self.collection)[getattr(ob, self.collection + '_index')]
         subcol = getattr(prop, self.subcollection)
-        subprop = subcol.add()
+        subprop = m3_item_new(col)
         subprop.bl_display = True
         subprop.name = prop.name + ' ' + self.subcollection + ' ' + str(len(subcol))
 
@@ -215,7 +273,7 @@ def draw_bone_prop(item, ob, layout, bone_prop='bone', prop_text='Bone'):
             row.label(text='')
 
 
-def draw_collection_list_active(ob, layout, collection, draw_func):
+def draw_collection_list_active(ob, layout, collection, draw_func, use_bone=True):
 
     count = len(getattr(ob, collection))
     rows = 5 if count > 1 else 3
@@ -227,9 +285,10 @@ def draw_collection_list_active(ob, layout, collection, draw_func):
     sub = col.column(align=True)
     op = sub.operator('m3.collection_add', icon='ADD', text='')
     op.collection = collection
-    sub2 = sub.column(align=True)
-    sub2.active = bool(len(getattr(ob, collection)))
-    op = sub2.operator('m3.collection_remove', icon='REMOVE', text='')
+    op = sub.operator('m3.collection_remove', icon='REMOVE', text='')
+    op.collection = collection
+    sub.separator()
+    op = sub.operator('m3.collection_duplicate', icon='DUPLICATE', text='')
     op.collection = collection
 
     if rows == 5:
@@ -250,7 +309,10 @@ def draw_collection_list_active(ob, layout, collection, draw_func):
     box.use_property_split = True
     col = box.column()
     col.prop(item, 'name', text='Identifier')
-    draw_bone_prop(item, ob, col)
+
+    if use_bone:
+        draw_bone_prop(item, ob, col)
+
     draw_func(item, box)
 
 
@@ -290,6 +352,21 @@ def draw_subcollection_list(ob, layout, collection_id, subcollection_id, subcoll
                 op.collection, op.subcollection, op.index, op.shift = (collection_id, subcollection_id, index, -1)
                 op = sub.operator('m3.subcollection_move', icon='TRIA_DOWN', text='')
                 op.collection, op.subcollection, op.index, op.shift = (collection_id, subcollection_id, index, 1)
+
+
+def copy_props(dst, src):
+    assert (type(dst) == type(src) and dst is not None)
+
+    for key in type(dst).__annotations__.keys():
+        prop = getattr(src, key)
+        if str(type(prop)) != '<class \'bpy_prop_collection_idprop\'>':
+            setattr(dst, key, prop)
+        else:
+            for item in prop:
+                new_item = m3_item_new()
+                copy_props(new_item, item)
+
+    return dst
 
 
 def collection_find_unused_name(collections=[], suggested_names=[], prefix=''):
@@ -346,8 +423,10 @@ classes = {
     M3CollectionOpAdd,
     M3CollectionOpRemove,
     M3CollectionOpMove,
+    M3CollectionOpDuplicate,
     M3SubCollectionOpAdd,
     M3SubCollectionOpRemove,
     M3SubCollectionOpMove,
     M3SubCollectionOpDisplayToggle,
+    M3CollectionMenu,
 }

@@ -32,56 +32,6 @@ def init_msgbus(ob, context):
         shared.bone2_update_event(joint, context)
 
 
-def bone1_update_callback(m3, bone):
-    m3.bl_update = False
-    m3.bone1 = bone.name
-    m3.bl_update = True
-
-
-def bone1_update_event(self, context):
-    if not self.bl_update:
-        return
-
-    data = context.object.data
-    bone = data.bones[self.bone1]
-    if bone:
-        bpy.msgbus.clear_by_owner(self.bone1)
-        bpy.msgbus.subscribe_rna(
-            key=bone.path_resolve('name', False),
-            owner=self.bone1,
-            args=(self, bone),
-            notify=bone1_update_callback,
-            options={'PERSISTENT'}
-        )
-    else:
-        bpy.msgbus.clear_by_owner(self.bone1)
-
-
-def bone2_update_callback(m3, bone):
-    m3.bl_update = False
-    m3.bone2 = bone.name
-    m3.bl_update = True
-
-
-def bone2_update_event(self, context):
-    if not self.bl_update:
-        return
-
-    data = context.object.data
-    bone = data.bones[self.bone2]
-    if bone:
-        bpy.msgbus.clear_by_owner(self.bone2)
-        bpy.msgbus.subscribe_rna(
-            key=bone.path_resolve('name', False),
-            owner=self.bone2,
-            args=(self, bone),
-            notify=bone2_update_callback,
-            options={'PERSISTENT'}
-        )
-    else:
-        bpy.msgbus.clear_by_owner(self.bone2)
-
-
 def draw_props(joint, layout):
     col = layout.column()
     shared.draw_bone_prop(joint, bpy.context.object.pose, col, 'bone1', 'Bone Joint Start')
@@ -123,8 +73,8 @@ def draw_props(joint, layout):
 
 class Properties(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(options=set())
-    bone1: bpy.props.StringProperty(options=set(), update=bone1_update_event)
-    bone2: bpy.props.StringProperty(options=set(), update=bone2_update_event)
+    bone1: bpy.props.StringProperty(options=set(), update=shared.bone1_update_event)
+    bone2: bpy.props.StringProperty(options=set(), update=shared.bone2_update_event)
     location1: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3)
     location2: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3)
     rotation1: bpy.props.FloatVectorProperty(options=set(), subtype='EULER', size=3)

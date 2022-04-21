@@ -29,6 +29,7 @@ from . import m3_forces
 from . import m3_hittests
 from . import m3_ik
 from . import m3_lights
+from . import m3_materiallayers
 from . import m3_particles
 from . import m3_physicsjoints
 from . import m3_ribbons
@@ -101,6 +102,7 @@ m3_collection_modules = (
     m3_hittests,
     m3_ik,
     m3_lights,
+    m3_materiallayers,
     m3_particles,
     m3_physicsjoints,
     m3_ribbons,
@@ -132,7 +134,8 @@ classes = (
 def init_msgbus(*args):
     for arm in [ob for ob in bpy.context.scene.objects if ob.type == 'ARMATURE']:
         for collection in m3_collection_modules:
-            collection.init_msgbus(arm, bpy.context)
+            if collection.init_msgbus:
+                collection.init_msgbus(arm, bpy.context)
 
 
 def register():

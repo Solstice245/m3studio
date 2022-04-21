@@ -166,3 +166,61 @@ ribbon_cull = [
     ('TIME', 'Lifespan', 'Ribbon elements are destroyed after having existed for the specified lifespan.'),
     ('LENGTH', 'Length Based', 'Ribbon elements are destroyed after reaching the specified maximum length'),
 ]
+
+material_layer_type = [
+    ('BITMAP', 'Bitmap', 'Renders using the image defined in the image path property'),
+    ('COLOR', 'Color', 'Renders using the color defined in the color value property'),
+]
+
+material_layer_channel = [
+    ('RGB', 'RGB', 'Use red, green and blue color channels'),
+    ('ARGB', 'ARGB', 'Use alpha, red, green, and blue color channels'),
+    ('A', 'Alpha Only', 'Use alpha channel only'),
+    ('R', 'Red Only', 'Use red color channel only'),
+    ('G', 'Green Only', 'Use green color channel only'),
+    ('B', 'Blue Only', 'Use blue color channel only')
+]
+
+uv_source = [
+    ('UV1', 'Default', 'First UV layer of mesh or generated whole image UVs for particles'),
+    ('UV2', 'UV Layer 2', 'Second UV layer which can be used for decals'),
+    ('REFCUBE', 'Ref Cubic Env', 'For Env. Layer: Reflective Cubic Environment'),
+    ('REFSPHERE', 'Ref Spherical Env', 'For Env. Layer: Reflective Spherical Environemnt'),
+    ('PLANARLZ', 'Planar Local Z', 'Planar Local Z'),
+    ('PLANARWZ', 'Planar World Z', 'Planar World Z'),
+    ('PARTICLE', 'Animated Particle UV', 'The flip book of the particle system is used to determine the UVs'),
+    ('CUBE', 'Cubic Environment', 'For Env. Layer: Cubic Environment'),
+    ('SPHERE', 'Spherical Environment', 'For Env. Layer: Spherical Environment'),
+    ('UV3', 'UV Layer 3', 'UV Layer 3'),
+    ('UV4', 'UV Layer 4', 'UV Layer 4'),
+    ('PLANARLX', 'Planar Local X', 'Planar Local X'),
+    ('PLANARLY', 'Planar Local Y', 'Planar Local Y'),
+    ('PLANARWX', 'Planar World X', 'Planar World X'),
+    ('PLANARWY', 'Planar World Y', 'Planar World Y'),
+    ('SCREEN', 'Screen space', 'Screen space'),
+    ('TRIPLANARW', 'Tri Planar World', 'Tri Planar World'),
+    ('TRIPLANARL', 'Tri Planar Local', 'Tri Planar Local'),
+    ('TRIPLANARLZ', 'Tri Planar Local Z', 'Tri Planar Local Z')
+]
+
+fresnel_type = [
+    ('DISABLED', 'Disabled', 'Fresnel is disabled'),
+    ('ENABLED', 'Enabled', 'Strength of layer is based on fresnel formula'),
+    ('INVERTED', 'Enabled; Inverted', 'Strenth of layer is based on inverted fresnel formula')
+]
+
+rtt_channel = [
+    ('NONE', 'None', 'None'),
+    ('0', 'Layer 0', 'Render To Texture Layer 0'),
+    ('1', 'Layer 1', 'Render To Texture Layer 1'),
+    ('2', 'Layer 2', 'Render To Texture Layer 2'),
+    ('3', 'Layer 3', 'Render To Texture Layer 3'),
+    ('4', 'Layer 4', 'Render To Texture Layer 4'),
+    ('5', 'Layer 5', 'Render To Texture Layer 5'),
+    ('6', 'Layer 6', 'Render To Texture Layer 6'),
+]
+
+video_mode = [
+    ('LOOP', 'Loop', 'Loop'),
+    ('HOLD', 'Hold', 'Hold')
+]

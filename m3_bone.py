@@ -38,7 +38,7 @@ class Panel(bpy.types.Panel):
     def draw(self, context):
         bone = context.armature.bones[context.bone.name]
         self.layout.use_property_split = True
-        self.layout.prop(bone, 'bind_scale', text='M3 Bone Bind Scale')
+        # self.layout.prop(bone, 'bind_scale', text='M3 Bone Bind Scale')
 
 
 classes = (
