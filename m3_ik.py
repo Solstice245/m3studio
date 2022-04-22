@@ -45,8 +45,7 @@ def draw_props(chain, layout):
     col.prop(chain, 'goal_threshold', text='Goal Position Threshold')
 
 
-class Properties(bpy.types.PropertyGroup):
-    name: bpy.props.StringProperty(options=set())
+class Properties(shared.M3PropertyGroup):
     bone1: bpy.props.StringProperty(options=set(), update=shared.bone1_update_event)
     bone2: bpy.props.StringProperty(options=set(), update=shared.bone2_update_event)
     max_search_up: bpy.props.FloatProperty(options=set())

@@ -95,10 +95,7 @@ class PartProperties(shared.M3BoneUserPropertyGroup):
     unknown148: bpy.props.FloatProperty(options=set())
 
 
-class Properties(bpy.types.PropertyGroup):
-    bl_display: bpy.props.BoolProperty(default=False)
-    bl_update: bpy.props.BoolProperty(options=set(), default=True)
-    name: bpy.props.StringProperty(options=set())
+class Properties(shared.M3PropertyGroup):
     parts: bpy.props.CollectionProperty(type=PartProperties)
 
 

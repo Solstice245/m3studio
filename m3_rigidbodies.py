@@ -82,8 +82,7 @@ def draw_props(rigidbody, layout):
     col.prop(rigidbody, 'walkable', text='Walkable')
 
 
-class ShapeProperties(bpy.types.PropertyGroup):
-    bl_display: bpy.props.BoolProperty(default=False)
+class ShapeProperties(shared.M3PropertyGroup):
     shape: bpy.props.EnumProperty(options=set(), items=bl_enum.physics_shape)
     mesh: bpy.props.StringProperty(options=set())
     size: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0)

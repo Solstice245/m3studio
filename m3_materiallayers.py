@@ -97,8 +97,7 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
         shared.draw_collection_list_active(context.object, self.layout, 'm3_materiallayers', draw_props, False)
 
 
-class Properties(bpy.types.PropertyGroup):
-    name: bpy.props.StringProperty(default='Material Layer')
+class Properties(shared.M3PropertyGroup):
     unknownbd3f7b5d: bpy.props.IntProperty(name='unknownbd3f7b5d', default=-1, options=set())
     color_type: bpy.props.EnumProperty(items=bl_enum.material_layer_type, options=set())
     color_bitmap: bpy.props.StringProperty(default='', options=set())

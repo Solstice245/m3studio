@@ -71,8 +71,7 @@ def draw_props(joint, layout):
         sub.prop(joint, 'friction', text='Amount')
 
 
-class Properties(bpy.types.PropertyGroup):
-    name: bpy.props.StringProperty(options=set())
+class Properties(shared.M3PropertyGroup):
     bone1: bpy.props.StringProperty(options=set(), update=shared.bone1_update_event)
     bone2: bpy.props.StringProperty(options=set(), update=shared.bone2_update_event)
     location1: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3)

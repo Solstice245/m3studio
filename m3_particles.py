@@ -26,36 +26,25 @@ def register_props():
     bpy.types.Object.m3_particles_index = bpy.props.IntProperty(options=set(), default=-1)
 
 
-def trail_update_callback(particle, otherparticle):
-    particle.bl_update = False
-    particle.trail_particle_name = otherparticle.name
-    particle.bl_update = True
-
-
-def trail_update_event(self, context):
-    if not self.bl_update:
-        return
-
-    otherparticle = context.object.m3_particles[self.trail_particle_name]
-    if otherparticle:
-        bpy.msgbus.clear_by_owner(self.trail_particle_name)
-        bpy.msgbus.subscribe_rna(
-            key=otherparticle.path_resolve('name', False),
-            owner=self.trail_particle_name,
-            args=(self, otherparticle),
-            notify=trail_update_callback,
-            options={'PERSISTENT'}
-        )
-    else:
-        bpy.msgbus.clear_by_owner(self.trail_particle_name)
-
-
 def init_msgbus(arm, context):
     for particle in arm.m3_particles:
         shared.bone_update_event(particle, context)
         trail_update_event(particle, context)
         for copy in particle.copies:
             shared.bone_update_event(copy, context)
+
+
+def trail_update_event(self, context):
+    if not self.bl_update:
+        return
+
+    bpy.msgbus.clear_by_owner(self.bl_handle + 'trail_particle_name')
+    m3_particle = None
+    for item in context.object.m3_particles:
+        if item.name == self.trail_particle_name:
+            m3_particle = item
+            break
+    shared.m3_msgbus_sub(self, context, 'trail_particle_name', m3_particle, 'name')
 
 
 def draw_copy_props(copy, layout):
