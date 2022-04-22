@@ -165,7 +165,7 @@ class M3Import:
                 mesh.uv_layers.new(name=coord)
                 coords.append(coord)
 
-        # Currently using seperate layers for color and alpha even though
+        # Currently using separate layers for color and alpha even though
         # vertex color layers have an alpha channel because as of 3.0, Blender's
         # support for displaying actual vertex alphas is very poor.
 
