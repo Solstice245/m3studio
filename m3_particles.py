@@ -70,7 +70,7 @@ def draw_props(particle, layout):
     col.prop(particle, 'emit_rate', text='Rate')
     col.prop(particle, 'emit_amount', text='Amount')
     col.separator()
-    shared.draw_subcollection_list(particle, layout, 'm3_particles', 'copies', 'Particle Copy', draw_copy_props)
+    shared.draw_collection_stack(layout, 'm3_particles[{}].copies'.format(particle.bl_index), 'Particle Copy', draw_copy_props)
     col.separator()
     col = layout.column(align=True)
     col.prop(particle, 'emit_type', text='Emission Type')
@@ -369,7 +369,7 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Particles'
 
     def draw(self, context):
-        shared.draw_collection_list_active(context.object, self.layout, 'm3_particles', draw_props)
+        shared.draw_collection_list(self.layout, 'm3_particles', draw_props)
 
 
 classes = (

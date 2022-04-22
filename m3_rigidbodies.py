@@ -56,7 +56,7 @@ def draw_shape_props(shape, layout):
 
 def draw_props(rigidbody, layout):
 
-    shared.draw_subcollection_list(rigidbody, layout, 'm3_rigidbodies', 'shapes', 'Shape', draw_shape_props)
+    shared.draw_collection_stack(layout, 'm3_rigidbodies[{}].shapes'.format(rigidbody.bl_index), 'Shape', draw_shape_props)
 
     col = layout.column()
     col.prop(rigidbody, 'material', text='Physics Material')
@@ -118,7 +118,7 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Rigid Bodies'
 
     def draw(self, context):
-        shared.draw_collection_list_active(context.object, self.layout, 'm3_rigidbodies', draw_props)
+        shared.draw_collection_list(self.layout, 'm3_rigidbodies', draw_props)
 
 
 classes = (

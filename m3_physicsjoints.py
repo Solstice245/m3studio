@@ -34,14 +34,14 @@ def init_msgbus(ob, context):
 
 def draw_props(joint, layout):
     col = layout.column()
-    shared.draw_bone_prop(joint, bpy.context.object.pose, col, 'bone1', 'Bone Joint Start')
+    shared.draw_bone_prop(joint, bpy.context.object, col, 'bone1', 'Bone Joint Start')
 
     if joint.bone1:
         col.prop(joint, 'location1', text='Location')
         col.prop(joint, 'rotation1', text='Rotation')
 
     col = layout.column()
-    shared.draw_bone_prop(joint, bpy.context.object.pose, col, 'bone2', 'Bone Joint End')
+    shared.draw_bone_prop(joint, bpy.context.object, col, 'bone2', 'Bone Joint End')
 
     if joint.bone2:
         col.prop(joint, 'location2', text='Location')
@@ -94,7 +94,7 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Physics Joints'
 
     def draw(self, context):
-        shared.draw_collection_list_active(context.object, self.layout, 'm3_physicsjoints', draw_props)
+        shared.draw_collection_list(self.layout, 'm3_physicsjoints', draw_props)
 
 
 classes = (

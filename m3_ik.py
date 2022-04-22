@@ -34,8 +34,8 @@ def init_msgbus(ob, context):
 def draw_props(chain, layout):
     col = layout.column(align=True)
 
-    shared.draw_bone_prop(chain, bpy.context.object.pose, col, 'bone1', 'Bone Chain Start')
-    shared.draw_bone_prop(chain, bpy.context.object.pose, col, 'bone2', 'Bone Chain End')
+    shared.draw_bone_prop(chain, bpy.context.object, col, 'bone1', 'Bone Chain Start')
+    shared.draw_bone_prop(chain, bpy.context.object, col, 'bone2', 'Bone Chain End')
 
     col = layout.column(align=True)
     col.prop(chain, 'max_search_up', text='Max Search Up')
@@ -59,7 +59,7 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Inverse Kinematics'
 
     def draw(self, context):
-        shared.draw_collection_list_active(context.object, self.layout, 'm3_ikchains', draw_props)
+        shared.draw_collection_list(self.layout, 'm3_ikchains', draw_props)
 
 
 classes = (

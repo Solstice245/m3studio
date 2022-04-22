@@ -89,14 +89,6 @@ def draw_props(layer, layout):
         layout.prop(layer, 'video_restart', text='Restart')
 
 
-class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
-    bl_idname = 'OBJECT_PT_M3_MATERIALLAYERS'
-    bl_label = 'M3 Material Layers'
-
-    def draw(self, context):
-        shared.draw_collection_list_active(context.object, self.layout, 'm3_materiallayers', draw_props, False)
-
-
 class Properties(shared.M3PropertyGroup):
     unknownbd3f7b5d: bpy.props.IntProperty(name='unknownbd3f7b5d', default=-1, options=set())
     color_type: bpy.props.EnumProperty(items=bl_enum.material_layer_type, options=set())
@@ -137,6 +129,14 @@ class Properties(shared.M3PropertyGroup):
     video_restart: bpy.props.BoolProperty(name='Video Restart', options={'ANIMATABLE'}, default=True)
     noise_frequency: bpy.props.FloatProperty(options=set(), default=0.8)
     noise_amplitude: bpy.props.FloatProperty(options=set(), default=0.5)
+
+
+class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_M3_MATERIALLAYERS'
+    bl_label = 'M3 Material Layers'
+
+    def draw(self, context):
+        shared.draw_collection_list(self.layout, 'm3_materiallayers', draw_props)
 
 
 classes = (

@@ -59,7 +59,7 @@ def draw_part_props(part, layout):
     sub.prop(part, 'pitch_min', text='Pitch Minimum')
     sub.prop(part, 'pitch_min', text='Pitch Maximum')
     col = layout.column(align=True)
-    col.seperator()
+    col.separator()
     col.prop(part, 'unknown132')
     col.prop(part, 'unknown136')
     col.prop(part, 'unknown140')
@@ -68,7 +68,7 @@ def draw_part_props(part, layout):
 
 
 def draw_props(turret, layout):
-    shared.draw_subcollection_list(turret, layout, 'm3_turrets', 'parts', 'Turret Part', draw_part_props)
+    shared.draw_collection_stack(layout, 'm3_turrets[{}].parts'.format(turret.bl_index), 'Turret Part', draw_part_props)
 
 
 class PartProperties(shared.M3BoneUserPropertyGroup):
@@ -104,7 +104,7 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Turrets'
 
     def draw(self, context):
-        shared.draw_collection_list_active(context.object, self.layout, 'm3_turrets', draw_props)
+        shared.draw_collection_list(self.layout, 'm3_turrets', draw_props)
 
 
 classes = (

@@ -60,7 +60,7 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Cameras'
 
     def draw(self, context):
-        shared.draw_collection_list_active(context.object, self.layout, 'm3_cameras', draw_props)
+        shared.draw_collection_list(self.layout, 'm3_cameras', draw_props)
 
 
 classes = (

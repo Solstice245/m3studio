@@ -21,7 +21,9 @@ import random
 from . import bl_enum
 
 
-def bl_gettr(obj, name, default=None):
+def m3_ob_getter(name, obj=None):
+    if obj is None:
+        obj = bpy.context.object
     for attr in name.split('.'):
         index = None
         lbs = attr.split('[', 1)
@@ -33,24 +35,44 @@ def bl_gettr(obj, name, default=None):
         else:
             obj = getattr(obj, attr, None)
         if obj is None:
-            return default
+            return None
     return obj
 
 
-def bl_settr(obj, name, value):
+def m3_ob_setter(name, value, obj='default'):
     rsp = name.rsplit('.', 1)
+    if obj == 'default':
+        obj = bpy.context.object
     if len(rsp) > 1:
-        obj = bl_gettr(obj, rsp[1])
+        obj = m3_ob_getter(rsp[1], obj=obj)
     if obj is not None:
         setattr(obj, rsp[0], value)
 
 
-def m3_item_new(col):
-    item = col.add()
+def m3_item_new(collection):
+    item = collection.add()
     item.bl_display = True
     item.bl_handle = '%030x' % random.getrandbits(60)
-    item.bl_index = len(col) - 1
+    item.bl_index = len(collection) - 1
     return item
+
+
+def m3_item_duplicate(collection, src):
+    dst = m3_item_new(collection)
+
+    if (type(dst) != type(src)):
+        collection.remove(len(collection) - 1)
+        return None
+
+    for key in type(dst).__annotations__.keys():
+        prop = getattr(src, key)
+        if str(type(prop)) != '<class \'bpy_prop_collection_idprop\'>':
+            setattr(dst, key, prop)
+        else:
+            for item in prop:
+                m3_item_duplicate(getattr(dst, key), item)
+
+    return dst
 
 
 def m3_msgbus_callback(self, context, owner, sub, key):
@@ -146,11 +168,11 @@ class M3CollectionOpAdd(M3CollectionOpBase):
     bl_description = 'Adds a new item to the collection'
 
     def invoke(self, context, event):
-        collection = bl_gettr(context.object, self.collection)
+        collection = m3_ob_getter(self.collection)
         item = m3_item_new(collection)
 
-        bl_settr(item, 'bl_display', self.set_display)
-        bl_settr(context.object, self.collection + '_index', item.bl_index)
+        m3_ob_setter('bl_display', self.set_display, obj=item)
+        m3_ob_setter(self.collection + '_index', item.bl_index)
 
         return {'FINISHED'}
 
@@ -161,7 +183,7 @@ class M3CollectionOpRemove(M3CollectionOpBase):
     bl_description = 'Removes the active item from the collection'
 
     def invoke(self, context, event):
-        collection = bl_gettr(context.object, self.collection)
+        collection = m3_ob_getter(self.collection)
         collection.remove(self.index)
 
         remove_m3_action_keyframes(context.object, self.collection, self.index)
@@ -172,7 +194,7 @@ class M3CollectionOpRemove(M3CollectionOpBase):
         new_index = self.index
         new_index -= 1 if (self.index == 0 and len(collection) > 0) or self.index == len(collection) else 0
 
-        bl_settr(context.object, self.collection + '_index', new_index)
+        m3_ob_setter(self.collection + '_index', new_index)
 
         return {'FINISHED'}
 
@@ -183,14 +205,14 @@ class M3CollectionOpMove(M3CollectionOpBase):
     bl_description = 'Moves the active item up/down in the list'
 
     def invoke(self, context, event):
-        collection = bl_gettr(context.object, self.collection)
+        collection = m3_ob_getter(self.collection)
 
         if (self.index < len(collection) - self.shift and self.index >= -self.shift):
             collection[self.index].bl_index += self.shift
             collection[self.index + self.shift].bl_index -= self.shift
             collection.move(self.index, self.index + self.shift)
             swap_m3_action_keyframes(context.object, self.collection, self.index, self.shift)
-            bl_settr(context.object, self.collection + '_index', self.index + self.shift)
+            m3_ob_setter(self.collection + '_index', self.index + self.shift)
 
         return {'FINISHED'}
 
@@ -201,15 +223,15 @@ class M3CollectionOpDuplicate(M3CollectionOpBase):
     bl_description = 'Duplicates the active item in the collection'
 
     def invoke(self, context, event):
-        collection = bl_gettr(context.object, self.collection)
+        collection = m3_ob_getter(self.collection)
 
-        if self.index:
+        if self.index == -1:
             return {'FINISHED'}
 
         item = collection[self.index]
-        new_item = m3_item_new(collection)
-        copy_props(new_item, item)
-        setattr(context.object, self.collection + '_index', len(collection) - 1)
+        m3_item_duplicate(collection, item)
+
+        m3_ob_setter(self.collection + '_index', len(collection) - 1)
 
         return {'FINISHED'}
 
@@ -220,14 +242,14 @@ class M3CollectionOpDisplayToggle(M3CollectionOpBase):
     bl_description = 'Shows/hides the properties of the item in the list'
 
     def invoke(self, context, event):
-        collection = bl_gettr(context.object, self.collection)
+        collection = m3_ob_getter(self.collection)
         collection[self.index].bl_display = not collection[self.index].bl_display
 
         return {'FINISHED'}
 
 
 def draw_bone_prop(item, ob, layout, bone_prop='bone', prop_text='Bone'):
-    if getattr(item, bone_prop, None) is not None:
+    if hasattr(item, bone_prop):
         layout.prop_search(item, bone_prop, ob.data, 'bones', text=prop_text)
 
         if not ob.data.bones.get(getattr(item, bone_prop)):
@@ -237,100 +259,86 @@ def draw_bone_prop(item, ob, layout, bone_prop='bone', prop_text='Bone'):
             row.label(text='')
 
 
-def draw_collection_list_active(ob, layout, collection, draw_func, use_bone=True):
+def draw_collection_list(layout, collection_path, draw_func):
+    collection = m3_ob_getter(collection_path)
+    index = m3_ob_getter(collection_path + '_index')
+    rows = 5 if len(collection) else 3
 
-    count = len(getattr(ob, collection))
-    index = getattr(ob, collection + '_index')
-    rows = 5 if count else 3
+    rsp = collection_path.rsplit('.', 1)
+    if len(rsp) == 1:
+        list_str = collection_path
+        list_obj = bpy.context.object
+    else:
+        list_str = rsp[1]
+        list_obj = m3_ob_getter(rsp[0])
 
     row = layout.row()
     col = row.column()
-    col.template_list('UI_UL_list', collection, ob, collection, ob, collection + '_index', rows=rows)
+    col.template_list('UI_UL_list', list_str, list_obj, list_str, list_obj, list_str + '_index', rows=rows)  # TODO
     col = row.column()
     sub = col.column(align=True)
     op = sub.operator('m3.collection_add', icon='ADD', text='')
-    op.collection, op.index = (collection, index)
+    op.collection, op.index = (collection_path, index)
     op = sub.operator('m3.collection_remove', icon='REMOVE', text='')
-    op.collection, op.index = (collection, index)
+    op.collection, op.index = (collection_path, index)
     sub.separator()
     op = sub.operator('m3.collection_duplicate', icon='DUPLICATE', text='')
-    op.collection, op.index = (collection, index)
+    op.collection, op.index = (collection_path, index)
 
-    if count:
+    if len(collection):
         sub.separator()
         op = sub.operator('m3.collection_move', icon='TRIA_UP', text='')
-        op.collection, op.index, op.shift = (collection, index, -1)
+        op.collection, op.index, op.shift = (collection_path, index, -1)
         op = sub.operator('m3.collection_move', icon='TRIA_DOWN', text='')
-        op.collection, op.index, op.shift = (collection, index, 1)
+        op.collection, op.index, op.shift = (collection_path, index, 1)
 
     if index < 0:
-        return (None, None)
+        return
 
-    item = getattr(ob, collection)[index]
+    item = collection[index]
 
     box = layout.box()
     box.use_property_split = True
     col = box.column()
     col.prop(item, 'name', text='Identifier')
 
-    if use_bone:
-        draw_bone_prop(item, ob, col)
-
+    draw_bone_prop(item, bpy.context.object, col)
     draw_func(item, box)
 
 
-def draw_subcollection_list(ob, layout, collection_id, subcollection_id, subcollection_name, draw_func):
-    subcollection = bl_gettr(ob, subcollection_id)
-    collection_str = collection_id + '[{}].'.format(ob.bl_index) + subcollection_id
+def draw_collection_stack(layout, collection_path, label, draw_func):
+    collection = m3_ob_getter(collection_path)
 
     box = layout.box()
-    op = box.operator('m3.collection_add', text='Add ' + subcollection_name)
-    op.collection = collection_str
+    op = box.operator('m3.collection_add', text='Add ' + label)
+    op.collection = collection_path
 
-    items = []
-
-    if len(subcollection):
-        for index, item in enumerate(subcollection):
-            items.append(item)
+    if len(collection):
+        for index, item in enumerate(collection):
 
             row = box.row(align=True)
             col = row.column(align=True)
 
             if not item.bl_display:
-                op = col.operator('m3.collection_displaytoggle', icon='TRIA_RIGHT', text='Toggle ' + subcollection_name + ' Display')
-                op.collection, op.index = (collection_str, index)
+                op = col.operator('m3.collection_displaytoggle', icon='TRIA_RIGHT', text='Toggle ' + label + ' Display')
+                op.collection, op.index = (collection_path, index)
             else:
                 op = col.operator('m3.collection_displaytoggle', icon='TRIA_DOWN', text='')
-                op.collection, op.index = (collection_str, index)
+                op.collection, op.index = (collection_path, index)
                 col = row.column()
                 draw_bone_prop(item, bpy.context.object, col)
                 draw_func(item, col)
 
             col = row.column(align=True)
             op = col.operator('m3.collection_remove', icon='X', text='')
-            op.collection, op.index = (collection_str, index)
+            op.collection, op.index = (collection_path, index)
 
-            if item.bl_display and len(subcollection) > 1:
+            if item.bl_display:
                 sub = col.column(align=True)
                 op = sub.operator('m3.collection_move', icon='TRIA_UP', text='')
-                op.collection, op.index, op.shift = (collection_str, index, -1)
+                op.collection, op.index, op.shift = (collection_path, index, -1)
                 op = sub.operator('m3.collection_move', icon='TRIA_DOWN', text='')
-                op.collection, op.index, op.shift = (collection_str, index, 1)
-
-
-def copy_props(dst, src):
-    assert (type(dst) == type(src) and dst is not None)
-
-    for key in type(dst).__annotations__.keys():
-        prop = getattr(src, key)
-        if str(type(prop)) != '<class \'bpy_prop_collection_idprop\'>':
-            setattr(dst, key, prop)
-        else:
-            for item in prop:
-                new_item = m3_item_new(getattr(dst, key))
-                copy_props(new_item, item)
-
-    return dst
+                op.collection, op.index, op.shift = (collection_path, index, 1)
 
 
 def collection_find_unused_name(collections=[], suggested_names=[], prefix=''):
@@ -340,7 +348,7 @@ def collection_find_unused_name(collections=[], suggested_names=[], prefix=''):
         for name in [name for name in suggested_names if name not in used_names]:
             return name
 
-        name = prefix + '0' + str(num) if num < 10 else str(num)
+        name = prefix + ' 0' + str(num) if num < 10 else str(num)
 
         if name not in used_names:
             return name

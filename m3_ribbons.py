@@ -82,7 +82,7 @@ def draw_props(ribbon, layout):
     col.prop(ribbon, 'pitch', text='Pitch')
     col.separator()
 
-    shared.draw_subcollection_list(ribbon, layout, 'm3_ribbons', 'splines', 'Spline', draw_spline_props)
+    shared.draw_collection_stack(layout, 'm3_ribbons[{}].splines'.format(ribbon.bl_index), 'Spline', draw_spline_props)
 
     col = layout.column(align=True)
     col.prop(ribbon, 'gravity', text='Gravity')
@@ -258,7 +258,7 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Ribbons'
 
     def draw(self, context):
-        shared.draw_collection_list_active(context.object, self.layout, 'm3_ribbons', draw_props)
+        shared.draw_collection_list(self.layout, 'm3_ribbons', draw_props)
 
 
 classes = (
