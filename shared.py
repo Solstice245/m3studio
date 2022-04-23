@@ -49,6 +49,21 @@ def m3_ob_setter(name, value, obj='default'):
         setattr(obj, rsp[0], value)
 
 
+def m3_item_find_name(collections=[], suggested_names=[], prefix=''):
+    used_names = [item.name for item in collection for collection in collections]
+    num = 1
+    while True:
+        for name in [name for name in suggested_names if name not in used_names]:
+            return name
+
+        name = prefix + ' 0' + str(num) if num < 10 else str(num)
+
+        if name not in used_names:
+            return name
+
+        num += 1
+
+
 def m3_item_new(collection):
     item = collection.add()
     item.bl_display = True
@@ -158,7 +173,6 @@ class M3CollectionOpBase(bpy.types.Operator):
     collection: bpy.props.StringProperty(default='m3_generics')
     index: bpy.props.IntProperty()
     shift: bpy.props.IntProperty()
-    set_display: bpy.props.BoolProperty(default=True)
     set_name: bpy.props.BoolProperty(default=False)
 
 
@@ -171,7 +185,6 @@ class M3CollectionOpAdd(M3CollectionOpBase):
         collection = m3_ob_getter(self.collection)
         item = m3_item_new(collection)
 
-        m3_ob_setter('bl_display', self.set_display, obj=item)
         m3_ob_setter(self.collection + '_index', item.bl_index)
 
         return {'FINISHED'}
@@ -228,8 +241,7 @@ class M3CollectionOpDuplicate(M3CollectionOpBase):
         if self.index == -1:
             return {'FINISHED'}
 
-        item = collection[self.index]
-        m3_item_duplicate(collection, item)
+        m3_item_duplicate(collection, collection[self.index])
 
         m3_ob_setter(self.collection + '_index', len(collection) - 1)
 
@@ -259,7 +271,7 @@ def draw_bone_prop(item, ob, layout, bone_prop='bone', prop_text='Bone'):
             row.label(text='')
 
 
-def draw_collection_list(layout, collection_path, draw_func):
+def draw_collection_list(layout, collection_path, draw_func, can_duplicate=True):
     collection = m3_ob_getter(collection_path)
     index = m3_ob_getter(collection_path + '_index')
     rows = 5 if len(collection) else 3
@@ -281,9 +293,10 @@ def draw_collection_list(layout, collection_path, draw_func):
     op.collection, op.index = (collection_path, index)
     op = sub.operator('m3.collection_remove', icon='REMOVE', text='')
     op.collection, op.index = (collection_path, index)
-    sub.separator()
-    op = sub.operator('m3.collection_duplicate', icon='DUPLICATE', text='')
-    op.collection, op.index = (collection_path, index)
+    if can_duplicate:
+        sub.separator()
+        op = sub.operator('m3.collection_duplicate', icon='DUPLICATE', text='')
+        op.collection, op.index = (collection_path, index)
 
     if len(collection):
         sub.separator()
@@ -297,16 +310,15 @@ def draw_collection_list(layout, collection_path, draw_func):
 
     item = collection[index]
 
-    box = layout.box()
-    box.use_property_split = True
-    col = box.column()
+    col = layout.column()
+    col.use_property_split = True
     col.prop(item, 'name', text='Identifier')
 
     draw_bone_prop(item, bpy.context.object, col)
-    draw_func(item, box)
+    draw_func(item, col)
 
 
-def draw_collection_stack(layout, collection_path, label, draw_func):
+def draw_collection_stack(layout, collection_path, label, draw_func, use_name=False, can_duplicate=True):
     collection = m3_ob_getter(collection_path)
 
     box = layout.box()
@@ -326,6 +338,7 @@ def draw_collection_stack(layout, collection_path, label, draw_func):
                 op = col.operator('m3.collection_displaytoggle', icon='TRIA_DOWN', text='')
                 op.collection, op.index = (collection_path, index)
                 col = row.column()
+                col.prop(item, 'name', text='Name')
                 draw_bone_prop(item, bpy.context.object, col)
                 draw_func(item, col)
 
@@ -334,26 +347,15 @@ def draw_collection_stack(layout, collection_path, label, draw_func):
             op.collection, op.index = (collection_path, index)
 
             if item.bl_display:
-                sub = col.column(align=True)
-                op = sub.operator('m3.collection_move', icon='TRIA_UP', text='')
+                if can_duplicate:
+                    col.separator()
+                    op = col.operator('m3.collection_duplicate', icon='DUPLICATE', text='')
+                    op.collection, op.index = (collection_path, index)
+                col.separator()
+                op = col.operator('m3.collection_move', icon='TRIA_UP', text='')
                 op.collection, op.index, op.shift = (collection_path, index, -1)
-                op = sub.operator('m3.collection_move', icon='TRIA_DOWN', text='')
+                op = col.operator('m3.collection_move', icon='TRIA_DOWN', text='')
                 op.collection, op.index, op.shift = (collection_path, index, 1)
-
-
-def collection_find_unused_name(collections=[], suggested_names=[], prefix=''):
-    used_names = [item.name for item in collection for collection in collections]
-    num = 1
-    while True:
-        for name in [name for name in suggested_names if name not in used_names]:
-            return name
-
-        name = prefix + ' 0' + str(num) if num < 10 else str(num)
-
-        if name not in used_names:
-            return name
-
-        num += 1
 
 
 def remove_m3_action_keyframes(ob, prefix, index):

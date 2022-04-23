@@ -61,7 +61,7 @@ def draw_props(layer, layout):
     layout.separator()
     col = layout.column()
     col.prop(layer, 'noise_amplitude', text='Volume Noise Amplitide')
-    col.prop(layer, 'noise_amplitude', text='Frequency')
+    col.prop(layer, 'noise_frequency', text='Frequency')
     layout.separator()
     layout.prop(layer, 'fresnel_type', text='Fresel Mode')
     if layer.fresnel_type != 'DISABLED':
@@ -127,8 +127,8 @@ class Properties(shared.M3PropertyGroup):
     video_sync_timing: bpy.props.BoolProperty(options=set())
     video_play: bpy.props.BoolProperty(name='Video Play', options={'ANIMATABLE'}, default=True)
     video_restart: bpy.props.BoolProperty(name='Video Restart', options={'ANIMATABLE'}, default=True)
-    noise_frequency: bpy.props.FloatProperty(options=set(), default=0.8)
-    noise_amplitude: bpy.props.FloatProperty(options=set(), default=0.5)
+    noise_amplitude: bpy.props.FloatProperty(options=set(), default=0.8)
+    noise_frequency: bpy.props.FloatProperty(options=set(), default=0.5)
 
 
 class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):

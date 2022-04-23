@@ -20,11 +20,12 @@ import bpy
 
 
 def register_props():
-    bpy.types.Bone.bind_scale = bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', default=(1, 1, 1))
+    bpy.types.Bone.m3_bind_scale = bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', default=(1, 1, 1))
+    bpy.types.EditBone.m3_bind_scale = bpy.props.FloatVectorProperty(option=set(), subtype='XYZ', default=(1, 1, 1))
 
 
 class Panel(bpy.types.Panel):
-    bl_idname = 'OBJECT_PT_M3_BonePanel'
+    bl_idname = 'OBJECT_PT_M3_BONE'
     bl_label = 'M3 Properties'
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -32,13 +33,11 @@ class Panel(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        ob = context.object
-        return ob and ob.mode == 'POSE' and context.bone
+        return context.bone
 
     def draw(self, context):
-        bone = context.armature.bones[context.bone.name]
         self.layout.use_property_split = True
-        # self.layout.prop(bone, 'bind_scale', text='M3 Bone Bind Scale')
+        self.layout.prop(context.bone, 'm3_bind_scale', text='Bind Scale')
 
 
 classes = (

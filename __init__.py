@@ -22,6 +22,7 @@ from bpy.app.handlers import persistent
 from . import shared
 from . import m3_bone
 from . import m3_vertex_groups
+from . import m3_animations
 from . import m3_attachmentpoints
 from . import m3_billboards
 from . import m3_cameras
@@ -32,6 +33,7 @@ from . import m3_lights
 from . import m3_materiallayers
 from . import m3_particles
 from . import m3_physicsjoints
+from . import m3_projections
 from . import m3_ribbons
 from . import m3_rigidbodies
 from . import m3_turrets
@@ -95,6 +97,7 @@ def top_bar_export(self, context):
 
 
 m3_collection_modules = (
+    m3_animations,
     m3_attachmentpoints,
     m3_billboards,
     m3_cameras,
@@ -105,6 +108,7 @@ m3_collection_modules = (
     m3_materiallayers,
     m3_particles,
     m3_physicsjoints,
+    m3_projections,
     m3_ribbons,
     m3_rigidbodies,
     m3_turrets,
@@ -143,6 +147,7 @@ def register():
         bpy.utils.register_class(clss)
     for collection in m3_collection_modules:
         collection.register_props()
+    m3_bone.register_props()
     bpy.types.TOPBAR_MT_file_import.append(top_bar_import)
     bpy.types.TOPBAR_MT_file_export.append(top_bar_export)
     bpy.app.handlers.load_post.append(init_msgbus)

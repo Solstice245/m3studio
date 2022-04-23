@@ -182,6 +182,24 @@ particle_emit_type = [
     ('MESH', 'Mesh Normal', 'Emitted particles move along the normal of the face being used as the emitter'),
 ]
 
+projection_type = [
+    ('ORTHONORMAL', 'Orthonormal', 'Makes the projector behave like a box. It will be the same width no matter how close it is to the target surface'),
+    ('PERSPECTIVE', 'Perspective', 'Makes the projector behave like a camera. The closer the projector is to the surface, the smaller the effect will be'),
+]
+
+projection_layer = [
+    ('GENERIC1', 'Layer 1', 'Is a generic layer that occurs above creep, that is open for use as the user sees fit'),
+    ('GENERIC2', 'Layer 2', 'Is a generic layer that occurs above creep, that is open for use as the user sees fit'),
+    ('GENERIC2', 'Layer 3', 'Is a generic layer that occurs above creep, that is open for use as the user sees fit'),
+    ('GENERIC4', 'Layer 4', 'Is a generic layer that occurs above creep, that is open for use as the user sees fit'),
+    ('BUILDING', 'Building', 'Is most often used for the dark shadow that occurs under buildings'),
+    ('AOE', 'Area of Effect', 'Conventionally used for AoE cursors and some special spell effects'),
+    ('POWER', 'Power', 'Used for rarely active effects such as the Protoss power fields which should be above most other splats'),
+    ('UI', 'UI', 'Used for in-world effects that are part if te user interface such as selection circles'),
+    ('UNDERCREEP', 'Under Creep', 'Is a general use layer that occurs below creep. Is most often used for effects that appear above roads but below creep'),
+    ('HARDTILE', 'Hardtile', 'Is the most common layer for terrain decoration. Roads are also drawn on this layer'),
+]
+
 physics_materials = [
     ('BONE', 'Bone', ''),
     ('CLOTHHVY', 'Cloth Heavy', ''),
@@ -233,6 +251,16 @@ ribbon_type = [
 ribbon_cull = [
     ('TIME', 'Lifespan', 'Ribbon elements are destroyed after having existed for the specified lifespan.'),
     ('LENGTH', 'Length Based', 'Ribbon elements are destroyed after reaching the specified maximum length'),
+]
+
+ribbon_variation_shape = [
+    ('NONE', 'None', ''),
+    ('SIN', 'Sin', ''),
+    ('COS', 'Cos', ''),
+    ('SAW', 'Saw', ''),
+    ('SQUARE', 'Square', ''),
+    ('NOISE_RANDOM', 'Noise (Random)', ''),
+    ('NOISE_CONTINUOUS', 'Noise (Continuous)', ''),
 ]
 
 material_layer_type = [
