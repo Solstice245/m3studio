@@ -275,29 +275,22 @@ class M3AnimationSubgroupOpAssign(bpy.types.Operator):
         if ob.m3_animations_index < 0:
             return {'FINISHED'}
 
-        data_paths = set()
         fcurve_set = set()
 
         if ob.animation_data is not None:
             action = ob.animation_data.action
             if action is not None:
                 fcurve_set = set([fcurve for fcurve in action.fcurves if fcurve.select])
-                data_paths = set([fcurve.data_path for fcurve in action.fcurves if fcurve.select])
 
         animation = ob.m3_animations[ob.m3_animations_index]
 
         for subgroup in animation.subgroups:
-            print(subgroup.bl_index, self.index)
+
             for item in subgroup.data_paths:
                 bpy.msgbus.clear_by_owner(item.bl_handle + 'val')
 
             if subgroup.bl_index == self.index:
                 subgroup.data_paths.clear()
-                # for data_path in data_paths:
-                #     item = subgroup.data_paths.add()
-                #     item.val = data_path
-                #     m3_msgbus_sub(self, context, bone, 'name', prop)
-                #     print(item, item.val)
                 for fcurve in fcurve_set:
                     item = subgroup.data_paths.add()
                     item.bl_handle = shared.m3_handle_gen()
@@ -307,18 +300,12 @@ class M3AnimationSubgroupOpAssign(bpy.types.Operator):
                 sg_data_paths = set([data_path.val for data_path in subgroup.data_paths])
                 sg_fcurve_set = set([fcurve for fcurve in action.fcurves if fcurve.data_path in sg_data_paths])
                 sg_fcurve_set = sg_fcurve_set - fcurve_set
-                # sg_data_paths = sg_data_paths - data_paths
                 subgroup.data_paths.clear()
-                # for data_path in sg_data_paths:
-                #     item = subgroup.data_paths.add()
-                #     item.val = data_path
                 for fcurve in sg_fcurve_set:
                     item = subgroup.data_paths.add()
                     item.bl_handle = shared.m3_handle_gen()
                     item.val = fcurve.data_path
                     m3_msgbus_sub(item, context, fcurve, 'data_path', 'val')
-
-        print(data_paths)
 
         return {'FINISHED'}
 
