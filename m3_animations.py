@@ -25,9 +25,15 @@ def register_props():
     bpy.types.Object.m3_animations_index = bpy.props.IntProperty(options=set(), default=-1)
 
 
-def draw_transform_collection_props(transform_collection, layout):
-    layout.prop(transform_collection, 'concurrent', text='Concurrent')
-    layout.prop(transform_collection, 'priority', text='Priority')
+def draw_subgroup_props(subgroup, layout):
+    layout.prop(subgroup, 'concurrent', text='Concurrent')
+    layout.prop(subgroup, 'priority', text='Priority')
+    layout.separator()
+    row = layout.row()
+    op = row.operator('m3.animation_subgroup_select')
+    op.index = subgroup.bl_index
+    op = row.operator('m3.animation_subgroup_assign')
+    op.index = subgroup.bl_index
 
 
 def draw_props(anim, layout):
@@ -47,8 +53,8 @@ def draw_props(anim, layout):
     col.prop(anim, 'global_in_previewer', text='Global In Previewer')
 
     shared.draw_collection_stack(
-        layout=layout, collection_path='m3_animations[{}].transform_collection'.format(anim.bl_index), label='Animation Group',
-        draw_func=draw_transform_collection_props, use_name=True, can_duplicate=False,
+        layout=layout, collection_path='m3_animations[{}].subgroups'.format(anim.bl_index), label='Animation Subgroup',
+        draw_func=draw_subgroup_props, use_name=True, can_duplicate=False,
     )
 
 
@@ -56,7 +62,7 @@ class DataPathProperties(bpy.types.PropertyGroup):
     val: bpy.props.StringProperty(options=set())
 
 
-class TransformCollectionProperties(shared.M3PropertyGroup):
+class SubgroupProperties(shared.M3PropertyGroup):
     priority: bpy.props.IntProperty(options=set(), min=0)
     concurrent: bpy.props.BoolProperty(options=set())
     data_paths: bpy.props.CollectionProperty(type=DataPathProperties)
@@ -72,7 +78,7 @@ class Properties(shared.M3PropertyGroup):
     not_looping: bpy.props.BoolProperty(options=set())
     always_global: bpy.props.BoolProperty(options=set())
     global_in_previewer: bpy.props.BoolProperty(options=set())
-    transform_collection: bpy.props.CollectionProperty(type=TransformCollectionProperties)
+    subgroups: bpy.props.CollectionProperty(type=SubgroupProperties)
 
 
 class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
@@ -83,9 +89,81 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
         shared.draw_collection_list(self.layout, 'm3_animations', draw_props)
 
 
+class M3AnimationSubgroupOpSelect(bpy.types.Operator):
+    bl_idname = 'm3.animation_subgroup_select'
+    bl_label = 'Select FCurves'
+    bl_description = 'Selects all f-curves whose data paths are stored in the subgroup data'
+
+    index: bpy.props.IntProperty()
+
+    def invoke(self, context, event):
+        ob = context.object
+        if ob.m3_animations_index < 0:
+            return {'FINISHED'}
+
+        animation = ob.m3_animations[ob.m3_animations_index]
+        subgroup = animation.subgroups[self.index]
+        data_paths = [data_path.val for data_path in subgroup.data_paths]
+
+        print('select', data_paths)
+
+        if ob.animation_data is not None:
+            action = ob.animation_data.action
+            if action is not None:
+                for fcurve in action.fcurves:
+                    print(fcurve.data_path)
+                    fcurve.select = True if fcurve.data_path in data_paths else False
+
+        return {'FINISHED'}
+
+
+class M3AnimationSubgroupOpAssign(bpy.types.Operator):
+    bl_idname = 'm3.animation_subgroup_assign'
+    bl_label = 'Assign FCurves'
+    bl_description = 'Sets all selected f-curves data paths as members of the active subgroup'
+
+    index: bpy.props.IntProperty()
+
+    def invoke(self, context, event):
+        ob = context.object
+        if ob.m3_animations_index < 0:
+            return {'FINISHED'}
+
+        data_paths = set()
+
+        if ob.animation_data is not None:
+            action = ob.animation_data.action
+            if action is not None:
+                data_paths = set([fcurve.data_path for fcurve in action.fcurves if fcurve.select])
+
+        animation = ob.m3_animations[ob.m3_animations_index]
+
+        for subgroup in animation.subgroups:
+            print(subgroup.bl_index, self.index)
+            if subgroup.bl_index == self.index:
+                subgroup.data_paths.clear()
+                for data_path in data_paths:
+                    item = subgroup.data_paths.add()
+                    item.val = data_path
+                    print(item, item.val)
+            else:
+                sg_data_paths = set([data_path.val for data_path in subgroup.data_paths])
+                sg_data_paths = sg_data_paths - data_paths
+                subgroup.data_paths.clear()
+                for data_path in sg_data_paths:
+                    item = subgroup.data_paths.add()
+                    item.val = data_path
+
+        print(data_paths)
+
+        return {'FINISHED'}
+
+
 classes = (
     DataPathProperties,
-    TransformCollectionProperties,
+    SubgroupProperties,
     Properties,
     Panel,
+    M3AnimationSubgroupOpSelect,
+    M3AnimationSubgroupOpAssign,
 )

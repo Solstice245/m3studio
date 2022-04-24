@@ -361,7 +361,8 @@ def draw_collection_stack(layout, collection_path, label, draw_func, use_name=Fa
             col = row.column(align=True)
 
             if not item.bl_display:
-                op = col.operator('m3.collection_displaytoggle', icon='TRIA_RIGHT', text='Toggle ' + label + ' Display')
+                toggle_label = '"{}"'.format(item.name) if use_name else label
+                op = col.operator('m3.collection_displaytoggle', icon='TRIA_RIGHT', text='Toggle ' + toggle_label + ' Display')
                 op.collection, op.index = (collection_path, index)
             else:
                 op = col.operator('m3.collection_displaytoggle', icon='TRIA_DOWN', text='')

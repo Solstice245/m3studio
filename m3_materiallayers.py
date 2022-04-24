@@ -103,7 +103,7 @@ class Properties(shared.M3PropertyGroup):
     uv_source: bpy.props.EnumProperty(items=bl_enum.uv_source, options=set())
     uv_wrap: bpy.props.BoolVectorProperty(options=set(), size=2, default=(True, True))
     uv_offset: bpy.props.FloatVectorProperty(name='UV Offset', default=(0.0, 0.0), size=2, subtype='XYZ', options={'ANIMATABLE'})
-    uv_angle: bpy.props.FloatVectorProperty(name='UV Offset', default=(0.0, 0.0, 0.0), size=3, subtype='XYZ', options={'ANIMATABLE'})
+    uv_angle: bpy.props.FloatVectorProperty(name='UV Angle', default=(0.0, 0.0, 0.0), size=3, subtype='XYZ', options={'ANIMATABLE'})
     uv_tiling: bpy.props.FloatVectorProperty(name='UV Tiling', default=(1.0, 1.0), size=2, subtype='XYZ', options={'ANIMATABLE'})
     uv_flipbook_rows: bpy.props.IntProperty(name='Flipbook Rows', default=0, options=set())
     uv_flipbook_columns: bpy.props.IntProperty(name='Flipbook Columns', default=0, options=set())
