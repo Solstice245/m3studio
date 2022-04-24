@@ -1,13 +1,8 @@
-<!-- This file will be phased out, but will remain here for reference -->
-
 <!--
-    This file describes the m3 model format and gets used by
-    the script generateM3Library.py to generate the the file m3.py
+    This file describes the m3 model format. The m3 file format originally comes from
+    Blizzard. For example, it is used in Starcraft 2 to describe models.
 
-    The generated m3.py file gets used by the blender addon to
-    read and write the m3 file format. The m3 file format comes originally from
-    Blizzard. It gets used in for example Starcraft 2 to describe models.
-
+    Original source of file - https://github.com/SC2Mapster/m3addon
 
     Credits for gathering information about the m3 file format go to:
     * Florian Köberle - who created the first version of this file by using existing descriptions of the m3 file format
@@ -16,7 +11,7 @@
     * Witchsong (http://code.google.com/p/libm3/) - who made a M3 library and helped NiNtoxicated on sequence data
     * Teal (starcraft.incgamers.com) - who made an PHP M3 parser
     * Blue Isle Studios (http://blueislestudios.com/) - who helped NiNtoxicated
-    * Volcore (http://volcore.limbicsoft.com/)  - who helped NiNtoxicated figure out vertex flags
+    * Volcore (http://volcore.limbicsoft.com/) - who helped NiNtoxicated figure out vertex flags
     * Sixen (http://www.sc2mapster.com/) - who provided NiNtoxicated with a good central resource for SC2 tools
     * der_Ton (http://www.doom3world.org/) - who worked on the MD5 format which is similar to M3
     * MrMoonKr - who provided NiNtoxicated a toUpper function to fix 3ds max incompatibility issues
@@ -29,7 +24,7 @@
     * TangorCraft - who created the M3 Editor (https://github.com/tangorcraft/m3editor/) - which was very useful for decoding m3 structures
     * Solstice245 (sc2solstice245@gmail.com) - who helped improving the structure.xml file
 
-    Please give credit to this people if you use the xml or the (generated) code in your own scripts.
+    Please give credit to these people if you use the xml or the (generated) code in your own scripts.
 
 -->
 <structures>
