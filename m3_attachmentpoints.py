@@ -22,7 +22,7 @@ from . import shared
 
 def register_props():
     bpy.types.Object.m3_attachmentpoints = bpy.props.CollectionProperty(type=Properties)
-    bpy.types.Object.m3_attachmentpoints_index = bpy.props.IntProperty(options=set(), default=-1)
+    bpy.types.Object.m3_attachmentpoints_index = bpy.props.IntProperty(options=set(), default=-1, update=update_bone_shapes_option)
 
 
 def init_msgbus(ob, context):
@@ -30,6 +30,12 @@ def init_msgbus(ob, context):
         shared.bone_update_event(point, context)
         for volume in point.volumes:
             shared.bone_update_event(volume, context)
+
+
+def update_bone_shapes_option(self, context):
+    if context.object.m3_options.auto_update_bone_shapes:
+        if context.object.m3_options.bone_shapes != 'ATT_':
+            context.object.m3_options.bone_shapes = 'ATT_'
 
 
 def draw_volume_props(volume, layout):

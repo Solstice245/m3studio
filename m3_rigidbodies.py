@@ -23,7 +23,7 @@ from . import bl_enum
 
 def register_props():
     bpy.types.Object.m3_rigidbodies = bpy.props.CollectionProperty(type=Properties)
-    bpy.types.Object.m3_rigidbodies_index = bpy.props.IntProperty(options=set(), default=-1)
+    bpy.types.Object.m3_rigidbodies_index = bpy.props.IntProperty(options=set(), default=-1, update=update_bone_shapes_option)
 
 
 def init_msgbus(ob, context):
@@ -32,6 +32,12 @@ def init_msgbus(ob, context):
         trail_update_event(rigidbody, context)
         for shape in rigidbody.shapes:
             shared.bone_update_event(shape, context)
+
+
+def update_bone_shapes_option(self, context):
+    if context.object.m3_options.auto_update_bone_shapes:
+        if context.object.m3_options.bone_shapes != 'PHRB':
+            context.object.m3_options.bone_shapes = 'PHRB'
 
 
 def draw_shape_props(shape, layout):
@@ -83,12 +89,12 @@ def draw_props(rigidbody, layout):
 
 
 class ShapeProperties(shared.M3PropertyGroup):
-    shape: bpy.props.EnumProperty(options=set(), items=bl_enum.physics_shape)
-    mesh: bpy.props.StringProperty(options=set())
-    size: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0)
-    location: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3)
-    rotation: bpy.props.FloatVectorProperty(options=set(), subtype='EULER', unit='ROTATION', size=3, default=(0, 0, 0))
-    scale: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0, default=(1, 1, 1))
+    shape: bpy.props.EnumProperty(options=set(), items=bl_enum.physics_shape, update=shared.bone_shape_update_event)
+    mesh: bpy.props.StringProperty(options=set(), update=shared.bone_shape_update_event)
+    size: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0, update=shared.bone_shape_update_event)
+    location: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, update=shared.bone_shape_update_event)
+    rotation: bpy.props.FloatVectorProperty(options=set(), subtype='EULER', unit='ROTATION', size=3, default=(0, 0, 0), update=shared.bone_shape_update_event)
+    scale: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0, default=(1, 1, 1), update=shared.bone_shape_update_event)
 
 
 class Properties(shared.M3BoneUserPropertyGroup):

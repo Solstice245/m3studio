@@ -22,12 +22,18 @@ from . import shared
 
 def register_props():
     bpy.types.Object.m3_warps = bpy.props.CollectionProperty(type=Properties)
-    bpy.types.Object.m3_warps_index = bpy.props.IntProperty(options=set(), default=-1)
+    bpy.types.Object.m3_warps_index = bpy.props.IntProperty(options=set(), default=-1, update=update_bone_shapes_option)
 
 
 def init_msgbus(ob, context):
     for warp in ob.m3_warps:
         shared.bone_update_event(warp, context)
+
+
+def update_bone_shapes_option(self, context):
+    if context.object.m3_options.auto_update_bone_shapes:
+        if context.object.m3_options.bone_shapes != 'WRP_':
+            context.object.m3_options.bone_shapes = 'WRP_'
 
 
 def draw_props(warp, layout):
@@ -37,7 +43,7 @@ def draw_props(warp, layout):
 
 
 class Properties(shared.M3BoneUserPropertyGroup):
-    radius: bpy.props.FloatProperty(name='M3 Warp Radius', min=0, default=1)
+    radius: bpy.props.FloatProperty(name='M3 Warp Radius', min=0, default=1, update=shared.bone_shape_update_event)
     strength: bpy.props.FloatProperty(name='M3 Warp Strength', min=0, default=1)
 
 

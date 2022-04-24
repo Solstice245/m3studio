@@ -22,12 +22,18 @@ from . import shared
 
 def register_props():
     bpy.types.Object.m3_cameras = bpy.props.CollectionProperty(type=Properties)
-    bpy.types.Object.m3_cameras_index = bpy.props.IntProperty(options=set(), default=-1)
+    bpy.types.Object.m3_cameras_index = bpy.props.IntProperty(options=set(), default=-1, update=update_bone_shapes_option)
 
 
 def init_msgbus(ob, context):
     for camera in ob.m3_cameras:
         shared.bone_update_event(camera, context)
+
+
+def update_bone_shapes_option(self, context):
+    if context.object.m3_options.auto_update_bone_shapes:
+        if context.object.m3_options.bone_shapes != 'CAM_':
+            context.object.m3_options.bone_shapes = 'CAM_'
 
 
 def draw_props(camera, layout):
@@ -44,11 +50,11 @@ def draw_props(camera, layout):
 
 
 class Properties(shared.M3BoneUserPropertyGroup):
-    field_of_view: bpy.props.FloatProperty(name='M3 Camera Field Of View', default=0.5)
+    field_of_view: bpy.props.FloatProperty(name='M3 Camera Field Of View', default=0.5, update=shared.bone_shape_update_event)
     far_clip: bpy.props.FloatProperty(name='M3 Camera Far Clip', default=10)
     near_clip: bpy.props.FloatProperty(name='M3 Camera Near Clip', default=0.1)
     clip2: bpy.props.FloatProperty(name='M3 Camera Clip 2', default=10)
-    focal_depth: bpy.props.FloatProperty(name='M3 Camera Focal Depth', default=2)
+    focal_depth: bpy.props.FloatProperty(name='M3 Camera Focal Depth', default=2, update=shared.bone_shape_update_event)
     falloff_start: bpy.props.FloatProperty(name='M3 Camera Falloff Start', default=1)
     falloff_end: bpy.props.FloatProperty(name='M3 Camera Falloff End', default=2)
     depth_of_field: bpy.props.FloatProperty(name='M3 Camera Depth Of Field', default=0.5)

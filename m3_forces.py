@@ -23,12 +23,18 @@ from . import bl_enum
 
 def register_props():
     bpy.types.Object.m3_forces = bpy.props.CollectionProperty(type=Properties)
-    bpy.types.Object.m3_forces_index = bpy.props.IntProperty(options=set(), default=-1)
+    bpy.types.Object.m3_forces_index = bpy.props.IntProperty(options=set(), default=-1, update=update_bone_shapes_option)
 
 
 def init_msgbus(ob, context):
     for force in ob.m3_forces:
         shared.bone_update_event(force, context)
+
+
+def update_bone_shapes_option(self, context):
+    if context.object.m3_options.auto_update_bone_shapes:
+        if context.object.m3_options.bone_shapes != 'FOR_':
+            context.object.m3_options.bone_shapes = 'FOR_'
 
 
 def draw_props(force, layout):
@@ -49,9 +55,9 @@ def draw_props(force, layout):
 
 
 class Properties(shared.M3BoneUserPropertyGroup):
-    force_type: bpy.props.EnumProperty(options=set(), items=bl_enum.force_type)
-    shape: bpy.props.EnumProperty(options=set(), items=bl_enum.force_shape)
-    size: bpy.props.FloatVectorProperty(name='M3 Force Size', subtype='XYZ', size=3, min=0.001, default=tuple(3 * [1]))
+    force_type: bpy.props.EnumProperty(options=set(), items=bl_enum.force_type, update=shared.bone_shape_update_event)
+    shape: bpy.props.EnumProperty(options=set(), items=bl_enum.force_shape, update=shared.bone_shape_update_event)
+    size: bpy.props.FloatVectorProperty(name='M3 Force Size', subtype='XYZ', size=3, min=0.001, default=tuple(3 * [1]), update=shared.bone_shape_update_event)
     channels: bpy.props.BoolVectorProperty(options=set(), subtype='LAYER', size=32)
     strength: bpy.props.FloatProperty(name='M3 Force Strength', default=1)
     falloff: bpy.props.BoolProperty(options=set())

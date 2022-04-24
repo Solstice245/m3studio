@@ -23,12 +23,18 @@ from . import bl_enum
 
 def register_props():
     bpy.types.Object.m3_lights = bpy.props.CollectionProperty(type=Properties)
-    bpy.types.Object.m3_lights_index = bpy.props.IntProperty(options=set(), default=-1)
+    bpy.types.Object.m3_lights_index = bpy.props.IntProperty(options=set(), default=-1, update=update_bone_shapes_option)
 
 
 def init_msgbus(ob, context):
     for light in ob.m3_lights:
         shared.bone_update_event(light, context)
+
+
+def update_bone_shapes_option(self, context):
+    if context.object.m3_options.auto_update_bone_shapes:
+        if context.object.m3_options.bone_shapes != 'LITE':
+            context.object.m3_options.bone_shapes = 'LITE'
 
 
 def draw_props(light, layout):
@@ -51,15 +57,15 @@ def draw_props(light, layout):
 
 
 class Properties(shared.M3BoneUserPropertyGroup):
-    shape: bpy.props.EnumProperty(options=set(), items=bl_enum.light_shape)
+    shape: bpy.props.EnumProperty(options=set(), items=bl_enum.light_shape, update=shared.bone_shape_update_event)
     unknownAt1: bpy.props.IntProperty(options=set())
     unknownAt8: bpy.props.IntProperty(options=set())
     unknownAt12: bpy.props.IntProperty(options=set(), default=-1)
     color: bpy.props.FloatVectorProperty(name='M3 Light Color', subtype='COLOR', size=3, min=0, max=1, default=(1, 1, 1))
     intensity: bpy.props.FloatProperty(name='M3 Light Intensity')
-    attenuation_far: bpy.props.FloatProperty(name='M3 Light Attenuation Far', default=3)
+    attenuation_far: bpy.props.FloatProperty(name='M3 Light Attenuation Far', default=3, update=shared.bone_shape_update_event)
     attenuation_near: bpy.props.FloatProperty(name='M3 Light Attenuation Near', default=2)
-    falloff: bpy.props.FloatProperty(name='M3 Light Falloff', default=3)
+    falloff: bpy.props.FloatProperty(name='M3 Light Falloff', default=3, update=shared.bone_shape_update_event)
     hotspot: bpy.props.FloatProperty(name='M3 Light Hotspot', default=2)
     unknown148: bpy.props.FloatProperty(options=set())
     shadows: bpy.props.BoolProperty(options=set())

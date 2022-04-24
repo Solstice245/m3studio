@@ -23,7 +23,7 @@ from . import bl_enum
 
 def register_props():
     bpy.types.Object.m3_particles = bpy.props.CollectionProperty(type=Properties)
-    bpy.types.Object.m3_particles_index = bpy.props.IntProperty(options=set(), default=-1)
+    bpy.types.Object.m3_particles_index = bpy.props.IntProperty(options=set(), default=-1, update=update_bone_shapes_option)
 
 
 def init_msgbus(arm, context):
@@ -32,6 +32,21 @@ def init_msgbus(arm, context):
         trail_update_event(particle, context)
         for copy in particle.copies:
             shared.bone_update_event(copy, context)
+
+
+def update_bone_shapes_option(self, context):
+    if context.object.m3_options.auto_update_bone_shapes:
+        if context.object.m3_options.bone_shapes != 'PAR_':
+            context.object.m3_options.bone_shapes = 'PAR_'
+
+
+def bone_shape_update_event(self, context):
+    bone = context.object.data.bones.get(self.bone)
+    shared.set_bone_shape(context.object, bone)
+
+    for copy in self.copies:
+        copy_bone = context.object.data.bones.get(copy.bone)
+        shared.set_bone_shape(context.object, copy_bone)
 
 
 def trail_update_event(self, context):
@@ -44,7 +59,7 @@ def trail_update_event(self, context):
         if item.name == self.trail_particle_name:
             m3_particle = item
             break
-    shared.m3_msgbus_sub(self, context, 'trail_particle_name', m3_particle, 'name')
+    shared.m3_msgbus_sub(self, context, m3_particle, 'name', 'trail_particle_name')
 
 
 def draw_copy_props(copy, layout):
@@ -267,12 +282,12 @@ class Properties(shared.M3BoneUserPropertyGroup):
     lod_cut: bpy.props.EnumProperty(options=set(), items=bl_enum.lod)
     lod_reduce: bpy.props.EnumProperty(options=set(), items=bl_enum.lod)
     emit_type: bpy.props.EnumProperty(options=set(), items=bl_enum.particle_emit_type)
-    emit_shape: bpy.props.EnumProperty(options=set(), items=bl_enum.particle_shape)
-    emit_shape_cutout: bpy.props.BoolProperty(options=set())
-    emit_shape_size: bpy.props.FloatVectorProperty(name='Emission Area Size', subtype='XYZ', size=3, default=(1, 1, 1))
-    emit_shape_size_cutout: bpy.props.FloatVectorProperty(name='Emission Area Size Cutout', subtype='XYZ', size=3)
-    emit_shape_radius: bpy.props.FloatProperty(name='Emission Radius', default=1)
-    emit_shape_radius_cutout: bpy.props.FloatProperty(name='Emission Radius Cutout')
+    emit_shape: bpy.props.EnumProperty(options=set(), items=bl_enum.particle_shape, update=bone_shape_update_event)
+    emit_shape_cutout: bpy.props.BoolProperty(options=set(), update=bone_shape_update_event)
+    emit_shape_size: bpy.props.FloatVectorProperty(name='Emission Area Size', subtype='XYZ', size=3, default=(1, 1, 1), update=bone_shape_update_event)
+    emit_shape_size_cutout: bpy.props.FloatVectorProperty(name='Emission Area Size Cutout', subtype='XYZ', size=3, update=bone_shape_update_event)
+    emit_shape_radius: bpy.props.FloatProperty(name='Emission Radius', default=1, update=bone_shape_update_event)
+    emit_shape_radius_cutout: bpy.props.FloatProperty(name='Emission Radius Cutout', update=bone_shape_update_event)
     emit_max: bpy.props.IntProperty(options=set(), min=0)
     emit_rate: bpy.props.FloatProperty(name='Emission Rate', min=0)
     emit_amount: bpy.props.IntProperty(name='Emission Amount', min=0)
@@ -308,10 +323,10 @@ class Properties(shared.M3BoneUserPropertyGroup):
     alpha_middle: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0, max=1, default=0.5)
     rotation_middle: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0, max=1, default=0.5)
     size_middle: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0, max=1, default=0.5)
-    color_hold: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0, max=1, default=0.5)
-    alpha_hold: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0, max=1, default=0.5)
-    rotation_hold: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0, max=1, default=0.5)
-    size_hold: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0, max=1, default=0.5)
+    color_hold: bpy.props.FloatProperty(options=set(), min=0)
+    alpha_hold: bpy.props.FloatProperty(options=set(), min=0)
+    rotation_hold: bpy.props.FloatProperty(options=set(), min=0)
+    size_hold: bpy.props.FloatProperty(options=set(), min=0)
     color_smooth: bpy.props.EnumProperty(options=set(), items=bl_enum.anim_smoothing)
     rotation_smooth: bpy.props.EnumProperty(options=set(), items=bl_enum.anim_smoothing)
     size_smooth: bpy.props.EnumProperty(options=set(), items=bl_enum.anim_smoothing)

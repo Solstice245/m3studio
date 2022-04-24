@@ -16,12 +16,13 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-from timeit import timeit
+# from timeit import timeit
 import bpy
 from bpy.app.handlers import persistent
 from . import shared
 from . import m3_bone
 from . import m3_vertex_groups
+from . import m3_options
 from . import m3_animations
 from . import m3_attachmentpoints
 from . import m3_billboards
@@ -38,7 +39,7 @@ from . import m3_ribbons
 from . import m3_rigidbodies
 from . import m3_turrets
 from . import m3_warps
-from . import m3_import
+# from . import m3_import
 
 bl_info = {
     'name': 'M3: Used by Blizzard\'s StarCraft 2 and Heroes of the Storm',
@@ -80,11 +81,11 @@ class M3ImportOperator(bpy.types.Operator):
     test_vertexalpha = 'C:\\Users\\John Wharton\\Documents\\_Base Assets\\Protoss\\Effects\\Mothership_Taldarim_Shield.m3'
 
     def invoke(self, context, event):
-        print(timeit(lambda: m3_import.M3Import(self.test_goliath), number=1))
+        # print(timeit(lambda: m3_import.M3Import(self.test_goliath), number=1))
         return {'RUNNING_MODAL'}
 
     def execute(self, context):
-        print(timeit(lambda: m3_import.M3Import(self.test_goliath), number=1))
+        # print(timeit(lambda: m3_import.M3Import(self.test_goliath), number=1))
         return {'FINISHED'}
 
 
@@ -96,7 +97,9 @@ def top_bar_export(self, context):
     self.layout.operator('m3.import', text='StarCraft 2 Model (.m3)')
 
 
-m3_collection_modules = (
+m3_modules = (
+    m3_bone,
+    m3_options,
     m3_animations,
     m3_attachmentpoints,
     m3_billboards,
@@ -116,19 +119,18 @@ m3_collection_modules = (
 )
 
 
-def m3_collection_module_classes():
+def m3_module_classes():
     classes = []
-    for collection in m3_collection_modules:
-        for clss in collection.classes:
+    for module in m3_modules:
+        for clss in module.classes:
             classes.append(clss)
     return classes
 
 
 classes = (
     *shared.classes,
-    *m3_bone.classes,
     *m3_vertex_groups.classes,
-    *m3_collection_module_classes(),
+    *m3_module_classes(),
     M3ImportOperator,
     M3ScenePanel,
 )
@@ -137,17 +139,16 @@ classes = (
 @persistent
 def init_msgbus(*args):
     for arm in [ob for ob in bpy.context.scene.objects if ob.type == 'ARMATURE']:
-        for collection in m3_collection_modules:
-            if collection.init_msgbus:
-                collection.init_msgbus(arm, bpy.context)
+        for module in m3_modules:
+            if module.init_msgbus:
+                module.init_msgbus(arm, bpy.context)
 
 
 def register():
     for clss in classes:
         bpy.utils.register_class(clss)
-    for collection in m3_collection_modules:
-        collection.register_props()
-    m3_bone.register_props()
+    for module in m3_modules:
+        module.register_props()
     bpy.types.TOPBAR_MT_file_import.append(top_bar_import)
     bpy.types.TOPBAR_MT_file_export.append(top_bar_export)
     bpy.app.handlers.load_post.append(init_msgbus)

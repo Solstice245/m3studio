@@ -16,6 +16,20 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
+options_bone_display = [
+    ('NONE', 'None', ''),
+    ('ATT_', 'Attachment Points', ''),
+    ('CAM_', 'Cameras', ''),
+    ('FOR_', 'Forces', ''),
+    ('FTHT', 'Hit Test Volumes', ''),
+    ('LITE', 'Lights', ''),
+    ('PAR_', 'Particles', ''),
+    ('PROJ', 'Projections', ''),
+    ('RIB_', 'Ribbons', ''),
+    ('PHRB', 'Physics Bodies', ''),
+    ('WRP_', 'Vertex Warpers', ''),
+]
+
 attachmentpoint_keys = [
     ('None', '(None)'),
     ('Air', 'Air', ''),
