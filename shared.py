@@ -22,6 +22,10 @@ from . import bl_enum
 from . import mesh_gen
 
 
+def m3_handle_gen():
+    return '%064x' % random.getrandbits(256)
+
+
 def m3_ob_getter(name, obj=None):
     if obj is None:
         obj = bpy.context.object
@@ -68,7 +72,7 @@ def m3_item_find_name(collections=[], suggested_names=[], prefix=''):
 def m3_item_new(collection):
     item = collection.add()
     item.bl_display = True
-    item.bl_handle = '%064x' % random.getrandbits(256)
+    item.bl_handle = m3_handle_gen()
     item.bl_index = len(collection) - 1
     return item
 
@@ -92,7 +96,7 @@ def m3_item_duplicate(collection, src):
 
 
 def m3_get_bone_handle(bone):
-    bone.m3.handle = bone.m3.handle if bone.m3.handle else '%064x' % random.getrandbits(256)
+    bone.m3.handle = bone.m3.handle if bone.m3.handle else m3_handle_gen()
     return bone.m3.handle
 
 
@@ -315,7 +319,7 @@ def draw_collection_list(layout, collection_path, draw_func, can_duplicate=True)
 
     row = layout.row()
     col = row.column()
-    col.template_list('UI_UL_list', list_str, list_obj, list_str, list_obj, list_str + '_index', rows=rows)  # TODO
+    col.template_list('UI_UL_list', list_str, list_obj, list_str, list_obj, list_str + '_index', rows=rows)
     col = row.column()
     sub = col.column(align=True)
     op = sub.operator('m3.collection_add', icon='ADD', text='')

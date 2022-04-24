@@ -22,7 +22,32 @@ from . import shared
 
 def register_props():
     bpy.types.Object.m3_animations = bpy.props.CollectionProperty(type=Properties)
-    bpy.types.Object.m3_animations_index = bpy.props.IntProperty(options=set(), default=-1)
+    bpy.types.Object.m3_animations_index = bpy.props.IntProperty(options=set(), default=-1, update=anim_update)
+
+
+def init_msgbus(ob, context):
+    for animation in ob.m3_animations:
+        action = bpy.actions.get(ob.name + '_' + animation.name)
+        for subgroup in animation.subgroups:
+            for fcurve in action.fcurves:
+                for item in subgroup.data_paths:
+                    if fcurve.data_path == item.val:
+                        m3_msgbus_sub(item, context, fcurve, 'data_path', 'val')
+                        break
+
+
+def anim_update(self, context):
+    ob = context.object
+    if ob.animation_data is None:
+        ob.animation_data_create()
+
+    if ob.m3_animations_index < 0:
+        ob.animation_data.action = None
+    else:
+        anim = ob.m3_animations[ob.m3_animations_index]
+        ob.animation_data.action = anim.action
+        context.scene.frame_current = context.scene.frame_start = anim.frame_start
+        context.scene.frame_end = anim.frame_end - 1
 
 
 def draw_subgroup_props(subgroup, layout):
@@ -59,6 +84,7 @@ def draw_props(anim, layout):
 
 
 class DataPathProperties(bpy.types.PropertyGroup):
+    bl_handle: bpy.props.StringProperty(options=set())
     val: bpy.props.StringProperty(options=set())
 
 
@@ -69,12 +95,13 @@ class SubgroupProperties(shared.M3PropertyGroup):
 
 
 class Properties(shared.M3PropertyGroup):
+    action: bpy.props.PointerProperty(type=bpy.types.Action, update=anim_update)
     frame_start: bpy.props.IntProperty(options=set(), min=0)
     frame_end: bpy.props.IntProperty(options=set(), min=0, default=60)
     simulate: bpy.props.BoolProperty(options=set())
     simulate_frame: bpy.props.IntProperty(options=set())
     movement_speed: bpy.props.FloatProperty(options=set())
-    frequency: bpy.props.IntProperty(options=set(), min=0)
+    frequency: bpy.props.IntProperty(options=set(), min=0, default=100)
     not_looping: bpy.props.BoolProperty(options=set())
     always_global: bpy.props.BoolProperty(options=set())
     global_in_previewer: bpy.props.BoolProperty(options=set())
@@ -86,7 +113,129 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Animations'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, 'm3_animations', draw_props)
+        layout = self.layout
+        ob = context.object
+        index = ob.m3_animations_index
+        rows = 5 if len(ob.m3_animations) else 3
+
+        row = layout.row()
+        col = row.column()
+        col.template_list('UI_UL_list', 'm3_animations', ob, 'm3_animations', ob, 'm3_animations' + '_index', rows=rows)
+        col = row.column()
+        sub = col.column(align=True)
+        op = sub.operator('m3.animation_add', icon='ADD', text='')
+        op = sub.operator('m3.animation_remove', icon='REMOVE', text='')
+        sub.separator()
+        op = sub.operator('m3.animation_duplicate', icon='DUPLICATE', text='')
+
+        if len(ob.m3_animations):
+            sub.separator()
+            op = sub.operator('m3.animation_move', icon='TRIA_UP', text='')
+            op.shift = -1
+            op = sub.operator('m3.animation_move', icon='TRIA_DOWN', text='')
+            op.shift = 1
+
+        if index < 0:
+            return
+
+        anim = ob.m3_animations[index]
+
+        col = layout.column()
+        col.use_property_split = True
+        col.template_ID(anim, "action", new="action.new", unlink="action.unlink")
+        col.separator()
+        col.prop(anim, 'name', text='Name')
+        col.separator()
+        draw_props(anim, col)
+
+
+class M3AnimationOpAdd(bpy.types.Operator):
+    bl_idname = 'm3.animation_add'
+    bl_label = 'Add Collection Item'
+    bl_description = 'Adds a new item to the collection'
+    bl_options = {'UNDO'}
+
+    def invoke(self, context, event):
+        ob = context.object
+        anim = shared.m3_item_new(ob.m3_animations)
+
+        anim.start_frame = 0
+        anim.end_frame = 60
+
+        anim.action = bpy.data.actions.new(ob.name + '_' + anim.name)
+
+        if ob.animation_data is None:
+            ob.animation_data_create()
+
+        ob.animation_data.action = anim.action
+
+        ob.m3_animations_index = len(ob.m3_animations) - 1
+
+        return {'FINISHED'}
+
+
+class M3AnimationOpRemove(bpy.types.Operator):
+    bl_idname = 'm3.animation_remove'
+    bl_label = 'Remove Collection Item'
+    bl_description = 'Removes the active item from the collection'
+    bl_options = {'UNDO'}
+
+    def invoke(self, context, event):
+        ob = context.object
+        ii = ob.m3_animations_index
+
+        ob.m3_animations.remove(ii)
+
+        for ii in range(ii, len(ob.m3_animations)):
+            ob.m3_animations[ii].bl_index -= 1
+
+        ob.m3_animations_index += 1 if (ii == 0 and len(collection) > 0) or ii == len(collection) else 0
+
+        if ob.m3_animations_index == ii:
+            anim_update(context.object, context)
+
+        return {'FINISHED'}
+
+
+class M3AnimationOpMove(bpy.types.Operator):
+    bl_idname = 'm3.animation_move'
+    bl_label = 'Move Collection Item'
+    bl_description = 'Moves the active item up/down in the list'
+    bl_options = {'UNDO'}
+
+    shift: bpy.props.IntProperty()
+
+    def invoke(self, context, event):
+        ob = context.object
+        ii = ob.m3_animations_index
+
+        if (ii < len(ob.m3_animations) - self.shift and ii >= -self.shift):
+            ob.m3_animations[ii].bl_index += self.shift
+            ob.m3_animations[ii + self.shift].bl_index -= self.shift
+            ob.m3_animations.move(ii, ii + self.shift)
+            ob.m3_animations_index = ii + self.shift
+
+        return {'FINISHED'}
+
+
+class M3AnimationOpDuplicate(bpy.types.Operator):
+    bl_idname = 'm3.animation_duplicate'
+    bl_label = 'Duplicate Collection Item'
+    bl_description = 'Duplicates the active item in the collection'
+    bl_options = {'UNDO'}
+
+    def invoke(self, context, event):
+        ob = context.object
+        ii = ob.m3_animations_index
+
+        if ii < 0:
+            return {'FINISHED'}
+
+        shared.m3_item_duplicate(ob.m3_animations, ob.m3_animations[ii])
+
+        ob.m3_animations_index = len(ob.m3_animations) - 1
+
+        return {'FINISHED'}
 
 
 class M3AnimationSubgroupOpSelect(bpy.types.Operator):
@@ -105,13 +254,10 @@ class M3AnimationSubgroupOpSelect(bpy.types.Operator):
         subgroup = animation.subgroups[self.index]
         data_paths = [data_path.val for data_path in subgroup.data_paths]
 
-        print('select', data_paths)
-
         if ob.animation_data is not None:
             action = ob.animation_data.action
             if action is not None:
                 for fcurve in action.fcurves:
-                    print(fcurve.data_path)
                     fcurve.select = True if fcurve.data_path in data_paths else False
 
         return {'FINISHED'}
@@ -130,29 +276,47 @@ class M3AnimationSubgroupOpAssign(bpy.types.Operator):
             return {'FINISHED'}
 
         data_paths = set()
+        fcurve_set = set()
 
         if ob.animation_data is not None:
             action = ob.animation_data.action
             if action is not None:
+                fcurve_set = set([fcurve for fcurve in action.fcurves if fcurve.select])
                 data_paths = set([fcurve.data_path for fcurve in action.fcurves if fcurve.select])
 
         animation = ob.m3_animations[ob.m3_animations_index]
 
         for subgroup in animation.subgroups:
             print(subgroup.bl_index, self.index)
+            for item in subgroup.data_paths:
+                bpy.msgbus.clear_by_owner(item.bl_handle + 'val')
+
             if subgroup.bl_index == self.index:
                 subgroup.data_paths.clear()
-                for data_path in data_paths:
+                # for data_path in data_paths:
+                #     item = subgroup.data_paths.add()
+                #     item.val = data_path
+                #     m3_msgbus_sub(self, context, bone, 'name', prop)
+                #     print(item, item.val)
+                for fcurve in fcurve_set:
                     item = subgroup.data_paths.add()
-                    item.val = data_path
-                    print(item, item.val)
+                    item.bl_handle = shared.m3_handle_gen()
+                    item.val = fcurve.data_path
+                    shared.m3_msgbus_sub(item, context, fcurve, 'data_path', 'val')
             else:
                 sg_data_paths = set([data_path.val for data_path in subgroup.data_paths])
-                sg_data_paths = sg_data_paths - data_paths
+                sg_fcurve_set = set([fcurve for fcurve in action.fcurves if fcurve.data_path in sg_data_paths])
+                sg_fcurve_set = sg_fcurve_set - fcurve_set
+                # sg_data_paths = sg_data_paths - data_paths
                 subgroup.data_paths.clear()
-                for data_path in sg_data_paths:
+                # for data_path in sg_data_paths:
+                #     item = subgroup.data_paths.add()
+                #     item.val = data_path
+                for fcurve in sg_fcurve_set:
                     item = subgroup.data_paths.add()
-                    item.val = data_path
+                    item.bl_handle = shared.m3_handle_gen()
+                    item.val = fcurve.data_path
+                    m3_msgbus_sub(item, context, fcurve, 'data_path', 'val')
 
         print(data_paths)
 
@@ -164,6 +328,10 @@ classes = (
     SubgroupProperties,
     Properties,
     Panel,
+    M3AnimationOpAdd,
+    M3AnimationOpRemove,
+    M3AnimationOpMove,
+    M3AnimationOpDuplicate,
     M3AnimationSubgroupOpSelect,
     M3AnimationSubgroupOpAssign,
 )
