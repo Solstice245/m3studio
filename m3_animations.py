@@ -93,18 +93,13 @@ def get_default_values(ob, new_action, old_action, default_action):
 
     for fcurve in default_action.fcurves:
         prop = (fcurve.data_path, fcurve.array_index)
-        print(prop)
         if prop in unanim_props:
             default_val = fcurve.evaluate(0)
             attr = shared.m3_ob_getter(prop[0], obj=ob)
             if attr is not None:
-                print('prop', prop[0])
                 if type(default_val) in [float, int, bool]:
-                    print('default', default_val)
-                    print('current', shared.m3_ob_getter(prop[0], obj=ob))
                     shared.m3_ob_setter(prop[0], default_val, obj=ob)
                 else:
-                    print(prop[0] + '[{}]'.format(prop[1]))
                     shared.m3_ob_setter(prop[0] + '[{}]'.format(prop[1]), default_val, obj=ob)
             else:
                 removed_default_props.add(prop)
@@ -256,7 +251,7 @@ class M3AnimationOpRemove(bpy.types.Operator):
         for ii in range(ii, len(ob.m3_animations)):
             ob.m3_animations[ii].bl_index -= 1
 
-        ob.m3_animations_index += 1 if (ii == 0 and len(collection) > 0) or ii == len(collection) else 0
+        ob.m3_animations_index += 1 if (ii == 0 and len(ob.m3_animations) > 0) or ii == len(ob.m3_animations) else 0
 
         if ob.m3_animations_index == ii:
             anim_update(context.object, context)
