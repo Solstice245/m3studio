@@ -21,6 +21,7 @@ from . import shared
 
 
 def register_props():
+    bpy.types.Object.m3_animations_default = bpy.props.PointerProperty(type=bpy.types.Action)
     bpy.types.Object.m3_animations = bpy.props.CollectionProperty(type=Properties)
     bpy.types.Object.m3_animations_index = bpy.props.IntProperty(options=set(), default=-1, update=anim_update)
 
@@ -41,13 +42,77 @@ def anim_update(self, context):
     if ob.animation_data is None:
         ob.animation_data_create()
 
+    if ob.m3_animations_default is None:
+        ob.m3_animations_default = bpy.data.actions.new(ob.name + '_DEFAULTS')
+
     if ob.m3_animations_index < 0:
-        ob.animation_data.action = None
+        ob.animation_data.action = ob.m3_animations_default
     else:
         anim = ob.m3_animations[ob.m3_animations_index]
+
+        old_action = ob.animation_data.action
         ob.animation_data.action = anim.action
+        get_default_values(ob, anim.action, old_action, ob.m3_animations_default)
         context.scene.frame_current = context.scene.frame_start = anim.frame_start
         context.scene.frame_end = anim.frame_end - 1
+
+
+def set_default_value(action, path, index, value):
+    fcurve = None
+    for c in action.fcurves:
+        if c.data_path == path and c.array_index == index:
+            fcurve = c
+            break
+    if fcurve is None:
+        fcurve = action.fcurves.new(path, index=index)
+    keyframe = fcurve.keyframe_points.insert(0, value)
+    keyframe.interpolation = "CONSTANT"
+
+
+def get_default_values(ob, new_action, old_action, default_action):
+    old_props = set()
+    new_props = set()
+
+    if old_action is not None:
+        old_props = set([(fcurve.data_path, fcurve.array_index) for fcurve in old_action.fcurves])
+
+    if new_action is not None:
+        new_props = set([(fcurve.data_path, fcurve.array_index) for fcurve in new_action.fcurves])
+
+    props = new_props.difference(old_props)
+
+    for prop in props:
+        val = shared.m3_ob_getter(prop[0], obj=ob)
+        if type(val) not in [float, int, bool, None]:
+            val = val[prop[1]]
+        if val is not None:
+            set_default_value(default_action, prop[0], prop[1], val)
+
+    unanim_props = old_props.difference(new_props)
+    removed_default_props = set()
+
+    for fcurve in default_action.fcurves:
+        prop = (fcurve.data_path, fcurve.array_index)
+        print(prop)
+        if prop in unanim_props:
+            default_val = fcurve.evaluate(0)
+            attr = shared.m3_ob_getter(prop[0], obj=ob)
+            if attr is not None:
+                print('prop', prop[0])
+                if type(default_val) in [float, int, bool]:
+                    print('default', default_val)
+                    print('current', shared.m3_ob_getter(prop[0], obj=ob))
+                    shared.m3_ob_setter(prop[0], default_val, obj=ob)
+                else:
+                    print(prop[0] + '[{}]'.format(prop[1]))
+                    shared.m3_ob_setter(prop[0] + '[{}]'.format(prop[1]), default_val, obj=ob)
+            else:
+                removed_default_props.add(prop)
+
+    for fcurve in [fcurve for fcurve in default_action.fcurves if (fcurve.data_path, fcurve.array_index) in removed_default_props]:
+        default_action.fcurves.remove(fcurve)
+
+    return new_action
 
 
 def draw_subgroup_props(subgroup, layout):
@@ -117,6 +182,8 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
         ob = context.object
         index = ob.m3_animations_index
         rows = 5 if len(ob.m3_animations) else 3
+
+        layout.operator('m3.animation_deselect')
 
         row = layout.row()
         col = row.column()
@@ -238,6 +305,18 @@ class M3AnimationOpDuplicate(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class M3AnimationOpDeselect(bpy.types.Operator):
+    bl_idname = "m3.animation_deselect"
+    bl_label = "Edit Default Values"
+    bl_description = "Deselects the active M3 animation sequence so that the default values can be edited"
+    bl_options = {"UNDO"}
+
+    def invoke(self, context, event):
+        ob = context.object
+        ob.m3_animations_index = -1
+        return {'FINISHED'}
+
+
 class M3AnimationSubgroupOpSelect(bpy.types.Operator):
     bl_idname = 'm3.animation_subgroup_select'
     bl_label = 'Select FCurves'
@@ -319,6 +398,7 @@ classes = (
     M3AnimationOpRemove,
     M3AnimationOpMove,
     M3AnimationOpDuplicate,
+    M3AnimationOpDeselect,
     M3AnimationSubgroupOpSelect,
     M3AnimationSubgroupOpAssign,
 )

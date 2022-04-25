@@ -49,12 +49,14 @@ def m3_ob_setter(name, value, obj='default'):
     if obj == 'default':
         obj = bpy.context.object
     if len(rsp) > 1:
-        obj = m3_ob_getter(rsp[1], obj=obj)
-    if obj is not None:
+        obj = m3_ob_getter(rsp[0], obj=obj)
+        if obj is not None:
+            setattr(obj, rsp[1], value)
+    else:
         setattr(obj, rsp[0], value)
 
 
-def m3_item_find_name(collections=[], suggested_names=[], prefix=''):
+def m3_item_get_name(collections=[], suggested_names=[], prefix=''):
     used_names = [item.name for item in collection for collection in collections]
     num = 1
     while True:
@@ -93,6 +95,27 @@ def m3_item_duplicate(collection, src):
                 m3_item_duplicate(getattr(dst, key), item)
 
     return dst
+
+
+def m3_item_find_bones(item):
+    bone_list = []
+
+    if hasattr(item, 'bone'):
+        bone_list.append(getattr(item, 'bone'))
+
+    if hasattr(item, 'bone1'):
+        bone_list.append(getattr(item, 'bone1'))
+
+    if hasattr(item, 'bone2'):
+        bone_list.append(getattr(item, 'bone2'))
+
+    for key in type(item).__annotations__.keys():
+        prop = getattr(item, key)
+        if str(type(prop)) == '<class \'bpy_prop_collection_idprop\'>':
+            for sub_item in prop:
+                bone_list += m3_item_find_bones(sub_item)
+
+    return bone_list
 
 
 def m3_get_bone_handle(bone):
@@ -230,6 +253,7 @@ class M3CollectionOpRemove(M3CollectionOpBase):
 
     def invoke(self, context, event):
         collection = m3_ob_getter(self.collection)
+        bone_list = m3_item_find_bones(collection[self.index])
         collection.remove(self.index)
 
         remove_m3_action_keyframes(context.object, self.collection, self.index)
@@ -241,6 +265,10 @@ class M3CollectionOpRemove(M3CollectionOpBase):
         new_index -= 1 if (self.index == 0 and len(collection) > 0) or self.index == len(collection) else 0
 
         m3_ob_setter(self.collection + '_index', new_index)
+
+        for bone in context.object.data.bones:
+            if bone.name in bone_list:
+                set_bone_shape(context.object, bone)
 
         return {'FINISHED'}
 
