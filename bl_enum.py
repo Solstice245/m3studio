@@ -277,6 +277,31 @@ ribbon_variation_shape = [
     ('NOISE_CONTINUOUS', 'Noise (Continuous)', ''),
 ]
 
+mat_blend = [
+    ('OPAQUE', 'Opaque', 'Render output has no transparency except where the alpha mask value exceeds the cutout threshold'),
+    ('ALPHAB', 'Alpha Blend', 'Render output is blended on the basis of the alpha mask'),
+    ('ADD', 'Add', 'Render output is transparent on the basis of color value'),
+    ('ALPHAA', 'Alpha Add', 'Render output is transparent on the basis of the alpha mask'),
+    ('MOD', 'Mod', 'Render output is similar to Opaque, but the alpha mask cutout is applied with greater fidelity'),
+    ('MOD2', 'Mod 2x', 'Render output is similar to Opaque, but the alpha mask cutout is applied with greater fidelity'),
+    ('UNK6', 'Unknown 0x06', 'Undocumented'),
+    ('UNK7', 'Unknown 0x07', 'Undocumented'),
+]
+
+mat_layer_blend = [
+    ('MOD', 'Mod', 'No description yet'),
+    ('MOD2', 'Mod 2x', 'No description yet'),
+    ('ADD', 'Add', 'Render output is transparent on the basis of color value'),
+    ('BLEND', 'Blend', 'Render output is layered over previous layers'),
+    ('TEAMEMIS', 'Team Color Emissive Add', 'Render output is team colored from the alpha channel (or single color channel)'),
+    ('TEAMDIFF', 'Team Color Diffuse Add', 'No description yet'),
+]
+
+mat_spec = [
+    ('RGB', 'RGB', 'Mode for multi-channel specular maps'),
+    ('A', 'Alpha', 'Mode for single channel specular maps'),
+]
+
 material_layer_type = [
     ('BITMAP', 'Bitmap', 'Renders using the image defined in the image path property'),
     ('COLOR', 'Color', 'Renders using the color defined in the color value property'),

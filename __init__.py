@@ -32,6 +32,7 @@ from . import m3_hittests
 from . import m3_ik
 from . import m3_lights
 from . import m3_materiallayers
+from . import m3_materials
 from . import m3_particles
 from . import m3_physicsjoints
 from . import m3_projections
@@ -102,6 +103,7 @@ m3_modules = (
     m3_options,
     m3_animations,
     m3_materiallayers,
+    m3_materials,
     m3_attachmentpoints,
     m3_hittests,
     m3_particles,

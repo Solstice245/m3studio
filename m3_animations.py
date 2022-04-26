@@ -251,7 +251,7 @@ class M3AnimationOpRemove(bpy.types.Operator):
         for ii in range(ii, len(ob.m3_animations)):
             ob.m3_animations[ii].bl_index -= 1
 
-        ob.m3_animations_index += 1 if (ii == 0 and len(ob.m3_animations) > 0) or ii == len(ob.m3_animations) else 0
+        ob.m3_animations_index -= 1 if (ii == 0 and len(ob.m3_animations) > 0) or ii == len(ob.m3_animations) else 0
 
         if ob.m3_animations_index == ii:
             anim_update(context.object, context)
