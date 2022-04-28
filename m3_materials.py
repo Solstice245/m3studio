@@ -19,6 +19,7 @@
 import bpy
 from . import shared
 from . import bl_enum
+from . import m3_materiallayers
 
 
 def register_props():
@@ -35,24 +36,43 @@ def register_props():
 
 
 class StandardProperties(shared.M3PropertyGroup):
-    diff_layer: bpy.props.StringProperty(options=set())
-    decal_layer: bpy.props.StringProperty(options=set())
-    spec_layer: bpy.props.StringProperty(options=set())
-    gloss_layer: bpy.props.StringProperty(options=set())
-    emis1_layer: bpy.props.StringProperty(options=set())
-    emis2_layer: bpy.props.StringProperty(options=set())
-    evio_layer: bpy.props.StringProperty(options=set())
-    evio_mask_layer: bpy.props.StringProperty(options=set())
-    alpha_mask1_layer: bpy.props.StringProperty(options=set())
-    alpha_mask2_layer: bpy.props.StringProperty(options=set())
-    norm_layer: bpy.props.StringProperty(options=set())
-    height_layer: bpy.props.StringProperty(options=set())
-    lightmap_layer: bpy.props.StringProperty(options=set())
-    ao_layer: bpy.props.StringProperty(options=set())
-    norm_blend_mask1_layer: bpy.props.StringProperty(options=set())
-    norm_blend_mask2_layer: bpy.props.StringProperty(options=set())
-    norm_blend1_layer: bpy.props.StringProperty(options=set())
-    norm_blend2_layer: bpy.props.StringProperty(options=set())
+    # diff_layer: bpy.props.StringProperty(options=set())
+    # decal_layer: bpy.props.StringProperty(options=set())
+    # spec_layer: bpy.props.StringProperty(options=set())
+    # gloss_layer: bpy.props.StringProperty(options=set())
+    # emis1_layer: bpy.props.StringProperty(options=set())
+    # emis2_layer: bpy.props.StringProperty(options=set())
+    # evio_layer: bpy.props.StringProperty(options=set())
+    # evio_mask_layer: bpy.props.StringProperty(options=set())
+    # alpha_mask1_layer: bpy.props.StringProperty(options=set())
+    # alpha_mask2_layer: bpy.props.StringProperty(options=set())
+    # norm_layer: bpy.props.StringProperty(options=set())
+    # height_layer: bpy.props.StringProperty(options=set())
+    # lightmap_layer: bpy.props.StringProperty(options=set())
+    # ao_layer: bpy.props.StringProperty(options=set())
+    # norm_blend_mask1_layer: bpy.props.StringProperty(options=set())
+    # norm_blend_mask2_layer: bpy.props.StringProperty(options=set())
+    # norm_blend1_layer: bpy.props.StringProperty(options=set())
+    # norm_blend2_layer: bpy.props.StringProperty(options=set())
+
+    diff_layer: bpy.props.PointerProperty(type=m3_materiallayers.Properties, options=set())
+    decal_layer: bpy.props.PointerProperty(type=m3_materiallayers.Properties, options=set())
+    spec_layer: bpy.props.PointerProperty(type=m3_materiallayers.Properties, options=set())
+    gloss_layer: bpy.props.PointerProperty(type=m3_materiallayers.Properties, options=set())
+    emis1_layer: bpy.props.PointerProperty(type=m3_materiallayers.Properties, options=set())
+    emis2_layer: bpy.props.PointerProperty(type=m3_materiallayers.Properties, options=set())
+    evio_layer: bpy.props.PointerProperty(type=m3_materiallayers.Properties, options=set())
+    evio_mask_layer: bpy.props.PointerProperty(type=m3_materiallayers.Properties, options=set())
+    alpha_mask1_layer: bpy.props.PointerProperty(type=m3_materiallayers.Properties, options=set())
+    alpha_mask2_layer: bpy.props.PointerProperty(type=m3_materiallayers.Properties, options=set())
+    norm_layer: bpy.props.PointerProperty(type=m3_materiallayers.Properties, options=set())
+    height_layer: bpy.props.PointerProperty(type=m3_materiallayers.Properties, options=set())
+    lightmap_layer: bpy.props.PointerProperty(type=m3_materiallayers.Properties, options=set())
+    ao_layer: bpy.props.PointerProperty(type=m3_materiallayers.Properties, options=set())
+    norm_blend1_mask_layer: bpy.props.PointerProperty(type=m3_materiallayers.Properties, options=set())
+    norm_blend2_mask_layer: bpy.props.PointerProperty(type=m3_materiallayers.Properties, options=set())
+    norm_blend1_layer: bpy.props.PointerProperty(type=m3_materiallayers.Properties, options=set())
+    norm_blend2_layer: bpy.props.PointerProperty(type=m3_materiallayers.Properties, options=set())
 
     priority: bpy.props.IntProperty(options=set())
     blend_mode: bpy.props.EnumProperty(options=set(), items=bl_enum.mat_blend)
@@ -105,7 +125,8 @@ class DisplacementProperties(shared.M3PropertyGroup):
 
 class CompositeSectionProperties(shared.M3PropertyGroup):
     name: bpy.props.StringProperty(options=set())
-    material_reference: bpy.props.StringProperty(options=set())
+    matref: bpy.props.StringProperty(options=set())
+    matref_handle: bpy.props.StringProperty(options=set())
     alpha_factor: bpy.props.FloatProperty(name='Alpha Factor')
 
 
@@ -149,13 +170,51 @@ class SplatTerrainBakeProperties(shared.M3PropertyGroup):
     spec_layer: bpy.props.StringProperty(options=set())
 
 
-def draw_props(material, context):
-    pass
+def draw_layer_header(ob, layout, material, layer):
+    row = layout.row()
+    row.template_search(material, layer, ob, 'm3_materiallayers')
+    # row.props_menu_enum('op bl_idname', 'op property', text='', icon='NODECOMPOSITING')
+    # if getattr(material, layer):
+    #     row.prop(material, layer, text='')
+    #     row.operator('op bl_idname users', text=num)
+    #     row.operator('op bl_idname new', text='', icon='DUPLICATE')
+    #     row.operator('op bl_idname unlink', text='', icon='X')
+    # else:
+    #     row.operator('op bl_idname new', text='New', icon='ADD')
+
+
+def draw_standard_props(context, material, layout):
+    draw_layer_header(context.object, layout, material, 'diff_layer')
+    draw_layer_header(context.object, layout, material, 'decal_layer')
+    draw_layer_header(context.object, layout, material, 'spec_layer')
+    draw_layer_header(context.object, layout, material, 'gloss_layer')
+    draw_layer_header(context.object, layout, material, 'emis1_layer')
+    draw_layer_header(context.object, layout, material, 'emis2_layer')
+    draw_layer_header(context.object, layout, material, 'evio_layer')
+    draw_layer_header(context.object, layout, material, 'evio_mask_layer')
+    draw_layer_header(context.object, layout, material, 'alpha_mask1_layer')
+    draw_layer_header(context.object, layout, material, 'alpha_mask2_layer')
+    draw_layer_header(context.object, layout, material, 'norm_layer')
+    draw_layer_header(context.object, layout, material, 'height_layer')
+    draw_layer_header(context.object, layout, material, 'lightmap_layer')
+    draw_layer_header(context.object, layout, material, 'ao_layer')
+    draw_layer_header(context.object, layout, material, 'norm_blend1_mask_layer')
+    draw_layer_header(context.object, layout, material, 'norm_blend2_mask_layer')
+    draw_layer_header(context.object, layout, material, 'norm_blend1_layer')
+    draw_layer_header(context.object, layout, material, 'norm_blend2_layer')
+
+
+def draw_props(context, matref, layout):
+    mat = m3_material_get(context.object, matref)
+    if matref.mat_type == 'm3_materials_standard':
+        draw_standard_props(context, mat, layout)
+    else:
+        pass  # TODO
 
 
 class Properties(shared.M3PropertyGroup):
-    material_type: bpy.props.IntProperty(options=set(), default=-1)
-    material_index: bpy.props.IntProperty(options=set(), default=-1)
+    mat_type: bpy.props.EnumProperty(options=set(), items=bl_enum.matref_type)
+    mat_handle: bpy.props.StringProperty(options=set())
 
 
 class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
@@ -163,7 +222,159 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Materials'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, 'm3_materialrefs', draw_props)
+        layout = self.layout
+        ob = context.object
+        index = ob.m3_materialrefs_index
+        rows = 5 if len(ob.m3_materialrefs) else 3
+
+        row = layout.row()
+        col = row.column()
+        col.template_list('UI_UL_list', 'm3_materialrefs', ob, 'm3_materialrefs', ob, 'm3_materialrefs_index', rows=rows)
+        col = row.column()
+        sub = col.column(align=True)
+        op = sub.operator('m3.material_add', icon='ADD', text='')
+        op = sub.operator('m3.material_remove', icon='REMOVE', text='')
+        sub.separator()
+        op = sub.operator('m3.material_duplicate', icon='DUPLICATE', text='')
+
+        if len(ob.m3_animations):
+            sub.separator()
+            op = sub.operator('m3.material_move', icon='TRIA_UP', text='')
+            op.shift = -1
+            op = sub.operator('m3.material_move', icon='TRIA_DOWN', text='')
+            op.shift = 1
+
+        if index < 0:
+            return
+
+        matref = ob.m3_materialrefs[index]
+
+        col = layout.column()
+        col.use_property_split = True
+        col.separator()
+        col.prop(matref, 'name', text='Name')
+        col.separator()
+        draw_props(context, matref, col)
+
+
+def m3_material_get(ob, matref):
+    mat = None
+    if matref.mat_handle:
+        mat_col = getattr(ob, matref.mat_type)
+        for item in mat_col:
+            if item.bl_handle == matref.mat_handle:
+                mat = item
+    return mat
+
+
+def m3_material_layer_get(ob, name):
+    for layer in ob.m3_materiallayers:
+        if layer.name == name:
+            return layer
+
+
+class M3MaterialLayerOpAdd(bpy.types.Operator):
+    bl_idname = 'm3.material_layer_add'
+    bl_label = 'New M3 Material Layer'
+    bl_description = 'Create new M3 material layer'
+
+    layer_name: bpy.props.StringProperty()
+
+    def invoke(self, context, event):
+        ob = context.object
+        layers = ob.m3_materiallayers
+        matref = ob.m3_materialrefs[ob.m3_materialrefs_index]
+        mat = m3_material_get(ob, matref)
+
+        if getattr(mat, self.layer_name):
+            layer = shared.m3_item_duplicate(layers, m3_material_layer_get(ob, self.layer_name))
+        else:
+            layer = shared.m3_item_new(layers)
+
+        setattr(mat, self.layer_name, layer.name)
+
+        return {'FINISHED'}
+
+
+class M3MaterialOpAdd(bpy.types.Operator):
+    bl_idname = 'm3.material_add'
+    bl_label = 'New M3 Material'
+    bl_description = 'Adds a new item to the collection'
+
+    def invoke(self, context, event):
+        matref = shared.m3_item_new(context.object.m3_materialrefs)
+        mat = shared.m3_item_new(context.object.m3_materials_standard)
+
+        matref.mat_type = 'm3_materials_standard'
+        matref.mat_handle = mat.bl_handle
+
+        mat.name = matref.name
+
+        context.object.m3_materialrefs_index = len(context.object.m3_materialrefs) - 1
+
+        return {'FINISHED'}
+
+
+class M3MaterialOpRemove(bpy.types.Operator):
+    bl_idname = 'm3.material_remove'
+    bl_label = 'Remove M3 Material'
+    bl_description = 'Removes the active item from the collection'
+
+    def invoke(self, context, event):
+        ob = context.object
+        matref = ob.m3_materialrefs[ob.m3_materialrefs_index]
+        mat = m3_material_get(ob, matref)
+
+        getattr(ob, matref.mat_type).remove(mat.bl_index)
+        ob.m3_materialrefs.remove(ob.m3_materialrefs_index)
+
+        shared.remove_m3_action_keyframes(ob, matref.mat_type, ob.m3_materialrefs_index)
+        for ii in range(ob.m3_materialrefs_index, len(collection)):
+            ob.m3_materialrefs[ii].bl_index -= 1
+            shared.shift_m3_action_keyframes(ob, matref.mat_type, ii + 1)
+
+        ob.m3_materialrefs_index -= 1 if (self.index == 0 and len(collection) > 0) or self.index == len(collection) else 0
+
+
+class M3MaterialOpMove(bpy.types.Operator):
+    bl_idname = 'm3.material_move'
+    bl_label = 'Move M3 Material'
+    bl_description = 'Moves the active item up/down in the list'
+
+    shift: bpy.props.IntProperty()
+
+    def invoke(self, context, event):
+        matrefs = context.object.m3_materialrefs
+
+        if (self.index < len(collection) - self.shift and self.index >= -self.shift):
+            matrefs[self.index].bl_index += self.shift
+            matrefs[self.index + self.shift].bl_index -= self.shift
+            matrefs.move(self.index, self.index + self.shift)
+            context.object.m3_materialrefs_index += self.shift
+
+        return {'FINISHED'}
+
+
+class M3MaterialOpDuplicate(bpy.types.Operator):
+    bl_idname = 'm3.material_duplicate'
+    bl_label = 'Duplicate M3 Material'
+    bl_description = 'Duplicates the active item in the list'
+
+    def invoke(self, context, event):
+        matrefs = context.object.m3_materialrefs
+        matref = matrefs[context.object.m3_materialrefs_index]
+        mat = m3_material_get(context.object, matref)
+
+        if context.object.m3_materialrefs_index == -1:
+            return {'FINISHED'}
+
+        new_mat = shared.m3_item_duplicate(getattr(ob, matref.mat_type), mat)
+        new_matref = shared.m3_item_duplicate(matrefs, matref)
+        new_matref.mat_handle = new_mat.bl_handle
+
+        context.object.m3_materialrefs_index = len(matrefs) - 1
+
+        return {'FINISHED'}
 
 
 classes = (
@@ -178,4 +389,9 @@ classes = (
     SplatTerrainBakeProperties,
     Properties,
     Panel,
+    M3MaterialOpAdd,
+    M3MaterialOpRemove,
+    M3MaterialOpMove,
+    M3MaterialOpDuplicate,
+    M3MaterialLayerOpAdd,
 )

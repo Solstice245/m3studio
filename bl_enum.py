@@ -277,6 +277,19 @@ ribbon_variation_shape = [
     ('NOISE_CONTINUOUS', 'Noise (Continuous)', ''),
 ]
 
+matref_type = [
+    ('m3_materials_standard', 'Standard', 'Used for most purposes'),
+    ('m3_materials_displace', 'Displacement', 'Used to create rippling effects'),
+    ('m3_materials_composite', 'Composite', 'Used to combine multiple materials into one'),
+    ('m3_materials_terrain', 'Terrain', 'Used to draw terrain textures in the game map over the mesh'),
+    ('m3_materials_volume', 'Volume', 'Used to draw volumetric shapes'),
+    ('m3_materials_volumenoise', 'Volume Noise', 'Used to draw volumetric shapes. Has additional functionality compared to the Volume material type'),
+    ('m3_materials_creep', 'Creep', 'Used to draw creep which exists in the game map over the mesh'),
+    ('m3_materials_stb', 'Splat Terrain Bake', 'Used typically for static shapes drawn over terrain'),
+    ('LFLR', 'Lens Flare', 'Used for lens flare effects. Currently not supported'),
+    ('REF_', 'Reflection', 'Used for special reflection effects. Currently not supported'),
+]
+
 mat_blend = [
     ('OPAQUE', 'Opaque', 'Render output has no transparency except where the alpha mask value exceeds the cutout threshold'),
     ('ALPHAB', 'Alpha Blend', 'Render output is blended on the basis of the alpha mask'),
