@@ -143,9 +143,7 @@ def m3_bone_handles_verify(ob):
 
 
 def m3_msgbus_callback(self, context, sub, key, owner):
-    self.bl_update = False
     setattr(self, owner, getattr(sub, key))
-    self.bl_update = True
 
 
 def m3_msgbus_sub(self, context, sub, key, owner):
@@ -184,7 +182,6 @@ class ArmatureObjectPanel(bpy.types.Panel):
 
 class M3PropertyGroup(bpy.types.PropertyGroup):
     bl_display: bpy.props.BoolProperty(default=False)
-    bl_update: bpy.props.BoolProperty(options=set(), default=True)
     bl_index: bpy.props.IntProperty(options=set())
     bl_handle: bpy.props.StringProperty(options=set())
     name: bpy.props.StringProperty(options=set())
@@ -432,7 +429,7 @@ def draw_collection_list(layout, collection_path, draw_func, can_duplicate=True,
     draw_func(item, col)
 
 
-def draw_collection_stack(layout, collection_path, label, draw_func, use_name=False, can_duplicate=True, ops=[]):
+def draw_collection_stack(layout, collection_path, label, draw_func, use_name=False, can_duplicate=True, ops=[], send_path=False):
     collection = m3_ob_getter(collection_path)
 
     if not ops:
@@ -459,7 +456,10 @@ def draw_collection_stack(layout, collection_path, label, draw_func, use_name=Fa
                 if use_name:
                     col.prop(item, 'name', text='Name')
                 draw_pointer_prop(bpy.context.object, col, 'data.bones', '{}[{}].{}'.format(collection_path, index, 'bone'), 'Bone', 'BONE_DATA')
-                draw_func(item, col)
+                if send_path:
+                    draw_func('{}[{}]'.format(collection_path, index), item, col)
+                else:
+                    draw_func(item, col)
 
             col = row.column(align=True)
             op = col.operator(ops[1], icon='X', text='')

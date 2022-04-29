@@ -33,7 +33,7 @@ def init_msgbus(ob, context):
             for fcurve in action.fcurves:
                 for item in subgroup.data_paths:
                     if fcurve.data_path == item.val:
-                        m3_msgbus_sub(item, context, fcurve, 'data_path', 'val')
+                        shared.m3_msgbus_sub(item, context, fcurve, 'data_path', 'val')
                         break
 
 
@@ -379,7 +379,7 @@ class M3AnimationSubgroupOpAssign(bpy.types.Operator):
                     item = subgroup.data_paths.add()
                     item.bl_handle = shared.m3_handle_gen()
                     item.val = fcurve.data_path
-                    m3_msgbus_sub(item, context, fcurve, 'data_path', 'val')
+                    shared.m3_msgbus_sub(item, context, fcurve, 'data_path', 'val')
 
         return {'FINISHED'}
 

@@ -32,6 +32,8 @@ def register_props():
     bpy.types.Object.m3_materials_volumenoise = bpy.props.CollectionProperty(type=VolumeNoiseProperties)
     bpy.types.Object.m3_materials_creep = bpy.props.CollectionProperty(type=CreepProperties)
     bpy.types.Object.m3_materials_stb = bpy.props.CollectionProperty(type=SplatTerrainBakeProperties)
+    bpy.types.Object.m3_materials_lensflare = bpy.props.CollectionProperty(type=LensFlareProperties)
+    bpy.types.Object.m3_materials_reflections = bpy.props.CollectionProperty(type=ReflectionProperties)
 
 
 class StandardProperties(shared.M3PropertyGroup):
@@ -108,8 +110,7 @@ class DisplacementProperties(shared.M3PropertyGroup):
 class CompositeSectionProperties(shared.M3PropertyGroup):
     name: bpy.props.StringProperty(options=set())
     matref: bpy.props.StringProperty(options=set())
-    matref_handle: bpy.props.StringProperty(options=set())
-    alpha_factor: bpy.props.FloatProperty(name='Alpha Factor')
+    alpha_factor: bpy.props.FloatProperty(name='Alpha Factor', default=1)
 
 
 class CompositeProperties(shared.M3PropertyGroup):
@@ -152,6 +153,14 @@ class SplatTerrainBakeProperties(shared.M3PropertyGroup):
     spec_layer: bpy.props.StringProperty(options=set())
 
 
+class LensFlareProperties(shared.M3PropertyGroup):
+    pass
+
+
+class ReflectionProperties(shared.M3PropertyGroup):
+    pass
+
+
 def m3_material_get(ob, matref):
     mat = None
     if matref.mat_handle:
@@ -173,7 +182,7 @@ def layer_enum(self, context):
     return [(layer.bl_handle, layer.name, '') for layer in context.object.m3_materiallayers]
 
 
-def draw_layer_header(ob, layout, material, layer_name, label='test'):
+def draw_layer_pointer_prop(ob, layout, material, layer_name, label='test'):
     col = layout.column(align=True)
     col.use_property_split = False
     split = col.split(factor=0.375, align=True)
@@ -196,24 +205,24 @@ def draw_layer_header(ob, layout, material, layer_name, label='test'):
 
 
 def draw_standard_props(context, material, layout):
-    draw_layer_header(context.object, layout, material, 'diff_layer', 'Diffuse')
-    draw_layer_header(context.object, layout, material, 'decal_layer', 'Decal')
-    draw_layer_header(context.object, layout, material, 'spec_layer', 'Specular')
-    draw_layer_header(context.object, layout, material, 'gloss_layer', 'Gloss')
-    draw_layer_header(context.object, layout, material, 'emis1_layer', 'Emissive 1')
-    draw_layer_header(context.object, layout, material, 'emis2_layer', 'Emissive 2')
-    draw_layer_header(context.object, layout, material, 'evio_layer', 'Environment')
-    draw_layer_header(context.object, layout, material, 'evio_mask_layer', 'Environment Mask')
-    draw_layer_header(context.object, layout, material, 'alpha_mask1_layer', 'Alpha Mask 1')
-    draw_layer_header(context.object, layout, material, 'alpha_mask2_layer', 'Alpha Mask 2')
-    draw_layer_header(context.object, layout, material, 'norm_layer', 'Normal')
-    draw_layer_header(context.object, layout, material, 'height_layer', 'Height')
-    draw_layer_header(context.object, layout, material, 'lightmap_layer', 'Lightmap')
-    draw_layer_header(context.object, layout, material, 'ao_layer', 'Ambient Occlusion')
-    draw_layer_header(context.object, layout, material, 'norm_blend1_mask_layer', 'Normal Blend 1 Mask')
-    draw_layer_header(context.object, layout, material, 'norm_blend2_mask_layer', 'Normal Blend 2 Mask')
-    draw_layer_header(context.object, layout, material, 'norm_blend1_layer', 'Normal Blend 1')
-    draw_layer_header(context.object, layout, material, 'norm_blend2_layer', 'Normal Blend 2')
+    draw_layer_pointer_prop(context.object, layout, material, 'diff_layer', 'Diffuse')
+    draw_layer_pointer_prop(context.object, layout, material, 'decal_layer', 'Decal')
+    draw_layer_pointer_prop(context.object, layout, material, 'spec_layer', 'Specular')
+    draw_layer_pointer_prop(context.object, layout, material, 'gloss_layer', 'Gloss')
+    draw_layer_pointer_prop(context.object, layout, material, 'emis1_layer', 'Emissive 1')
+    draw_layer_pointer_prop(context.object, layout, material, 'emis2_layer', 'Emissive 2')
+    draw_layer_pointer_prop(context.object, layout, material, 'evio_layer', 'Environment')
+    draw_layer_pointer_prop(context.object, layout, material, 'evio_mask_layer', 'Environment Mask')
+    draw_layer_pointer_prop(context.object, layout, material, 'alpha_mask1_layer', 'Alpha Mask 1')
+    draw_layer_pointer_prop(context.object, layout, material, 'alpha_mask2_layer', 'Alpha Mask 2')
+    draw_layer_pointer_prop(context.object, layout, material, 'norm_layer', 'Normal')
+    draw_layer_pointer_prop(context.object, layout, material, 'height_layer', 'Height')
+    draw_layer_pointer_prop(context.object, layout, material, 'lightmap_layer', 'Lightmap')
+    draw_layer_pointer_prop(context.object, layout, material, 'ao_layer', 'Ambient Occlusion')
+    draw_layer_pointer_prop(context.object, layout, material, 'norm_blend1_mask_layer', 'Normal Blend 1 Mask')
+    draw_layer_pointer_prop(context.object, layout, material, 'norm_blend2_mask_layer', 'Normal Blend 2 Mask')
+    draw_layer_pointer_prop(context.object, layout, material, 'norm_blend1_layer', 'Normal Blend 1')
+    draw_layer_pointer_prop(context.object, layout, material, 'norm_blend2_layer', 'Normal Blend 2')
     layout.separator()
     col = layout.column()
     col.prop(material, 'blend_mode', text='Blend Mode')
@@ -249,7 +258,7 @@ def draw_standard_props(context, material, layout):
     col.prop(material, 'flag_transparent_depth', text='Transparent Depth')
     col.prop(material, 'flag_transparent_local_lights', text='Transparent Local Lights')
     col.prop(material, 'flag_disable_soft', text='Soft Lighting', invert_checkbox=True)
-    col.prop(material, 'flag_double_lamber', text='Double Lambert')
+    col.prop(material, 'flag_double_lambert', text='Double Lambert')
     col.prop(material, 'flag_hair_layer_sorting', text='Hair Layer Sorting')
     col.prop(material, 'flag_accept_splats', text='Accept Splats')
     col.prop(material, 'flag_accept_splats_only', text='Accept Splats Only')
@@ -274,12 +283,93 @@ def draw_standard_props(context, material, layout):
     col.prop(material, 'flag_emis_required', text='Emissive')
 
 
+def draw_displacement_props(context, material, layout):
+    draw_layer_pointer_prop(context.object, layout, material, 'norm_layer', 'Normal')
+    draw_layer_pointer_prop(context.object, layout, material, 'strength_layer', 'Strength')
+    layout.separator()
+    layout.prop(material, 'priority', text='Priority')
+    layout.prop(material, 'strength_factor', text='Strength Multiplier')
+
+
+def draw_composite_section_props(path, section, layout):
+    shared.draw_pointer_prop(bpy.context.object, layout, 'm3_materialrefs', path + '.matref', 'Material', 'LINKED')
+    layout.prop(section, 'alpha_factor', text='Alpha Factor')
+
+
+def draw_composite_props(context, material, layout):
+    shared.draw_collection_stack(
+        layout, 'm3_materials_composite[{}].sections'.format(material.bl_index), 'Section', draw_composite_section_props,
+        use_name=False, can_duplicate=False, ops=[], send_path=True)
+
+
+def draw_terrain_props(context, material, layout):
+    draw_layer_pointer_prop(context.object, layout, material, 'terrain_layer', 'Terrain')
+
+
+def draw_volume_props(context, material, layout):
+    draw_layer_pointer_prop(context.object, layout, material, 'color_layer', 'Color')
+    draw_layer_pointer_prop(context.object, layout, material, 'unknown_layer1', 'Unknown 1')
+    draw_layer_pointer_prop(context.object, layout, material, 'unknown_layer2', 'Unknown 2')
+    layout.separator()
+    layout.prop(material, 'density', text='Density')
+
+
+def draw_volumenoise_props(context, material, layout):
+    draw_layer_pointer_prop(context.object, layout, material, 'color_layer', 'Color')
+    draw_layer_pointer_prop(context.object, layout, material, 'noise1_layer', 'Noise 1')
+    draw_layer_pointer_prop(context.object, layout, material, 'noise2_layer', 'Noise 2')
+    layout.separator()
+    layout.prop(material, 'density', text='Density')
+    layout.prop(material, 'near_plane', text='Near Plane')
+    layout.prop(material, 'falloff', text='Falloff')
+    layout.prop(material, 'scroll_rate', text='Scroll Rate')
+    layout.separator()
+    layout.prop(material, 'translation', text='Translation')
+    layout.prop(material, 'rotation', text='Rotation')
+    layout.prop(material, 'scale', text='Scale')
+    layout.separator()
+    layout.prop(material, 'alpha_threshold', text='Alpha Threshold')
+    layout.prop(material, 'flag_draw_after_transparency', text='Draw After Transparency')
+
+
+def draw_creep_props(context, material, layout):
+    draw_layer_pointer_prop(context.object, layout, material, 'creep_layer', 'Creep')
+
+
+def draw_stb_props(context, material, layout):
+    draw_layer_pointer_prop(context.object, layout, material, 'diff_layer', 'Diffuse')
+    draw_layer_pointer_prop(context.object, layout, material, 'spec_layer', 'Specular')
+    draw_layer_pointer_prop(context.object, layout, material, 'norm_layer', 'Normal')
+
+
+def draw_lensflare_props(context, material, layout):
+    layout.label(text='Currently not supported')
+
+
+def draw_reflection_props(context, material, layout):
+    layout.label(text='Currently not supported')
+
+
+mat_type_dict = {
+    'm3_materials_standard': {'name': 'Standard', 'draw': draw_standard_props},
+    'm3_materials_displacement': {'name': 'Displacement', 'draw': draw_displacement_props},
+    'm3_materials_composite': {'name': 'Composite', 'draw': draw_composite_props},
+    'm3_materials_terrain': {'name': 'Terrain', 'draw': draw_terrain_props},
+    'm3_materials_volume': {'name': 'Volume', 'draw': draw_volume_props},
+    'm3_materials_volumenoise': {'name': 'Volume Noise', 'draw': draw_volumenoise_props},
+    'm3_materials_creep': {'name': 'Creep', 'draw': draw_creep_props},
+    'm3_materials_stb': {'name': 'Splat Terrain Bake', 'draw': draw_stb_props},
+    'm3_materials_lensflare': {'name': 'Lens Flare', 'draw': draw_lensflare_props},
+    'm3_materials_reflection': {'name': 'Reflection', 'draw': draw_reflection_props},
+}
+
+
 def draw_props(context, matref, layout):
     mat = m3_material_get(context.object, matref)
-    if matref.mat_type == 'm3_materials_standard':
-        draw_standard_props(context, mat, layout)
-    else:
-        pass  # TODO
+    col = layout.column()
+    col.alignment = 'RIGHT'
+    col.label(text='Material Type: ' + mat_type_dict[matref.mat_type]['name'])
+    mat_type_dict[matref.mat_type]['draw'](context, mat, layout)
 
 
 class Properties(shared.M3PropertyGroup):
@@ -302,12 +392,12 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
         col.template_list('UI_UL_list', 'm3_materialrefs', ob, 'm3_materialrefs', ob, 'm3_materialrefs_index', rows=rows)
         col = row.column()
         sub = col.column(align=True)
-        op = sub.operator('m3.material_add', icon='ADD', text='')
+        op = sub.operator('m3.material_add_popup', icon='ADD', text='')
         op = sub.operator('m3.material_remove', icon='REMOVE', text='')
         sub.separator()
         op = sub.operator('m3.material_duplicate', icon='DUPLICATE', text='')
 
-        if len(ob.m3_animations):
+        if len(ob.m3_materialrefs):
             sub.separator()
             op = sub.operator('m3.material_move', icon='TRIA_UP', text='')
             op.shift = -1
@@ -331,6 +421,7 @@ class M3MaterialLayerOpAdd(bpy.types.Operator):
     bl_idname = 'm3.material_layer_add'
     bl_label = 'New M3 Material Layer'
     bl_description = 'Create new M3 material layer'
+    bl_options = {'UNDO'}
 
     layer_name: bpy.props.StringProperty()
 
@@ -355,6 +446,7 @@ class M3MaterialLayerOpUnlink(bpy.types.Operator):
     bl_idname = 'm3.material_layer_unlink'
     bl_label = 'Unlink M3 Material Layer'
     bl_description = 'Unlinks the M3 material layer from this layer slot'
+    bl_options = {'UNDO'}
 
     layer_name: bpy.props.StringProperty()
 
@@ -371,6 +463,7 @@ class M3MaterialLayerOpSearch(bpy.types.Operator):
     bl_idname = 'm3.material_layer_search'
     bl_label = 'Search M3 Material Layer'
     bl_description = 'Search for and select M3 material layer'
+    bl_options = {'UNDO'}
     bl_property = 'enum'
 
     enum: bpy.props.EnumProperty(items=layer_enum)
@@ -378,7 +471,7 @@ class M3MaterialLayerOpSearch(bpy.types.Operator):
 
     def invoke(self, context, event):
         context.window_manager.invoke_search_popup(self)
-        return {'FINISHED'}
+        return {'RUNNING_MODAL'}
 
     def execute(self, context):
         ob = context.object
@@ -389,19 +482,47 @@ class M3MaterialLayerOpSearch(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class M3MaterialOpAddPopup(bpy.types.Operator):
+    bl_idname = 'm3.material_add_popup'
+    bl_label = 'New M3 Material'
+    bl_description = 'Create new M3 material'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    enum: bpy.props.EnumProperty(items=bl_enum.matref_type)
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
+
+    def draw(self, context):
+        layout = self.layout
+        layout.label(text='Material Type')
+        col = layout.column_flow(columns=2, align=True)
+        col.prop(self, 'enum', expand=True)
+        layout.separator()
+
+    def execute(self, context):
+        bpy.ops.m3.material_add('INVOKE_DEFAULT', mat_type=self.enum)
+        return {'FINISHED'}
+
+
 class M3MaterialOpAdd(bpy.types.Operator):
     bl_idname = 'm3.material_add'
     bl_label = 'New M3 Material'
     bl_description = 'Adds a new item to the collection'
+    bl_options = {'UNDO'}
+
+    mat_type: bpy.props.StringProperty()
 
     def invoke(self, context, event):
         matref = shared.m3_item_new(context.object.m3_materialrefs)
-        mat = shared.m3_item_new(context.object.m3_materials_standard)
+        mat = shared.m3_item_new(getattr(context.object, self.mat_type))
 
-        matref.mat_type = 'm3_materials_standard'
+        matref.mat_type = self.mat_type
         matref.mat_handle = mat.bl_handle
 
         mat.name = matref.name
+
+        shared.m3_msgbus_sub(mat, context, matref, 'name', 'name')
 
         context.object.m3_materialrefs_index = len(context.object.m3_materialrefs) - 1
 
@@ -412,6 +533,7 @@ class M3MaterialOpRemove(bpy.types.Operator):
     bl_idname = 'm3.material_remove'
     bl_label = 'Remove M3 Material'
     bl_description = 'Removes the active item from the collection'
+    bl_options = {'UNDO'}
 
     def invoke(self, context, event):
         ob = context.object
@@ -436,17 +558,19 @@ class M3MaterialOpMove(bpy.types.Operator):
     bl_idname = 'm3.material_move'
     bl_label = 'Move M3 Material'
     bl_description = 'Moves the active item up/down in the list'
+    bl_options = {'UNDO'}
 
     shift: bpy.props.IntProperty()
 
     def invoke(self, context, event):
-        matrefs = context.object.m3_materialrefs
+        ob = context.object
+        matrefs = ob.m3_materialrefs
 
-        if (self.index < len(collection) - self.shift and self.index >= -self.shift):
-            matrefs[self.index].bl_index += self.shift
-            matrefs[self.index + self.shift].bl_index -= self.shift
-            matrefs.move(self.index, self.index + self.shift)
-            context.object.m3_materialrefs_index += self.shift
+        if (ob.m3_materialrefs_index < len(matrefs) - self.shift and ob.m3_materialrefs_index >= -self.shift):
+            matrefs[ob.m3_materialrefs_index].bl_index += self.shift
+            matrefs[ob.m3_materialrefs_index + self.shift].bl_index -= self.shift
+            matrefs.move(ob.m3_materialrefs_index, ob.m3_materialrefs_index + self.shift)
+            ob.m3_materialrefs_index += self.shift
 
         return {'FINISHED'}
 
@@ -455,6 +579,7 @@ class M3MaterialOpDuplicate(bpy.types.Operator):
     bl_idname = 'm3.material_duplicate'
     bl_label = 'Duplicate M3 Material'
     bl_description = 'Duplicates the active item in the list'
+    bl_options = {'UNDO'}
 
     def invoke(self, context, event):
         matrefs = context.object.m3_materialrefs
@@ -483,8 +608,11 @@ classes = (
     VolumeNoiseProperties,
     CreepProperties,
     SplatTerrainBakeProperties,
+    LensFlareProperties,
+    ReflectionProperties,
     Properties,
     Panel,
+    M3MaterialOpAddPopup,
     M3MaterialOpAdd,
     M3MaterialOpRemove,
     M3MaterialOpMove,
