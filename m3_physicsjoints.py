@@ -26,24 +26,18 @@ def register_props():
     bpy.types.Object.m3_physicsjoints_index = bpy.props.IntProperty(options=set(), default=-1)
 
 
-def init_msgbus(ob, context):
-    for joint in ob.m3_physicsjoints:
-        shared.bone1_update_event(joint, context)
-        shared.bone2_update_event(joint, context)
-
-
 def draw_props(joint, layout):
     col = layout.column()
-    shared.draw_bone_prop(joint, bpy.context.object, col, 'bone1', 'Bone Joint Start')
 
-    if joint.bone1:
+    shared.draw_pointer_prop(bpy.context.object, col, 'data.bones', 'm3_physicsjoints[{}].bone1'.format(joint.bl_index), 'Bone Joint Start', 'BONE_DATA')
+    if shared.m3_pointer_get(bpy.context.object, 'data.bones', 'm3_physicsjoints[{}].bone1'.format(joint.bl_index)):
         col.prop(joint, 'location1', text='Location')
         col.prop(joint, 'rotation1', text='Rotation')
 
     col = layout.column()
-    shared.draw_bone_prop(joint, bpy.context.object, col, 'bone2', 'Bone Joint End')
 
-    if joint.bone2:
+    shared.draw_pointer_prop(bpy.context.object, col, 'data.bones', 'm3_physicsjoints[{}].bone2'.format(joint.bl_index), 'Bone Joint End', 'BONE_DATA')
+    if shared.m3_pointer_get(bpy.context.object, 'data.bones', 'm3_physicsjoints[{}].bone2'.format(joint.bl_index)):
         col.prop(joint, 'location2', text='Location')
         col.prop(joint, 'rotation2', text='Rotation')
 
@@ -72,10 +66,8 @@ def draw_props(joint, layout):
 
 
 class Properties(shared.M3PropertyGroup):
-    bone1: bpy.props.StringProperty(options=set(), update=shared.bone1_update_event)
-    bone1_handle: bpy.props.StringProperty(options=set())
-    bone2: bpy.props.StringProperty(options=set(), update=shared.bone2_update_event)
-    bone2_handle: bpy.props.StringProperty(options=set())
+    bone1: bpy.props.StringProperty(options=set())
+    bone2: bpy.props.StringProperty(options=set())
     location1: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3)
     location2: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3)
     rotation1: bpy.props.FloatVectorProperty(options=set(), subtype='EULER', size=3)

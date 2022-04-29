@@ -26,18 +26,16 @@ def register_props():
     bpy.types.Object.m3_rigidbodies_index = bpy.props.IntProperty(options=set(), default=-1, update=update_bone_shapes_option)
 
 
-def init_msgbus(ob, context):
-    for rigidbody in ob.m3_rigidbodies:
-        shared.bone_update_event(rigidbody, context)
-        trail_update_event(rigidbody, context)
-        for shape in rigidbody.shapes:
-            shared.bone_update_event(shape, context)
-
-
 def update_bone_shapes_option(self, context):
     if context.object.m3_options.auto_update_bone_shapes:
         if context.object.m3_options.bone_shapes != 'PHRB':
             context.object.m3_options.bone_shapes = 'PHRB'
+
+
+def bone_shape_update_event(self, context):
+    ob = context.object
+    bone = shared.m3_pointer_get(ob, 'data.bones', 'm3_rigidbodies[{}].bone'.format(ob.m3_rigidbodies_index))
+    shared.set_bone_shape(ob, bone)
 
 
 def draw_shape_props(shape, layout):
@@ -62,7 +60,10 @@ def draw_shape_props(shape, layout):
 
 def draw_props(rigidbody, layout):
 
-    shared.draw_collection_stack(layout, 'm3_rigidbodies[{}].shapes'.format(rigidbody.bl_index), 'Shape', draw_shape_props)
+    shared.draw_collection_stack(
+        layout, 'm3_rigidbodies[{}].shapes'.format(rigidbody.bl_index), 'Shape', draw_shape_props, use_name=False, can_duplicate=True,
+        ops=['m3.rigidbody_shape_add', 'm3.rigidbody_shape_remove', 'm3.collection_move', 'm3.rigidbody_shape_duplicate'],
+    )
 
     col = layout.column()
     col.prop(rigidbody, 'material', text='Physics Material')
@@ -79,6 +80,7 @@ def draw_props(rigidbody, layout):
         col.prop(rigidbody, 'world_forces', index=ii, text=val)
     col = layout.column_flow(align=True, columns=2)
     col.use_property_split = False
+    col.label(text='Flags:')
     col.prop(rigidbody, 'simulate_collision', text='Simulate On Collision')
     col.prop(rigidbody, 'ignore_local_bodies', text='Ignore Local Bodies')
     col.prop(rigidbody, 'always_exists', text='Always Exists')
@@ -89,12 +91,12 @@ def draw_props(rigidbody, layout):
 
 
 class ShapeProperties(shared.M3PropertyGroup):
-    shape: bpy.props.EnumProperty(options=set(), items=bl_enum.physics_shape, update=shared.bone_shape_update_event)
-    mesh: bpy.props.StringProperty(options=set(), update=shared.bone_shape_update_event)
-    size: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0, update=shared.bone_shape_update_event)
-    location: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, update=shared.bone_shape_update_event)
-    rotation: bpy.props.FloatVectorProperty(options=set(), subtype='EULER', unit='ROTATION', size=3, default=(0, 0, 0), update=shared.bone_shape_update_event)
-    scale: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0, default=(1, 1, 1), update=shared.bone_shape_update_event)
+    shape: bpy.props.EnumProperty(options=set(), items=bl_enum.physics_shape, update=bone_shape_update_event)
+    mesh: bpy.props.StringProperty(options=set(), update=bone_shape_update_event)
+    size: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0, default=(1, 1, 1), update=bone_shape_update_event)
+    location: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, update=bone_shape_update_event)
+    rotation: bpy.props.FloatVectorProperty(options=set(), subtype='EULER', unit='ROTATION', size=3, default=(0, 0, 0), update=bone_shape_update_event)
+    scale: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0, default=(1, 1, 1), update=bone_shape_update_event)
 
 
 class Properties(shared.M3BoneUserPropertyGroup):
@@ -127,8 +129,59 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
         shared.draw_collection_list(self.layout, 'm3_rigidbodies', draw_props)
 
 
+class M3ShapeOpAdd(shared.M3CollectionOpBase):
+    bl_idname = 'm3.rigidbody_shape_add'
+    bl_label = 'Add Collection Item'
+    bl_description = 'Adds a new item to the collection'
+
+    def invoke(self, context, event):
+        rigid_body = context.object.m3_rigidbodies[context.object.m3_rigidbodies_index]
+        shared.m3_item_new(rigid_body.shapes)
+        bone = shared.m3_pointer_get(context.object, 'data.bones', 'm3_rigidbodies[{}].bone'.format(context.object.m3_rigidbodies_index))
+        shared.set_bone_shape(context.object, bone)
+        return {'FINISHED'}
+
+
+class M3ShapeOpRemove(shared.M3CollectionOpBase):
+    bl_idname = 'm3.rigidbody_shape_remove'
+    bl_label = 'Remove Collection Item'
+    bl_description = 'Removes the active item from the collection'
+
+    def invoke(self, context, event):
+        shapes = context.object.m3_rigidbodies[context.object.m3_rigidbodies_index].shapes
+        shapes.remove(self.index)
+
+        for ii in range(self.index, len(shapes)):
+            shapes[ii].bl_index -= 1
+
+        bone = shared.m3_pointer_get(context.object, 'data.bones', 'm3_rigidbodies[{}].bone'.format(context.object.m3_rigidbodies_index))
+        shared.set_bone_shape(context.object, bone)
+
+        return {'FINISHED'}
+
+
+class M3ShapeOpDuplicate(shared.M3CollectionOpBase):
+    bl_idname = 'm3.rigidbody_shape_duplicate'
+    bl_label = 'Duplicate Collection Item'
+    bl_description = 'Duplicates the active item in the collection'
+
+    def invoke(self, context, event):
+        if self.index == -1:
+            return {'FINISHED'}
+
+        rigid_body = context.object.m3_rigidbodies[context.object.m3_rigidbodies_index]
+        shared.m3_item_duplicate(rigid_body.shapes, rigid_body.shapes[self.index])
+        bone = shared.m3_pointer_get(context.object, 'data.bones', 'm3_rigidbodies[{}].bone'.format(context.object.m3_rigidbodies_index))
+        shared.set_bone_shape(context.object, bone)
+
+        return {'FINISHED'}
+
+
 classes = (
     ShapeProperties,
     Properties,
     Panel,
+    M3ShapeOpAdd,
+    M3ShapeOpRemove,
+    M3ShapeOpDuplicate,
 )

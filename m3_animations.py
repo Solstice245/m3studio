@@ -28,7 +28,7 @@ def register_props():
 
 def init_msgbus(ob, context):
     for animation in ob.m3_animations:
-        action = bpy.actions.get(ob.name + '_' + animation.name)
+        action = animation.action
         for subgroup in animation.subgroups:
             for fcurve in action.fcurves:
                 for item in subgroup.data_paths:
@@ -139,7 +139,7 @@ def draw_props(anim, layout):
 
     shared.draw_collection_stack(
         layout=layout, collection_path='m3_animations[{}].subgroups'.format(anim.bl_index), label='Animation Subgroup',
-        draw_func=draw_subgroup_props, use_name=True, can_duplicate=False,
+        draw_func=draw_subgroup_props, use_name=True, can_duplicate=False
     )
 
 

@@ -26,14 +26,6 @@ def register_props():
     bpy.types.Object.m3_ribbons_index = bpy.props.IntProperty(options=set(), default=-1)
 
 
-def init_msgbus(ob, context):
-    for ribbon in ob.m3_ribbons:
-        shared.bone_update_event(ribbon, context)
-        trail_update_event(ribbon, context)
-        for spline in ribbon.splines:
-            shared.bone_update_event(spline, context)
-
-
 def draw_spline_props(spline, layout):
     col = layout.column(align=True)
     col.prop(spline, 'speed', text='Speed')

@@ -25,11 +25,6 @@ def register_props():
     bpy.types.Object.m3_projections_index = bpy.props.IntProperty(options=set(), default=-1)
 
 
-def init_msgbus(arm, context):
-    for projection in arm.m3_projections:
-        shared.bone_update_event(projection, context)
-
-
 def draw_props(projection, layout):
     col = layout.column()
     col.prop(projection, 'material', text='Material')

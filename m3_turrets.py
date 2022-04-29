@@ -25,12 +25,6 @@ def register_props():
     bpy.types.Object.m3_turrets_index = bpy.props.IntProperty(options=set(), default=-1)
 
 
-def init_msgbus(ob, context):
-    for turret in ob.m3_turrets:
-        for part in turret.parts:
-            shared.bone_update_event(part, context)
-
-
 def draw_part_props(part, layout):
     col = layout.column()
     col.prop(part, 'group', text='Part Group')

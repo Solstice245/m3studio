@@ -26,12 +26,6 @@ def register_props():
     bpy.types.Object.m3_hittests_index = bpy.props.IntProperty(options=set(), default=-1, update=update_bone_shapes_option)
 
 
-def init_msgbus(ob, context):
-    shared.bone_update_event(ob.m3_tighthittest)
-    for hittest in ob.m3_hittests:
-        shared.bone_update_event(hittest, context)
-
-
 def update_bone_shapes_option(self, context):
     if context.object.m3_options.auto_update_bone_shapes:
         if context.object.m3_options.bone_shapes != 'FTHT':
@@ -63,7 +57,7 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
         layout = self.layout
         layout.use_property_split = True
         layout.label(text='Tight Hit Test:')
-        shared.draw_bone_prop(context.object.m3_tighthittest, context.object, layout)
+        shared.draw_pointer_prop(bpy.context.object, layout, 'data.bones', 'm3_tighthittest.bone', 'Bone', 'BONE_DATA')
         draw_props(context.object.m3_tighthittest, layout)
         layout.label(text='Fuzzy Hit Tests:')
         shared.draw_collection_list(layout, 'm3_hittests', draw_props)

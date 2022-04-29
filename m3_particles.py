@@ -26,14 +26,6 @@ def register_props():
     bpy.types.Object.m3_particles_index = bpy.props.IntProperty(options=set(), default=-1, update=update_bone_shapes_option)
 
 
-def init_msgbus(arm, context):
-    for particle in arm.m3_particles:
-        shared.bone_update_event(particle, context)
-        trail_update_event(particle, context)
-        for copy in particle.copies:
-            shared.bone_update_event(copy, context)
-
-
 def update_bone_shapes_option(self, context):
     if context.object.m3_options.auto_update_bone_shapes:
         if context.object.m3_options.bone_shapes != 'PAR_':
@@ -41,25 +33,10 @@ def update_bone_shapes_option(self, context):
 
 
 def bone_shape_update_event(self, context):
-    bone = context.object.data.bones.get(self.bone)
-    shared.set_bone_shape(context.object, bone)
+    shared.set_bone_shape(context.object, m3_pointer_get(context.object, 'data.bones', self.bone, True))
 
     for copy in self.copies:
-        copy_bone = context.object.data.bones.get(copy.bone)
-        shared.set_bone_shape(context.object, copy_bone)
-
-
-def trail_update_event(self, context):
-    if not self.bl_update:
-        return
-
-    bpy.msgbus.clear_by_owner(self.bl_handle + 'trail_particle_name')
-    m3_particle = None
-    for item in context.object.m3_particles:
-        if item.name == self.trail_particle_name:
-            m3_particle = item
-            break
-    shared.m3_msgbus_sub(self, context, m3_particle, 'name', 'trail_particle_name')
+        shared.set_bone_shape(context.object, m3_pointer_get(context.object, 'data.bones', copy.bone, True))
 
 
 def draw_copy_props(copy, layout):
@@ -228,9 +205,10 @@ def draw_props(particle, layout):
     sub = col.column(align=True)
     sub.prop(particle, 'phase1_length', text='Phase 1 Length')
     col = layout.column(align=True)
-    col.prop_search(particle, 'trail_particle_name', bpy.context.object, 'm3_particles', text='Trailing Particle Name')
-    col.prop(particle, 'trail_particle_chance', text='Chance')
-    col.prop(particle, 'trail_particle_rate', text='Rate')
+    col.separator()
+    shared.draw_pointer_prop(bpy.context.object, col, 'm3_particles', 'm3_particles[%d].trail_particle' % particle.bl_index, 'Trailing Particle', 'LINKED')
+    col.prop(particle, 'trail_chance', text='Chance')
+    col.prop(particle, 'trail_rate', text='Rate')
     col = layout.column()
     col.use_property_split = False
     col.prop(particle, 'local_forces', text='Local Force Channels')
@@ -334,9 +312,9 @@ class Properties(shared.M3BoneUserPropertyGroup):
     noise_frequency: bpy.props.FloatProperty(options=set())
     noise_cohesion: bpy.props.FloatProperty(options=set())
     noise_edge: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0, max=0.5)
-    trail_particle_name: bpy.props.StringProperty(options=set(), update=trail_update_event)
-    trail_particle_chance: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0, max=1)
-    trail_particle_rate: bpy.props.FloatProperty(name='Particle Trail Rate', default=10)
+    trail_particle: bpy.props.StringProperty(options=set())
+    trail_chance: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0, max=1)
+    trail_rate: bpy.props.FloatProperty(name='Particle Trail Rate', default=10)
     flipbook_cols: bpy.props.IntProperty(options=set(), min=0)
     flipbook_rows: bpy.props.IntProperty(options=set(), min=0)
     flipbook_col_width: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0, max=1)

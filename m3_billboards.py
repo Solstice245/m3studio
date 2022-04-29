@@ -26,11 +26,6 @@ def register_props():
     bpy.types.Object.m3_billboards_index = bpy.props.IntProperty(options=set(), default=-1)
 
 
-def init_msgbus(arm, context):
-    for billboard in arm.m3_billboards:
-        shared.bone_update_event(billboard, context)
-
-
 def draw_props(billboard, layout):
     layout.prop(billboard, 'billboard_type', text='Type')
     layout.prop(billboard, 'look', text='Look At Camera Center')

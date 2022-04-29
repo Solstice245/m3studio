@@ -25,11 +25,6 @@ def register_props():
     bpy.types.Object.m3_warps_index = bpy.props.IntProperty(options=set(), default=-1, update=update_bone_shapes_option)
 
 
-def init_msgbus(ob, context):
-    for warp in ob.m3_warps:
-        shared.bone_update_event(warp, context)
-
-
 def update_bone_shapes_option(self, context):
     if context.object.m3_options.auto_update_bone_shapes:
         if context.object.m3_options.bone_shapes != 'WRP_':
