@@ -1259,7 +1259,14 @@
             <field name="numberOfBoneWeightPairsPerVertex" type="uint8"/>
             <field name="unknown4" type="uint8" default-value="1"/>
             <field name="rootbone" type="uint16"/>
-            <field name="unknown5" type="uint32" since-version="4"/>
+            <field name="flags" type="uint32" since-version="4">
+                <bits>
+                    <bit mask='0x1' name='hidden'/>
+                    <bit mask='0x2' name='placeholder'/>
+                    <bit mask='0x4' name='cloth_related1'/>
+                    <bit mask='0x8' name='cloth_related2'/>
+                </bits>
+            </field>
             <field name="uvwMult" type="float" default-value="16.0" since-version="5"/>
             <field name="uvwOffset" type="float" default-value="0.0" since-version="5"/>
         </fields>
@@ -2224,8 +2231,8 @@
         <fields>
             <field name="unknown1" type="uint32"/>
             <field name="unknown2" type="uint32"/>
-            <field name="unknown3" type="Reference" refTo="U64_"/>
-            <field name="unknown4" type="Reference" refTo="U32_"/>
+            <field name="unknown3" type="Reference" refTo="U64_"/> <!-- possibly linking together vertices which influence one another. also suspect it is intended to be read as 4 int16 values -->
+            <field name="unknown4" type="Reference" refTo="U32_"/> <!-- seems to be 4 8-bit values that add up to ~255 -->
         </fields>
     </structure>
 
@@ -2236,15 +2243,16 @@
             <version number="4" size="192"/>
         </versions>
         <fields>
-            <field name="unknown1" type="uint32"/>
+            <field name="region_index" type="uint32"/>
             <field name="unknown2" type="uint32"/>
-            <field name="bone_reference_index" type="Reference" refTo="U16_"/>
-            <field name="unknown3" type="Reference" refTo="U8__"/> <!-- values are either 0x0 or 0x1, likely a vertex flag of some kind -->
-            <field name="vertex_bones" type="Reference" refTo="U32_"/> <!-- 2 bits each used to reference up to 4 values from bone_reference_index -->
+            <field name="bone_reference_index" type="Reference" refTo="U16_"/> <!-- list of bone indices referenced by vertex_bones or by PHCC bone indices -->
+            <field name="vertex_simulated" type="Reference" refTo="U8__"/> <!-- 0x0 for static vertex, 0x1 for simulated vertex -->
+            <field name="vertex_bones" type="Reference" refTo="U32_"/> <!-- 2 bits each used to reference up to 4 bone indices -->
             <field name="vertex_weights" type="Reference" refTo="U32_"/> <!-- 2 bits each used to define the weight given to the bones referenced by vertex_bones -->
             <field name="cloth_constrainsts" type="Reference" refTo="PHCC"/>
             <field name="unknown4" type="Reference" refTo="PHAC"/>
-            <field name="unknown5" type="VEC3"/>
+            <field name="density" type='float'/>
+            <field name="unknown5" type="VEC2"/>
             <field name="unknown6" type="VEC3"/>
             <field name="unknown7" type="VEC3"/>
             <field name="unknown8" type="VEC3"/>
