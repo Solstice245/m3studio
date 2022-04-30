@@ -1263,8 +1263,8 @@
                 <bits>
                     <bit mask='0x1' name='hidden'/>
                     <bit mask='0x2' name='placeholder'/>
-                    <bit mask='0x4' name='cloth_related1'/>
-                    <bit mask='0x8' name='cloth_related2'/>
+                    <bit mask='0x4' name='cloth_simulator'/>
+                    <bit mask='0x8' name='cloth_influenced'/>
                 </bits>
             </field>
             <field name="uvwMult" type="float" default-value="16.0" since-version="5"/>
@@ -2229,10 +2229,10 @@
             <version number="0" size="32"/>
         </versions>
         <fields>
-            <field name="unknown1" type="uint32"/>
-            <field name="unknown2" type="uint32"/>
-            <field name="unknown3" type="Reference" refTo="U64_"/> <!-- possibly linking together vertices which influence one another. also suspect it is intended to be read as 4 int16 values -->
-            <field name="unknown4" type="Reference" refTo="U32_"/> <!-- seems to be 4 8-bit values that add up to ~255 -->
+            <field name="simulation_region_index" type="uint32"/>
+            <field name="influenced_region_index" type="uint32"/>
+            <field name="simulation_vertices" type="Reference" refTo="U64_"/> <!-- possibly linking together vertices which influence one another. also suspect it is intended to be read as 4 int16 values -->
+            <field name="simulation_weights" type="Reference" refTo="U32_"/> <!-- assigns influence of simulation_region vertices on influenced_region vertices with 4 single byte values, one for each vertice index in simulation_vertices -->
         </fields>
     </structure>
 
@@ -2243,21 +2243,40 @@
             <version number="4" size="192"/>
         </versions>
         <fields>
-            <field name="region_index" type="uint32"/>
-            <field name="unknown2" type="uint32"/>
-            <field name="bone_reference_index" type="Reference" refTo="U16_"/> <!-- list of bone indices referenced by vertex_bones or by PHCC bone indices -->
+            <field name="influenced_region_index" type="uint32"/>
+            <field name="unknown0" type="uint32"/>
+            <field name="skin_bones" type="Reference" refTo="U16_"/> <!-- list of bone indices referenced by vertex_bones or by PHCC bone indices -->
             <field name="vertex_simulated" type="Reference" refTo="U8__"/> <!-- 0x0 for static vertex, 0x1 for simulated vertex -->
-            <field name="vertex_bones" type="Reference" refTo="U32_"/> <!-- 2 bits each used to reference up to 4 bone indices -->
-            <field name="vertex_weights" type="Reference" refTo="U32_"/> <!-- 2 bits each used to define the weight given to the bones referenced by vertex_bones -->
+            <field name="vertex_bones" type="Reference" refTo="U32_"/> <!-- 2 bytes each used to reference up to 4 bone indices -->
+            <field name="vertex_weights" type="Reference" refTo="U32_"/> <!-- 2 bytes each used to define the weight given to the bones referenced by vertex_bones -->
             <field name="cloth_constrainsts" type="Reference" refTo="PHCC"/>
-            <field name="unknown4" type="Reference" refTo="PHAC"/>
-            <field name="density" type='float'/>
-            <field name="unknown5" type="VEC2"/>
-            <field name="unknown6" type="VEC3"/>
-            <field name="unknown7" type="VEC3"/>
-            <field name="unknown8" type="VEC3"/>
-
-            <field name="unknown71538f14" type="Matrix44" since-version="4"/> <!-- Not likely an actual matrix, this type is simply being used for brevity -->
+            <field name="influence_map" type="Reference" refTo="PHAC"/>
+            <field name="density" type="float"/>
+            <field name="tracking" type="float"/>
+            <field name="stiffness_stretching" type="float"/>
+            <field name="stiffness_horizontal" type="float"/>
+            <field name="stifness_blending" type="float"/>
+            <field name="damping" type="float"/>
+            <field name="friction" type="float"/>
+            <field name="gravity" type="float"/>
+            <field name="explosion_scale" type="float"/>
+            <field name="wind_scale" type="float"/>
+            <field name="shear_stiffness" type="float"/>
+            <field name="drag_factor" type="float"/>
+            <field name="lift_factor" type="float"/>
+            <field name="sphere_attachment_stiffness" type="float"/>
+            <field name="unknown1" type="uint32" since-version="4"/>
+            <field name="unknown2" type="uint32" since-version="4"/>
+            <field name="unknown3" type="uint32" since-version="4"/> <!-- weird number, could actually be single byte values -->
+            <field name="unknown4" type="uint32" since-version="4" default-value="1"/>
+            <field name="unknown5" type="uint32" since-version="4" default-value="1"/>
+            <field name="unknown6" type="int32" since-version="4" default-value="-1"/>
+            <field name="use_skin_collision" type="uint32" since-version="4"/>
+            <field name="skin_offset" type="float" since-version="4"/>
+            <field name="skin_exponent" type="float" since-version="4"/>
+            <field name="skin_stiffness" type="float" since-version="4"/>
+            <field name="unknown7" type="uint32" since-version="4"/>
+            <field name="local_wind" type="VEC3" since-version="4"/>
         </fields>
     </structure>
 
