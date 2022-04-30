@@ -1786,20 +1786,20 @@
             <version number="2" size="56"/>
         </versions>
         <fields>
-           <field name="unknown07c51b5b" type="uint32" default-value="0"/>
-           <field name="unknownde754918" type="float" default-value="1.0"/>
-           <field name="unknownd74895eb" type="float" default-value="3200.0"/>
-           <field name="unknown5d722d08" type="float" default-value="500.0"/>
-           <field name="unknownfc180384" type="float" default-value="1200.0"/>
-           <field name="unknown713b7b48" type="float" default-value="150.0"/>
+           <field name="uv_index" type="uint32" default-value="0"/>
+           <field name="distance_factor" type="float" default-value="1.0"/>
+           <field name="width" type="float" default-value="3200.0"/>
+           <field name="height" type="float" default-value="500.0"/>
+           <field name="width_falloff" type="float" default-value="1200.0"/>
+           <field name="height_falloff" type="float" default-value="150.0"/>
            <field name="unk00" type="uint32" default-value="0"/>
            <field name="unk01" type="uint32" default-value="0"/>
-           <field name="unk02" type="uint32" default-value="0"/>
-           <field name="unknown1e6f06e7" type="float" default-value="1.0"/>
-           <field name="unknown402f350d" type="uint32" default-value="0x80ffffff"/>
-           <field name="unk03" type="uint32" default-value="0"/>
-           <field name="unk04" type="float" default-value="0.0"/>
-           <field name="unk05" type="float" default-value="0.0"/>
+           <field name="falloff_threshold" type="float" default-value="0"/>
+           <field name="falloff_rate" type="float" default-value="1.0"/>
+           <field name="color" type="COL" default-value="0x80ffffff"/>
+           <field name="flag_face_source" type="uint32" default-value="0"/>
+           <field name="unk02" type="float" default-value="0.0"/>
+           <field name="unk03" type="float" default-value="0.0"/>
         </fields>
     </structure>
 
@@ -1813,26 +1813,26 @@
         </versions>
         <fields>
             <field name="name" type="Reference" refTo="CHAR"/>
-            <field name="unknownLayer1" type="Reference" refTo="LAYR"/>
-            <field name="unknownLayer2" type="Reference" refTo="LAYR"/>
-            <field name="unkRefToLFSB" type="Reference" refTo="LFSB"/>
-            <field name="unk00" type="uint32" default-value="0" since-version="3"/>
-            <field name="unk01" type="uint32" default-value="0" since-version="3"/>
-            <field name="unk02" type="float" default-value="0.0" since-version="3"/>
-            <field name="unkRefToCHAR" type="Reference" refTo="CHAR" since-version="3"/>
-            <field name="unknown7f492c0a" type="uint32" defualt-value="0x40000000" till-version="2"/>
-            <field name="unkFloatAnim01" type="FloatAnimationReference" since-version="3"/>
-            <!-- version 2 may have more fields with version 3 in common -->
+            <field name="color_layer" type="Reference" refTo="LAYR"/>
+            <field name="unknown_layer" type="Reference" refTo="LAYR"/>
+            <field name="starbursts" type="Reference" refTo="LFSB"/>
+            <field name="unknown7f492c0a" type="uint32" default-value="0x40000000" till-version="2"/>
+            <field name="unk00" type="uint32" till-version="2"/>
+            <field name="unk01" type="uint32" till-version="2"/>
+            <field name="unk02" type="uint32" till-version="2"/>
             <field name="unk03" type="uint32" till-version="2"/>
             <field name="unk04" type="uint32" till-version="2"/>
             <field name="unk05" type="uint32" till-version="2"/>
             <field name="unk06" type="uint32" till-version="2"/>
-            <field name="unk07" type="uint32" till-version="2"/>
-            <field name="unk08" type="uint32" till-version="2"/>
-            <field name="unk09" type="uint32" till-version="2"/>
-			<field name="unkFloatAnim02" type="UInt32AnimationReference" since-version="3"/>
-			<field name="unkFloatAnim03" type="FloatAnimationReference" since-version="3"/>
-			<field name="unkFloatAnim04" type="FloatAnimationReference" since-version="3"/>
+            <!-- version 2 may have more fields with version 3 in common -->
+            <field name="uv_columns" type="uint32" default-value="0" since-version="3"/>
+            <field name="uv_rows" type="uint32" default-value="0" since-version="3"/>
+            <field name="unk07" type="float" default-value="0.0" since-version="3"/>
+            <field name="unknown_ref_char" type="Reference" refTo="CHAR" since-version="3"/>
+            <field name="intensity" type="FloatAnimationReference" since-version="3"/>
+            <field name="color" type="ColorAnimationReference" since-version="3"/>
+            <field name="intensity2" type="FloatAnimationReference" since-version="3"/>
+            <field name="scale" type="FloatAnimationReference" since-version="3"/>
         </fields>
     </structure>
 
