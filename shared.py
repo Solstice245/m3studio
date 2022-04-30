@@ -638,7 +638,7 @@ def set_bone_shape(ob, bone):
 
     elif ob.m3_options.bone_shapes == 'WRP_':
         for warp in ob.m3_warps:
-            add_mesh_data(warp.bone, sphere(warp.radius))
+            add_mesh_data(warp.bone, mesh_gen.sphere(warp.radius))
 
     if pose_bone:
 

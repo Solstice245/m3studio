@@ -32,8 +32,14 @@ def register_props():
     bpy.types.Object.m3_materials_volumenoise = bpy.props.CollectionProperty(type=VolumeNoiseProperties)
     bpy.types.Object.m3_materials_creep = bpy.props.CollectionProperty(type=CreepProperties)
     bpy.types.Object.m3_materials_stb = bpy.props.CollectionProperty(type=SplatTerrainBakeProperties)
+    bpy.types.Object.m3_materials_reflection = bpy.props.CollectionProperty(type=ReflectionProperties)
     bpy.types.Object.m3_materials_lensflare = bpy.props.CollectionProperty(type=LensFlareProperties)
-    bpy.types.Object.m3_materials_reflections = bpy.props.CollectionProperty(type=ReflectionProperties)
+
+
+def init_msgbus(ob, context):
+    for matref in ob.m3_materialrefs:
+        mat = m3_material_get(ob, matref)
+        shared.m3_msgbus_sub(mat, context, matref, 'name', 'name')
 
 
 class StandardProperties(shared.M3PropertyGroup):
@@ -153,12 +159,45 @@ class SplatTerrainBakeProperties(shared.M3PropertyGroup):
     spec_layer: bpy.props.StringProperty(options=set())
 
 
-class LensFlareProperties(shared.M3PropertyGroup):
-    pass
-
-
 class ReflectionProperties(shared.M3PropertyGroup):
-    pass
+    norm_layer: bpy.props.StringProperty(options=set())
+    strength_layer: bpy.props.StringProperty(options=set())
+    blur_layer: bpy.props.StringProperty(options=set())
+    blur_angle: bpy.props.FloatProperty(name='Blur Angle')
+    blur_distance: bpy.props.FloatProperty(name='Blur Distance', default=2)
+    reflection_offset: bpy.props.FloatProperty(name='Reflection Offset')
+    reflection_strength: bpy.props.FloatProperty(name='Reflection Strength', default=1)
+    displacement_strength: bpy.props.FloatProperty(name='Displacement Strength', default=1)
+    flag_normal: bpy.props.BoolProperty(options=set())
+    flag_strength: bpy.props.BoolProperty(options=set())
+    flag_blur: bpy.props.BoolProperty(options=set())
+    flag_blur_mask: bpy.props.BoolProperty(options=set())
+    flag_render_transparent_pass: bpy.props.BoolProperty(options=set())
+
+
+class LensFlareStarburstProperties(shared.M3PropertyGroup):
+    uv_index: bpy.props.IntProperty(options=set(), min=0)
+    distance_factor: bpy.props.FloatProperty(options=set(), default=1)
+    width: bpy.props.FloatProperty(options=set(), min=0, default=500)
+    height: bpy.props.FloatProperty(options=set(), min=0, default=100)
+    width_falloff: bpy.props.FloatProperty(options=set(), min=0, default=750)
+    height_falloff: bpy.props.FloatProperty(options=set(), min=0, default=150)
+    falloff_threshold: bpy.props.FloatProperty(options=set(), min=0)
+    falloff_rate: bpy.props.FloatProperty(options=set(), min=0, default=1)
+    color: bpy.props.FloatVectorProperty(options=set(), subtype='COLOR', size=4, min=0, max=1, default=(1, 1, 1, 1))
+    flag_face_source: bpy.props.BoolProperty(options=set())
+
+
+class LensFlareProperties(shared.M3PropertyGroup):
+    color_layer: bpy.props.StringProperty(options=set())
+    unknown_layer: bpy.props.StringProperty(options=set())
+    starbursts: bpy.props.CollectionProperty(type=LensFlareStarburstProperties)
+    uv_columns: bpy.props.IntProperty(options=set(), min=0)
+    uv_rows: bpy.props.IntProperty(options=set(), min=0)
+    intensity: bpy.props.FloatProperty(name='Intensity', min=0)
+    intensity2: bpy.props.FloatProperty(name='Intensity 2', min=0)
+    uniform_scale: bpy.props.FloatProperty(name='Uniform Scale', min=0, default=1)
+    color: bpy.props.FloatVectorProperty(name='Color', subtype='COLOR', size=4, min=0, max=1, default=(1, 1, 1, 1))
 
 
 def m3_material_get(ob, matref):
@@ -342,12 +381,65 @@ def draw_stb_props(context, material, layout):
     draw_layer_pointer_prop(context.object, layout, material, 'norm_layer', 'Normal')
 
 
-def draw_lensflare_props(context, material, layout):
-    layout.label(text='Currently not supported')
-
-
 def draw_reflection_props(context, material, layout):
-    layout.label(text='Currently not supported')
+    draw_layer_pointer_prop(context.object, layout, material, 'norm_layer', 'Normal')
+    draw_layer_pointer_prop(context.object, layout, material, 'norm_layer', 'Strength')
+    draw_layer_pointer_prop(context.object, layout, material, 'norm_layer', 'Blur')
+    layout.separator()
+    layout.prop(material, 'reflection_offset', text='Reflection Offset')
+    layout.prop(material, 'reflection_strength', text='Reflection Strength')
+    layout.prop(material, 'displacement_strength', text='Displacement Strength')
+    layout.separator()
+    layout.prop(material, 'blur_angle', text='Blur Angle')
+    layout.prop(material, 'blur_distance', text='Blur Distance')
+    layout.separator()
+    col = layout.column_flow(columns=2)
+    col.use_property_split = False
+    col.prop(material, 'flag_normal', text='Use Normal')
+    col.prop(material, 'flag_strength', text='Use Strength')
+    col.prop(material, 'flag_blur', text='Use Blur')
+    col.prop(material, 'flag_blur_mask', text='Use Blur Mask')
+    col = layout.column()
+    col.use_property_split = False
+    col.alignment = 'LEFT'
+    col.prop(material, 'flag_render_transparent_pass', text='Render On Trasparent Pass')
+
+
+def draw_lensflare_starburst_props(starburst, layout):
+    layout.prop(starburst, 'uv_index', text='UV Index')
+    layout.separator()
+    layout.prop(starburst, 'distance_factor', text='Distance Factor')
+    layout.separator()
+    layout.prop(starburst, 'width', text='Width')
+    layout.prop(starburst, 'height', text='Height')
+    layout.separator()
+    layout.prop(starburst, 'width_falloff', text='Fallof Width')
+    layout.prop(starburst, 'height_falloff', text='Fallof Height')
+    layout.separator()
+    layout.prop(starburst, 'falloff_threshold', text='Falloff Threshold')
+    layout.prop(starburst, 'falloff_rate', text='Falloff Rate')
+    layout.separator()
+    layout.prop(starburst, 'color', text='Tint Color')
+    layout.separator()
+    layout.prop(starburst, 'flag_face_source', text='Face Source')
+
+
+def draw_lensflare_props(context, material, layout):
+    draw_layer_pointer_prop(context.object, layout, material, 'color_layer', 'Color')
+    draw_layer_pointer_prop(context.object, layout, material, 'unknown_layer', 'Unknown')
+    layout.separator()
+    col = layout.column(align=True)
+    col.prop(material, 'uv_columns', text='UV Columns')
+    col.prop(material, 'uv_rows', text='Rows')
+    layout.separator()
+    layout.prop(material, 'intensity', text='Intensity')
+    layout.prop(material, 'intensity2', text='Intensity 2')
+    layout.separator()
+    layout.prop(material, 'uniform_scale', text='Uniform Scale')
+    layout.separator()
+    layout.prop(material, 'color', text='Tint Color')
+    layout.separator()
+    shared.draw_collection_stack(layout, 'm3_materials_lensflare[{}].starbursts'.format(material.bl_index), 'Starburst', draw_lensflare_starburst_props)
 
 
 mat_type_dict = {
@@ -359,8 +451,8 @@ mat_type_dict = {
     'm3_materials_volumenoise': {'name': 'Volume Noise', 'draw': draw_volumenoise_props},
     'm3_materials_creep': {'name': 'Creep', 'draw': draw_creep_props},
     'm3_materials_stb': {'name': 'Splat Terrain Bake', 'draw': draw_stb_props},
-    'm3_materials_lensflare': {'name': 'Lens Flare', 'draw': draw_lensflare_props},
     'm3_materials_reflection': {'name': 'Reflection', 'draw': draw_reflection_props},
+    'm3_materials_lensflare': {'name': 'Lens Flare', 'draw': draw_lensflare_props},
 }
 
 
@@ -608,8 +700,9 @@ classes = (
     VolumeNoiseProperties,
     CreepProperties,
     SplatTerrainBakeProperties,
-    LensFlareProperties,
     ReflectionProperties,
+    LensFlareStarburstProperties,
+    LensFlareProperties,
     Properties,
     Panel,
     M3MaterialOpAddPopup,

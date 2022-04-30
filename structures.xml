@@ -1832,7 +1832,7 @@
             <field name="intensity" type="FloatAnimationReference" since-version="3"/>
             <field name="color" type="ColorAnimationReference" since-version="3"/>
             <field name="intensity2" type="FloatAnimationReference" since-version="3"/>
-            <field name="scale" type="FloatAnimationReference" since-version="3"/>
+            <field name="uniform_scale" type="FloatAnimationReference" since-version="3"/>
         </fields>
     </structure>
 

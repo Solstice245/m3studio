@@ -286,8 +286,8 @@ matref_type = [
     ('m3_materials_volume', 'Volume', 'Used to draw volumetric shapes'),
     ('m3_materials_volumenoise', 'Volume Noise', 'Used to draw volumetric shapes. Has additional functionality compared to the Volume material type'),
     ('m3_materials_stb', 'Splat Terrain Bake', 'Used typically for static shapes drawn over terrain'),
-    ('m3_materials_lensflare', 'Lens Flare', 'Used for lens flare effects. Currently not supported'),
     ('m3_materials_reflection', 'Reflection', 'Used for special reflection effects. Currently not supported'),
+    ('m3_materials_lensflare', 'Lens Flare', 'Used for lens flare effects. Currently not supported'),
 ]
 
 mat_blend = [
