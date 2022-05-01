@@ -2869,29 +2869,29 @@
             <version number="30" size="868"/>
         </versions>
         <fields>
-            <field name="modelName" type="Reference" refTo="CHAR"/>
+            <field name="model_name" type="Reference" refTo="CHAR"/>
             <field name="flags" type="uint32" default-value="0x80d53">
                 <bits>
                     <bit mask="0x100000" name="hasMesh"/>
                 </bits>
             </field>
             <field name="sequences" type="Reference" refTo="SEQS" />
-            <field name="sequenceTransformationCollections" type="Reference" refTo="STC_"/>
-            <field name="sequenceTransformationGroups" type="Reference" refTo="STG_"/>
-            <field name="unknownRefBeta01" type="Reference"/>
+            <field name="sequence_transformation_collections" type="Reference" refTo="STC_"/>
+            <field name="sequence_transformation_groups" type="Reference" refTo="STG_"/>
+            <field name="unknown_ref_beta0" type="Reference"/>
             <field name="unknown03" type="uint32" expected-value="0"/>
             <field name="sts" type="Reference" refTo="STS_"/>
             <field name="bones"  type="Reference" refTo="BONE"/>
-            <field name="numberOfBonesToCheckForSkin" type="uint32"/>
-            <field name="vFlags" type="uint32" default-value="0x180007d" >
+            <field name="skin_bone_count" type="uint32"/>
+            <field name="vertex_flags" type="uint32" default-value="0x180007d" >
                 <bits>
-                    <bit mask="0x200" name="hasVertexColors"/>
-                    <bit mask="0x20000" name="hasVertices"/>
-                    <bit mask="0x40000" name="useUVChannel1"/> <!-- 1st UV coordinate -->
-                    <bit mask="0x80000" name="useUVChannel2"/> <!-- 2nd UV coordinate -->
-                    <bit mask="0x100000" name="useUVChannel3"/> <!-- 3th UV coordinate -->
-                    <bit mask="0x100000" name="useUVChannel4"/> <!-- 4th UV coordinate -->
-                    <bit mask="0x40000000" name="useUVChannel5"/> <!-- 5th UV coordinate -->
+                    <bit mask="0x200" name="has_vertex_colors"/>
+                    <bit mask="0x20000" name="has_vertices"/>
+                    <bit mask="0x40000" name="use_uv_channel0"/> <!-- 1st UV coordinate -->
+                    <bit mask="0x80000" name="use_uv_channel1"/> <!-- 2nd UV coordinate -->
+                    <bit mask="0x100000" name="use_uv_channel2"/> <!-- 3th UV coordinate -->
+                    <bit mask="0x100000" name="use_uv_channel3"/> <!-- 4th UV coordinate -->
+                    <bit mask="0x40000000" name="use_uv_channel4"/> <!-- 5th UV coordinate -->
                     <!--
                          UV flags aren't always set in order, for instance 0x41820261 has two UVs
                          - does it affect the model in some way?
@@ -2901,63 +2901,63 @@
             </field>
             <field name="vertices" type="Reference" refTo="U8__"/>
             <field name="divisions" type="Reference" refTo="DIV_"/>
-            <field name="boneLookup" type="Reference" refTo="U16_"/>
+            <field name="bone_lookup" type="Reference" refTo="U16_"/>
             <field name="boundings" type="BNDS"/>
-            <field name="maybeBoundingsFlags" type="uint32" expected-value="0"/>
-            <field name="unknownRefBeta02" type="Reference"/>
-            <field name="unknownRefBeta03" type="Reference"/>
-            <field name="unknownRefBeta04" type="Reference"/>
+            <field name="maybe_boundings_flags" type="uint32" expected-value="0"/>
+            <field name="unknown_ref_beta1" type="Reference"/>
+            <field name="unknown_ref_beta2" type="Reference"/>
+            <field name="unknown_ref_beta3" type="Reference"/>
             <field name="unknown14" type="uint32" expected-value="0"/>
             <field name="unknown15" type="uint32" expected-value="0"/>
             <field name="unknown16" type="uint32" default-value="0"/>
             <field name="unknown17" type="uint32" expected-value="0"/>
             <field name="unknown18" type="uint32" expected-value="0"/>
             <field name="unknown19" type="uint32" default-value="0"/>
-            <field name="attachmentPoints" type="Reference" refTo="ATT_"/>
-            <field name="attachmentPointAddons" type="Reference" refTo="U16_"/>
+            <field name="attachment_points" type="Reference" refTo="ATT_"/>
+            <field name="attachment_point_addons" type="Reference" refTo="U16_"/>
             <field name="lights" type="Reference" refTo="LITE"/>
-            <field name="shbxData" type="Reference" refTo="SHBX" since-version="21"/>
+            <field name="shadow_boxes" type="Reference" refTo="SHBX" since-version="21"/>
             <field name="cameras" type="Reference" refTo="CAM_"/>
             <field name="d" type="Reference" refTo="U16_"/>
-            <field name="materialReferences" type="Reference" refTo="MATM"/>
-            <field name="standardMaterials" type="Reference" refTo="MAT_"/>
-            <field name="displacementMaterials" type="Reference" refTo="DIS_"/>
-            <field name="compositeMaterials" type="Reference" refTo="CMP_"/>
-            <field name="terrainMaterials" type="Reference" refTo="TER_"/>
-            <field name="volumeMaterials" type="Reference" refTo="VOL_"/>
-            <field name="unknownMaybeRef0" type="Reference"/>
-            <field name="creepMaterials" type="Reference" refTo="CREP"/>
-            <field name="volumeNoiseMaterials" type="Reference" refTo="VON_" since-version="25"/>
-            <field name="splatTerrainBakeMaterials" type="Reference" refTo="STBM" since-version="26"/>
-            <field name="reflectionMaterial" type="Reference" refTo="REF_" since-version="28"/>
-            <field name="lensFlareMaterial" type="Reference" refTo="LFLR" since-version="29"/>
-            <field name="bufferMaterial" type="Reference" refTo="MADD" since-version="30"/>
+            <field name="material_references" type="Reference" refTo="MATM"/>
+            <field name="materials_standard" type="Reference" refTo="MAT_"/>
+            <field name="materials_displacement" type="Reference" refTo="DIS_"/>
+            <field name="materials_composite" type="Reference" refTo="CMP_"/>
+            <field name="materials_terrain" type="Reference" refTo="TER_"/>
+            <field name="materials_volume" type="Reference" refTo="VOL_"/>
+            <field name="unknown_maybe_ref0" type="Reference"/>
+            <field name="materials_creep" type="Reference" refTo="CREP"/>
+            <field name="materials_volumenoise" type="Reference" refTo="VON_" since-version="25"/>
+            <field name="materials_splatterrainbake" type="Reference" refTo="STBM" since-version="26"/>
+            <field name="materials_reflection" type="Reference" refTo="REF_" since-version="28"/>
+            <field name="materials_lensflare" type="Reference" refTo="LFLR" since-version="29"/>
+            <field name="materials_buffer" type="Reference" refTo="MADD" since-version="30"/>
             <field name="particles" type="Reference" refTo="PAR_"/>
-            <field name="particleCopies" type="Reference" refTo="PARC"/>
+            <field name="particle_copies" type="Reference" refTo="PARC"/>
             <field name="ribbons" type="Reference" refTo="RIB_"/>
             <field name="projections" type="Reference" refTo="PROJ"/>
             <field name="forces" type="Reference" refTo="FOR_"/>
             <field name="warps" type="Reference" refTo ="WRP_"/>
-            <field name="unknownMaybeRef2" type="Reference"/>
-            <field name="rigidBodies" type="Reference" refTo="PHRB"/>
-            <field name="unknownMaybeRef3" type="Reference"/>
-            <field name="physicsJoints" type="Reference" refTo="PHYJ"/>
-            <field name="clothBehavior" type="Reference" refTo="PHCL" since-version="28"/>
-            <field name="unknownMaybeRef4" type="Reference"/>
+            <field name="unknown_maybe_ref1" type="Reference"/>
+            <field name="physics_rigidbodies" type="Reference" refTo="PHRB"/>
+            <field name="unknown_maybe_ref2" type="Reference"/>
+            <field name="physics_joints" type="Reference" refTo="PHYJ"/>
+            <field name="physics_cloths" type="Reference" refTo="PHCL" since-version="28"/>
+            <field name="unknown_maybe_ref3" type="Reference"/>
             <field name="unknownbd5657bd" type="Reference" since-version="25"/>
-            <field name="inverseKinematicChains" type="Reference" refTo="IKJT"/>
-            <field name="unknownMaybeRef5" type="Reference"/>
-            <field name="turretBehaviorParts" type="Reference" refTo="PATU"/>
-            <field name="turretBehaviors" type="Reference" refTo="TRGD"/>
-            <field name="boneRests" type="Reference" refTo="IREF"/>
+            <field name="ik_joints" type="Reference" refTo="IKJT"/>
+            <field name="unknown_maybe_ref4" type="Reference"/>
+            <field name="turret_parts" type="Reference" refTo="PATU"/>
+            <field name="turrets" type="Reference" refTo="TRGD"/>
+            <field name="bone_rests" type="Reference" refTo="IREF"/>
             <field name="tightHitTest" type="SSGS" type-version="1"/>
             <field name="fuzzyHitTestObjects" type="Reference" refTo="SSGS"/>
-            <field name="attachmentVolumes" type="Reference" refTo="ATVL"/>
-            <field name="attachmentVolumesAddon0" type="Reference" refTo="U16_" since-version="23"/>
-            <field name="attachmentVolumesAddon1" type="Reference" refTo="U16_" since-version="23"/>
-            <field name="billboardBehaviors" type="Reference" refTo="BBSC"/>
-            <field name="tmdData" type="Reference" refTo="TMD_"/>
-            <field name="uniqueUnknownNumber" type="uint32"/>
+            <field name="attachment_volumes" type="Reference" refTo="ATVL"/>
+            <field name="attachment_volumes_addon0" type="Reference" refTo="U16_" since-version="23"/>
+            <field name="attachment_volumes_addon1" type="Reference" refTo="U16_" since-version="23"/>
+            <field name="billboards" type="Reference" refTo="BBSC"/>
+            <field name="tmd_data" type="Reference" refTo="TMD_"/>
+            <field name="unique_unknown_number" type="uint32"/>
             <field name="unknown45" type="Reference" refTo="U32_"/>
         </fields>
     </structure>

@@ -636,6 +636,11 @@ def set_bone_shape(ob, bone):
             elif hittest.shape == 'CYLINDER':
                 add_mesh_data(hittest.bone, mesh_gen.cylinder(hittest.size, hittest.size[0]))
 
+    elif ob.m3_options.bone_shapes == 'PHCL':
+        for cloth in ob.m3_physicscloths:
+            for constraint in cloth.constraints:
+                add_mesh_data(constraint.bone, mesh_gen.capsule((0, constraint.height, 0), constraint.radius))
+
     elif ob.m3_options.bone_shapes == 'WRP_':
         for warp in ob.m3_warps:
             add_mesh_data(warp.bone, mesh_gen.sphere(warp.radius))

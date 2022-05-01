@@ -26,7 +26,8 @@ options_bone_display = [
     ('PAR_', 'Particles', ''),
     ('PROJ', 'Projections', ''),
     ('RIB_', 'Ribbons', ''),
-    ('PHRB', 'Physics Bodies', ''),
+    ('PHRB', 'Physics Rigid Bodies', ''),
+    ('PHCL', 'Physics Cloths', ''),
     ('WRP_', 'Vertex Warpers', ''),
 ]
 

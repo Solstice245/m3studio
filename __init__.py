@@ -34,6 +34,7 @@ from . import m3_lights
 from . import m3_materiallayers
 from . import m3_materials
 from . import m3_particles
+from . import m3_physicscloths
 from . import m3_physicsjoints
 from . import m3_projections
 from . import m3_ribbons
@@ -117,6 +118,7 @@ m3_modules = (
     m3_billboards,
     m3_cameras,
     m3_ik,
+    m3_physicscloths,
     m3_warps,
 )
 

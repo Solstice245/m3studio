@@ -66,7 +66,7 @@ def set_default_value(action, path, index, value):
     if fcurve is None:
         fcurve = action.fcurves.new(path, index=index)
     keyframe = fcurve.keyframe_points.insert(0, value)
-    keyframe.interpolation = "CONSTANT"
+    keyframe.interpolation = 'CONSTANT'
 
 
 def get_default_values(ob, new_action, old_action, default_action):
@@ -204,7 +204,7 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
 
         col = layout.column()
         col.use_property_split = True
-        col.template_ID(anim, "action", new="action.new", unlink="action.unlink")
+        col.template_ID(anim, 'action', new='action.new', unlink='action.unlink')
         col.separator()
         col.prop(anim, 'name', text='Name')
         col.separator()
@@ -301,10 +301,10 @@ class M3AnimationOpDuplicate(bpy.types.Operator):
 
 
 class M3AnimationOpDeselect(bpy.types.Operator):
-    bl_idname = "m3.animation_deselect"
-    bl_label = "Edit Default Values"
-    bl_description = "Deselects the active M3 animation sequence so that the default values can be edited"
-    bl_options = {"UNDO"}
+    bl_idname = 'm3.animation_deselect'
+    bl_label = 'Edit Default Values'
+    bl_description = 'Deselects the active M3 animation sequence so that the default values can be edited'
+    bl_options = {'UNDO'}
 
     def invoke(self, context, event):
         ob = context.object
