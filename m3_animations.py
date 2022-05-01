@@ -37,26 +37,6 @@ def init_msgbus(ob, context):
                         break
 
 
-def anim_update(self, context):
-    ob = context.object
-    if ob.animation_data is None:
-        ob.animation_data_create()
-
-    if ob.m3_animations_default is None:
-        ob.m3_animations_default = bpy.data.actions.new(ob.name + '_DEFAULTS')
-
-    if ob.m3_animations_index < 0:
-        ob.animation_data.action = ob.m3_animations_default
-    else:
-        anim = ob.m3_animations[ob.m3_animations_index]
-
-        old_action = ob.animation_data.action
-        ob.animation_data.action = anim.action
-        get_default_values(ob, anim.action, old_action, ob.m3_animations_default)
-        context.scene.frame_current = context.scene.frame_start = anim.frame_start
-        context.scene.frame_end = anim.frame_end - 1
-
-
 def set_default_value(action, path, index, value):
     fcurve = None
     for c in action.fcurves:
@@ -69,7 +49,7 @@ def set_default_value(action, path, index, value):
     keyframe.interpolation = 'CONSTANT'
 
 
-def get_default_values(ob, new_action, old_action, default_action):
+def get_default_values(ob, new_action, old_action):
     old_props = set()
     new_props = set()
 
@@ -86,12 +66,12 @@ def get_default_values(ob, new_action, old_action, default_action):
         if type(val) not in [float, int, bool, None]:
             val = val[prop[1]]
         if val is not None:
-            set_default_value(default_action, prop[0], prop[1], val)
+            set_default_value(ob.m3_animations_default, prop[0], prop[1], val)
 
     unanim_props = old_props.difference(new_props)
     removed_default_props = set()
 
-    for fcurve in default_action.fcurves:
+    for fcurve in ob.m3_animations_default.fcurves:
         prop = (fcurve.data_path, fcurve.array_index)
         if prop in unanim_props:
             default_val = fcurve.evaluate(0)
@@ -104,10 +84,30 @@ def get_default_values(ob, new_action, old_action, default_action):
             else:
                 removed_default_props.add(prop)
 
-    for fcurve in [fcurve for fcurve in default_action.fcurves if (fcurve.data_path, fcurve.array_index) in removed_default_props]:
-        default_action.fcurves.remove(fcurve)
+    for fcurve in [fcurve for fcurve in ob.m3_animations_default.fcurves if (fcurve.data_path, fcurve.array_index) in removed_default_props]:
+        ob.m3_animations_default.fcurves.remove(fcurve)
 
     return new_action
+
+
+def anim_update(self, context):
+    ob = context.object
+    if ob.animation_data is None:
+        ob.animation_data_create()
+
+    if ob.m3_animations_default is None:
+        ob.m3_animations_default = bpy.data.actions.new(ob.name + '_DEFAULTS')
+
+    if ob.m3_animations_index < 0:
+        ob.animation_data.action = ob.m3_animations_default
+    else:
+        anim = ob.m3_animations[ob.m3_animations_index]
+
+        old_action = ob.animation_data.action
+        ob.animation_data.action = anim.action
+        get_default_values(ob, anim.action, old_action)
+        context.scene.frame_current = context.scene.frame_start = anim.frame_start
+        context.scene.frame_end = anim.frame_end - 1
 
 
 def draw_subgroup_props(subgroup, layout):
@@ -202,9 +202,9 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
 
         anim = ob.m3_animations[index]
 
+        layout.template_ID(anim, 'action', new='action.new', unlink='action.unlink')
         col = layout.column()
         col.use_property_split = True
-        col.template_ID(anim, 'action', new='action.new', unlink='action.unlink')
         col.separator()
         col.prop(anim, 'name', text='Name')
         col.separator()
@@ -220,16 +220,7 @@ class M3AnimationOpAdd(bpy.types.Operator):
     def invoke(self, context, event):
         ob = context.object
         anim = shared.m3_item_new('m3_animations')
-
-        anim.start_frame = 0
-        anim.end_frame = 60
-
         anim.action = bpy.data.actions.new(ob.name + '_' + anim.name)
-
-        if ob.animation_data is None:
-            ob.animation_data_create()
-
-        ob.animation_data.action = anim.action
 
         ob.m3_animations_index = len(ob.m3_animations) - 1
 
@@ -245,6 +236,9 @@ class M3AnimationOpRemove(bpy.types.Operator):
     def invoke(self, context, event):
         ob = context.object
         ii = ob.m3_animations_index
+
+        if ii < 0:
+            return {'FINISHED'}
 
         ob.m3_animations.remove(ii)
 
