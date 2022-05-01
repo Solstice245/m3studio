@@ -22,6 +22,28 @@ from . import bl_enum
 from . import mesh_gen
 
 
+m3_collections_suggested_names = {
+    'm3_animations': ['Stand', 'Walk', 'Attack', 'Birth', 'Spell'],
+    'm3_attachmentpoints': ['Origin', 'Center', 'Overhead', 'Target'],
+    'm3_billboards': ['Billboard'],
+    'm3_cameras': ['CameraPortrait', 'CameraAvatar', 'Camera'],
+    'm3_forces': ['Force'],
+    'm3_fuzzyhittests': ['Fuzzy Hit Test'],
+    'm3_ik': ['IK Chain'],
+    'm3_lights': ['Light'],
+    'm3_materiallayers': ['Layer'],
+    'm3_materialrefs': ['Material'],
+    'm3_particles': ['Particle'],
+    'm3_physicscloths': ['Cloth'],
+    'm3_physicsjoints': ['Joint'],
+    'm3_projections': ['Projection'],
+    'm3_ribbons': ['Ribbon'],
+    'm3_rigidbodies': ['Rigid Body'],
+    'm3_turrets': ['TurretLeft', 'TurretRight', 'Turret'],
+    'm3_warps': ['Warp'],
+}
+
+
 def m3_handle_gen():
     return '%064x' % random.getrandbits(256)
 
@@ -56,31 +78,42 @@ def m3_ob_setter(name, value, obj='default'):
         setattr(obj, rsp[0], value)
 
 
-def m3_item_get_name(collections=[], suggested_names=[], prefix=''):
-    used_names = [item.name for item in collection for collection in collections]
+def m3_item_get_name(collection_name, prefix='', obj=None):
+    collection = m3_ob_getter(collection_name, obj=obj)
+    suggested_names = m3_collections_suggested_names.get(collection_name)
+    used_names = [item.name for item in collection]
     num = 1
+
+    if not prefix and suggested_names:
+        for name in suggested_names:
+            prefix = name
+            if name not in used_names:
+                break
+    else:
+        if prefix.split(' ')[-1].isdigit():
+            prefix = ''.join(prefix.split(' ')[:-1])
+
+    name = prefix
     while True:
-        for name in [name for name in suggested_names if name not in used_names]:
-            return name
-
-        name = prefix + ' 0' + str(num) if num < 10 else str(num)
-
         if name not in used_names:
             return name
-
+        name = prefix + (' 0' if prefix else '0') + str(num) if num < 10 else str(num)
         num += 1
 
 
-def m3_item_new(collection):
+def m3_item_new(collection_name, obj=None):
+    collection = m3_ob_getter(collection_name, obj=obj)
     item = collection.add()
     item.bl_display = True
     item.bl_handle = m3_handle_gen()
     item.bl_index = len(collection) - 1
+    item.name = m3_item_get_name(collection_name, '', obj=obj)
     return item
 
 
-def m3_item_duplicate(collection, src):
-    dst = m3_item_new(collection)
+def m3_item_duplicate(collection_name, src, obj=None):
+    collection = m3_ob_getter(collection_name, obj=obj)
+    dst = m3_item_new(collection_name, obj=obj)
 
     if (type(dst) != type(src)):
         collection.remove(len(collection) - 1)
@@ -92,7 +125,10 @@ def m3_item_duplicate(collection, src):
             setattr(dst, key, prop)
         else:
             for item in prop:
-                m3_item_duplicate(getattr(dst, key), item)
+                m3_item_duplicate(key, item, obj=dst)
+
+    dst.name = ''
+    dst.name = m3_item_get_name(collection_name, src.name, obj=obj)
 
     return dst
 
@@ -216,8 +252,7 @@ class M3CollectionOpAdd(M3CollectionOpBase):
     bl_description = 'Adds a new item to the collection'
 
     def invoke(self, context, event):
-        collection = m3_ob_getter(self.collection)
-        item = m3_item_new(collection)
+        item = m3_item_new(self.collection)
 
         m3_ob_setter(self.collection + '_index', item.bl_index)
 
@@ -280,7 +315,7 @@ class M3CollectionOpDuplicate(M3CollectionOpBase):
         if self.index == -1:
             return {'FINISHED'}
 
-        m3_item_duplicate(collection, collection[self.index])
+        m3_item_duplicate(self.collection, collection[self.index])
 
         m3_ob_setter(self.collection + '_index', len(collection) - 1)
 

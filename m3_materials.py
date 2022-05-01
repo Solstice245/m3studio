@@ -519,15 +519,14 @@ class M3MaterialLayerOpAdd(bpy.types.Operator):
 
     def invoke(self, context, event):
         ob = context.object
-        layers = ob.m3_materiallayers
         matref = ob.m3_materialrefs[ob.m3_materialrefs_index]
         mat = m3_material_get(ob, matref)
         layer = m3_material_layer_get(ob, getattr(mat, self.layer_name))
 
         if layer:
-            new_layer = shared.m3_item_duplicate(layers, layer)
+            new_layer = shared.m3_item_duplicate('m3_materiallayers', layer)
         else:
-            new_layer = shared.m3_item_new(layers)
+            new_layer = shared.m3_item_new('m3_materiallayers')
 
         setattr(mat, self.layer_name, new_layer.bl_handle)
 
@@ -606,15 +605,14 @@ class M3MaterialOpAdd(bpy.types.Operator):
     mat_type: bpy.props.StringProperty()
 
     def invoke(self, context, event):
-        matref = shared.m3_item_new(context.object.m3_materialrefs)
-        mat = shared.m3_item_new(getattr(context.object, self.mat_type))
-
+        matref = shared.m3_item_new('m3_materialrefs')
+        mat = shared.m3_item_new(self.mat_type)
         matref.mat_type = self.mat_type
         matref.mat_handle = mat.bl_handle
 
-        mat.name = matref.name
-
         shared.m3_msgbus_sub(mat, context, matref, 'name', 'name')
+
+        matref.name = shared.m3_item_get_name('m3_materialrefs', mat_type_dict[self.mat_type]['name'])
 
         context.object.m3_materialrefs_index = len(context.object.m3_materialrefs) - 1
 
@@ -681,8 +679,8 @@ class M3MaterialOpDuplicate(bpy.types.Operator):
         if context.object.m3_materialrefs_index == -1:
             return {'FINISHED'}
 
-        new_mat = shared.m3_item_duplicate(getattr(ob, matref.mat_type), mat)
-        new_matref = shared.m3_item_duplicate(matrefs, matref)
+        new_mat = shared.m3_item_duplicate(matref.mat_type, mat)
+        new_matref = shared.m3_item_duplicate('m3_materialrefs', matref)
         new_matref.mat_handle = new_mat.bl_handle
 
         context.object.m3_materialrefs_index = len(matrefs) - 1

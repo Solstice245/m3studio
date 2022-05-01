@@ -219,7 +219,7 @@ class M3AnimationOpAdd(bpy.types.Operator):
 
     def invoke(self, context, event):
         ob = context.object
-        anim = shared.m3_item_new(ob.m3_animations)
+        anim = shared.m3_item_new('m3_animations')
 
         anim.start_frame = 0
         anim.end_frame = 60
@@ -293,7 +293,7 @@ class M3AnimationOpDuplicate(bpy.types.Operator):
         if ii < 0:
             return {'FINISHED'}
 
-        shared.m3_item_duplicate(ob.m3_animations, ob.m3_animations[ii])
+        shared.m3_item_duplicate('m3_animations', ob.m3_animations[ii])
 
         ob.m3_animations_index = len(ob.m3_animations) - 1
 
