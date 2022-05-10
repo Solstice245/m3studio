@@ -267,7 +267,7 @@ class M3CollectionOpRemove(M3CollectionOpBase):
     def invoke(self, context, event):
         collection = m3_ob_getter(self.collection)
 
-        if not self.index in range(len(collection)):
+        if self.index not in range(len(collection)):
             return {'FINISHED'}
 
         bone_list = m3_item_find_bones(collection[self.index])
