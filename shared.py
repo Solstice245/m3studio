@@ -29,7 +29,7 @@ m3_collections_suggested_names = {
     'm3_cameras': ['CameraPortrait', 'CameraAvatar', 'Camera'],
     'm3_forces': ['Force'],
     'm3_fuzzyhittests': ['Fuzzy Hit Test'],
-    'm3_ik': ['IK Chain'],
+    'm3_ikchains': ['IK Chain'],
     'm3_lights': ['Light'],
     'm3_materiallayers': ['Layer'],
     'm3_materialrefs': ['Material'],
@@ -266,6 +266,10 @@ class M3CollectionOpRemove(M3CollectionOpBase):
 
     def invoke(self, context, event):
         collection = m3_ob_getter(self.collection)
+
+        if not self.index in range(len(collection)):
+            return {'FINISHED'}
+
         bone_list = m3_item_find_bones(collection[self.index])
         collection.remove(self.index)
 
@@ -457,9 +461,6 @@ def draw_collection_list(layout, collection_path, draw_func, can_duplicate=True,
 
     col = layout.column()
     col.use_property_split = True
-
-    col.prop(item, 'name', text='Identifier')
-
     draw_pointer_prop(bpy.context.object, col, 'data.bones', '{}[{}].{}'.format(collection_path, index, 'bone'), 'Bone', 'BONE_DATA')
     draw_func(item, col)
 

@@ -27,7 +27,7 @@ def register_props():
 
 def draw_part_props(part, layout):
     col = layout.column()
-    col.prop(part, 'group', text='Part Group')
+    col.prop(part, 'group_id', text='Part Group')
     col.prop(part, 'main_part', text='Main Part')
     col.prop(part, 'forward_x', text='Forward Vector X')
     col.prop(part, 'forward_y', text='Forward Vector Y')
