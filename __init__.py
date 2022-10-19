@@ -16,7 +16,7 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-# from timeit import timeit
+from timeit import timeit
 import bpy
 from bpy.app.handlers import persistent
 from . import shared
@@ -41,7 +41,7 @@ from . import m3_ribbons
 from . import m3_rigidbodies
 from . import m3_turrets
 from . import m3_warps
-# from . import m3_import
+from . import io_m3_import
 
 bl_info = {
     'name': 'M3: Used by Blizzard\'s StarCraft 2 and Heroes of the Storm',
@@ -83,7 +83,8 @@ class M3ImportOperator(bpy.types.Operator):
     test_vertexalpha = 'C:\\Users\\John Wharton\\Documents\\_Base Assets\\Protoss\\Effects\\Mothership_Taldarim_Shield.m3'
 
     def invoke(self, context, event):
-        # print(timeit(lambda: m3_import.M3Import(self.test_goliath), number=1))
+        io_m3_import.m3_import(self.test_goliath)
+        # print(timeit(lambda: io_m3_import.m3_import(self.test_goliath), number=1))
         return {'RUNNING_MODAL'}
 
     def execute(self, context):

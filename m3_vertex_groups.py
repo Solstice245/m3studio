@@ -21,7 +21,7 @@ import bmesh
 
 
 def m3_get_vertex_sign(bm):
-    return bm.faces.layers.int.get('m3_vertex_sign') or bm.faces.layers.int.new('m3_vertex_sign')
+    return bm.faces.layers.int.get('m3sign') or bm.faces.layers.int.new('m3sign')
 
 
 class SignPanel(bpy.types.Panel):

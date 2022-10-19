@@ -1079,14 +1079,6 @@ def readStructureDefinitions(structuresXmlFile):
     doc = xml.dom.minidom.parse(structuresXmlFile)
     generalDataMap = {}
 
-    # first run is only for determing the complete list of known structures
-    # firstRunVisitors = [
-    #     StructureAttributesReader(),
-    #     KnownStructuresListDeterminer(),
-    #     KnownTagsListDeterminer()
-    #     ]
-    # visitStructresDomWith(doc, firstRunVisitors, generalDataMap)
-
     secondRunVisitors = [
         StructureAttributesReader(),
         StructureDescriptionReader(),

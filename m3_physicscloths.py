@@ -18,7 +18,6 @@
 
 import bpy
 from . import shared
-from . import bl_enum
 
 
 def register_props():

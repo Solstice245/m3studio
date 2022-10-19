@@ -20,13 +20,10 @@ import bpy
 
 
 def register_props():
-    bpy.types.Bone.m3 = bpy.props.PointerProperty(type=Properties)
-    bpy.types.EditBone.m3 = bpy.props.PointerProperty(type=Properties)
-
-
-class Properties(bpy.types.PropertyGroup):
-    handle: bpy.props.StringProperty(options=set())
-    bind_scale: bpy.props.FloatVectorProperty(options=set(), size=3, subtype='XYZ', default=(1, 1, 1))
+    bpy.types.Bone.bl_handle = bpy.props.StringProperty(options=set())
+    bpy.types.Bone.m3_bind_scale = bpy.props.FloatVectorProperty(options=set(), size=3, subtype='XYZ', default=(1, 1, 1))
+    bpy.types.EditBone.bl_handle = bpy.props.StringProperty(options=set())
+    bpy.types.EditBone.m3_bind_scale = bpy.props.FloatVectorProperty(options=set(), size=3, subtype='XYZ', default=(1, 1, 1))
 
 
 class Panel(bpy.types.Panel):
@@ -42,10 +39,9 @@ class Panel(bpy.types.Panel):
 
     def draw(self, context):
         self.layout.use_property_split = True
-        self.layout.prop(context.bone.m3, 'bind_scale', text='Bind Scale')
+        self.layout.prop(context.bone, 'm3_bind_scale', text='Bind Scale')
 
 
 classes = (
-    Properties,
     Panel,
 )

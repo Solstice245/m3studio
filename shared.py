@@ -90,8 +90,8 @@ def m3_item_get_name(collection_name, prefix='', obj=None):
             if name not in used_names:
                 break
     else:
-        if prefix.split(' ')[-1].isdigit():
-            prefix = ''.join(prefix.split(' ')[:-1])
+        if prefix.rsplit(' ', 1)[-1].isdigit():
+            prefix = prefix.rsplit(' ', 1)[0]
 
     name = prefix
     while True:
@@ -156,41 +156,35 @@ def m3_item_find_bones(item):
 
 def m3_pointer_get(ob, search_data, prop_name, prop_resolved=False):
     prop = m3_ob_getter(prop_name, obj=ob) if not prop_resolved else prop_name
-    if not prop:
+    if not prop or not ob:
         return None
     data = m3_ob_getter(search_data, obj=ob)
-    if search_data == 'data.bones' or search_data == 'data.edit_bones':
-        for item in data:
-            if item.m3.handle == prop:
-                return item
-    else:
-        for item in data:
-            if item.bl_handle == prop:
-                return item
+    for item in data:
+        if item.bl_handle == prop:
+            return item
     return None
 
 
 def m3_bone_handles_verify(ob):
     handles = set()
-    for bone in ob.data.bones:
-        if not bone.m3.handle or bone.m3.handle in handles:
-            bone.m3.handle = m3_handle_gen()
-        handles.add(bone.m3.handle)
+    for bone in ob.data.edit_bones if ob.mode == 'EDIT' else ob.data.bones:
+        if not bone.bl_handle or bone.bl_handle in handles:
+            bone.bl_handle = m3_handle_gen()
+        handles.add(bone.bl_handle)
 
 
-def m3_msgbus_callback(self, context, sub, key, owner):
+def m3_msgbus_callback(self, sub, key, owner):
     setattr(self, owner, getattr(sub, key))
 
 
-def m3_msgbus_sub(self, context, sub, key, owner):
-    if sub:
-        bpy.msgbus.subscribe_rna(
-            key=sub.path_resolve(key, False),
-            owner=self.bl_handle + owner,
-            args=(self, context, sub, key, owner),
-            notify=m3_msgbus_callback,
-            options={'PERSISTENT'}
-        )
+def m3_msgbus_sub(self, sub, key, owner):
+    bpy.msgbus.subscribe_rna(
+        key=sub.path_resolve(key, False),
+        owner=self.bl_handle + owner,
+        args=(self, sub, key, owner),
+        notify=m3_msgbus_callback,
+        options={'PERSISTENT'}
+    )
 
 
 def bone_shape_update_event(self, context):
@@ -233,6 +227,10 @@ class M3VolumePropertyGroup(M3BoneUserPropertyGroup):
     location: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, update=bone_shape_update_event)
     rotation: bpy.props.FloatVectorProperty(options=set(), subtype='EULER', unit='ROTATION', size=3, update=bone_shape_update_event)
     scale: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0, default=(1, 1, 1), update=bone_shape_update_event)
+
+
+class M3ObjectPropertyGroup(M3PropertyGroup):
+    bl_object: bpy.props.PointerProperty(type=bpy.types.Object)
 
 
 class M3CollectionOpBase(bpy.types.Operator):
@@ -278,13 +276,10 @@ class M3CollectionOpRemove(M3CollectionOpBase):
             collection[ii].bl_index -= 1
             shift_m3_action_keyframes(context.object, self.collection, ii + 1)
 
-        new_index = self.index
-        new_index -= 1 if (self.index == 0 and len(collection) > 0) or self.index == len(collection) else 0
-
-        m3_ob_setter(self.collection + '_index', new_index)
+        m3_ob_setter(self.collection + '_index', self.index - (1 if self.index == len(collection) else 0))
 
         for bone in context.object.data.bones:
-            if bone.m3.handle in bone_list:
+            if bone.bl_handle in bone_list:
                 set_bone_shape(context.object, bone)
 
         return {'FINISHED'}
@@ -340,10 +335,7 @@ class M3CollectionOpDisplayToggle(M3CollectionOpBase):
 
 def m3_prop_pointer_enum(self, context):
     for item in m3_ob_getter(self.search_data):
-        if hasattr(item, 'bl_handle'):
-            yield item.bl_handle, item.name, ''
-        elif hasattr(item, 'm3'):
-            yield item.m3.handle, item.name, ''
+        yield item.bl_handle, item.name, ''
 
 
 class M3PropPointerOpUnlink(bpy.types.Operator):
@@ -371,7 +363,7 @@ class M3PropPointerOpSearch(bpy.types.Operator):
     enum: bpy.props.EnumProperty(items=m3_prop_pointer_enum)
 
     def invoke(self, context, event):
-        if self.search_data == 'data.bones':
+        if self.search_data == 'data.bones' or self.search_data == 'data.edit_bones':
             m3_bone_handles_verify(context.object)
         context.window_manager.invoke_search_popup(self)
         return {'RUNNING_MODAL'}
@@ -454,10 +446,10 @@ def draw_collection_list(layout, collection_path, draw_func, can_duplicate=True,
         op = sub.operator(ops[2], icon='TRIA_DOWN', text='')
         op.collection, op.index, op.shift = (collection_path, index, 1)
 
-    if index < 0:
+    if not len(collection):
         return
 
-    item = collection[index]
+    item = collection[sorted((0, index, len(collection) - 1))[1]]
 
     col = layout.column()
     col.use_property_split = True
@@ -515,16 +507,16 @@ def draw_collection_stack(layout, collection_path, label, draw_func, use_name=Fa
 
 def remove_m3_action_keyframes(ob, prefix, index):
     for action in [action for action in bpy.data.actions if ob.name in action.name]:
-        path = '%s[%d]' % (prefix, index)
+        path = '{}[{}]'.format(prefix, index)
         for fcurve in [fcurve for fcurve in action.fcurves if prefix in fcurve.data_path and path in fcurve.data_path]:
             action.fcurves.remove(fcurve)
 
 
 def shift_m3_action_keyframes(ob, prefix, index, offset=-1):
     for action in [action for action in bpy.data.actions if ob.name in action.name]:
-        path = '%s[%d]' % (prefix, index)
+        path = '{}[{}]'.format(prefix, index)
         for fcurve in [fcurve for fcurve in action.fcurves if prefix in fcurve.data_path and path in fcurve.data_path]:
-            fcurve.data_path = fcurve.data_path.replace(path, '%s[%d]' % (prefix, index + offset))
+            fcurve.data_path = fcurve.data_path.replace(path, '{}[{}]'.format(prefix, index + offset))
 
 
 def swap_m3_action_keyframes(ob, prefix, old, shift):
@@ -532,8 +524,8 @@ def swap_m3_action_keyframes(ob, prefix, old, shift):
         if ob.name not in action.name:
             continue
 
-        path = '%s[%d]' % (prefix, old)
-        path_shift = '%s[%d]' % (prefix, old + shift)
+        path = '{}[{}]'.format(prefix, old)
+        path_shift = '{}[{}]'.format(prefix, old + shift)
 
         fcurves = [fcurve for fcurve in action.fcurves if path in fcurve.data_path]
         fcurves_shift = [fcurve for fcurve in action.fcurves if path_shift in fcurve.data_path]
@@ -554,7 +546,7 @@ def set_bone_shape(ob, bone):
 
     def add_mesh_data(prop, new_data, matrix=None):
 
-        if not prop or bone.m3.handle != prop:
+        if not prop or bone.bl_handle != prop:
             return
 
         # TODO Apply matrix to new_data before appending to src_data
@@ -658,12 +650,12 @@ def set_bone_shape(ob, bone):
                     pass  # TODO
 
     elif ob.m3_options.bone_shapes == 'FTHT':
-        if ob.m3_tighthittest.shape == 'CUBE':
-            add_mesh_data(ob.m3_tighthittest.bone, mesh_gen.cube(ob.m3_tighthittest.size))
-        elif ob.m3_tighthittest.shape == 'SPHERE':
-            add_mesh_data(ob.m3_tighthittest.bone, mesh_gen.sphere(ob.m3_tighthittest.size[0]))
-        elif ob.m3_tighthittest.shape == 'CYLINDER':
-            add_mesh_data(ob.m3_tighthittest.bone, mesh_gen.cylinder(hittest.size, hittest.size[0]))
+        if ob.m3_hittest_tight.shape == 'CUBE':
+            add_mesh_data(ob.m3_hittest_tight.bone, mesh_gen.cube(ob.m3_hittest_tight.size))
+        elif ob.m3_hittest_tight.shape == 'SPHERE':
+            add_mesh_data(ob.m3_hittest_tight.bone, mesh_gen.sphere(ob.m3_hittest_tight.size[0]))
+        elif ob.m3_hittest_tight.shape == 'CYLINDER':
+            add_mesh_data(ob.m3_hittest_tight.bone, mesh_gen.cylinder(hittest.size, hittest.size[0]))
         for hittest in ob.m3_hittests:
             if hittest.shape == 'CUBE':
                 add_mesh_data(hittest.bone, mesh_gen.cube(hittest.size))
@@ -708,6 +700,7 @@ classes = {
     M3PropertyGroup,
     M3VolumePropertyGroup,
     M3BoneUserPropertyGroup,
+    M3ObjectPropertyGroup,
     M3CollectionOpBase,
     M3CollectionOpAdd,
     M3CollectionOpRemove,

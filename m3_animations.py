@@ -33,7 +33,7 @@ def init_msgbus(ob, context):
             for fcurve in action.fcurves:
                 for item in subgroup.data_paths:
                     if fcurve.data_path == item.val:
-                        shared.m3_msgbus_sub(item, context, fcurve, 'data_path', 'val')
+                        shared.m3_msgbus_sub(item, fcurve, 'data_path', 'val')
                         break
 
 
@@ -159,7 +159,7 @@ class Properties(shared.M3PropertyGroup):
     frame_start: bpy.props.IntProperty(options=set(), min=0)
     frame_end: bpy.props.IntProperty(options=set(), min=0, default=60)
     simulate: bpy.props.BoolProperty(options=set())
-    simulate_frame: bpy.props.IntProperty(options=set())
+    simulate_frame: bpy.props.IntProperty(options=set(), min=0)
     movement_speed: bpy.props.FloatProperty(options=set())
     frequency: bpy.props.IntProperty(options=set(), min=0, default=100)
     not_looping: bpy.props.BoolProperty(options=set())
@@ -202,9 +202,9 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
 
         anim = ob.m3_animations[index]
 
-        layout.template_ID(anim, 'action', new='action.new', unlink='action.unlink')
         col = layout.column()
         col.use_property_split = True
+        col.prop(anim, 'action', text='Action')
         col.separator()
         col.prop(anim, 'name', text='Name')
         col.separator()
@@ -219,9 +219,7 @@ class M3AnimationOpAdd(bpy.types.Operator):
 
     def invoke(self, context, event):
         ob = context.object
-        anim = shared.m3_item_new('m3_animations')
-        anim.action = bpy.data.actions.new(ob.name + '_' + anim.name)
-
+        shared.m3_item_new('m3_animations')
         ob.m3_animations_index = len(ob.m3_animations) - 1
 
         return {'FINISHED'}
@@ -363,7 +361,7 @@ class M3AnimationSubgroupOpAssign(bpy.types.Operator):
                     item = subgroup.data_paths.add()
                     item.bl_handle = shared.m3_handle_gen()
                     item.val = fcurve.data_path
-                    shared.m3_msgbus_sub(item, context, fcurve, 'data_path', 'val')
+                    shared.m3_msgbus_sub(item, fcurve, 'data_path', 'val')
             else:
                 sg_data_paths = set([data_path.val for data_path in subgroup.data_paths])
                 sg_fcurve_set = set([fcurve for fcurve in action.fcurves if fcurve.data_path in sg_data_paths])
@@ -373,7 +371,7 @@ class M3AnimationSubgroupOpAssign(bpy.types.Operator):
                     item = subgroup.data_paths.add()
                     item.bl_handle = shared.m3_handle_gen()
                     item.val = fcurve.data_path
-                    shared.m3_msgbus_sub(item, context, fcurve, 'data_path', 'val')
+                    shared.m3_msgbus_sub(item, fcurve, 'data_path', 'val')
 
         return {'FINISHED'}
 

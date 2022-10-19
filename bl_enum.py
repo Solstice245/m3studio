@@ -160,6 +160,7 @@ force_shape = [
 ]
 
 light_shape = [
+    ('UNKNOWN', 'Unknown', 'Placeholder value for unused light shape value'),
     ('POINT', 'Point', 'Light is generated around a point'),
     ('SPOT', 'Spot', 'Light is generated from a point'),
 ]
@@ -186,7 +187,7 @@ particle_shape = [
     ('CYLINDER', 'Cylinder', 'Particles spawn within the area of the defined cylinder'),
     ('DISC', 'Disc', 'Particles spawn within the area of the defined disc'),
     ('SPLINE', 'Spline', 'Particles spawn on the vertices of a mesh'),
-    ('MESH', 'Mesh', 'Particles spawn on areas of a mesh. The probability of spawning at a particular vertex depends on the red value in its vertex color'),
+    ('MESH', 'Mesh', 'Particles spawn on faces of a mesh. A mesh using vertex colors can control the probability of emission using the red channel'),
 ]
 
 particle_emit_type = [
@@ -210,8 +211,8 @@ projection_layer = [
     ('BUILDING', 'Building', 'Is most often used for the dark shadow that occurs under buildings'),
     ('AOE', 'Area of Effect', 'Conventionally used for AoE cursors and some special spell effects'),
     ('POWER', 'Power', 'Used for rarely active effects such as the Protoss power fields which should be above most other splats'),
-    ('UI', 'UI', 'Used for in-world effects that are part if te user interface such as selection circles'),
-    ('UNDERCREEP', 'Under Creep', 'Is a general use layer that occurs below creep. Is most often used for effects that appear above roads but below creep'),
+    ('UI', 'UI', 'Used for in-world effects that are part of the user interface, such as selection circles'),
+    ('UNDERCREEP', 'Under Creep', 'Is a general use layer that occurs below creep. Is most often used for effects that appear above roads, but below creep'),
     ('HARDTILE', 'Hardtile', 'Is the most common layer for terrain decoration. Roads are also drawn on this layer'),
 ]
 
@@ -245,8 +246,8 @@ physics_shape = [
     ('SPHERE', 'Sphere', 'Spherical physics shape'),
     ('CAPSULE', 'Capsule', 'Capsular physics shape'),
     ('CYLINDER', 'Cylinder', 'Cylindrical physics shape'),
-    ('CONVEXHULL', 'Convex Hull', 'The physics shape is the convex hull of the selected objects mesh'),
-    ('MESH', 'Mesh', 'The physics shape is the same shape as the selected objects mesh'),
+    ('CONVEXHULL', 'Convex Hull', 'The physics shape is the convex hull of the selected object\'s mesh'),
+    ('MESH', 'Mesh', 'The physics shape is the same shape as the selected object\'s mesh'),
 ]
 
 physics_joint_type = [
@@ -359,7 +360,6 @@ fresnel_type = [
 ]
 
 rtt_channel = [
-    ('NONE', 'None', 'None'),
     ('0', 'Layer 0', 'Render To Texture Layer 0'),
     ('1', 'Layer 1', 'Render To Texture Layer 1'),
     ('2', 'Layer 2', 'Render To Texture Layer 2'),
@@ -367,6 +367,7 @@ rtt_channel = [
     ('4', 'Layer 4', 'Render To Texture Layer 4'),
     ('5', 'Layer 5', 'Render To Texture Layer 5'),
     ('6', 'Layer 6', 'Render To Texture Layer 6'),
+    ('NONE', 'None', 'None'),
 ]
 
 video_mode = [

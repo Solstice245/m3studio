@@ -43,30 +43,30 @@ def draw_props(light, layout):
     col = layout.column(align=True)
     col.prop(light, 'intensity', text='Intensity')
     col.prop(light, 'color', text='Color')
+    col = layout.column(align=True)
+    col.prop(light, 'unknownAt148', text='Unknown At 148')
     col = layout.column_flow(columns=2)
     col.use_property_split = False
-    col.prop(light, 'shadows', text='Casts Shadows (Spot)')
-    col.prop(light, 'unknownFlag0x04', text='Unknown Flag 0x04')
-    col.prop(light, 'active', text='Turn On')
-    col.prop(light, 'transparent_objects', text='Apply To Transparent Objects')
+    col.prop(light, 'light_opaque', text='Lights Opaque')
+    col.prop(light, 'light_transparent', text='Lights Transparent')
+    col.prop(light, 'team_color', text='Team Colored')
+    if light.shape == 'SPOT':
+        col.prop(light, 'shadows', text='Casts Shadows')
 
 
 class Properties(shared.M3BoneUserPropertyGroup):
-    shape: bpy.props.EnumProperty(options=set(), items=bl_enum.light_shape, update=shared.bone_shape_update_event)
-    unknownAt1: bpy.props.IntProperty(options=set())
-    unknownAt8: bpy.props.IntProperty(options=set())
-    unknownAt12: bpy.props.IntProperty(options=set(), default=-1)
+    shape: bpy.props.EnumProperty(options=set(), items=bl_enum.light_shape, default='POINT', update=shared.bone_shape_update_event)
     color: bpy.props.FloatVectorProperty(name='M3 Light Color', subtype='COLOR', size=3, min=0, max=1, default=(1, 1, 1))
     intensity: bpy.props.FloatProperty(name='M3 Light Intensity')
     attenuation_far: bpy.props.FloatProperty(name='M3 Light Attenuation Far', default=3, update=shared.bone_shape_update_event)
     attenuation_near: bpy.props.FloatProperty(name='M3 Light Attenuation Near', default=2)
     falloff: bpy.props.FloatProperty(name='M3 Light Falloff', default=3, update=shared.bone_shape_update_event)
     hotspot: bpy.props.FloatProperty(name='M3 Light Hotspot', default=2)
-    unknown148: bpy.props.FloatProperty(options=set())
+    unknownAt148: bpy.props.FloatProperty(options=set())
+    light_opaque: bpy.props.BoolProperty(options=set(), default=True)
+    light_transparent: bpy.props.BoolProperty(options=set())
     shadows: bpy.props.BoolProperty(options=set())
-    unknownFlag0x04: bpy.props.BoolProperty(options=set())
-    active: bpy.props.BoolProperty(options=set(), default=True)
-    transparent_objects: bpy.props.BoolProperty(options=set())
+    team_color: bpy.props.BoolProperty(options=set())
 
 
 class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
