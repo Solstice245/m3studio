@@ -336,8 +336,46 @@ class M3CollectionOpDisplayToggle(M3CollectionOpBase):
 
 
 def m3_prop_pointer_enum(self, context):
-    for item in m3_ob_getter(self.search_data):
+    search_ob = bpy.data.objects.get(self.search_ob_name if self.search_ob_name else self.ob_name)
+    for item in m3_ob_getter(self.search_prop, obj=search_ob):
         yield item.bl_handle, item.name, ''
+
+
+class M3PropPointerOpSearch(bpy.types.Operator):
+    bl_idname = 'm3.proppointer_search'
+    bl_label = 'Search'
+    bl_description = 'Search for an object to point to for the m3 property'
+    bl_property = 'enum'
+
+    ob_name: bpy.props.StringProperty()
+    prop: bpy.props.StringProperty()
+    search_ob_name: bpy.props.StringProperty()
+    search_prop: bpy.props.StringProperty()
+    enum: bpy.props.EnumProperty(items=m3_prop_pointer_enum)
+
+    def invoke(self, context, event):
+        if self.search_prop in ['data.bones', 'data.edit_bones']:
+            m3_bone_handles_verify(context.object)
+        context.window_manager.invoke_search_popup(self)
+        return {'RUNNING_MODAL'}
+
+    def execute(self, context):
+        ob = bpy.data.objects.get(self.ob_name)
+        search_ob = bpy.data.objects.get(self.search_ob_name) if self.search_ob_name else ob
+
+        is_bone_search_prop = self.search_prop in ['data.bones', 'data.edit_bones']
+
+        if is_bone_search_prop:
+            bone_before = m3_pointer_get(search_ob, 'data.bones', self.prop)
+
+        m3_ob_setter(self.prop, self.enum, obj=ob)
+
+        if is_bone_search_prop:
+            bone_after = m3_pointer_get(search_ob, 'data.bones', self.prop)
+            set_bone_shape(search_ob, bone_before)
+            set_bone_shape(search_ob, bone_after)
+
+        return {'FINISHED'}
 
 
 class M3PropPointerOpUnlink(bpy.types.Operator):
@@ -348,34 +386,12 @@ class M3PropPointerOpUnlink(bpy.types.Operator):
     prop: bpy.props.StringProperty()
 
     def invoke(self, context, event):
-        bone = m3_pointer_get(context.object, 'data.bones', self.prop)
+        is_bone_search_prop = hasattr(context.object.data, 'bones')
+        if is_bone_search_prop:
+            bone = m3_pointer_get(context.object, 'data.bones', self.prop)
         m3_ob_setter(self.prop, '')
-        set_bone_shape(context.object, bone)
-        return {'FINISHED'}
-
-
-class M3PropPointerOpSearch(bpy.types.Operator):
-    bl_idname = 'm3.proppointer_search'
-    bl_label = 'Search'
-    bl_description = 'Search for an object to point to for the m3 property'
-    bl_property = 'enum'
-
-    prop: bpy.props.StringProperty()
-    search_data: bpy.props.StringProperty()
-    enum: bpy.props.EnumProperty(items=m3_prop_pointer_enum)
-
-    def invoke(self, context, event):
-        if self.search_data == 'data.bones' or self.search_data == 'data.edit_bones':
-            m3_bone_handles_verify(context.object)
-        context.window_manager.invoke_search_popup(self)
-        return {'RUNNING_MODAL'}
-
-    def execute(self, context):
-        bone_before = m3_pointer_get(context.object, 'data.bones', self.prop)
-        m3_ob_setter(self.prop, self.enum)
-        bone_after = m3_pointer_get(context.object, 'data.bones', self.prop)
-        set_bone_shape(context.object, bone_before)
-        set_bone_shape(context.object, bone_after)
+        if is_bone_search_prop:
+            set_bone_shape(context.object, bone)
         return {'FINISHED'}
 
 

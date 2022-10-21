@@ -34,6 +34,7 @@ def register_props():
     bpy.types.Object.m3_materials_stb = bpy.props.CollectionProperty(type=SplatTerrainBakeProperties)
     bpy.types.Object.m3_materials_reflection = bpy.props.CollectionProperty(type=ReflectionProperties)
     bpy.types.Object.m3_materials_lensflare = bpy.props.CollectionProperty(type=LensFlareProperties)
+    bpy.types.Object.m3_material_ref = bpy.props.StringProperty(options=set())
 
 
 def init_msgbus(ob, context):

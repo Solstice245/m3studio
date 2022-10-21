@@ -21,7 +21,7 @@ import bpy
 from bpy.app.handlers import persistent
 from . import shared
 from . import m3_bone
-from . import m3_vertex_groups
+from . import m3_mesh_object
 from . import m3_options
 from . import m3_animations
 from . import m3_attachmentpoints
@@ -135,7 +135,7 @@ def m3_module_classes():
 
 classes = (
     *shared.classes,
-    *m3_vertex_groups.classes,
+    *m3_mesh_object.classes,
     *m3_module_classes(),
     M3ImportOperator,
     M3ScenePanel,

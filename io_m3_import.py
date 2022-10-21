@@ -400,6 +400,7 @@ def create_mesh(m3, ob):
             mesh = bpy.data.meshes.new('Mesh')
             mesh_ob = bpy.data.objects.new('Mesh', mesh)
             mesh_ob.parent = ob
+            mesh_ob.m3_material_ref = ob.m3_materialrefs[m3_ob.material_reference_index].bl_handle
             bpy.context.scene.collection.objects.link(mesh_ob)
 
             modifier = mesh_ob.modifiers.new('EdgeSplit', 'EDGE_SPLIT')
