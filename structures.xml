@@ -2299,10 +2299,10 @@
             <version number="0" size="4"/>
         </versions>
         <fields>
-            <field name="unknown" type="int8"/>
-            <field name="i0" type="uint8"/>
-            <field name="i1" type="uint8"/>
-            <field name="i2" type="uint8"/>
+            <field name="unknown_alt" type="int8"/> <!-- values seem to always alternate between 1 and -1 for this and next_edge -->
+            <field name="vertex0" type="uint8"/>
+            <field name="vertex1" type="uint8"/>
+            <field name="next_edge" type="uint8"/>
         </fields>
     </structure>
 
@@ -2331,7 +2331,7 @@
             <field name="unknown4ddf14b3" type="uint16" default-value="0"/>
             <field name="vertices" type="Reference" refTo="VEC3" till-version="1"/>
             <field name="unknownAt84" type="Reference" refTo="U8__" till-version="1"/>
-            <field name="faces" type="Reference" refTo="U16_" till-version="1"/>
+            <field name="face_data" type="Reference" refTo="U16_" till-version="1"/>
             <field name="planeEquations" type="Reference" refTo="VEC4" till-version="1"/> <!-- Bounding planes used for convex hull shapes? (may include extra radius value?) -->
 
             <field name="unknown66ce545e" size="20" expected-value="0x0000000000000000000000000000000000000000" since-version="2"/>
@@ -2339,20 +2339,20 @@
             <field name="size0" type="float" default-value="1.0"/> <!-- box x-size / capsule radius (/ cylinder radius / sphere radius?) -->
             <field name="size1" type="float" default-value="1.0"/> <!-- box y-size / capsule length (/ cylinder length?) -->
             <field name="size2" type="float" default-value="1.0"/> <!-- box z-size -->
-            <field name="unknown71459989" type="Reference" refTo="VEC3" since-version="2"/>
-            <field name="unknown46c85f1e" type="Reference" refTo="VEC4" since-version="2"/>
-            <field name="unknown4f8176e7" type="Reference" refTo="DMSE" since-version="2"/>
-            <field name="unknown124fad04" type="Reference" refTo="U8__" since-version="2"/>
+            <field name="vertices" type="Reference" refTo="VEC3" since-version="2"/>
+            <field name="face_related" type="Reference" refTo="VEC4" since-version="2"/>
+            <field name="edges" type="Reference" refTo="DMSE" since-version="2"/>
+            <field name="face_edge_start" type="Reference" refTo="U8__" since-version="2"/>
             <field name="unknownbda8f787" size="12" default-value="0x000000000000000000000000" since-version="2"/>
             <!-- unknown2e655ca4 can have the value 0x80000000 too -->
-            <field name="unknown2e655ca4" size="4" since-version="2"/>
+            <field name="unknown2e655ca4" type="uint32" since-version="2"/>
             <!-- unknown7df99f73 is not a float and has strange content -->
-            <field name="unknown7df99f73" size="4" since-version="2"/>
-            <field name="unknown5c04305e" size="4" default-value="0x00000000" since-version="2"/>
+            <field name="unknown7df99f73" type="uint32" since-version="2"/>
+            <field name="unknown5c04305e" type="uint32" default-value="0x00000000" since-version="2"/>
             <!-- unknown8d41b3f8 is not a float and has strange content -->
-            <field name="unknown8d41b3f8" size="4" since-version="2"/>
+            <field name="unknown8d41b3f8" type="uint32" since-version="2"/>
             <!-- unknown56fece2 is not a float and has strange content -->
-            <field name="unknown56fece2" size="4" since-version="2"/>
+            <field name="unknown56fece2" type="uint32" since-version="2"/>
             <field name="unknown6f23bce8" type="Reference" refTo="DMMN" since-version="2"/>
             <field name="unknown9836ec85" type="Reference" refTo="VEC4" since-version="2"/>
             <field name="unknownac0ac492" size="12" default-value="0x000000000000000000000000" since-version="2"/>
@@ -2360,19 +2360,19 @@
             <field name="unknownd93ef965" size="12" default-value="0x000000000000000000000000" since-version="2"/>
             <field name="unknown09823b6e" size="12" default-value="0x000000000000000000000000" since-version="2"/>
             <field name="unknown2f8ad6d6" size="12" default-value="0x000000000000000000000000" since-version="2"/>
-            <field name="unknown9d115fa7" size="4" since-version="2"/>
+            <field name="unknown9d115fa7" type="uint32" since-version="2"/>
             <!-- unknown9aea956e is not a float and has strange content -->
-            <field name="unknown9aea956e" size="4" since-version="2"/>
-            <field name="unknown17c6f44e" size="4" expected-value="0x00000000" since-version="2"/>
-            <field name="unknowne444b392" size="4" since-version="2"/>
-            <field name="unknown32885641" size="4" default-value="0x00000000" since-version="2"/>
+            <field name="unknown9aea956e" type="uint32" since-version="2"/>
+            <field name="unknown17c6f44e" type="uint32" expected-value="0x00000000" since-version="2"/>
+            <field name="unknowne444b392" type="uint32" since-version="2"/>
+            <field name="unknown32885641" type="uint32" default-value="0x00000000" since-version="2"/>
             <!-- unknown721b9a99 is not a float and has strange content-->
-            <field name="unknown721b9a99" size="4" since-version="2"/>
+            <field name="unknown721b9a99" type="uint32" since-version="2"/>
 
             <!-- unknowna495c84b is not a float and has strange content-->
-            <field name="unknowna495c84b" size="4" since-version="3"/>
+            <field name="unknowna495c84b" type="uint32" since-version="3"/>
             <!-- unknown12e15bc4 is not a float and has strange content-->
-            <field name="unknown12e15bc4" size="4" since-version="3"/>
+            <field name="unknown12e15bc4" type="uint32" since-version="3"/>
         </fields>
     </structure>
 
@@ -2480,10 +2480,10 @@
         <fields>
             <field name="shape" type="uint32"/>
             <field name="bone" type="int16"/> <!-- can be -1 -->
-            <field name="unknownAt6" type="uint16" expected-value="0"/>
+            <field name="bone_fb" type="uint16" expected-value="0"/>
             <field name="matrix" type="Matrix44"/>
-            <field name="unknownRefSSGSBeta01" type="Reference"/>
-            <field name="unknownRefSSGSBeta02" type="Reference"/>
+            <field name="vertices" type="Reference" refTo="VEC3"/> <!-- making a guess that these are for vertex/face data -->
+            <field name="face_data" type="Reference" refTo="U16_"/>
             <field name="size0" type="float"/>
             <field name="size1" type="float"/>
             <field name="size2" type="float"/>
@@ -2509,8 +2509,8 @@
             <field name="shape" type="uint32" default-value="1"/>
             <field name="bone2" type="uint32"/>
             <field name="matrix" type="Matrix44"/>
-            <field name="unknown0" type="Reference" refTo="VEC3"/>
-            <field name="unknown1" type="Reference" refTo="U16_"/>
+            <field name="vertices" type="Reference" refTo="VEC3"/>
+            <field name="face_data" type="Reference" refTo="U16_"/>
             <field name="size0" type="float"/>
             <field name="size1" type="float" default-value="0.0"/>
             <field name="size2" type="float" default-value="0.0"/>

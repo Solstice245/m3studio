@@ -39,10 +39,11 @@ def draw_props(hittest, layout):
         sub.prop(hittest, 'size', text='Size')
     elif hittest.shape == 'SPHERE':
         sub.prop(hittest, 'size', index=0, text='Size R')
-    elif hittest.shape == 'CAPSULE':
+    elif hittest.shape in ['CAPSULE', 'CYLINDER']:
         sub.prop(hittest, 'size', index=0, text='Size R')
         sub.prop(hittest, 'size', index=1, text='H')
-
+    elif hittest.shape == 'MESH':
+        sub.prop(hittest, 'mesh_object', text='Mesh Object')
     col = layout.column()
     col.prop(hittest, 'location', text='Location')
     col.prop(hittest, 'rotation', text='Rotation')

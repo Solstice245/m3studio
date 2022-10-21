@@ -127,11 +127,11 @@ lod = [
 ]
 
 volume_shape = [
-    ('CUBE', 'Cube', 'Volume with a cuboid shape'),
+    ('CUBE', 'Cube', 'Volume with a cubical shape'),
     ('SPHERE', 'Sphere', 'Volume with a spherical shape'),
     ('CAPSULE', 'Capsule', 'Volume with a capsular shape'),
-    ('UNKNOWN_3', 'Unknown 3', 'Unknown volumetric shape'),
-    ('UNKNOWN_4', 'Unknown 4', 'Unknown volumetric shape'),
+    ('CYLINDER', 'Cylinder', 'Volume with a cylindrical shape'),
+    ('MESH', 'Mesh', 'Volume with a shape matching the assigned mesh'),
 ]
 
 billboard_type = [

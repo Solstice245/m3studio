@@ -42,15 +42,14 @@ def draw_shape_props(shape, layout):
     sub = layout.column(align=True)
     sub.prop(shape, 'shape', text='Shape Type')
     if shape.shape in ['CONVEXHULL', 'MESH']:
-        sub.prop_search(shape, 'mesh', bpy.data, 'meshes', text='Mesh Data')
-    else:
-        if shape.shape == 'CUBE':
-            sub.prop(shape, 'size', text='Size')
-        elif shape.shape == 'SPHERE':
-            sub.prop(shape, 'size', index=0, text='Size R')
-        elif shape.shape in ['CAPSULE', 'CYLINDER']:
-            sub.prop(shape, 'size', index=0, text='Size R')
-            sub.prop(shape, 'size', index=1, text='H')
+        sub.prop_search(shape, 'mesh_object', bpy.data, 'meshes', text='Mesh Object')
+    elif shape.shape == 'CUBE':
+        sub.prop(shape, 'size', text='Size')
+    elif shape.shape == 'SPHERE':
+        sub.prop(shape, 'size', index=0, text='Size R')
+    elif shape.shape in ['CAPSULE', 'CYLINDER']:
+        sub.prop(shape, 'size', index=0, text='Size R')
+        sub.prop(shape, 'size', index=1, text='H')
 
     col = layout.column()
     col.prop(shape, 'location', text='Location')
@@ -92,11 +91,11 @@ def draw_props(rigidbody, layout):
 
 class ShapeProperties(shared.M3PropertyGroup):
     shape: bpy.props.EnumProperty(options=set(), items=bl_enum.physics_shape, update=bone_shape_update_event)
-    mesh: bpy.props.StringProperty(options=set(), update=bone_shape_update_event)
     size: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0, default=(1, 1, 1), update=bone_shape_update_event)
     location: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, update=bone_shape_update_event)
     rotation: bpy.props.FloatVectorProperty(options=set(), subtype='EULER', unit='ROTATION', size=3, default=(0, 0, 0), update=bone_shape_update_event)
     scale: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0, default=(1, 1, 1), update=bone_shape_update_event)
+    mesh_object: bpy.props.PointerProperty(type=bpy.types.Object, update=bone_shape_update_event)
 
 
 class Properties(shared.M3BoneUserPropertyGroup):

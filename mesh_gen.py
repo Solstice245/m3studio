@@ -32,18 +32,20 @@ def get_circular_mesh_data(index, radius, height, sides, circles):
         y = sin(angle) * radius
         vertices += [(x, y, height)]
 
-        nextI = ((ii + 1) % sides)
+        next_side = ((ii + 1) % sides)
         if next_index != 0:
             i0 = index * sides + ii
-            i1 = index * sides + nextI
-            i2 = next_index * sides + nextI
+            i1 = index * sides + next_side
+            i2 = next_index * sides + next_side
             i3 = next_index * sides + ii
             faces += [(i0, i1, i2, i3)]
 
     return (vertices, [], faces)
 
 
-def attachment_point(x=0.075, y=0.15, z=0.3):
+def attachment_point(x=0.05):
+    y = x * 2
+    z = x * 4
     vertices = [(0, -y, 0), (0, y, 0), (x, 0, 0), (0, 0, z)]
     faces = [(0, 1, 2), (0, 1, 3), (1, 2, 3), (0, 2, 3)]
     return (vertices, [], faces)
@@ -70,8 +72,8 @@ def point():
 
 
 def plane(size):
-    x = size[0] / 2
-    y = size[1] / 2
+    x = size[1]
+    y = size[0]
 
     vertices = [(-x, -y, 0), (-x, y, 0), (x, y, 0), (x, -y, 0)]
     faces = [(0, 1, 2, 3)]
@@ -80,9 +82,9 @@ def plane(size):
 
 
 def cube(size):
-    x = size[0] / 2
-    y = size[1] / 2
-    z = size[2] / 2
+    x = size[1]
+    y = size[0]
+    z = size[2]
 
     vertices = [(-x, -y, -z), (-x, -y, z), (-x, y, z), (-x, y, -z), (x, -y, -z), (x, -y, z), (x, y, -z), (x, y, z)]
     faces = [(0, 1, 2, 3), (6, 7, 5, 4), (4, 5, 1, 0), (3, 2, 7, 6), (0, 3, 6, 4), (5, 7, 2, 1)]

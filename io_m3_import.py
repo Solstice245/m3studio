@@ -452,7 +452,6 @@ def create_mesh(m3, ob):
             vertex_id_new_map = {}
 
             region_vert_data = []
-            vert_signs = []
 
             for ii in region_vertex_range:
                 id_tuple = old_vertex_to_id_map[ii]
@@ -463,7 +462,6 @@ def create_mesh(m3, ob):
                     region_vert_data.append(m3_vertices[ii].pos.x)
                     region_vert_data.append(m3_vertices[ii].pos.y)
                     region_vert_data.append(m3_vertices[ii].pos.z)
-                    vert_signs.append(m3_vertices[ii].sign)
                     vertex_id_new_map[id_tuple] = new_index
                 old_vertex_to_new_vertex_map[ii] = new_index
                 # store which old vertex indices were merged to a new one
@@ -502,6 +500,8 @@ def create_mesh(m3, ob):
                 m3_bone = m3.bones[lookup]
                 mesh_ob.vertex_groups.new(name=m3_bone.name)
 
+            vertex_groups_used = [False for g in mesh_ob.vertex_groups]
+
             bpy.context.view_layer.objects.active = mesh_ob
             bpy.ops.object.mode_set(mode='EDIT')
 
@@ -530,6 +530,7 @@ def create_mesh(m3, ob):
                     for ii in range(0, 4):
                         weight = getattr(m3_vert, 'weight' + str(ii))
                         if weight:
+                            vertex_groups_used[getattr(m3_vert, 'bone' + str(ii))] = True
                             vert[deform_layer][getattr(m3_vert, 'bone' + str(ii))] = weight / 255
 
                     if m3_vert.sign == 1.0:
@@ -539,12 +540,16 @@ def create_mesh(m3, ob):
                 edge.smooth = len(edge.link_faces) > 1
             # perform destructive operations only after all uses of m3 vertex data
             bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=0.00001)
-            bmesh.ops.join_triangles(bm, faces=bm.faces, cmp_sharp=False, cmp_uvs=True, angle_face_threshold=0.75, angle_shape_threshold=0.75)
+            bmesh.ops.join_triangles(bm, faces=bm.faces, cmp_uvs=True, angle_face_threshold=1, angle_shape_threshold=1)
 
             bmesh.update_edit_mesh(mesh)
             bm.free()
 
             bpy.ops.object.mode_set(mode='OBJECT')
+
+            for g, used in zip(reversed(mesh_ob.vertex_groups), reversed(vertex_groups_used)):
+                if not used:
+                    mesh_ob.vertex_groups.remove(g)
 
 
 def create_lights(m3, ob):
@@ -594,10 +599,13 @@ def create_hittests(m3, ob):
         hittest.rotation = md[1].to_euler('XYZ')
         hittest.scale = md[2]
 
+        if hittest.shape == 'MESH' and len(m3_hittest.vertices) and len(m3_hittest.face_data):
+            hittest.mesh_object = generate_volume_object(ob, hittest.name, m3_hittest.vertices, m3_hittest.face_data)
+
 
 def create_attachments(m3, ob):
 
-    # bone_point = []
+    bone_point = {}
 
     for m3_point in m3.attachment_points:
         bone_name = m3.bones[m3_point.bone].name
@@ -605,9 +613,64 @@ def create_attachments(m3, ob):
         point = shared.m3_item_new('m3_attachmentpoints', ob)
         point.bone = bone.bl_handle if bone else ''
         point.name = m3_point.name
+        print('point set', point.name)
+        if not bone_point.get(bone_name) or bone_name.startswith('Vol'):
+            bone_point[bone_name] = (point, len(getattr(ob, 'm3_attachmentpoints')) - 1)
 
-    # for m3_volume in m3.attachment_volumes:
-    #     m3_point = ob.m3_attachmentpoints[]
+    print(bone_point)
+
+    for m3_volume in m3.attachment_volumes:
+        bone0_name = m3.bones[m3_volume.bone0].name
+        point, point_index = bone_point[bone0_name]
+        bone1_name = m3.bones[m3_volume.bone1].name
+        bone1 = ob.data.bones[bone1_name]
+        if not point:
+            continue
+        vol = shared.m3_item_new('m3_attachmentpoints[{}].volumes'.format(point_index), ob)
+        vol.name = shared.m3_item_get_name('m3_attachmentpoints[{}].volumes'.format(point_index), 'Volume', ob)
+        vol.bone = bone1.bl_handle if bone1 else ''
+        vol.shape = vol.bl_rna.properties['shape'].enum_items[getattr(m3_volume, 'shape')].identifier
+        vol.size = (m3_volume.size0, m3_volume.size1, m3_volume.size2)
+        md = to_bl_matrix(m3_volume.matrix).decompose()
+        vol.location = md[0]
+        vol.rotation = md[1].to_euler('XYZ')
+        vol.scale = md[2]
+
+        print('point', point, point.name)
+
+        if vol.shape == 'MESH' and len(m3_volume.vertices) and len(m3_volume.face_data):
+            vol.mesh_object = generate_volume_object(ob, '{}_{}'.format(point.name, vol.name), m3_volume.vertices, m3_volume.face_data)
+
+
+def generate_volume_object(ob, name, m3_vert_data, m3_face_data):
+    me = bpy.data.meshes.new(name)
+    me_ob = bpy.data.objects.new(me.name, me)
+    me_ob.display_type = 'WIRE'
+    me_ob.parent = ob
+    me_ob.hide_viewport = True
+    me_ob.hide_render = True
+    bpy.context.scene.collection.objects.link(me_ob)
+
+    bl_vert_data = []
+    for v in m3_vert_data:
+        bl_vert_data.append(v.x)
+        bl_vert_data.append(v.y)
+        bl_vert_data.append(v.z)
+
+    bl_tri_range = range(0, len(m3_face_data), 3)
+
+    me.vertices.add(len(bl_vert_data) / 3)
+    me.vertices.foreach_set('co', bl_vert_data)
+    me.loops.add(len(m3_face_data))
+    me.loops.foreach_set('vertex_index', m3_face_data)
+    me.polygons.add(len(bl_tri_range))
+    me.polygons.foreach_set('loop_start', [ii for ii in bl_tri_range])
+    me.polygons.foreach_set('loop_total', [3 for ii in bl_tri_range])
+
+    me.validate()
+    me.update(calc_edges=True)
+
+    return me_ob
 
 
 def m3_import(filename):
@@ -621,3 +684,4 @@ def m3_import(filename):
     create_particles(m3, ob)
     create_hittests(m3, ob)
     create_attachments(m3, ob)
+    bpy.context.view_layer.objects.active = ob

@@ -26,9 +26,14 @@ def register_props():
 
 
 def update_bone_shapes_option(self, context):
-    if context.object.m3_options.auto_update_bone_shapes:
-        if context.object.m3_options.bone_shapes != 'ATT_':
-            context.object.m3_options.bone_shapes = 'ATT_'
+    ob = context.object
+    if ob.m3_options.auto_update_bone_shapes:
+        for vol in ob.m3_attachmentpoints[ob.m3_attachmentpoints_index].volumes:
+            if vol.shape == 'MESH':
+                mesh_update = True
+                break
+        if ob.m3_options.bone_shapes != 'ATT_' or mesh_update:
+            ob.m3_options.bone_shapes = 'ATT_'
 
 
 def draw_volume_props(volume, layout):
@@ -38,14 +43,15 @@ def draw_volume_props(volume, layout):
         sub.prop(volume, 'size', text='Size')
     elif volume.shape == 'SPHERE':
         sub.prop(volume, 'size', index=0, text='Size R')
-    elif volume.shape == 'CAPSULE':
+    elif volume.shape in ['CAPSULE', 'CYLINDER']:
         sub.prop(volume, 'size', index=0, text='Size R')
         sub.prop(volume, 'size', index=1, text='H')
-    if volume.shape in ['CUBE', 'SPHERE', 'CAPSULE']:
-        col = layout.column()
-        col.prop(volume, 'location', text='Location')
-        col.prop(volume, 'rotation', text='Rotation')
-        col.prop(volume, 'scale', text='Scale')
+    elif volume.shape == 'MESH':
+        sub.prop(volume, 'mesh_object', text='Mesh Object')
+    col = layout.column()
+    col.prop(volume, 'location', text='Location')
+    col.prop(volume, 'rotation', text='Rotation')
+    col.prop(volume, 'scale', text='Scale')
 
 
 def draw_props(point, layout):

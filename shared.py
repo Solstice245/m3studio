@@ -18,6 +18,7 @@
 
 import bpy
 import random
+import math
 from . import bl_enum
 from . import mesh_gen
 
@@ -227,6 +228,7 @@ class M3VolumePropertyGroup(M3BoneUserPropertyGroup):
     location: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, update=bone_shape_update_event)
     rotation: bpy.props.FloatVectorProperty(options=set(), subtype='EULER', unit='ROTATION', size=3, update=bone_shape_update_event)
     scale: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0, default=(1, 1, 1), update=bone_shape_update_event)
+    mesh_object: bpy.props.PointerProperty(type=bpy.types.Object, update=bone_shape_update_event)
 
 
 class M3ObjectPropertyGroup(M3PropertyGroup):
@@ -549,7 +551,40 @@ def set_bone_shape(ob, bone):
         if not prop or bone.bl_handle != prop:
             return
 
-        # TODO Apply matrix to new_data before appending to src_data
+        if str(type(new_data)) == '<class \'bpy_types.Mesh\'>':
+            me = new_data
+            new_data = [[vert.co for vert in me.vertices], [], [poly.vertices for poly in me.polygons]]
+            for ii, v in enumerate(new_data[0]):
+                angle = math.pi / 2
+                x = (math.cos(angle) * v[0]) - (math.sin(angle) * v[1])
+                y = (math.sin(angle) * v[0]) + (math.cos(angle) * v[1])
+                z = v[2]
+                new_data[0][ii] = (x, y, z)
+
+        if matrix:
+            loc, rot, scl = matrix
+            for ii, v in enumerate(new_data[0]):
+                x, y, z = v
+
+                x *= scl[0]
+                y *= scl[1]
+                z *= scl[2]
+
+                y0 = (math.cos(rot[0]) * y) - (math.sin(rot[0]) * z)
+                z0 = (math.sin(rot[0]) * y) + (math.cos(rot[0]) * z)
+                x, y, z = x, y0, z0
+                x0 = (math.sin(rot[1]) * z) + (math.cos(rot[1]) * x)
+                z0 = (math.cos(rot[1]) * z) - (math.sin(rot[1]) * x)
+                x, y, z = x0, y, z0
+                x0 = (math.cos(rot[2]) * x) - (math.sin(rot[2]) * y)
+                y0 = (math.sin(rot[2]) * x) + (math.cos(rot[2]) * y)
+                x, y, z = x0, y0, z
+
+                x += loc[0]
+                y += loc[1]
+                z += loc[2]
+
+                new_data[0][ii] = (x, y, z)
 
         for ii in new_data[2]:
             new_face = []
@@ -566,12 +601,15 @@ def set_bone_shape(ob, bone):
         for point in ob.m3_attachmentpoints:
             add_mesh_data(point.bone, mesh_gen.attachment_point())
             for volume in point.volumes:
+                mat = (volume.location, volume.rotation, volume.scale)
                 if volume.shape == 'CUBE':
-                    add_mesh_data(volume.bone, mesh_gen.cube(volume.size))
+                    add_mesh_data(volume.bone, mesh_gen.cube(volume.size), mat)
                 elif volume.shape == 'SPHERE':
-                    add_mesh_data(volume.bone, mesh_gen.sphere(volume.size[0]))
+                    add_mesh_data(volume.bone, mesh_gen.sphere(volume.size[0]), mat)
                 elif volume.shape == 'CAPSULE':
-                    add_mesh_data(volume.bone, mesh_gen.capsule(volume.size, volume.size[0]))
+                    add_mesh_data(volume.bone, mesh_gen.capsule(volume.size, volume.size[0]), mat)
+                elif volume.shape == 'MESH' and volume.mesh_object:
+                    add_mesh_data(volume.bone, volume.mesh_object.data, mat)
 
     elif ob.m3_options.bone_shapes == 'CAM_':
         for camera in ob.m3_cameras:
@@ -638,31 +676,38 @@ def set_bone_shape(ob, bone):
     elif ob.m3_options.bone_shapes == 'PHRB':
         for rigid_body in ob.m3_rigidbodies:
             for shape in rigid_body.shapes:
+                mat = (shape.location, shape.rotation, shape.scale)
                 if shape.shape == 'CUBE':
-                    add_mesh_data(rigid_body.bone, mesh_gen.cube(shape.size))
+                    add_mesh_data(rigid_body.bone, mesh_gen.cube(shape.size), mat)
                 elif shape.shape == 'SPHERE':
-                    add_mesh_data(rigid_body.bone, mesh_gen.sphere(shape.size[0]))
+                    add_mesh_data(rigid_body.bone, mesh_gen.sphere(shape.size[0]), mat)
                 elif shape.shape == 'CAPSULE':
-                    add_mesh_data(rigid_body.bone, mesh_gen.capsule(shape.size, shape.size[0]))
+                    add_mesh_data(rigid_body.bone, mesh_gen.capsule(shape.size, shape.size[0]), mat)
                 elif shape.shape == 'CYLINDER':
-                    add_mesh_data(rigid_body.bone, mesh_gen.cylinder(shape.size, shape.size[0]))
-                elif shape.shape == 'CONVEXHULL' or shape.shape == 'MESH':
-                    pass  # TODO
+                    add_mesh_data(rigid_body.bone, mesh_gen.cylinder(shape.size, shape.size[0]), mat)
+                elif (shape.shape == 'CONVEXHULL' or shape.shape == 'MESH') and shape.mesh_object:
+                    add_mesh_data(volume.bone, volume.mesh_object.data, mat)
 
     elif ob.m3_options.bone_shapes == 'FTHT':
+        mat = (ob.m3_hittest_tight.location, ob.m3_hittest_tight.rotation, ob.m3_hittest_tight.scale)
         if ob.m3_hittest_tight.shape == 'CUBE':
-            add_mesh_data(ob.m3_hittest_tight.bone, mesh_gen.cube(ob.m3_hittest_tight.size))
+            add_mesh_data(ob.m3_hittest_tight.bone, mesh_gen.cube(ob.m3_hittest_tight.size), mat)
         elif ob.m3_hittest_tight.shape == 'SPHERE':
-            add_mesh_data(ob.m3_hittest_tight.bone, mesh_gen.sphere(ob.m3_hittest_tight.size[0]))
+            add_mesh_data(ob.m3_hittest_tight.bone, mesh_gen.sphere(ob.m3_hittest_tight.size[0]), mat)
         elif ob.m3_hittest_tight.shape == 'CYLINDER':
-            add_mesh_data(ob.m3_hittest_tight.bone, mesh_gen.cylinder(hittest.size, hittest.size[0]))
+            add_mesh_data(ob.m3_hittest_tight.bone, mesh_gen.cylinder(hittest.size, hittest.size[0]), mat)
+        elif ob.m3_hittest_tight.shape == 'MESH' and ob.m3_hittest_tight.mesh_object:
+            add_mesh_data(ob.m3_hittest_tight.bone, ob.m3_hittest_tight.mesh_object.data, mat)
         for hittest in ob.m3_hittests:
+            mat = (hittest.location, hittest.rotation, hittest.scale)
             if hittest.shape == 'CUBE':
-                add_mesh_data(hittest.bone, mesh_gen.cube(hittest.size))
+                add_mesh_data(hittest.bone, mesh_gen.cube(hittest.size), mat)
             elif hittest.shape == 'SPHERE':
-                add_mesh_data(hittest.bone, mesh_gen.sphere(hittest.size[0]))
+                add_mesh_data(hittest.bone, mesh_gen.sphere(hittest.size[0]), mat)
             elif hittest.shape == 'CYLINDER':
-                add_mesh_data(hittest.bone, mesh_gen.cylinder(hittest.size, hittest.size[0]))
+                add_mesh_data(hittest.bone, mesh_gen.cylinder(hittest.size, hittest.size[0]), mat)
+            elif hittest.shape == 'MESH' and hittest.mesh_object:
+                add_mesh_data(hittest.bone, hittest.mesh_object.data, mat)
 
     elif ob.m3_options.bone_shapes == 'PHCL':
         for cloth in ob.m3_physicscloths:
