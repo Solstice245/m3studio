@@ -508,22 +508,30 @@ def create_mesh(m3, ob):
 
             bm = bmesh.from_edit_mesh(mesh)
 
+            has_vertex_colors = m3.getNamedBit('vertex_flags', 'has_vertex_colors')
+            color_layer = bm.loops.layers.color.new('m3color') if has_vertex_colors else None
+            alpha_layer = bm.loops.layers.color.new('m3alpha') if has_vertex_colors else None
             deform_layer = bm.verts.layers.deform.new('m3lookup')
             sign_layer = bm.faces.layers.int.new('m3sign')
             uv_maps = []
+            uv_layers = {}
             for uv_map in ['uv0', 'uv1', 'uv2', 'uv3', 'uv4']:
                 if v_class_desc.hasField(uv_map):
-                    bm.loops.layers.uv.new(uv_map)
+                    uv_layers[uv_map] = bm.loops.layers.uv.new(uv_map)
                     uv_maps.append(uv_map)
 
-            for face_index, face in enumerate(bm.faces):
-                old_indices = tris_old[face_index]
+            for face in bm.faces:
+                old_indices = tris_old[face.index]
                 face.smooth = True
-                for uv_map in uv_maps:
-                    uv_layer = bm.loops.layers.uv.get(uv_map)
-                    for loop_index, loop in enumerate(face.loops):
-                        m3_uv = getattr(m3_vertices[old_indices[loop_index]], uv_map)
-                        loop[uv_layer].uv = to_bl_uv(m3_uv, region_uv_multiply, region_uv_offset)
+
+                for loop_index, loop in enumerate(face.loops):
+                    m3_vert = m3_vertices[old_indices[loop_index]]
+                    for uv_map in uv_maps:
+                        loop[uv_layers[uv_map]].uv = to_bl_uv(getattr(m3_vert, uv_map), region_uv_multiply, region_uv_offset)
+
+                    if color_layer:
+                        loop[color_layer] = (m3_vert.col.r / 255, m3_vert.col.g / 255, m3_vert.col.b / 255, 1)
+                        loop[alpha_layer] = (m3_vert.col.a / 255, m3_vert.col.a / 255, m3_vert.col.a / 255, 1)
 
                 for vert_index, vert in enumerate(face.verts):
                     m3_vert = m3_vertices[old_indices[vert_index]]
@@ -614,11 +622,11 @@ def create_attachments(m3, ob):
         point = shared.m3_item_new('m3_attachmentpoints', ob)
         point.bone = bone.bl_handle if bone else ''
         point.name = m3_point.name
-        print('point set', point.name)
+        # print('point set', point.name)
         if not bone_point.get(bone_name) or bone_name.startswith('Vol'):
             bone_point[bone_name] = (point, len(getattr(ob, 'm3_attachmentpoints')) - 1)
 
-    print(bone_point)
+    # print(bone_point)
 
     for m3_volume in m3.attachment_volumes:
         bone0_name = m3.bones[m3_volume.bone0].name
@@ -637,7 +645,7 @@ def create_attachments(m3, ob):
         vol.rotation = md[1].to_euler('XYZ')
         vol.scale = md[2]
 
-        print('point', point, point.name)
+        # print('point', point, point.name)
 
         if vol.shape == 'MESH' and len(m3_volume.vertices) and len(m3_volume.face_data):
             vol.mesh_object = generate_volume_object(ob, '{}_{}'.format(point.name, vol.name), m3_volume.vertices, m3_volume.face_data)
