@@ -63,8 +63,8 @@ def draw_props(particle, layout):
     col.prop(particle, 'emit_amount', text='Amount')
     col.separator()
     shared.draw_collection_stack(layout, 'm3_particles[{}].copies'.format(particle.bl_index), 'Particle Copy', draw_copy_props)
-    col.separator()
     col = layout.column(align=True)
+    col.separator()
     col.prop(particle, 'emit_type', text='Emission Type')
     col.prop(particle, 'emit_shape', text='Emission Area Shape')
 

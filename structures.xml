@@ -2575,15 +2575,15 @@
             <field name="bone" type="uint32"/>
             <field name="unknown3" type="FloatAnimationReferenceV0"/>
             <field name="unknown4" type="FloatAnimationReferenceV0"/>
-            <field name="yawVariationType" type="uint32"/>
-            <field name="yawVariationAmplitude" type="FloatAnimationReferenceV0"/>
-            <field name="yawVariationFrequency" type="FloatAnimationReferenceV0"/>
-            <field name="pitchVariationType" type="uint32"/>
-            <field name="pitchVariationAmplitude" type="FloatAnimationReferenceV0"/>
-            <field name="pitchVariationFrequency" type="FloatAnimationReferenceV0"/>
-            <field name="speedVariationType" type="uint32"/>
-            <field name="speedVariationAmplitude" type="FloatAnimationReferenceV0"/>
-            <field name="speedVariationFrequency" type="FloatAnimationReferenceV0"/>
+            <field name="yaw_var_shape" type="uint32"/>
+            <field name="yaw_var_amplitude" type="FloatAnimationReferenceV0"/>
+            <field name="yaw_var_frequency" type="FloatAnimationReferenceV0"/>
+            <field name="pitch_var_shape" type="uint32"/>
+            <field name="pitch_var_amplitude" type="FloatAnimationReferenceV0"/>
+            <field name="pitch_var_frequency" type="FloatAnimationReferenceV0"/>
+            <field name="length_var_shape" type="uint32"/>
+            <field name="length_var_amplitude" type="FloatAnimationReferenceV0"/>
+            <field name="length_var_frequency" type="FloatAnimationReferenceV0"/>
             <field name="yaw" type="FloatAnimationReferenceV0"/>
             <field name="pitch" type="FloatAnimationReferenceV0"/>
             <field name="tan2" type="float"/>
@@ -2608,14 +2608,14 @@
         </versions>
         <fields>
             <field name="bone" type="uint16"/>
-            <field name="unknown13c070e5" type="uint16" expected-value="0"/> <!-- unused? or it might belong to bone -->
-            <field name="materialReferenceIndex" type="uint32"/>
-            <field name="additionalFlags" type="uint32" default-value="0x8" since-version="8">
+            <field name="bone_fb" type="uint16" expected-value="0"/>
+            <field name="material_reference" type="uint32"/>
+            <field name="additional_flags" type="uint32" default-value="0x8" since-version="8">
                 <bits>
-                    <bit mask="0x8" name="worldSpace"/>
+                    <bit mask="0x8" name="world_space"/>
                 </bits>
             </field>
-            <field name="speed" type="FloatAnimationReferenceV0 "/>
+            <field name="speed" type="FloatAnimationReferenceV0"/>
             <field name="unknown75e0b576" type="FloatAnimationReferenceV0"/>
             <field till-version="6" name="unknownd30655aa" type="uint32" expected-value="0"/> <!-- haven't seen a Blizzard model where this wouldn't be 0 -->
 
@@ -2636,68 +2636,68 @@
             <field name="unknown76f48851" type="uint32" expected-value="0"/>
             <field name="unknown874bdc23" type="uint32" expected-value="0" till-version="6"/>
             <field name="gravity" type="float" default-value="0"/>
-            <field name="sizeMiddleTime" type="float" default-value="1.0"/>
-            <field name="colorMiddleTime" type="float" default-value="1.0"/>
-            <field name="alphaMiddleTime" type="float" default-value="1.0"/>
-            <field name="rotationMiddleTime" type="float" default-value="1.0"/>
-            <field name="sizeMiddleHoldTime" type="float" default-value="0.0" since-version="8"/>
-            <field name="colorMiddleHoldTime" type="float" default-value="0.0" since-version="8"/>
-            <field name="alphaMiddleHoldTime" type="float" default-value="0.0" since-version="8"/>
-            <field name="rotationMiddleHoldTime" type="float" default-value="0.0" since-version="8"/>
-            <field name="size" type="Vector3AnimationReferenceV0"/>
-            <field name="rotation" type="Vector3AnimationReferenceV0"/>
-            <field name="baseColoring" type="ColorAnimationReferenceV0"/>
-            <field name="centerColoring" type="ColorAnimationReferenceV0"/>
-            <field name="tipColoring" type="ColorAnimationReferenceV0"/>
+            <field name="scale_anim_mid" type="float" default-value="1.0"/>
+            <field name="color_anim_mid" type="float" default-value="1.0"/>
+            <field name="alpha_anim_mid" type="float" default-value="1.0"/>
+            <field name="twist_anim_mid" type="float" default-value="1.0"/>
+            <field name="scale_anim_mid_time" type="float" default-value="0.0" since-version="8"/>
+            <field name="color_anim_mid_time" type="float" default-value="0.0" since-version="8"/>
+            <field name="alpha_anim_mid_time" type="float" default-value="0.0" since-version="8"/>
+            <field name="twist_anim_mid_time" type="float" default-value="0.0" since-version="8"/>
+            <field name="scale" type="Vector3AnimationReferenceV0"/>
+            <field name="twist" type="Vector3AnimationReferenceV0"/>
+            <field name="color_base" type="ColorAnimationReferenceV0"/>
+            <field name="color_mid" type="ColorAnimationReferenceV0"/>
+            <field name="color_tip" type="ColorAnimationReferenceV0"/>
             <field name="drag" type="float" default-value="0.0"/>
 
             <field name="mass" type="float" default-value="1.0" since-version="8"/>
-            <field name="massProbablyUnused" type="float" default-value="0.0" since-version="8"/>
+            <field name="mass2" type="float" default-value="0.0" since-version="8"/>
 
-            <field name="massProbablyUnused" type="float" default-value="0.0" till-version="6"/>
+            <field name="mass2" type="float" default-value="0.0" till-version="6"/>
             <field name="mass" type="float" default-value="1.0" till-version="6"/>
             <field name="unknownc7004d01" type="float" default-value="0.0"/> <!-- almost always 0.0 on Blizzard models, few occurences where it's 10.0 ; could be some multiplier related to mass?? -->
 
             <field name="unknown20683e1b" type="uint32" default-value="0" till-version="6"/> <!-- always 0 on Blizzard models expect 3 cases (LarvaPortrait.m3 OverlordPortrait.m3 HydraliskPortrait.m3) where it's 0x41200000 -->
-            <field name="worldSpace" type="uint32" default-value="0" till-version="6"/> <!-- 0x0 or 0x1 (off/on) -->
-            <field name="localForceChannels" type="uint16" default-value="0"/>
-            <field name="worldForceChannels" type="uint16" default-value="0"/>
-            <field name="localForceChannelsCopy" type="uint16" default-value="0"/>
-            <field name="worldForceChannelsCopy" type="uint16" default-value="0"/>
+            <field name="world_space" type="uint32" default-value="0" till-version="6"/> <!-- 0x0 or 0x1 (off/on) -->
+            <field name="local_forces" type="uint16" default-value="0"/>
+            <field name="world_forces" type="uint16" default-value="0"/>
+            <field name="local_forces_fb" type="uint16" default-value="0"/>
+            <field name="world_forces_fb" type="uint16" default-value="0"/>
 
             <field name="unknownfb168d8c" type="uint32" expected-value="0" since-version="9"/> <!-- haven't seen a Blizzard model where this wouldn't be 0 -->
-            <field name="surfaceNoiseAmplitude" type="float"/>
-            <field name="surfaceNoiseNumberOfWaves" type="float"/>
-            <field name="surfaceNoiseFrequency" type="float"/>
-            <field name="surfaceNoiseScale" type="float"/>
+            <field name="noise_amplitude" type="float"/>
+            <field name="noise_waves" type="float"/>
+            <field name="noise_frequency" type="float"/>
+            <field name="noise_scale" type="float"/>
             <field name="indexPlusHighestIndex" type="uint32" default-value="1" since-version="5"/> <!-- 1-255 value ; never seen to be 0 on Blizzard models ; shared with PAR_ ; probably determines the rendering priority of some sort ? -->
-            <field name="ribbonType" type="uint32"/>
-            <field name="cullType" type="uint32" default-value="1"/>
-            <field name="ribbonDivisions" type="float"/>
-            <field name="ribbonSides" type="uint32"/>
-            <field name="starRatio" type="float" default-value="0.5"/>
+            <field name="ribbon_type" type="uint32"/>
+            <field name="cull_method" type="uint32" default-value="1"/>
+            <field name="divisions" type="float"/>
+            <field name="sides" type="uint32"/>
+            <field name="star_ratio" type="float" default-value="0.5"/>
             <field name="length" type="FloatAnimationReferenceV0"/>
             <field name="unknown3fbae7d6" type="int32" expected-value="0" till-version="6"/> <!-- haven't seen a Blizzard model where this wouldn't be 0 -->
-            <field name="endPoints" type="Reference" refTo="SRIB"/>
+            <field name="splines" type="Reference" refTo="SRIB"/>
             <field name="active" type="UInt32AnimationReferenceV0"/>
             <field name="flags" type="uint32" default-value="0" >
                 <bits>
-                    <bit mask="0x2" name="collideWithTerrain"/>
-                    <bit mask="0x4" name="collideWithObjects"/>
-                    <bit mask="0x8" name="edgeFalloff"/>
-                    <bit mask="0x10" name="inheritParentVelocity"/>
-                    <bit mask="0x20" name="smoothSize"/>
-                    <bit mask="0x40" name="bezierSmoothSize"/>
-                    <bit mask="0x80" name="useVertexAlpha"/>
-                    <bit mask="0x100" name="scaleTimeByParent"/>
-                    <bit mask="0x200" name="forceCPUSimulation"/>
-                    <bit mask="0x400" name="useLocaleTime"/>
-                    <bit mask="0x800" name="simulateOnInitialization"/>
-                    <bit mask="0x1000" name="useLengthAndTime"/>
-                    <bit mask="0x2000" name="accurateGPUTangents"/>
+                    <bit mask="0x2" name="collide_terrain"/>
+                    <bit mask="0x4" name="collide_objects"/>
+                    <bit mask="0x8" name="edge_falloff"/>
+                    <bit mask="0x10" name="inherit_parent_velocity"/>
+                    <bit mask="0x20" name="scale_smooth"/>
+                    <bit mask="0x40" name="scale_smooth_bezier"/>
+                    <bit mask="0x80" name="vertex_alpha"/>
+                    <bit mask="0x100" name="scale_time_parent"/>
+                    <bit mask="0x200" name="force_cpu_sim"/>
+                    <bit mask="0x400" name="local_time"/>
+                    <bit mask="0x800" name="simulate_init"/>
+                    <bit mask="0x1000" name="length_time"/>
+                    <bit mask="0x2000" name="accurate_gpu_tangents"/>
                 </bits>
             </field>
-            <field name="size_smoothing" type="uint32" default-value="0"/>
+            <field name="scale_smoothing" type="uint32" default-value="0"/>
             <field name="color_smoothing" type="uint32" default-value="0"/>
             <field name="friction" type="float" default-value="1.0" since-version="8"/>
             <field name="bounce" type="float" default-value="0.0" since-version="8"/>
@@ -2705,30 +2705,30 @@
             <field name="lod_cut" type="uint32" default-value="0"/>
 
             <!-- till v6: pitch then yaw -->
-            <field name="pitchVariationType" type="uint32" till-version="6"/>
-            <field name="pitchVariationAmplitude" type="FloatAnimationReferenceV0" till-version="6"/>
-            <field name="pitchVariationFrequency" type="FloatAnimationReferenceV0" till-version="6"/>
-            <field name="yawVariationType" type="uint32" till-version="6"/>
-            <field name="yawVariationAmplitude" type="FloatAnimationReferenceV0" till-version="6"/>
-            <field name="yawVariationFrequency" type="FloatAnimationReferenceV0" till-version="6"/>
+            <field name="pitch_var_shape" type="uint32" till-version="6"/>
+            <field name="pitch_var_amplitude" type="FloatAnimationReferenceV0" till-version="6"/>
+            <field name="pitch_var_frequency" type="FloatAnimationReferenceV0" till-version="6"/>
+            <field name="yaw_var_shape" type="uint32" till-version="6"/>
+            <field name="yaw_var_amplitude" type="FloatAnimationReferenceV0" till-version="6"/>
+            <field name="yaw_var_frequency" type="FloatAnimationReferenceV0" till-version="6"/>
 
             <!-- since v8: yaw then pitch -->
-            <field name="yawVariationType" type="uint32" since-version="8"/>
-            <field name="yawVariationAmplitude" type="FloatAnimationReferenceV0" since-version="8"/>
-            <field name="yawVariationFrequency" type="FloatAnimationReferenceV0" since-version="8"/>
-            <field name="pitchVariationType" type="uint32" since-version="8"/>
-            <field name="pitchVariationAmplitude" type="FloatAnimationReferenceV0" since-version="8"/>
-            <field name="pitchVariationFrequency" type="FloatAnimationReferenceV0" since-version="8"/>
+            <field name="yaw_var_shape" type="uint32" since-version="8"/>
+            <field name="yaw_var_amplitude" type="FloatAnimationReferenceV0" since-version="8"/>
+            <field name="yaw_var_frequency" type="FloatAnimationReferenceV0" since-version="8"/>
+            <field name="pitch_var_shape" type="uint32" since-version="8"/>
+            <field name="pitch_var_amplitude" type="FloatAnimationReferenceV0" since-version="8"/>
+            <field name="pitch_var_frequency" type="FloatAnimationReferenceV0" since-version="8"/>
 
-            <field name="speedVariationType" type="uint32"/>
-            <field name="speedVariationAmplitude" type="FloatAnimationReferenceV0"/>
-            <field name="speedVariationFrequency" type="FloatAnimationReferenceV0"/>
-            <field name="sizeVariationType" type="uint32"/>
-            <field name="sizeVariationAmplitude" type="FloatAnimationReferenceV0"/>
-            <field name="sizeVariationFrequency" type="FloatAnimationReferenceV0"/>
-            <field name="alphaVariationType" type="uint32"/>
-            <field name="alphaVariationAmplitude" type="FloatAnimationReferenceV0"/>
-            <field name="alphaVariationFrequency" type="FloatAnimationReferenceV0"/>
+            <field name="length_var_shape" type="uint32"/>
+            <field name="length_var_amplitude" type="FloatAnimationReferenceV0"/>
+            <field name="length_var_frequency" type="FloatAnimationReferenceV0"/>
+            <field name="scale_var_shape" type="uint32"/>
+            <field name="scale_var_amplitude" type="FloatAnimationReferenceV0"/>
+            <field name="scale_var_frequency" type="FloatAnimationReferenceV0"/>
+            <field name="alpha_var_shape" type="uint32"/>
+            <field name="alpha_var_amplitude" type="FloatAnimationReferenceV0"/>
+            <field name="alpha_var_frequency" type="FloatAnimationReferenceV0"/>
             <field name="parent_velocity" type="FloatAnimationReferenceV0"/>
             <field name="phase_shift" type="FloatAnimationReferenceV0"/>
         </fields>

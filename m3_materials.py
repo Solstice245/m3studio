@@ -168,7 +168,7 @@ class SplatTerrainBakeProperties(shared.M3PropertyGroup):
 class ReflectionProperties(shared.M3PropertyGroup):
     layer_norm: bpy.props.StringProperty(options=set())
     layer_strength: bpy.props.StringProperty(options=set())
-    blur_layer: bpy.props.StringProperty(options=set())
+    layer_blur: bpy.props.StringProperty(options=set())
     blur_angle: bpy.props.FloatProperty(name='Blur Angle')
     blur_distance: bpy.props.FloatProperty(name='Blur Distance', default=2)
     reflection_offset: bpy.props.FloatProperty(name='Reflection Offset')
@@ -282,6 +282,11 @@ def draw_standard_props(context, material, layout):
     col.prop(material, 'spec_mode', text='Specular Mode Mode')
     col.prop(material, 'specularity', text='Specularity')
     col.prop(material, 'spec_multiply', text='Multiply')
+    col.separator()
+    col = layout.column(align=True)
+    col.prop(material, 'envi_const_multiply', text='Environment Multiply')
+    col.prop(material, 'envi_diff_multiply', text='Diffuse')
+    col.prop(material, 'envi_spec_multiply', text='Specular')
     col.separator()
     col = layout.column_flow(align=True, columns=2)
     col.use_property_split = False

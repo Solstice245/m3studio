@@ -155,11 +155,11 @@ def m3_item_find_bones(item):
     return bone_list
 
 
-def m3_pointer_get(ob, search_data, prop_name, prop_resolved=False):
+def m3_pointer_get(ob, search_prop, prop_name, prop_resolved=False):
     prop = m3_ob_getter(prop_name, obj=ob) if not prop_resolved else prop_name
     if not prop or not ob:
         return None
-    data = m3_ob_getter(search_data, obj=ob)
+    data = m3_ob_getter(search_prop, obj=ob)
     for item in data:
         if item.bl_handle == prop:
             return item
@@ -299,7 +299,7 @@ class M3CollectionOpMove(M3CollectionOpBase):
             collection[self.index].bl_index += self.shift
             collection[self.index + self.shift].bl_index -= self.shift
             collection.move(self.index, self.index + self.shift)
-            swap_m3_action_keyframes(context.object, self.collection, self.index, self.shift)
+            swap_m3_action_keyframes(context.object, self.collection, self.index, self.index + self.shift)
             m3_ob_setter(self.collection + '_index', self.index + self.shift)
 
         return {'FINISHED'}
@@ -395,15 +395,15 @@ class M3PropPointerOpUnlink(bpy.types.Operator):
         return {'FINISHED'}
 
 
-def draw_pointer_prop(ob, layout, search_data, prop_name, prop_label='', icon=''):
+def draw_pointer_prop(ob, layout, search_prop, prop_name, prop_label='', icon=''):
 
     if m3_ob_getter(prop_name, obj=ob) is None:
         return
 
-    if search_data == 'data.bones' and ob.mode == 'EDIT':
-        search_data = 'data.edit_bones'
+    if search_prop == 'data.bones' and ob.mode == 'EDIT':
+        search_prop = 'data.edit_bones'
 
-    pointer_ob = m3_pointer_get(ob, search_data, prop_name)
+    pointer_ob = m3_pointer_get(ob, search_prop, prop_name)
 
     main = layout.row(align=True)
     main.use_property_split = False
@@ -415,7 +415,7 @@ def draw_pointer_prop(ob, layout, search_data, prop_name, prop_label='', icon=''
     row = split.row(align=True)
     op = row.operator('m3.proppointer_search', text='' if pointer_ob else 'Select', icon='VIEWZOOM')
     op.prop = prop_name
-    op.search_data = search_data
+    op.search_prop = search_prop
 
     if pointer_ob:
         row.prop(pointer_ob, 'name', text='', icon=icon)
@@ -537,22 +537,22 @@ def shift_m3_action_keyframes(ob, prefix, index, offset=-1):
             fcurve.data_path = fcurve.data_path.replace(path, '{}[{}]'.format(prefix, index + offset))
 
 
-def swap_m3_action_keyframes(ob, prefix, old, shift):
+def swap_m3_action_keyframes(ob, prefix, old, new):
     for action in bpy.data.actions:
         if ob.name not in action.name:
             continue
 
         path = '{}[{}]'.format(prefix, old)
-        path_shift = '{}[{}]'.format(prefix, old + shift)
+        path_new = '{}[{}]'.format(prefix, new)
 
         fcurves = [fcurve for fcurve in action.fcurves if path in fcurve.data_path]
-        fcurves_shift = [fcurve for fcurve in action.fcurves if path_shift in fcurve.data_path]
+        fcurves_new = [fcurve for fcurve in action.fcurves if path_new in fcurve.data_path]
 
         for fcurve in fcurves:
-            fcurve.data_path = fcurve.data_path.replace(path, path_shift)
+            fcurve.data_path = fcurve.data_path.replace(path, path_new)
 
-        for fcurve in fcurves_shift:
-            fcurve.data_path = fcurve.data_path.replace(path_shift, path)
+        for fcurve in fcurves_new:
+            fcurve.data_path = fcurve.data_path.replace(path_new, path)
 
 
 def set_bone_shape(ob, bone):
