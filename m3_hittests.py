@@ -30,7 +30,7 @@ def update_collection_index(self, context):
     ob = context.object
     bl = ob.m3_hittests[ob.m3_hittests_index]
     shared.select_bones_handles(ob, [bl.bone])
-    shared.auto_update_bone_shapes(ob, 'FTHT_')
+    shared.auto_update_bone_shapes(ob, 'FTHT')
 
 
 def draw_props(hittest, layout):
