@@ -16,8 +16,8 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-from math import log, pi
 from timeit import timeit
+import math
 import bpy
 import bmesh
 import mathutils
@@ -96,6 +96,7 @@ class M3InputProcessor:
             mask = 1 << ii
             vector[ii] = (mask & val) > 0
 
+    # with resolved references no longer used, this is only used by "tag" field
     def string(self, field):
         val = getattr(self.m3, field)
         setattr(self.bl, field, val if val else '')
@@ -221,17 +222,39 @@ mattype_layers = {
 
 class Importer:
 
+    def m3_get_ref(self, ref_field):
+        return self.m3_ref_data[ref_field.index]['m3']
+
+    def bl_get_ref(self, ref_field, fallback=False):
+        bl = self.m3_ref_data[ref_field.index]['bl']
+        return bl if not fallback or bl else self.m3_ref_data[ref_field.index]['m3']
+
+    def m3_get_bone_name(self, bone_index):
+        return self.final_bone_names[self.m3_get_ref(self.m3_bones[bone_index].name)]
+
     def m3_import(self, filename):
-        self.m3 = io_m3.loadModel(filename)
+        self.m3 = io_m3.loadSections(filename)
+
+        self.m3_ref_data = []
+        for section in self.m3:
+            self.m3_ref_data.append({'m3': section.content, 'bl': None})
+        # 0 is used as index for null reference
+        self.m3_ref_data[0] = {'m3': [], 'bl': None}
+        self.bl_ref_objects = []
+
+        self.m3_model = self.m3_get_ref(self.m3[0].content[0].model)[0]
+        self.m3_bones = self.m3_get_ref(self.m3_model.bones)
+        self.m3_bone_rests = self.m3_get_ref(self.m3_model.bone_rests)
 
         self.sequence_stc_anim_id_set = {}
-        self.final_bone_names = []
+        self.final_bone_names = {}
         self.animations = []
         self.anim_id_to_long_map = {}
 
         self.ob = self.armature_object_new()
         self.create_bones()
         self.create_materials()
+        # print('createMesh', timeit(lambda: self.create_mesh(), number=1))
         self.create_mesh()
         self.create_lights()
         self.create_particles()
@@ -262,17 +285,16 @@ class Importer:
                 insertLinearKeyFrame(curve, frame, value)
 
     def create_bones(self):
-        m3, ob = self.m3, self.ob
 
         def get_bone_tails(bone_heads, bone_vectors):
-            child_bone_indices = [[] for ii in m3.bones]
-            for bone_index, bone_entry in enumerate(m3.bones):
+            child_bone_indices = [[] for ii in self.m3_bones]
+            for bone_index, bone_entry in enumerate(self.m3_bones):
                 if bone_entry.parent != -1:
                     child_bone_indices[bone_entry.parent].append(bone_index)
 
             tails = []
 
-            for m3_bone, child_indices, head, vector in zip(m3.bones, child_bone_indices, bone_heads, bone_vectors):
+            for m3_bone, child_indices, head, vector in zip(self.m3_bones, child_bone_indices, bone_heads, bone_vectors):
                 length = 0.1
                 for child_index in child_indices:
                     head_to_child_head = bone_heads[child_index] - head
@@ -315,7 +337,7 @@ class Importer:
                 z_x = matrix33.col[2].angle(iref.col[0].to_3d())
                 z_z = matrix33.col[2].angle(iref.col[2].to_3d())
 
-                roll_angle = z_z if z_x > pi / 2 else -z_z
+                roll_angle = z_z if z_x > math.pi / 2 else -z_z
 
                 rolls.append(roll_angle)
 
@@ -325,15 +347,17 @@ class Importer:
             bpy.ops.object.mode_set(mode='EDIT', toggle=False)
 
             edit_bones = []
-            for index, m3_bone in enumerate(m3.bones):
-                edit_bone = ob.data.edit_bones.new(m3_bone.name)
+            for index, m3_bone in enumerate(self.m3_bones):
+                m3_bone_name = self.m3[m3_bone.name.index].content
+                edit_bone = self.ob.data.edit_bones.new(m3_bone_name)
+                self.final_bone_names[m3_bone_name] = edit_bone.name
                 edit_bone.bl_handle = shared.m3_handle_gen()
                 edit_bone.head = bone_heads[index]
                 edit_bone.tail = bone_tails[index]
                 edit_bone.roll = bone_rolls[index]
 
                 if m3_bone.parent != -1:
-                    parent_edit_bone = ob.data.edit_bones[m3_bone.parent]
+                    parent_edit_bone = self.ob.data.edit_bones[m3_bone.parent]
                     edit_bone.parent = parent_edit_bone
                     parent_child_vector = parent_edit_bone.tail - edit_bone.head
 
@@ -344,7 +368,7 @@ class Importer:
 
             return edit_bones
 
-        bone_rests = [to_bl_matrix(iref.matrix).inverted() @ io_shared.rot_fix_matrix for iref in m3.bone_rests]
+        bone_rests = [to_bl_matrix(iref.matrix).inverted() @ io_shared.rot_fix_matrix for iref in self.m3_bone_rests]
         bone_heads = [matrix.translation for matrix in bone_rests]
         bone_vectors = [matrix.col[1].to_3d().normalized() for matrix in bone_rests]
         bone_tails = get_bone_tails(bone_heads, bone_vectors)
@@ -352,34 +376,43 @@ class Importer:
         get_edit_bones(bone_heads, bone_tails, bone_rolls)
 
     def create_materials(self):
-        m3, ob = self.m3, self.ob
+        ob = self.ob
 
-        for m3_matref in m3.material_references:
+        for m3_matref in self.m3[self.m3_model.material_references.index].content:
             mattype_list = matref_to_mattype[m3_matref.type]
-            m3_mat = getattr(m3, mattype_list[0])[m3_matref.index]
+            m3_mat = self.m3_get_ref(getattr(self.m3_model, mattype_list[0]))[m3_matref.index]
 
             matref = shared.m3_item_new('m3_materialrefs', ob)
             mat_col = getattr(ob, 'm3_' + mattype_list[0])
             mat = shared.m3_item_new('m3_' + mattype_list[0], ob)
-            mat.name = m3_mat.name
+            mat.name = self.m3[m3_mat.name.index].content
             processor = M3InputProcessor(self, ob, 'm3_{}[{}]'.format(mattype_list[0], len(mat_col) - 1), mat, m3_mat)
             mattype_list[1](processor)
 
-            matref.name = mat.name
+            matref.name = self.m3[m3_mat.name.index].content
             matref.mat_type = 'm3_' + matref_to_mattype[m3_matref.type][0]
             matref.mat_handle = mat.bl_handle
 
             shared.m3_msgbus_sub(mat, matref, 'name', 'name')
 
             for layer_name in mattype_layers[m3_matref.type]:
-                if not hasattr(m3_mat, 'layer_' + layer_name):
+                m3_layer_field = getattr(m3_mat, 'layer_' + layer_name, None)
+                if not m3_layer_field:
                     continue
-                m3_layer = getattr(m3_mat, 'layer_' + layer_name)[0]
-                if not m3_layer.color_bitmap and not m3_layer.getNamedBit('flags', 'color'):
+
+                layer = self.bl_get_ref(m3_layer_field)
+                if layer:
+                    setattr(mat, 'layer_' + layer_name, layer.bl_handle)
+                    continue
+
+                m3_layer = self.m3_get_ref(m3_layer_field)[0]
+                m3_layer_bitmap_str = self.m3[m3_layer.color_bitmap.index].content if m3_layer.color_bitmap.index else ''
+                if not m3_layer_bitmap_str and not m3_layer.getNamedBit('flags', 'color'):
                     continue
 
                 layer = shared.m3_item_new('m3_materiallayers', ob)
                 layer.name = shared.m3_item_get_name('m3_materiallayers', mat.name + '_' + layer_name, ob)
+                layer.color_bitmap = m3_layer_bitmap_str
                 processor = M3InputProcessor(self, ob, 'm3_materiallayers[{}]'.format(len(ob.m3_materiallayers) - 1), layer, m3_layer)
                 io_shared.io_material_layer(processor)
 
@@ -391,26 +424,32 @@ class Importer:
                     layer.fresnel_mask[1] = 1.0 - m3_layer.fresnel_inverted_mask_y
                     layer.fresnel_mask[2] = 1.0 - m3_layer.fresnel_inverted_mask_z
 
+                self.m3_ref_data[m3_layer_field.index]['bl'] = layer
                 setattr(mat, 'layer_' + layer_name, layer.bl_handle)
 
     def create_mesh(self):
-        m3, ob = self.m3, self.ob
+        ob = self.ob
+        m3_vertices = self.m3_get_ref(self.m3_model.vertices)
+        m3_divisions = self.m3_get_ref(self.m3_model.divisions)
 
-        if not m3.getNamedBit('vertex_flags', 'has_vertices'):
-            if len(m3.vertices):
-                raise Exception('Mesh claims to not have any vertices - expected buffer to be empty, but it isn\'t. size=%d' % len(self.model.vertices))
+        if not self.m3_model.getNamedBit('vertex_flags', 'has_vertices'):
+            if len(self.m3_model.vertices):
+                raise Exception('Mesh claims to not have any vertices - expected buffer to be empty, but it isn\'t. size=%d' % len(m3_vertices))
             return
 
-        v_class = 'VertexFormat' + hex(m3.vertex_flags)
+        v_class = 'VertexFormat' + hex(self.m3_model.vertex_flags)
         if v_class not in io_m3.structures:
-            raise Exception('Vertex flags %s can\'t be handled yet. bufferSize=%d' % (hex(self.model.vertex_flags), len(self.model.vertices)))
+            raise Exception('Vertex flags %s can\'t be handled yet. bufferSize=%d' % (hex(self.m3_model.vertex_flags), len(m3_vertices)))
 
         v_class_desc = io_m3.structures[v_class].getVersion(0)
-        v_count = len(m3.vertices) // v_class_desc.size
-        m3_vertices = v_class_desc.createInstances(buffer=m3.vertices, count=v_count)
+        v_count = len(m3_vertices) // v_class_desc.size
+        m3_vertices = v_class_desc.createInstances(buffer=m3_vertices, count=v_count)
 
-        for division in m3.divisions:
-            for m3_ob in division.objects:
+        for division in m3_divisions:
+            m3_objects = self.m3_get_ref(division.objects)
+            m3_regions = self.m3_get_ref(division.regions)
+            m3_faces = self.m3_get_ref(division.faces)
+            for m3_ob in m3_objects:
                 mesh = bpy.data.meshes.new('Mesh')
                 mesh_ob = bpy.data.objects.new('Mesh', mesh)
                 mesh_ob.parent = ob
@@ -423,7 +462,7 @@ class Importer:
                 modifier = mesh_ob.modifiers.new('Armature', 'ARMATURE')
                 modifier.object = ob
 
-                region = division.regions[m3_ob.region_index]
+                region = m3_regions[m3_ob.region_index]
                 region_uv_multiply = getattr(region, 'uv_multiply', 16)
                 region_uv_offset = getattr(region, 'uv_multiply', 0)
                 region_vertex_range = range(region.first_vertex_index, region.first_vertex_index + region.vertex_count)
@@ -433,16 +472,16 @@ class Importer:
                 # some weirdness in REGNV2 from SC2 Beta
                 if region.structureDescription.structureVersion <= 2:
                     while vertex_index + 2 <= region.first_face_index + region.face_count:
-                        i0 = division.faces[vertex_index]
-                        i1 = division.faces[vertex_index + 1]
-                        i2 = division.faces[vertex_index + 2]
+                        i0 = m3_faces[vertex_index]
+                        i1 = m3_faces[vertex_index + 1]
+                        i2 = m3_faces[vertex_index + 2]
                         faces_old.append((i0, i1, i2))
                         vertex_index += 3
                 else:
                     while vertex_index + 2 <= region.first_face_index + region.face_count:
-                        i0 = region.first_vertex_index + division.faces[vertex_index]
-                        i1 = region.first_vertex_index + division.faces[vertex_index + 1]
-                        i2 = region.first_vertex_index + division.faces[vertex_index + 2]
+                        i0 = region.first_vertex_index + m3_faces[vertex_index]
+                        i1 = region.first_vertex_index + m3_faces[vertex_index + 1]
+                        i2 = region.first_vertex_index + m3_faces[vertex_index + 2]
                         faces_old.append((i0, i1, i2))
                         vertex_index += 3
 
@@ -511,9 +550,8 @@ class Importer:
                 mesh.validate()
                 mesh.update(calc_edges=True)
 
-                for lookup in m3.bone_lookup:
-                    m3_bone = m3.bones[lookup]
-                    mesh_ob.vertex_groups.new(name=m3_bone.name)
+                for lookup in self.m3_get_ref(self.m3_model.bone_lookup):
+                    mesh_ob.vertex_groups.new(name=self.final_bone_names[self.m3_get_ref(self.m3_bones[lookup].name)])
 
                 vertex_groups_used = [False for g in mesh_ob.vertex_groups]
 
@@ -522,7 +560,7 @@ class Importer:
 
                 bm = bmesh.from_edit_mesh(mesh)
 
-                has_vertex_colors = m3.getNamedBit('vertex_flags', 'has_vertex_colors')
+                has_vertex_colors = self.m3_model.getNamedBit('vertex_flags', 'has_vertex_colors')
                 color_layer = bm.loops.layers.color.new('m3color') if has_vertex_colors else None
                 alpha_layer = bm.loops.layers.color.new('m3alpha') if has_vertex_colors else None
                 deform_layer = bm.verts.layers.deform.new('m3lookup')
@@ -556,8 +594,7 @@ class Importer:
                                 vertex_groups_used[getattr(m3_vert, 'bone' + str(ii))] = True
                                 vert[deform_layer][getattr(m3_vert, 'bone' + str(ii))] = weight / 255
 
-                        if m3_vert.sign == 1.0:
-                            face[sign_layer] = 1
+                        face[sign_layer] = round(m3_vert.sign)
 
                 for edge in bm.edges:
                     edge.smooth = len(edge.link_faces) > 1
@@ -575,10 +612,10 @@ class Importer:
                         mesh_ob.vertex_groups.remove(g)
 
     def create_lights(self):
-        m3, ob = self.m3, self.ob
+        ob = self.ob
 
-        for m3_light in m3.lights:
-            bone_name = m3.bones[m3_light.bone].name
+        for m3_light in self.m3_get_ref(self.m3_model.lights):
+            bone_name = self.m3_get_bone_name(m3_light.bone)
             bone = ob.data.bones[bone_name]
             light = shared.m3_item_new('m3_lights', ob)
             light.name = shared.m3_item_get_name('m3_lights', bone_name, ob)
@@ -587,10 +624,10 @@ class Importer:
             io_shared.io_light(processor)
 
     def create_particles(self):
-        m3, ob = self.m3, self.ob
+        ob = self.ob
 
-        for m3_particle in m3.particles:
-            bone_name = m3.bones[m3_particle.bone].name
+        for m3_particle in self.m3_get_ref(self.m3_model.particles):
+            bone_name = self.m3_get_bone_name(m3_particle.bone)
             bone = ob.data.bones[bone_name]
             particle = shared.m3_item_new('m3_particles', ob)
             particle.name = shared.m3_item_get_name('m3_particles', bone_name, ob)
@@ -599,10 +636,10 @@ class Importer:
             io_shared.io_particle_system(processor)
 
     def create_ribbons(self):
-        m3, ob = self.m3, self.ob
+        ob = self.ob
 
-        for m3_ribbon in m3.ribbons:
-            bone_name = m3.bones[m3_ribbon.bone].name
+        for m3_ribbon in self.m3_get_ref(self.m3_model.ribbons):
+            bone_name = self.m3_get_bone_name(m3_ribbon.bone)
             bone = ob.data.bones[bone_name]
             ribbon = shared.m3_item_new('m3_ribbons', ob)
             ribbon.name = shared.m3_item_get_name('m3_ribbons', bone_name, obj=ob)
@@ -611,7 +648,7 @@ class Importer:
             io_shared.io_ribbon(processor)
 
             for m3_spline in m3_ribbon.splines:
-                bone_name = m3.bones[m3_ribbon.bone].name
+                bone_name = m3_bones[m3_ribbon.bone].name
                 bone = ob.data.bones[bone_name]
                 spline = shared.m3_item_new('splines', ribbon)
                 spline.name = shared.m3_item_get_name('splines', 'Spline', obj=ribbon)
@@ -620,20 +657,22 @@ class Importer:
                 io_shared.io_ribbon_spline(processor)
 
     def create_hittests(self):
-        m3, ob = self.m3, self.ob
+        ob = self.ob
 
-        bone_name = m3.bones[m3.hittest_tight.bone].name
+        m3_hittest_tight = self.m3_model.hittest_tight
+        bone_name = self.m3_get_bone_name(m3_hittest_tight.bone)
         bone = ob.data.bones[bone_name]
         ob.m3_hittest_tight.bone = bone.bl_handle if bone else ''
-        ob.m3_hittest_tight.shape = ob.m3_hittest_tight.bl_rna.properties['shape'].enum_items[getattr(m3.hittest_tight, 'shape')].identifier
-        ob.m3_hittest_tight.size = (m3.hittest_tight.size0, m3.hittest_tight.size1, m3.hittest_tight.size2)
-        md = to_bl_matrix(m3.hittest_tight.matrix).decompose()
+        ob.m3_hittest_tight.shape = ob.m3_hittest_tight.bl_rna.properties['shape'].enum_items[m3_hittest_tight.shape].identifier
+        ob.m3_hittest_tight.size = (m3_hittest_tight.size0, m3_hittest_tight.size1, m3_hittest_tight.size2)
+        md = to_bl_matrix(m3_hittest_tight.matrix).decompose()
         ob.m3_hittest_tight.location = md[0]
         ob.m3_hittest_tight.rotation = md[1].to_euler('XYZ')
         ob.m3_hittest_tight.scale = md[2]
+        ob.m3_hittest_tight.mesh_object = self.generate_volume_object(ob.m3_hittest_tight.name, m3_hittest_tight.vertices, m3_hittest_tight.face_data)
 
-        for m3_hittest in m3.hittests:
-            bone_name = m3.bones[m3_hittest.bone].name
+        for m3_hittest in self.m3_get_ref(self.m3_model.hittests):
+            bone_name = self.m3_get_bone_name(m3_hittest.bone)
             bone = ob.data.bones[bone_name]
             hittest = shared.m3_item_new('m3_hittests', ob)
             hittest.name = shared.m3_item_get_name('m3_hittests', bone_name, ob)
@@ -644,31 +683,29 @@ class Importer:
             hittest.location = md[0]
             hittest.rotation = md[1].to_euler('XYZ')
             hittest.scale = md[2]
-
-            if hittest.shape == 'MESH' and len(m3_hittest.vertices) and len(m3_hittest.face_data):
-                hittest.mesh_object = generate_volume_object(ob, hittest.name, m3_hittest.vertices, m3_hittest.face_data)
+            hittest.mesh_object = self.generate_volume_object(hittest.name, m3_hittest.vertices, m3_hittest.face_data)
 
     def create_attachments(self):
-        m3, ob = self.m3, self.ob
+        ob = self.ob
 
         bone_point = {}
 
-        for m3_point in m3.attachment_points:
-            bone_name = m3.bones[m3_point.bone].name
+        for m3_point in self.m3_get_ref(self.m3_model.attachment_points):
+            bone_name = self.m3_get_bone_name(m3_point.bone)
             bone = ob.data.bones[bone_name]
             point = shared.m3_item_new('m3_attachmentpoints', ob)
             point.bone = bone.bl_handle if bone else ''
-            point.name = m3_point.name
+            point.name = self.m3_get_ref(m3_point.name)
             # print('point set', point.name)
             if not bone_point.get(bone_name) or bone_name.startswith('Vol'):
                 bone_point[bone_name] = (point, len(getattr(ob, 'm3_attachmentpoints')) - 1)
 
         # print(bone_point)
 
-        for m3_volume in m3.attachment_volumes:
-            bone0_name = m3.bones[m3_volume.bone0].name
+        for m3_volume in self.m3_get_ref(self.m3_model.attachment_volumes):
+            bone0_name = self.m3_get_bone_name(m3_volume.bone0)
             point, point_index = bone_point[bone0_name]
-            bone1_name = m3.bones[m3_volume.bone1].name
+            bone1_name = self.m3_get_bone_name(m3_volume.bone1)
             bone1 = ob.data.bones[bone1_name]
             if not point:
                 continue
@@ -681,42 +718,49 @@ class Importer:
             vol.location = md[0]
             vol.rotation = md[1].to_euler('XYZ')
             vol.scale = md[2]
-
             # print('point', point, point.name)
+            vol.mesh_object = self.generate_volume_object('{}_{}'.format(point.name, vol.name), m3_volume.vertices, m3_volume.face_data)
 
-            if vol.shape == 'MESH' and len(m3_volume.vertices) and len(m3_volume.face_data):
-                vol.mesh_object = generate_volume_object(ob, '{}_{}'.format(point.name, vol.name), m3_volume.vertices, m3_volume.face_data)
+    def generate_volume_object(self, name, m3_vert_ref, m3_face_ref):
 
+        if not m3_vert_ref.index and not m3_face_ref.index:
+            return
 
-def generate_volume_object(ob, name, m3_vert_data, m3_face_data):
-    me = bpy.data.meshes.new(name)
-    me_ob = bpy.data.objects.new(me.name, me)
-    me_ob.display_type = 'WIRE'
-    me_ob.parent = ob
-    me_ob.hide_viewport = True
-    me_ob.hide_render = True
-    bpy.context.scene.collection.objects.link(me_ob)
+        for ref in self.bl_ref_objects:
+            if [m3_vert_ref.index, m3_face_ref.index] == ref['sections']:
+                return ref['ob']
 
-    bl_vert_data = []
-    for v in m3_vert_data:
-        bl_vert_data.append(v.x)
-        bl_vert_data.append(v.y)
-        bl_vert_data.append(v.z)
+        me = bpy.data.meshes.new(name)
+        me_ob = bpy.data.objects.new(me.name, me)
+        me_ob.display_type = 'WIRE'
+        me_ob.parent = self.ob
+        me_ob.hide_viewport = True
+        me_ob.hide_render = True
+        bpy.context.scene.collection.objects.link(me_ob)
 
-    bl_tri_range = range(0, len(m3_face_data), 3)
+        bl_vert_data = []
+        for v in self.m3_get_ref(m3_vert_ref):
+            bl_vert_data.append(v.x)
+            bl_vert_data.append(v.y)
+            bl_vert_data.append(v.z)
 
-    me.vertices.add(len(bl_vert_data) / 3)
-    me.vertices.foreach_set('co', bl_vert_data)
-    me.loops.add(len(m3_face_data))
-    me.loops.foreach_set('vertex_index', m3_face_data)
-    me.polygons.add(len(bl_tri_range))
-    me.polygons.foreach_set('loop_start', [ii for ii in bl_tri_range])
-    me.polygons.foreach_set('loop_total', [3 for ii in bl_tri_range])
+        m3_face_data = self.m3_get_ref(m3_face_ref)
+        bl_tri_range = range(0, len(m3_face_data), 3)
 
-    me.validate()
-    me.update(calc_edges=True)
+        me.vertices.add(len(bl_vert_data) / 3)
+        me.vertices.foreach_set('co', bl_vert_data)
+        me.loops.add(len(m3_face_data))
+        me.loops.foreach_set('vertex_index', m3_face_data)
+        me.polygons.add(len(bl_tri_range))
+        me.polygons.foreach_set('loop_start', [ii for ii in bl_tri_range])
+        me.polygons.foreach_set('loop_total', [3 for ii in bl_tri_range])
 
-    return me_ob
+        me.validate()
+        me.update(calc_edges=True)
+
+        self.bl_ref_objects.append({'sections': [m3_vert_ref.index, m3_face_ref.index], 'ob': me_ob})
+
+        return me_ob
 
 
 def m3_import(filename):

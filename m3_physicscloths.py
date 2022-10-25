@@ -22,10 +22,10 @@ from . import shared
 
 def register_props():
     bpy.types.Object.m3_physicscloths = bpy.props.CollectionProperty(type=Properties)
-    bpy.types.Object.m3_physicscloths_index = bpy.props.IntProperty(options=set(), default=-1, update=update_bone_shapes_option)
+    bpy.types.Object.m3_physicscloths_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
 
 
-def update_bone_shapes_option(self, context):
+def update_collection_index(self, context):
     if context.object.m3_options.auto_update_bone_shapes:
         if context.object.m3_options.bone_shapes != 'PHCL':
             context.object.m3_options.bone_shapes = 'PHCL'

@@ -23,10 +23,13 @@ from . import bl_enum
 
 def register_props():
     bpy.types.Object.m3_rigidbodies = bpy.props.CollectionProperty(type=Properties)
-    bpy.types.Object.m3_rigidbodies_index = bpy.props.IntProperty(options=set(), default=-1, update=update_bone_shapes_option)
+    bpy.types.Object.m3_rigidbodies_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
 
 
-def update_bone_shapes_option(self, context):
+def update_collection_index(self, context):
+    ob = context.object
+    bl = ob.m3_rigidbodies[ob.m3_rigidbodies_index]
+    shared.select_bones_handles(ob, [bl.bone])
     if context.object.m3_options.auto_update_bone_shapes:
         if context.object.m3_options.bone_shapes != 'PHRB':
             context.object.m3_options.bone_shapes = 'PHRB'

@@ -27,7 +27,6 @@ def register_props():
 
 
 def draw_props(layer, layout):
-    layout.prop(layer, 'unknownbd3f7b5d', text='Unknown (id: bd3f7b5d)')
     col = layout.column(align=True)
     col.prop(layer, 'color_type', text='Layer Type')
     if layer.color_type == 'BITMAP':
@@ -44,6 +43,7 @@ def draw_props(layer, layout):
     row.prop(layer, 'color_clamp', text='Clamp')
     layout.separator()
     layout.prop(layer, 'uv_source', text='UV Source')
+    layout.prop(layer, 'uv_source_related', text='Unknown Related')
     row = layout.row(heading='Wrap')
     row.prop(layer, 'uv_wrap', index=0, text='X')
     row.prop(layer, 'uv_wrap', index=1, text='Y')
@@ -59,8 +59,8 @@ def draw_props(layer, layout):
         layout.prop(layer, 'uv_triplanar_offset', text='Triplanar Offset')
         layout.prop(layer, 'uv_triplanar_scale', text='Triplanar Scale')
     layout.separator()
-    col = layout.column()
-    col.prop(layer, 'noise_amplitude', text='Volume Noise Amplitide')
+    col = layout.column(align=True)
+    col.prop(layer, 'noise_amplitude', text='Volume Noise Amplitude')
     col.prop(layer, 'noise_frequency', text='Frequency')
     layout.separator()
     layout.prop(layer, 'fresnel_type', text='Fresel Mode')
@@ -90,7 +90,6 @@ def draw_props(layer, layout):
 
 
 class Properties(shared.M3PropertyGroup):
-    unknownbd3f7b5d: bpy.props.IntProperty(name='unknownbd3f7b5d', default=-1, options=set())
     color_type: bpy.props.EnumProperty(items=bl_enum.material_layer_type, options=set())
     color_bitmap: bpy.props.StringProperty(default='', options=set())
     color_channels: bpy.props.EnumProperty(items=bl_enum.material_layer_channel, options=set(), default='RGB')
@@ -110,6 +109,7 @@ class Properties(shared.M3PropertyGroup):
     uv_flipbook_frame: bpy.props.IntProperty(name='Flipbook Frame', default=0, options={'ANIMATABLE'})
     uv_triplanar_offset: bpy.props.FloatVectorProperty(name='Tri Planer Offset', default=(0.0, 0.0, 0.0), size=3, subtype='XYZ', options={'ANIMATABLE'})
     uv_triplanar_scale: bpy.props.FloatVectorProperty(name='Tri Planer Scale', default=(1.0, 1.0, 1.0), size=3, subtype='XYZ', options={'ANIMATABLE'})
+    uv_source_related: bpy.props.IntProperty(options=set(), default=-1, min=-1)
     fresnel_type: bpy.props.EnumProperty(items=bl_enum.fresnel_type, options=set())
     fresnel_exponent: bpy.props.FloatProperty(default=4.0, options=set())
     fresnel_min: bpy.props.FloatProperty(default=0.0, options=set())

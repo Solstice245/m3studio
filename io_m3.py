@@ -967,34 +967,41 @@ class FieldListCreator(Visitor):
             else:
                 fieldStructureName = typeString
                 fieldStructureVersion = 0
-            if fieldStructureName == "Reference" or fieldStructureName == "SmallReference":
-                refTo = fieldDataMap["refTo"]
-                if (refTo is not None) and (not (refTo in structures)):
-                    raise Exception("The structure with name %s referenced by %s.%s is not defined" % (refTo, structureName, fieldName))
-                if refTo is not None:
-                    historyOfReferencedStructures = structures[refTo]
-                else:
-                    historyOfReferencedStructures = None
-                referenceStructureDescription = structures[fieldStructureName].getVersion(fieldStructureVersion)
 
-                if refTo is None:
-                    field = UnknownReferenceField(fieldName, referenceStructureDescription, historyOfReferencedStructures, sinceVersion, tillVersion)
-                elif refTo == "CHAR":
-                    field = CharReferenceField(fieldName, referenceStructureDescription, historyOfReferencedStructures, sinceVersion, tillVersion)
-                elif refTo == "U8__":
-                    field = ByteReferenceField(fieldName, referenceStructureDescription, historyOfReferencedStructures, sinceVersion, tillVersion)
-                elif refTo == "REAL":
-                    field = RealReferenceField(fieldName, referenceStructureDescription, historyOfReferencedStructures, sinceVersion, tillVersion)
-                elif refTo in ["I16_", "U16_", "I32_", "U32_", "FLAG"]:
-                    field = IntReferenceField(fieldName, referenceStructureDescription, historyOfReferencedStructures, sinceVersion, tillVersion)
-                else:
-                    field = StructureReferenceField(fieldName, referenceStructureDescription, historyOfReferencedStructures, sinceVersion, tillVersion)
-            else:
-                fieldStructureHistory = structures.get(fieldStructureName)
-                if fieldStructureHistory is None:
-                    raise Exception("The structure %s has not been defined before structure %s" % (fieldStructureName, structureName))
-                fieldStructureDescription = fieldStructureHistory.getVersion(fieldStructureVersion)
-                field = EmbeddedStructureField(fieldName, fieldStructureDescription, sinceVersion, tillVersion)
+            fieldStructureHistory = structures.get(fieldStructureName)
+            if fieldStructureHistory is None:
+                raise Exception("The structure %s has not been defined before structure %s" % (fieldStructureName, structureName))
+            fieldStructureDescription = fieldStructureHistory.getVersion(fieldStructureVersion)
+            field = EmbeddedStructureField(fieldName, fieldStructureDescription, sinceVersion, tillVersion)
+
+            # if fieldStructureName == "Reference" or fieldStructureName == "SmallReference":
+            #     refTo = fieldDataMap["refTo"]
+            #     if (refTo is not None) and (not (refTo in structures)):
+            #         raise Exception("The structure with name %s referenced by %s.%s is not defined" % (refTo, structureName, fieldName))
+            #     if refTo is not None:
+            #         historyOfReferencedStructures = structures[refTo]
+            #     else:
+            #         historyOfReferencedStructures = None
+            #     referenceStructureDescription = structures[fieldStructureName].getVersion(fieldStructureVersion)
+            #
+            #     if refTo is None:
+            #         field = UnknownReferenceField(fieldName, referenceStructureDescription, historyOfReferencedStructures, sinceVersion, tillVersion)
+            #     elif refTo == "CHAR":
+            #         field = CharReferenceField(fieldName, referenceStructureDescription, historyOfReferencedStructures, sinceVersion, tillVersion)
+            #     elif refTo == "U8__":
+            #         field = ByteReferenceField(fieldName, referenceStructureDescription, historyOfReferencedStructures, sinceVersion, tillVersion)
+            #     elif refTo == "REAL":
+            #         field = RealReferenceField(fieldName, referenceStructureDescription, historyOfReferencedStructures, sinceVersion, tillVersion)
+            #     elif refTo in ["I16_", "U16_", "I32_", "U32_", "FLAG"]:
+            #         field = IntReferenceField(fieldName, referenceStructureDescription, historyOfReferencedStructures, sinceVersion, tillVersion)
+            #     else:
+            #         field = StructureReferenceField(fieldName, referenceStructureDescription, historyOfReferencedStructures, sinceVersion, tillVersion)
+            # else:
+            #     fieldStructureHistory = structures.get(fieldStructureName)
+            #     if fieldStructureHistory is None:
+            #         raise Exception("The structure %s has not been defined before structure %s" % (fieldStructureName, structureName))
+            #     fieldStructureDescription = fieldStructureHistory.getVersion(fieldStructureVersion)
+            #     field = EmbeddedStructureField(fieldName, fieldStructureDescription, sinceVersion, tillVersion)
         fields.append(field)
 
 

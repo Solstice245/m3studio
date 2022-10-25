@@ -33,6 +33,7 @@ def update_bone_shapes(self, context):
 class Properties(bpy.types.PropertyGroup):
     bone_shapes: bpy.props.EnumProperty(options=set(), items=bl_enum.options_bone_display, update=update_bone_shapes)
     auto_update_bone_shapes: bpy.props.BoolProperty(options=set(), default=True, description='Clicking on m3 list items changes the bone display mode')
+    auto_select_bones: bpy.props.BoolProperty(options=set(), default=True, description='Clicking on m3 list items selects associated bones')
 
 
 class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):

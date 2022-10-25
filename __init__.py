@@ -82,12 +82,13 @@ class M3ImportOperator(bpy.types.Operator):
     test_goliath = 'C:\\Users\\John Wharton\\Documents\\_Base Assets\\Terran\\Units\\Goliath\\Goliath.m3'
     test_compound = 'C:\\Users\\John Wharton\\Documents\\_Base Assets\\Terran\\Buildings\\MercCompound\\MercCompound.m3'
     test_vertexalpha = 'C:\\Users\\John Wharton\\Documents\\_Base Assets\\Protoss\\Effects\\Mothership_Taldarim_Shield.m3'
+    test_doc = 'C:\\Users\\John Wharton\\Documents\\M3Test.m3'
 
     test = 'C:\\Users\\John Wharton\\Documents\\_Base Assets\\Protoss\\Units\\Colossus\\Colossus.m3'
 
     def invoke(self, context, event):
-        io_m3_import.m3_import(self.test)
-        # print(timeit(lambda: io_m3_import.m3_import(self.test_goliath), number=1))
+        # io_m3_import.m3_import(self.test_goliath)
+        print(timeit(lambda: io_m3_import.m3_import(self.test_doc), number=1))
         return {'RUNNING_MODAL'}
 
     def execute(self, context):

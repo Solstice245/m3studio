@@ -200,6 +200,15 @@ def bone2_shape_update_event(self, context):
     set_bone_shape(context.object, m3_pointer_get(context.object, 'data.bones', self.bone2, True))
 
 
+def select_bones_handles(ob, bl_handles):
+    if ob.m3_options.auto_select_bones:
+        for bone in ob.data.bones:
+            bone.select = bone.bl_handle in bl_handles
+            bone.select_tail = bone.select
+            if bone.bl_handle == bl_handles[0]:
+                ob.data.bones.active = bone
+
+
 class ArmatureObjectPanel(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'

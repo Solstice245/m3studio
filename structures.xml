@@ -1516,7 +1516,7 @@
             <field name="color_brightness" type="FloatAnimationReferenceV0"/>
             <field name="uv_triplanar_offset" type="Vector3AnimationReferenceV0" since-version="24"/>
             <field name="uv_triplanar_scale" type="Vector3AnimationReferenceV0" since-version="24"/> <!-- default (1.0, 1.0, 1.0)-->
-            <field name="unknownbd3f7b5d" type="int32" default-value="-1"/>
+            <field name="uv_source_related" type="int32" default-value="-1"/>
             <field name="fresnel_type" type="uint32" default-value="0"/>
             <field name="fresnel_exponent" type="float" default-value="4.0"/>
             <field name="fresnel_min" type="float" default-value="0.0"/>

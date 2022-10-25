@@ -147,7 +147,6 @@ def io_material_buffer(processor):
 
 def io_material_layer(processor):
     processor.integer('unknown00')
-    processor.string('color_bitmap')
     processor.anim_color('color_value')
     processor.bit('flags', 'uv_wrap_x')
     processor.bit('flags', 'uv_wrap_y')
@@ -186,7 +185,7 @@ def io_material_layer(processor):
     processor.anim_float('color_brightness')
     processor.anim_vec3('uv_triplanar_offset', since_version=24)
     processor.anim_vec3('uv_triplanar_scale', since_version=24)
-    processor.integer('unknownbd3f7b5d')
+    processor.integer('uv_source_related')
     processor.enum('fresnel_type')
     processor.float('fresnel_exponent')
     processor.float('fresnel_min')

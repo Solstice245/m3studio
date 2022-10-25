@@ -22,17 +22,20 @@ from . import shared
 
 def register_props():
     bpy.types.Object.m3_attachmentpoints = bpy.props.CollectionProperty(type=Properties)
-    bpy.types.Object.m3_attachmentpoints_index = bpy.props.IntProperty(options=set(), default=-1, update=update_bone_shapes_option)
+    bpy.types.Object.m3_attachmentpoints_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
 
 
-def update_bone_shapes_option(self, context):
+def update_collection_index(self, context):
     ob = context.object
+    bl = ob.m3_attachmentpoints[ob.m3_attachmentpoints_index]
+    shared.select_bones_handles(ob, [bl.bone])
     if ob.m3_options.auto_update_bone_shapes:
-        for vol in ob.m3_attachmentpoints[ob.m3_attachmentpoints_index].volumes:
+        force_mesh_update = False
+        for vol in bl.volumes:
             if vol.shape == 'MESH':
-                mesh_update = True
+                force_mesh_update = True
                 break
-        if ob.m3_options.bone_shapes != 'ATT_' or mesh_update:
+        if ob.m3_options.bone_shapes != 'ATT_' or force_mesh_update:
             ob.m3_options.bone_shapes = 'ATT_'
 
 
