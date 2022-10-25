@@ -29,14 +29,14 @@ def update_collection_index(self, context):
     ob = context.object
     bl = ob.m3_attachmentpoints[ob.m3_attachmentpoints_index]
     shared.select_bones_handles(ob, [bl.bone])
-    if ob.m3_options.auto_update_bone_shapes:
-        force_mesh_update = False
-        for vol in bl.volumes:
-            if vol.shape == 'MESH':
-                force_mesh_update = True
-                break
-        if ob.m3_options.bone_shapes != 'ATT_' or force_mesh_update:
-            ob.m3_options.bone_shapes = 'ATT_'
+    shared.auto_update_bone_shapes(ob, 'ATT_')
+    force_mesh_update = False
+    for vol in bl.volumes:
+        if vol.shape == 'MESH':
+            force_mesh_update = True
+            break
+    if force_mesh_update:
+        ob.m3_options.bone_shapes = 'ATT_'
 
 
 def draw_volume_props(volume, layout):

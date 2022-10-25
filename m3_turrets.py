@@ -22,7 +22,16 @@ from . import shared
 
 def register_props():
     bpy.types.Object.m3_turrets = bpy.props.CollectionProperty(type=Properties)
-    bpy.types.Object.m3_turrets_index = bpy.props.IntProperty(options=set(), default=-1)
+    bpy.types.Object.m3_turrets_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
+
+
+def update_collection_index(self, context):
+    ob = context.object
+    bl = ob.m3_turrets[ob.m3_turrets_index]
+    bl_handles = []
+    if bl:
+        bl_handles = [part.bone for part in bl.parts]
+    shared.select_bones_handles(ob, bl_handles)
 
 
 def draw_part_props(part, layout):

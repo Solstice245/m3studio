@@ -30,9 +30,7 @@ def update_collection_index(self, context):
     ob = context.object
     bl = ob.m3_particles[ob.m3_particles_index]
     shared.select_bones_handles(ob, [bl.bone])
-    if context.object.m3_options.auto_update_bone_shapes:
-        if context.object.m3_options.bone_shapes != 'PAR_':
-            context.object.m3_options.bone_shapes = 'PAR_'
+    shared.auto_update_bone_shapes(ob, 'PAR_')
 
 
 def bone_shape_update_event(self, context):

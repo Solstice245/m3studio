@@ -29,9 +29,7 @@ def update_collection_index(self, context):
     ob = context.object
     bl = ob.m3_warps[ob.m3_warps_index]
     shared.select_bones_handles(ob, [bl.bone])
-    if context.object.m3_options.auto_update_bone_shapes:
-        if context.object.m3_options.bone_shapes != 'WRP_':
-            context.object.m3_options.bone_shapes = 'WRP_'
+    shared.auto_update_bone_shapes(ob, 'WRP_')
 
 
 def draw_props(warp, layout):

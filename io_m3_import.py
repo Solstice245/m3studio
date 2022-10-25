@@ -695,7 +695,7 @@ class Importer:
             bone = ob.data.bones[bone_name]
             point = shared.m3_item_new('m3_attachmentpoints', ob)
             point.bone = bone.bl_handle if bone else ''
-            point.name = self.m3_get_ref(m3_point.name)
+            point.name = self.m3_get_ref(m3_point.name)[4:]
             # print('point set', point.name)
             if not bone_point.get(bone_name) or bone_name.startswith('Vol'):
                 bone_point[bone_name] = (point, len(getattr(ob, 'm3_attachmentpoints')) - 1)

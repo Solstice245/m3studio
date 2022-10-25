@@ -23,7 +23,13 @@ from . import bl_enum, shared
 
 def register_props():
     bpy.types.Object.m3_billboards = bpy.props.CollectionProperty(type=Properties)
-    bpy.types.Object.m3_billboards_index = bpy.props.IntProperty(options=set(), default=-1)
+    bpy.types.Object.m3_billboards_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
+
+
+def update_collection_index(self, context):
+    ob = context.object
+    bl = ob.m3_billboards[ob.m3_billboards_index]
+    shared.select_bones_handles(ob, [bl.bone])
 
 
 def draw_props(billboard, layout):

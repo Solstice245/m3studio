@@ -26,9 +26,7 @@ def register_props():
 
 
 def update_collection_index(self, context):
-    if context.object.m3_options.auto_update_bone_shapes:
-        if context.object.m3_options.bone_shapes != 'PHCL':
-            context.object.m3_options.bone_shapes = 'PHCL'
+    shared.auto_update_bone_shapes(ob, 'PHCL')
 
 
 def draw_constraint_props(constraint, layout):

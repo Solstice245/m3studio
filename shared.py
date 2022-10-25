@@ -82,8 +82,7 @@ def m3_ob_setter(name, value, obj='default'):
 def m3_item_get_name(collection_name, prefix='', obj=None):
     collection = m3_ob_getter(collection_name, obj=obj)
     suggested_names = m3_collections_suggested_names.get(collection_name)
-    used_names = [item.name for item in collection]
-    num = 1
+    used_names = {item.name for item in collection}
 
     if not prefix and suggested_names:
         for name in suggested_names:
@@ -95,10 +94,11 @@ def m3_item_get_name(collection_name, prefix='', obj=None):
             prefix = prefix.rsplit(' ', 1)[0]
 
     name = prefix
+    num = 1
     while True:
         if name not in used_names:
             return name
-        name = prefix + (' 0' if prefix else '0') + str(num) if num < 10 else str(num)
+        name = prefix + (' ' if prefix else '') + ('0' if num < 10 else '') + str(num)
         num += 1
 
 
@@ -207,6 +207,12 @@ def select_bones_handles(ob, bl_handles):
             bone.select_tail = bone.select
             if bone.bl_handle == bl_handles[0]:
                 ob.data.bones.active = bone
+
+
+def auto_update_bone_shapes(ob, setting):
+    if ob.m3_options.auto_update_bone_shapes:
+        if ob.m3_options.bone_shapes != setting:
+            ob.m3_options.bone_shapes = setting
 
 
 class ArmatureObjectPanel(bpy.types.Panel):
