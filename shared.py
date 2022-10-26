@@ -24,7 +24,8 @@ from . import mesh_gen
 
 
 m3_collections_suggested_names = {
-    'm3_animations': ['Stand', 'Walk', 'Attack', 'Birth', 'Spell'],
+    'm3_animations': ['Stand_full', 'Walk_full', 'Attack_full', 'Birth_full', 'Spell_full'],
+    'm3_animation_groups': ['Stand', 'Walk', 'Attack', 'Birth', 'Spell'],
     'm3_attachmentpoints': ['Origin', 'Center', 'Overhead', 'Target'],
     'm3_billboards': ['Billboard'],
     'm3_cameras': ['CameraPortrait', 'CameraAvatar', 'Camera'],
