@@ -148,11 +148,11 @@ def draw_props(particle, layout):
     sub = col.column()
     sub.separator()
     sub2 = sub.column(align=True)
-    sub2.prop(particle, 'color_smooth', text='Color Smooth Type')
+    sub2.prop(particle, 'color_smoothing', text='Color Smooth Type')
     sub2.prop(particle, 'color_middle', text='Color Middle')
     sub2.prop(particle, 'alpha_middle', text='Alpha Middle')
 
-    if particle.color_smooth == 'LINEARHOLD' or particle.color_smooth == 'BEZIERHOLD':
+    if particle.color_smoothing == 'LINEARHOLD' or particle.color_smoothing == 'BEZIERHOLD':
         sub2.prop(particle, 'color_hold', text='Color Hold Time')
         sub2.prop(particle, 'alpha_hold', text='Alpha Hold Time')
 
@@ -170,10 +170,10 @@ def draw_props(particle, layout):
     sub = col.column(align=True)
     sub.separator()
     sub2 = sub.column(align=True)
-    sub2.prop(particle, 'rotation_smooth', text='Rotation Smooth Type')
+    sub2.prop(particle, 'rotation_smoothing', text='Rotation Smooth Type')
     sub2.prop(particle, 'rotation_middle', text='Rotation Middle')
 
-    if particle.rotation_smooth == 'LINEARHOLD' or particle.rotation_smooth == 'BEZIERHOLD':
+    if particle.rotation_smoothing == 'LINEARHOLD' or particle.rotation_smoothing == 'BEZIERHOLD':
         sub2.prop(particle, 'rotation_hold', text='Rotation Hold Time')
 
     col = layout.column(align=True)
@@ -190,10 +190,10 @@ def draw_props(particle, layout):
     sub = col.column()
     sub.separator()
     sub2 = sub.column(align=True)
-    sub2.prop(particle, 'size_smooth', text='Size Smooth Type')
+    sub2.prop(particle, 'size_smoothing', text='Size Smooth Type')
     sub2.prop(particle, 'size_middle', text='Size Middle')
 
-    if particle.size_smooth == 'LINEARHOLD' or particle.size_smooth == 'BEZIERHOLD':
+    if particle.size_smoothing == 'LINEARHOLD' or particle.size_smoothing == 'BEZIERHOLD':
         sub2.prop(particle, 'size_hold', text='Size Hold Time')
 
     col = layout.column(align=True)
@@ -319,9 +319,9 @@ class Properties(shared.M3BoneUserPropertyGroup):
     alpha_hold: bpy.props.FloatProperty(options=set(), min=0)
     rotation_hold: bpy.props.FloatProperty(options=set(), min=0)
     size_hold: bpy.props.FloatProperty(options=set(), min=0)
-    color_smooth: bpy.props.EnumProperty(options=set(), items=bl_enum.anim_smoothing)
-    rotation_smooth: bpy.props.EnumProperty(options=set(), items=bl_enum.anim_smoothing)
-    size_smooth: bpy.props.EnumProperty(options=set(), items=bl_enum.anim_smoothing)
+    color_smoothing: bpy.props.EnumProperty(options=set(), items=bl_enum.anim_smoothing)
+    rotation_smoothing: bpy.props.EnumProperty(options=set(), items=bl_enum.anim_smoothing)
+    size_smoothing: bpy.props.EnumProperty(options=set(), items=bl_enum.anim_smoothing)
     noise_amplitude: bpy.props.FloatProperty(options=set())
     noise_frequency: bpy.props.FloatProperty(options=set())
     noise_cohesion: bpy.props.FloatProperty(options=set())

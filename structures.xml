@@ -2214,8 +2214,8 @@
             <version number="0" size="32"/>
         </versions>
         <fields>
-            <field name="simulation_region_index" type="uint32"/>
             <field name="influenced_region_index" type="uint32"/>
+            <field name="simulation_region_index" type="uint32"/>
             <field name="simulation_vertices" type="Reference" refTo="U64_"/> <!-- i suspect this is intended to be read as 4 int16 values, possibly linking together vertices which influence one another -->
             <field name="simulation_weights" type="Reference" refTo="U32_"/> <!-- assigns influence of simulation_region vertices on influenced_region vertices with 4 single byte values, one for each vertice index in simulation_vertices -->
         </fields>
@@ -2232,15 +2232,15 @@
             <field name="unknown0" type="uint32"/>
             <field name="skin_bones" type="Reference" refTo="U16_"/> <!-- list of bone indices referenced by vertex_bones or by PHCC bone indices -->
             <field name="vertex_simulated" type="Reference" refTo="U8__"/> <!-- 0x0 for static vertex, 0x1 for simulated vertex -->
-            <field name="vertex_bones" type="Reference" refTo="U32_"/> <!-- 2 bytes each used to reference up to 4 bone indices -->
-            <field name="vertex_weights" type="Reference" refTo="U32_"/> <!-- 2 bytes each used to define the weight given to the bones referenced by vertex_bones -->
+            <field name="vertex_bones" type="Reference" refTo="U32_"/> <!-- Each byte used to reference a bone index -->
+            <field name="vertex_weights" type="Reference" refTo="U32_"/> <!-- Each byte used to define a weight given to the bones referenced by vertex_bones -->
             <field name="cloth_constrainsts" type="Reference" refTo="PHCC"/>
             <field name="influence_map" type="Reference" refTo="PHAC"/>
             <field name="density" type="float"/>
             <field name="tracking" type="float"/>
             <field name="stiffness_stretching" type="float"/>
             <field name="stiffness_horizontal" type="float"/>
-            <field name="stifness_blending" type="float"/>
+            <field name="stiffness_blending" type="float"/>
             <field name="damping" type="float"/>
             <field name="friction" type="float"/>
             <field name="gravity" type="float"/>
@@ -2256,7 +2256,7 @@
             <field name="unknown4" type="uint32" since-version="4" default-value="1"/>
             <field name="unknown5" type="uint32" since-version="4" default-value="1"/>
             <field name="unknown6" type="int32" since-version="4" default-value="-1"/>
-            <field name="use_skin_collision" type="uint32" since-version="4"/>
+            <field name="skin_collision" type="uint32" since-version="4"/>
             <field name="skin_offset" type="float" since-version="4"/>
             <field name="skin_exponent" type="float" since-version="4"/>
             <field name="skin_stiffness" type="float" since-version="4"/>

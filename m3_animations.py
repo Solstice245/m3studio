@@ -23,7 +23,7 @@ from . import shared
 def register_props():
     bpy.types.Object.m3_animations_default = bpy.props.PointerProperty(type=bpy.types.Action)
     bpy.types.Object.m3_animations = bpy.props.CollectionProperty(type=AnimationProperties)
-    bpy.types.Object.m3_animations_index = bpy.props.IntProperty(options=set(), default=-1)
+    bpy.types.Object.m3_animations_index = bpy.props.IntProperty(options=set(), default=-1, update=anim_update)
     bpy.types.Object.m3_animation_groups = bpy.props.CollectionProperty(type=GroupProperties)
     bpy.types.Object.m3_animation_groups_index = bpy.props.IntProperty(options=set(), default=-1)
 
@@ -97,14 +97,17 @@ def anim_update(self, context):
         old_action = ob.animation_data.action
         ob.animation_data.action = anim.action
         get_default_values(ob, anim.action, old_action)
-        context.scene.frame_current = context.scene.frame_start = anim.frame_start
-        context.scene.frame_end = anim.frame_end - 1
 
 
 def draw_animation_props(animation, layout):
-    layout.prop(animation, 'action', text='Action')
-    layout.prop(animation, 'priority', text='Priority')
-    layout.prop(animation, 'concurrent', text='Concurrent')
+    layout.template_ID(animation, 'action', new='m3.animation_action_new', unlink='m3.animation_action_unlink')
+    row = layout.row()
+    row.use_property_split = False
+    row.alignment = 'CENTER'
+    row.split(factor=0.5)
+    row.label(text='Priority')
+    row.prop(animation, 'priority', text='')
+    row.prop(animation, 'concurrent', text='Concurrent')
 
 
 def draw_animation_handle(ob, anim, layout, index):
@@ -169,14 +172,36 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Animations'
 
     def draw(self, context):
-        self.layout.label(text='Default Action:')
-        self.layout.prop(context.object, 'm3_animations_default', text='')
-        self.layout.separator()
         self.layout.label(text='Animation Sequences:')
-        shared.draw_collection_list(self.layout, 'm3_animations', draw_animation_props)
+        shared.draw_collection_list(self.layout, 'm3_animations', draw_animation_props, can_duplicate=False)
         self.layout.separator()
         self.layout.label(text='Animation Groups:')
         shared.draw_collection_list(self.layout, 'm3_animation_groups', draw_group_props)
+
+
+class M3AnimationActionNewOp(bpy.types.Operator):
+    bl_idname = 'm3.animation_action_new'
+    bl_label = 'New Action'
+    bl_description = 'Create new action'
+    bl_options = {'UNDO'}
+
+    def invoke(self, context, event):
+        anim = context.object.m3_animations[context.object.m3_animations_index]
+        action = bpy.data.actions.new(name=anim.name)
+        anim.action = action
+        return {'FINISHED'}
+
+
+class M3AnimationActionUnlinkOp(bpy.types.Operator):
+    bl_idname = 'm3.animation_action_unlink'
+    bl_label = 'Unlink Action'
+    bl_description = 'Unlink this action from the active action slot'
+    bl_options = {'UNDO'}
+
+    def invoke(self, context, event):
+        anim = context.object.m3_animations[context.object.m3_animations_index]
+        anim.action = None
+        return {'FINISHED'}
 
 
 class M3AnimationHandleAddOp(bpy.types.Operator):
@@ -186,7 +211,7 @@ class M3AnimationHandleAddOp(bpy.types.Operator):
     bl_options = {'UNDO'}
 
     def invoke(self, context, event):
-        anim_group = bpy.context.object.m3_animation_groups[bpy.context.object.m3_animation_groups_index]
+        anim_group = context.object.m3_animation_groups[context.object.m3_animation_groups_index]
         anim_group.animations.add()
         return {'FINISHED'}
 
@@ -200,7 +225,7 @@ class M3AnimationHandleRemoveOp(bpy.types.Operator):
     index: bpy.props.IntProperty(options=set())
 
     def invoke(self, context, event):
-        anim_group = bpy.context.object.m3_animation_groups[bpy.context.object.m3_animation_groups_index]
+        anim_group = context.object.m3_animation_groups[context.object.m3_animation_groups_index]
         anim_group.animations.remove(self.index)
         return {'FINISHED'}
 
@@ -210,6 +235,8 @@ classes = (
     AnimationHandleProperties,
     GroupProperties,
     Panel,
+    M3AnimationActionNewOp,
+    M3AnimationActionUnlinkOp,
     M3AnimationHandleAddOp,
     M3AnimationHandleRemoveOp,
 )

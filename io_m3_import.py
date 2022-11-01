@@ -115,6 +115,11 @@ class M3InputProcessor:
             return
         setattr(self.bl, field, getattr(self.m3, field))
 
+    def vec3(self, field, since_version=None):
+        if (since_version is not None) and (self.version < since_version):
+            return
+        setattr(self.bl, field, to_bl_vec3(getattr(self.m3, field)))
+
     def enum(self, field, since_version=None):
         if (since_version is not None) and (self.version < since_version):
             return
@@ -241,6 +246,7 @@ class Importer:
         # 0 is used as index for null reference
         self.m3_ref_data[0] = {'m3': [], 'bl': None}
         self.bl_ref_objects = []
+        self.rgn_objects = {}
 
         self.m3_model = self.m3_get_ref(self.m3[0].content[0].model)[0]
         self.m3_bones = self.m3_get_ref(self.m3_model.bones)
@@ -261,6 +267,7 @@ class Importer:
         self.create_ribbons()
         self.create_hittests()
         self.create_attachments()
+        self.create_cloths()
         bpy.context.view_layer.objects.active = self.ob
 
     def armature_object_new(self):
@@ -444,6 +451,7 @@ class Importer:
         v_class_desc = io_m3.structures[v_class].getVersion(0)
         v_count = len(m3_vertices) // v_class_desc.size
         m3_vertices = v_class_desc.createInstances(buffer=m3_vertices, count=v_count)
+        bone_lookup_full = self.m3_get_ref(self.m3_model.bone_lookup)
 
         for division in m3_divisions:
             m3_objects = self.m3_get_ref(division.objects)
@@ -550,7 +558,8 @@ class Importer:
                 mesh.validate()
                 mesh.update(calc_edges=True)
 
-                for lookup in self.m3_get_ref(self.m3_model.bone_lookup):
+                bone_lookup = bone_lookup_full[region.first_bone_lookup_index:region.first_bone_lookup_index + region.bone_lookup_count]
+                for lookup in bone_lookup:
                     mesh_ob.vertex_groups.new(name=self.final_bone_names[self.m3_get_ref(self.m3_bones[lookup].name)])
 
                 vertex_groups_used = [False for g in mesh_ob.vertex_groups]
@@ -607,9 +616,11 @@ class Importer:
 
                 bpy.ops.object.mode_set(mode='OBJECT')
 
-                for g, used in zip(reversed(mesh_ob.vertex_groups), reversed(vertex_groups_used)):
+                for g, used in zip(mesh_ob.vertex_groups, vertex_groups_used):
                     if not used:
                         mesh_ob.vertex_groups.remove(g)
+
+                self.rgn_objects[m3_ob.region_index] = mesh_ob
 
     def create_lights(self):
         ob = self.ob
@@ -720,6 +731,20 @@ class Importer:
             vol.scale = md[2]
             # print('point', point, point.name)
             vol.mesh_object = self.generate_volume_object('{}_{}'.format(point.name, vol.name), m3_volume.vertices, m3_volume.face_data)
+
+    def create_cloths(self):
+        ob = self.ob
+
+        for m3_cloth in self.m3_get_ref(self.m3_model.physics_cloths):
+            cloth = shared.m3_item_new('m3_physicscloths', ob)
+            cloth.name = shared.m3_item_get_name('m3_physicscloths', 'Cloth', ob)
+            processor = M3InputProcessor(self, ob, 'm3_physicscloths[{}]'.format(len(ob.m3_physicscloths) - 1), cloth, m3_cloth)
+            io_shared.io_cloth(processor)
+
+            for m3_object_pair in self.m3_get_ref(m3_cloth.influence_map):
+                object_pair = cloth.object_pairs.add()
+                object_pair.mesh_object = self.rgn_objects[m3_object_pair.influenced_region_index]
+                object_pair.simulator_object = self.rgn_objects[m3_object_pair.simulation_region_index]
 
     def generate_volume_object(self, name, m3_vert_ref, m3_face_ref):
 

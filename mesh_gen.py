@@ -43,14 +43,6 @@ def get_circular_mesh_data(index, radius, height, sides, circles):
     return (vertices, [], faces)
 
 
-def attachment_point(x=0.05):
-    y = x * 2
-    z = x * 4
-    vertices = [(0, -y, 0), (0, y, 0), (x, 0, 0), (0, 0, z)]
-    faces = [(0, 1, 2), (0, 1, 3), (1, 2, 3), (0, 2, 3)]
-    return (vertices, [], faces)
-
-
 def camera(field_of_view, focal_depth):
     x = field_of_view
     y = field_of_view / 1.5
@@ -60,15 +52,12 @@ def camera(field_of_view, focal_depth):
     return (vertices, [], faces)
 
 
-def point():
-    s1 = 0.5
-    s2 = s1 / 2
-    vertices = [(-s1, 0, 0), (s1, 0, 0), (0, -s1, 0), (0, s1, 0), (0, 0, -s1), (0, 0, s1)]
-    vertices += [(-s2, 0, 0), (s2, 0, 0), (0, -s2, 0), (0, s2, 0), (0, 0, -s2), (0, 0, s2)]
-    edges = [(0, 1), (2, 3), (4, 5)]
-    faces = [(6, 8, 10), (6, 8, 11), (7, 8, 10), (7, 8, 11)]
-    faces += [(6, 9, 10), (6, 9, 11), (7, 9, 10), (7, 9, 11)]
-    return (vertices, edges, faces)
+def point(x=0.05):
+    y = x * 2
+    z = x * 4
+    vertices = [(0, -y, 0), (0, y, 0), (x, 0, 0), (0, 0, z)]
+    faces = [(0, 1, 2), (0, 1, 3), (1, 2, 3), (0, 2, 3)]
+    return (vertices, [], faces)
 
 
 def plane(size):

@@ -21,12 +21,12 @@ from . import shared
 
 
 def register_props():
-    bpy.types.Object.m3_physicscloths = bpy.props.CollectionProperty(type=Properties)
+    bpy.types.Object.m3_physicscloths = bpy.props.CollectionProperty(type=ClothProperties)
     bpy.types.Object.m3_physicscloths_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
 
 
 def update_collection_index(self, context):
-    shared.auto_update_bone_shapes(ob, 'PHCL')
+    shared.auto_update_bone_shapes(context.object, 'PHCL')
 
 
 def draw_constraint_props(constraint, layout):
@@ -39,9 +39,13 @@ def draw_constraint_props(constraint, layout):
     col.prop(constraint, 'scale', text='Scale')
 
 
+def draw_object_pair_props(pair, layout):
+    layout.prop(pair, 'mesh_object', text='Mesh Object')
+    layout.prop(pair, 'simulator_object', text='Simulator Object')
+
+
 def draw_props(cloth, layout):
-    layout.prop(cloth, 'mesh_object', text='Mesh Object')
-    layout.prop(cloth, 'simulator_object', text='Simulator Object')
+    shared.draw_collection_stack(layout, 'm3_physicscloths[{}].object_pairs'.format(cloth.bl_index), 'Object Pairs', draw_object_pair_props)
     layout.separator()
     layout.prop(cloth, 'density', text='Cloth Density')
     layout.separator()
@@ -86,9 +90,13 @@ class ConstraintProperties(shared.M3BoneUserPropertyGroup):
     height: bpy.props.FloatProperty(options=set(), min=0, default=1, update=shared.bone_shape_update_event)
 
 
-class Properties(shared.M3PropertyGroup):
+class ObjectPairProperties(shared.M3PropertyGroup):
     mesh_object: bpy.props.PointerProperty(type=bpy.types.Object)
     simulator_object: bpy.props.PointerProperty(type=bpy.types.Object)
+
+
+class ClothProperties(shared.M3PropertyGroup):
+    object_pairs: bpy.props.CollectionProperty(type=ObjectPairProperties)
     constraints: bpy.props.CollectionProperty(type=ConstraintProperties)
     density: bpy.props.FloatProperty(options=set(), min=0, default=10)
     tracking: bpy.props.FloatProperty(options=set(), min=0, default=0.25)
@@ -121,6 +129,7 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
 
 classes = (
     ConstraintProperties,
-    Properties,
+    ObjectPairProperties,
+    ClothProperties,
     Panel,
 )

@@ -631,7 +631,7 @@ def set_bone_shape(ob, bone):
 
     if ob.m3_options.bone_shapes == 'ATT_':
         for point in ob.m3_attachmentpoints:
-            add_mesh_data(point.bone, mesh_gen.attachment_point())
+            add_mesh_data(point.bone, mesh_gen.point())
             for volume in point.volumes:
                 mat = (volume.location, volume.rotation, volume.scale)
                 if volume.shape == 'CUBE':
