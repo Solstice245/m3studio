@@ -36,7 +36,8 @@ m3_collections_suggested_names = {
     'm3_materiallayers': ['Layer'],
     'm3_materialrefs': ['Material'],
     'm3_particles': ['Particle'],
-    'm3_physicscloths': ['Cloth'],
+    'm3_cloths': ['Cloth'],
+    'm3_clothconstraintsets': ['Cloth Constraint Set'],
     'm3_physicsjoints': ['Joint'],
     'm3_projections': ['Projection'],
     'm3_ribbons': ['Ribbon'],
@@ -103,19 +104,19 @@ def m3_item_get_name(collection_name, prefix='', obj=None):
         num += 1
 
 
-def m3_item_new(collection_name, obj=None):
+def m3_item_add(collection_name, item_name='', obj=None):
     collection = m3_ob_getter(collection_name, obj=obj)
     item = collection.add()
     item.bl_display = True
     item.bl_handle = m3_handle_gen()
     item.bl_index = len(collection) - 1
-    item.name = m3_item_get_name(collection_name, '', obj=obj)
+    item.name = m3_item_get_name(collection_name, item_name, obj=obj)
     return item
 
 
 def m3_item_duplicate(collection_name, src, obj=None):
     collection = m3_ob_getter(collection_name, obj=obj)
-    dst = m3_item_new(collection_name, obj=obj)
+    dst = m3_item_add(collection_name, obj=obj)
 
     if (type(dst) != type(src)):
         collection.remove(len(collection) - 1)
@@ -259,7 +260,6 @@ class M3CollectionOpBase(bpy.types.Operator):
     collection: bpy.props.StringProperty(default='m3_generics')
     index: bpy.props.IntProperty()
     shift: bpy.props.IntProperty()
-    set_name: bpy.props.BoolProperty(default=False)
 
 
 class M3CollectionOpAdd(M3CollectionOpBase):
@@ -268,7 +268,7 @@ class M3CollectionOpAdd(M3CollectionOpBase):
     bl_description = 'Adds a new item to the collection'
 
     def invoke(self, context, event):
-        item = m3_item_new(self.collection)
+        item = m3_item_add(self.collection)
 
         m3_ob_setter(self.collection + '_index', item.bl_index)
 
@@ -743,8 +743,9 @@ def set_bone_shape(ob, bone):
 
     elif ob.m3_options.bone_shapes == 'PHCL':
         for cloth in ob.m3_physicscloths:
-            for constraint in cloth.constraints:
-                add_mesh_data(constraint.bone, mesh_gen.capsule((0, constraint.height, 0), constraint.radius))
+            pass  # TODO
+            # for constraint in cloth.constraints:
+            #     add_mesh_data(constraint.bone, mesh_gen.capsule((0, constraint.height, 0), constraint.radius))
 
     elif ob.m3_options.bone_shapes == 'WRP_':
         for warp in ob.m3_warps:

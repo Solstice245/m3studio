@@ -21,8 +21,10 @@ from . import shared
 
 
 def register_props():
-    bpy.types.Object.m3_physicscloths = bpy.props.CollectionProperty(type=ClothProperties)
-    bpy.types.Object.m3_physicscloths_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
+    bpy.types.Object.m3_cloths = bpy.props.CollectionProperty(type=ClothProperties)
+    bpy.types.Object.m3_cloths_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
+    bpy.types.Object.m3_clothconstraintsets = bpy.props.CollectionProperty(type=ConstraintSetProperties)
+    bpy.types.Object.m3_clothconstraintsets_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
 
 
 def update_collection_index(self, context):
@@ -39,13 +41,19 @@ def draw_constraint_props(constraint, layout):
     col.prop(constraint, 'scale', text='Scale')
 
 
+def draw_constraint_set_props(constraint_set, layout):
+    shared.draw_collection_stack(layout, 'm3_clothconstraintsets[{}].constraints'.format(constraint_set.bl_index), 'Constraint Volumes', draw_constraint_props)
+
+
 def draw_object_pair_props(pair, layout):
     layout.prop(pair, 'mesh_object', text='Mesh Object')
     layout.prop(pair, 'simulator_object', text='Simulator Object')
 
 
-def draw_props(cloth, layout):
-    shared.draw_collection_stack(layout, 'm3_physicscloths[{}].object_pairs'.format(cloth.bl_index), 'Object Pairs', draw_object_pair_props)
+def draw_cloth_props(cloth, layout):
+    shared.draw_collection_stack(layout, 'm3_cloths[{}].object_pairs'.format(cloth.bl_index), 'Object Pairs', draw_object_pair_props)
+    layout.separator()
+    shared.draw_pointer_prop(bpy.context.object, layout, 'm3_clothconstraintsets', 'm3_cloths[%d].constraint_set' % cloth.bl_index, 'Constraint Set', 'LINKED')
     layout.separator()
     layout.prop(cloth, 'density', text='Cloth Density')
     layout.separator()
@@ -78,8 +86,6 @@ def draw_props(cloth, layout):
     sub.prop(cloth, 'skin_stiffness', text='Stiffness')
     layout.separator()
     layout.prop(cloth, 'local_wind', text='Local Wind')
-    layout.separator()
-    shared.draw_collection_stack(layout, 'm3_physicscloths[{}].constraints'.format(cloth.bl_index), 'Constraints', draw_constraint_props)
 
 
 class ConstraintProperties(shared.M3BoneUserPropertyGroup):
@@ -90,6 +96,10 @@ class ConstraintProperties(shared.M3BoneUserPropertyGroup):
     height: bpy.props.FloatProperty(options=set(), min=0, default=1, update=shared.bone_shape_update_event)
 
 
+class ConstraintSetProperties(shared.M3PropertyGroup):
+    constraints: bpy.props.CollectionProperty(type=ConstraintProperties)
+
+
 class ObjectPairProperties(shared.M3PropertyGroup):
     mesh_object: bpy.props.PointerProperty(type=bpy.types.Object)
     simulator_object: bpy.props.PointerProperty(type=bpy.types.Object)
@@ -97,7 +107,7 @@ class ObjectPairProperties(shared.M3PropertyGroup):
 
 class ClothProperties(shared.M3PropertyGroup):
     object_pairs: bpy.props.CollectionProperty(type=ObjectPairProperties)
-    constraints: bpy.props.CollectionProperty(type=ConstraintProperties)
+    constraint_set: bpy.props.StringProperty(options=set())
     density: bpy.props.FloatProperty(options=set(), min=0, default=10)
     tracking: bpy.props.FloatProperty(options=set(), min=0, default=0.25)
     stiffness_stretching: bpy.props.FloatProperty(options=set(), min=0, default=0.5)
@@ -119,17 +129,27 @@ class ClothProperties(shared.M3PropertyGroup):
     local_wind: bpy.props.FloatVectorProperty(options=set(), size=3, subtype='XYZ')
 
 
-class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
-    bl_idname = 'OBJECT_PT_M3_PHYSICSCLOTHS'
-    bl_label = 'M3 Physics Cloths'
+class ClothPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_m3_cloths'
+    bl_label = 'M3 Cloths'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, 'm3_physicscloths', draw_props)
+        shared.draw_collection_list(self.layout, 'm3_cloths', draw_cloth_props)
+
+
+class ClothConstraintsPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_m3_cloth_constraints'
+    bl_label = 'M3 Cloth Constraint Sets'
+
+    def draw(self, context):
+        shared.draw_collection_list(self.layout, 'm3_clothconstraintsets', draw_constraint_set_props)
 
 
 classes = (
     ConstraintProperties,
+    ConstraintSetProperties,
     ObjectPairProperties,
     ClothProperties,
-    Panel,
+    ClothPanel,
+    ClothConstraintsPanel,
 )

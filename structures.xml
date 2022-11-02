@@ -2202,8 +2202,8 @@
         </versions>
         <fields>
             <field name="matrix" type="Matrix44"/>
-            <field name="size0" type="float"/>
-            <field name="size1" type="float"/>
+            <field name="height" type="float"/>
+            <field name="radius" type="float"/>
             <field name="bone" type="uint32"/>
         </fields>
     </structure>
@@ -2234,7 +2234,7 @@
             <field name="vertex_simulated" type="Reference" refTo="U8__"/> <!-- 0x0 for static vertex, 0x1 for simulated vertex -->
             <field name="vertex_bones" type="Reference" refTo="U32_"/> <!-- Each byte used to reference a bone index -->
             <field name="vertex_weights" type="Reference" refTo="U32_"/> <!-- Each byte used to define a weight given to the bones referenced by vertex_bones -->
-            <field name="cloth_constrainsts" type="Reference" refTo="PHCC"/>
+            <field name="constraints" type="Reference" refTo="PHCC"/>
             <field name="influence_map" type="Reference" refTo="PHAC"/>
             <field name="density" type="float"/>
             <field name="tracking" type="float"/>

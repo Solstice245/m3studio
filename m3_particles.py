@@ -134,6 +134,7 @@ def draw_props(particle, layout):
     col.prop(particle, 'bounce', text='Bounce')
     col.prop(particle, 'wind_multiplier', text='Wind Multiplier')
     col = layout.column()
+    col.separator()
     sub = col.column(align=True)
     sub.prop(particle, 'color_init', text='Color Initial')
     sub.prop(particle, 'color_mid', text='Middle')

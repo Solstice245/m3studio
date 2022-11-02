@@ -136,7 +136,7 @@ class M3ShapeOpAdd(shared.M3CollectionOpBase):
 
     def invoke(self, context, event):
         rigid_body = context.object.m3_rigidbodies[context.object.m3_rigidbodies_index]
-        shared.m3_item_new('shapes', obj=rigid_body)
+        shared.m3_item_add('shapes', obj=rigid_body)
         bone = shared.m3_pointer_get(context.object, 'data.bones', 'm3_rigidbodies[{}].bone'.format(context.object.m3_rigidbodies_index))
         shared.set_bone_shape(context.object, bone)
         return {'FINISHED'}
