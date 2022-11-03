@@ -92,9 +92,21 @@ def draw_props(particle, layout):
             if size_r:
                 col.prop(particle, 'emit_shape_radius_cutout', text='R')
         elif particle.emit_shape == 'SPLINE':
-            pass
+            box = col.box()
+            box.use_property_split = False
+            op = box.operator('m3.collection_add', text='Add Spline Point')
+            op.collection = 'm3_particles[%d].emit_shape_spline' % particle.bl_index
+            for index, item in enumerate(particle.emit_shape_spline):
+                row = box.row(align=True)
+                row.prop(item, 'location', index=0, text='X')
+                row.prop(item, 'location', index=1, text='Y')
+                row.prop(item, 'location', index=2, text='Z')
+                row.separator()
+                op = row.operator('m3.collection_remove', icon='X', text='')
+                op.collection, op.index = ('m3_particles[%d].emit_shape_spline' % particle.bl_index, index)
         elif particle.emit_shape == 'MESH':
             box = col.box()
+            box.use_property_split = False
             op = box.operator('m3.collection_add', text='Add Mesh Object')
             op.collection = 'm3_particles[%d].emit_shape_mesh' % particle.bl_index
             for index, item in enumerate(particle.emit_shape_mesh):
@@ -260,6 +272,10 @@ def draw_props(particle, layout):
     col.prop(particle, 'copy', text='Copy')
 
 
+class SplinePointProperties(shared.M3PropertyGroup):
+    location: bpy.props.FloatVectorProperty(name='Location', subtype='XYZ', size=3)
+
+
 class CopyProperties(shared.M3BoneUserPropertyGroup):
     emit_rate: bpy.props.FloatProperty(name='Particle Copy Emission Rate', min=0)
     emit_amount: bpy.props.IntProperty(name='Particle Copy Emission Amount', min=0)
@@ -281,6 +297,7 @@ class Properties(shared.M3BoneUserPropertyGroup):
     emit_shape_radius: bpy.props.FloatProperty(name='Emission Radius', default=1, update=bone_shape_update_event)
     emit_shape_radius_cutout: bpy.props.FloatProperty(name='Emission Radius Cutout', update=bone_shape_update_event)
     emit_shape_mesh: bpy.props.CollectionProperty(type=shared.M3ObjectPropertyGroup)
+    emit_shape_spline: bpy.props.CollectionProperty(type=SplinePointProperties)
     emit_max: bpy.props.IntProperty(options=set(), min=0)
     emit_rate: bpy.props.FloatProperty(name='Emission Rate', min=0)
     emit_amount: bpy.props.IntProperty(name='Emission Amount', min=0)
@@ -381,6 +398,7 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
 
 
 classes = (
+    SplinePointProperties,
     CopyProperties,
     Properties,
     Panel,

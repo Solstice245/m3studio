@@ -262,10 +262,10 @@ def io_particle_system(processor):
     processor.integer('emit_max')
     processor.anim_float('emit_rate')
     processor.enum('emit_shape')
-    processor.anim_vec3('emit_size')
-    processor.anim_vec3('emit_size_cutout')
-    processor.anim_float('emit_radius')
-    processor.anim_float('emit_radius_cutout')
+    processor.anim_vec3('emit_shape_size')
+    processor.anim_vec3('emit_shape_size_cutout')
+    processor.anim_float('emit_shape_radius')
+    processor.anim_float('emit_shape_radius_cutout')
     processor.enum('emit_type')
     processor.boolean('size_randomize')
     processor.anim_vec3('size2')
@@ -463,3 +463,10 @@ def io_cloth(processor):
     processor.float('skin_exponent', since_version=4)
     processor.float('skin_stiffness', since_version=4)
     processor.vec3('local_wind', since_version=4)
+
+
+def io_ik(processor):
+    processor.float('search_up')
+    processor.float('search_down')
+    processor.float('speed')
+    processor.float('goal_threshold')

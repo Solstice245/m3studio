@@ -39,26 +39,8 @@ def update_collection_index(self, context):
         ob.m3_options.bone_shapes = 'ATT_'
 
 
-def draw_volume_props(volume, layout):
-    sub = layout.column(align=True)
-    sub.prop(volume, 'shape', text='Shape Type')
-    if volume.shape == 'CUBE':
-        sub.prop(volume, 'size', text='Size')
-    elif volume.shape == 'SPHERE':
-        sub.prop(volume, 'size', index=0, text='Size R')
-    elif volume.shape in ['CAPSULE', 'CYLINDER']:
-        sub.prop(volume, 'size', index=0, text='Size R')
-        sub.prop(volume, 'size', index=1, text='H')
-    elif volume.shape == 'MESH':
-        sub.prop(volume, 'mesh_object', text='Mesh Object')
-    col = layout.column()
-    col.prop(volume, 'location', text='Location')
-    col.prop(volume, 'rotation', text='Rotation')
-    col.prop(volume, 'scale', text='Scale')
-
-
 def draw_props(point, layout):
-    shared.draw_collection_stack(layout, 'm3_attachmentpoints[{}].volumes'.format(point.bl_index), 'Volume', draw_volume_props)
+    shared.draw_collection_stack(layout, 'm3_attachmentpoints[{}].volumes'.format(point.bl_index), 'Volume', shared.draw_volume_props)
 
 
 class Properties(shared.M3BoneUserPropertyGroup):

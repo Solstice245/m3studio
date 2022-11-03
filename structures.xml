@@ -1951,14 +1951,14 @@
             <field name="emit_max" type="uint32"/>
             <field name="emit_rate" type="FloatAnimationReferenceV0"/>
             <field name="emit_shape" type="uint32"/>
-            <field name="emit_size" type="Vector3AnimationReferenceV0"/>
-            <field name="emit_size_cutout" type="Vector3AnimationReferenceV0"/>
-            <field name="emit_radius" type="FloatAnimationReferenceV0"/>
-            <field name="emit_radius_cutout" type="FloatAnimationReferenceV0"/>
-            <field name="emit_regions" type="Reference" refTo="U32_" since-version="17"/>
+            <field name="emit_shape_size" type="Vector3AnimationReferenceV0"/>
+            <field name="emit_shape_size_cutout" type="Vector3AnimationReferenceV0"/>
+            <field name="emit_shape_radius" type="FloatAnimationReferenceV0"/>
+            <field name="emit_shape_radius_cutout" type="FloatAnimationReferenceV0"/>
+            <field name="emit_shape_regions" type="Reference" refTo="U32_" since-version="17"/>
             <field name="emit_type" type="uint32"/>
             <field name="size_randomize" type="uint32"/>
-            <field name="size2" type="Vector3AnimationReferenceV0"/>W
+            <field name="size2" type="Vector3AnimationReferenceV0"/>
             <field name="unknown71001416" size="40" since-version="10" till-version="11"/>
             <field name="rotation_randomize" type="uint32" since-version="12"/>
             <field name="rotation2" type="Vector3AnimationReferenceV0" since-version="12"/>
@@ -2085,7 +2085,7 @@
             <field name="unknownb35ad6e1" type="Vector2AnimationReferenceV0" since-version="17"/>
             <field name="unknown686e5943" type="Vector3AnimationReferenceV0" since-version="17"/>
             <field name="unknown18a90564" type="Vector2AnimationReferenceV0" since-version="17"/> <!-- with init=(1.0, 1.0) and null=(1.0, 1.0)-->
-            <field name="spawnPoints" type="Reference" refTo="SVC3"/>
+            <field name="emit_shape_spline" type="Reference" refTo="SVC3"/>
             <field name="wind_multiplier" type="float" default-value="0.0"/>
             <field name="lod_reduce" type="uint32" default-value="2"/>
             <field name="lod_cut" type="uint32" default-value="1"/>
@@ -2745,10 +2745,10 @@
             <field name="unknownIKJTRef01" type="Reference"/>
             <field name="bone1" type="uint16"/>
             <field name="bone2" type="uint16"/>
-            <field name="maxSearchUp" type="float"/>
-            <field name="maxSearchDown" type="float"/>
-            <field name="maxSpeed" type="float"/>
-            <field name="goalPosThreshold" type="float"/>
+            <field name="search_up" type="float"/>
+            <field name="search_down" type="float"/>
+            <field name="speed" type="float"/>
+            <field name="goal_threshold" type="float"/>
         </fields>
     </structure>
 

@@ -51,7 +51,16 @@ def draw_object_pair_props(pair, layout):
 
 
 def draw_cloth_props(cloth, layout):
-    shared.draw_collection_stack(layout, 'm3_cloths[{}].object_pairs'.format(cloth.bl_index), 'Object Pairs', draw_object_pair_props)
+    box = layout.box()
+    box.use_property_split = False
+    op = box.operator('m3.collection_add', text='Add Mesh/Simulator Object Pair')
+    op.collection = 'm3_cloths[%d].object_pairs' % cloth.bl_index
+    for index, item in enumerate(cloth.object_pairs):
+        row = box.row()
+        row.prop(item, 'mesh_object', text='')
+        row.prop(item, 'simulator_object', text='')
+        op = row.operator('m3.collection_remove', icon='X', text='')
+        op.collection, op.index = ('m3_cloths[%d].object_pairs' % cloth.bl_index, index)
     layout.separator()
     shared.draw_pointer_prop(bpy.context.object, layout, 'm3_clothconstraintsets', 'm3_cloths[%d].constraint_set' % cloth.bl_index, 'Constraint Set', 'LINKED')
     layout.separator()

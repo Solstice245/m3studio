@@ -31,7 +31,7 @@ m3_collections_suggested_names = {
     'm3_cameras': ['CameraPortrait', 'CameraAvatar', 'Camera'],
     'm3_forces': ['Force'],
     'm3_fuzzyhittests': ['Fuzzy Hit Test'],
-    'm3_ikchains': ['IK Chain'],
+    'm3_ikjoints': ['IK Joint'],
     'm3_lights': ['Light'],
     'm3_materiallayers': ['Layer'],
     'm3_materialrefs': ['Material'],
@@ -443,6 +443,24 @@ def draw_pointer_prop(ob, layout, search_prop, prop_name, prop_label='', icon=''
     row.separator(factor=3.6)
 
 
+def draw_volume_props(volume, layout):
+    sub = layout.column(align=True)
+    sub.prop(volume, 'shape', text='Shape Type')
+    if volume.shape == 'CUBE':
+        sub.prop(volume, 'size', text='Size')
+    elif volume.shape == 'SPHERE':
+        sub.prop(volume, 'size', index=0, text='Size R')
+    elif volume.shape in ['CAPSULE', 'CYLINDER']:
+        sub.prop(volume, 'size', index=0, text='Size R')
+        sub.prop(volume, 'size', index=1, text='H')
+    elif volume.shape == 'MESH':
+        sub.prop(volume, 'mesh_object', text='Mesh Object')
+    col = layout.column()
+    col.prop(volume, 'location', text='Location')
+    col.prop(volume, 'rotation', text='Rotation')
+    col.prop(volume, 'scale', text='Scale')
+
+
 def draw_collection_list(layout, collection_path, draw_func, can_duplicate=True, ops=[]):
     collection = m3_ob_getter(collection_path)
     index = m3_ob_getter(collection_path + '_index')
@@ -742,7 +760,7 @@ def set_bone_shape(ob, bone):
                 add_mesh_data(hittest.bone, hittest.mesh_object.data, mat)
 
     elif ob.m3_options.bone_shapes == 'PHCL':
-        for cloth in ob.m3_physicscloths:
+        for cloth in ob.m3_cloths:
             pass  # TODO
             # for constraint in cloth.constraints:
             #     add_mesh_data(constraint.bone, mesh_gen.capsule((0, constraint.height, 0), constraint.radius))

@@ -21,28 +21,28 @@ from . import shared
 
 
 def register_props():
-    bpy.types.Object.m3_ikchains = bpy.props.CollectionProperty(type=Properties)
-    bpy.types.Object.m3_ikchains_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
+    bpy.types.Object.m3_ikjoints = bpy.props.CollectionProperty(type=Properties)
+    bpy.types.Object.m3_ikjoints_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
 
 
 def update_collection_index(self, context):
     ob = context.object
-    bl = ob.m3_ikchains[ob.m3_ikchains_index]
+    bl = ob.m3_ikjoints[ob.m3_ikjoints_index]
     shared.select_bones_handles(ob, [bl.bone1, bl.bone2])
 
 
-def draw_props(chain, layout):
+def draw_props(joint, layout):
     col = layout.column(align=True)
 
-    shared.draw_pointer_prop(bpy.context.object, col, 'data.bones', 'm3_ikchains[{}].bone1'.format(chain.bl_index), 'Bone Chain Start', 'BONE_DATA')
-    shared.draw_pointer_prop(bpy.context.object, col, 'data.bones', 'm3_ikchains[{}].bone2'.format(chain.bl_index), 'Bone Chain End', 'BONE_DATA')
+    shared.draw_pointer_prop(bpy.context.object, col, 'data.bones', 'm3_ikjoints[{}].bone1'.format(joint.bl_index), 'Bone Joint Start', 'BONE_DATA')
+    shared.draw_pointer_prop(bpy.context.object, col, 'data.bones', 'm3_ikjoints[{}].bone2'.format(joint.bl_index), 'Bone Joint End', 'BONE_DATA')
 
     col = layout.column(align=True)
-    col.prop(chain, 'max_search_up', text='Max Search Up')
-    col.prop(chain, 'max_search_down', text='Max Search Down')
-    col.prop(chain, 'max_search_speed', text='Max Search Speed')
+    col.prop(joint, 'max_search_up', text='Max Search Up')
+    col.prop(joint, 'max_search_down', text='Max Search Down')
+    col.prop(joint, 'max_search_speed', text='Max Search Speed')
     col = layout.column()
-    col.prop(chain, 'goal_threshold', text='Goal Position Threshold')
+    col.prop(joint, 'goal_threshold', text='Goal Position Threshold')
 
 
 class Properties(shared.M3PropertyGroup):
@@ -55,11 +55,11 @@ class Properties(shared.M3PropertyGroup):
 
 
 class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
-    bl_idname = 'OBJECT_PT_M3_IKCHAINS'
+    bl_idname = 'OBJECT_PT_M3_IKJOINTS'
     bl_label = 'M3 Inverse Kinematics'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, 'm3_ikchains', draw_props)
+        shared.draw_collection_list(self.layout, 'm3_ikjoints', draw_props)
 
 
 classes = (

@@ -242,13 +242,13 @@ class Importer:
 
         self.m3_ref_data = []
         for section in self.m3:
-            self.m3_ref_data.append({'m3': section.content, 'bl': None})
+            self.m3_ref_data.append({'m3': section.content, 'bl': {}})
         # 0 is used as index for null reference
         self.m3_ref_data[0] = {'m3': [], 'bl': None}
         self.bl_ref_objects = []
-        self.rgn_objects = {}
 
         self.m3_model = self.m3_get_ref(self.m3[0].content[0].model)[0]
+        self.m3_division = self.m3_get_ref(self.m3_model.divisions)[0]
         self.m3_bones = self.m3_get_ref(self.m3_model.bones)
         self.m3_bone_rests = self.m3_get_ref(self.m3_model.bone_rests)
 
@@ -258,6 +258,7 @@ class Importer:
         self.anim_id_to_long_map = {}
 
         self.ob = self.armature_object_new()
+        self.create_animations()
         self.create_bones()
         self.create_materials()
         # print('createMesh', timeit(lambda: self.create_mesh(), number=1))
@@ -268,6 +269,7 @@ class Importer:
         self.create_hittests()
         self.create_attachments()
         self.create_cloths()
+        self.create_ik_joints()
         bpy.context.view_layer.objects.active = self.ob
 
     def armature_object_new(self):
@@ -290,6 +292,9 @@ class Importer:
             curve = action.fcurves.new(path, index=0)
             for frame, value in frameValuePairs(timeValueMap):
                 insertLinearKeyFrame(curve, frame, value)
+
+    def create_animations(self):
+        pass
 
     def create_bones(self):
 
@@ -434,7 +439,6 @@ class Importer:
     def create_mesh(self):
         ob = self.ob
         m3_vertices = self.m3_get_ref(self.m3_model.vertices)
-        m3_divisions = self.m3_get_ref(self.m3_model.divisions)
 
         if not self.m3_model.getNamedBit('vertex_flags', 'has_vertices'):
             if len(self.m3_model.vertices):
@@ -450,174 +454,174 @@ class Importer:
         m3_vertices = v_class_desc.createInstances(buffer=m3_vertices, count=v_count)
         bone_lookup_full = self.m3_get_ref(self.m3_model.bone_lookup)
 
-        for division in m3_divisions:
-            m3_objects = self.m3_get_ref(division.objects)
-            m3_regions = self.m3_get_ref(division.regions)
-            m3_faces = self.m3_get_ref(division.faces)
-            for m3_ob in m3_objects:
-                mesh = bpy.data.meshes.new('Mesh')
-                mesh_ob = bpy.data.objects.new('Mesh', mesh)
-                mesh_ob.parent = ob
-                mesh_ob.m3_material_ref = ob.m3_materialrefs[m3_ob.material_reference_index].bl_handle
-                bpy.context.scene.collection.objects.link(mesh_ob)
+        # for now, we assume there is only a single division
+        m3_objects = self.m3_get_ref(self.m3_division.objects)
+        m3_regions = self.m3_get_ref(self.m3_division.regions)
+        m3_faces = self.m3_get_ref(self.m3_division.faces)
+        for m3_ob in m3_objects:
+            mesh = bpy.data.meshes.new('Mesh')
+            mesh_ob = bpy.data.objects.new('Mesh', mesh)
+            mesh_ob.parent = ob
+            mesh_ob.m3_material_ref = ob.m3_materialrefs[m3_ob.material_reference_index].bl_handle
+            bpy.context.scene.collection.objects.link(mesh_ob)
 
-                modifier = mesh_ob.modifiers.new('EdgeSplit', 'EDGE_SPLIT')
-                modifier.use_edge_angle = False
+            modifier = mesh_ob.modifiers.new('EdgeSplit', 'EDGE_SPLIT')
+            modifier.use_edge_angle = False
 
-                modifier = mesh_ob.modifiers.new('Armature', 'ARMATURE')
-                modifier.object = ob
+            modifier = mesh_ob.modifiers.new('Armature', 'ARMATURE')
+            modifier.object = ob
 
-                region = m3_regions[m3_ob.region_index]
-                region_uv_multiply = getattr(region, 'uv_multiply', 16)
-                region_uv_offset = getattr(region, 'uv_multiply', 0)
-                region_vertex_range = range(region.first_vertex_index, region.first_vertex_index + region.vertex_count)
+            region = m3_regions[m3_ob.region_index]
+            region_uv_multiply = getattr(region, 'uv_multiply', 16)
+            region_uv_offset = getattr(region, 'uv_multiply', 0)
+            region_vertex_range = range(region.first_vertex_index, region.first_vertex_index + region.vertex_count)
 
-                faces_old = []
-                vertex_index = region.first_face_index
-                # some weirdness in REGNV2 from SC2 Beta
-                if region.structureDescription.structureVersion <= 2:
-                    while vertex_index + 2 <= region.first_face_index + region.face_count:
-                        i0 = m3_faces[vertex_index]
-                        i1 = m3_faces[vertex_index + 1]
-                        i2 = m3_faces[vertex_index + 2]
-                        faces_old.append((i0, i1, i2))
-                        vertex_index += 3
-                else:
-                    while vertex_index + 2 <= region.first_face_index + region.face_count:
-                        i0 = region.first_vertex_index + m3_faces[vertex_index]
-                        i1 = region.first_vertex_index + m3_faces[vertex_index + 1]
-                        i2 = region.first_vertex_index + m3_faces[vertex_index + 2]
-                        faces_old.append((i0, i1, i2))
-                        vertex_index += 3
+            faces_old = []
+            vertex_index = region.first_face_index
+            # some weirdness in REGNV2 from SC2 Beta
+            if region.structureDescription.structureVersion <= 2:
+                while vertex_index + 2 <= region.first_face_index + region.face_count:
+                    i0 = m3_faces[vertex_index]
+                    i1 = m3_faces[vertex_index + 1]
+                    i2 = m3_faces[vertex_index + 2]
+                    faces_old.append((i0, i1, i2))
+                    vertex_index += 3
+            else:
+                while vertex_index + 2 <= region.first_face_index + region.face_count:
+                    i0 = region.first_vertex_index + m3_faces[vertex_index]
+                    i1 = region.first_vertex_index + m3_faces[vertex_index + 1]
+                    i2 = region.first_vertex_index + m3_faces[vertex_index + 2]
+                    faces_old.append((i0, i1, i2))
+                    vertex_index += 3
 
-                old_vertex_to_id_map = {}
-                for ii in region_vertex_range:
-                    v = m3_vertices[ii]
-                    id_tuple = (v.pos.x, v.pos.y, v.pos.z, v.weight0, v.weight1, v.weight2, v.weight3,
-                                v.bone0, v.bone1, v.bone2, v.bone3, v.normal.x, v.normal.y, v.normal.z)
-                    old_vertex_to_id_map[ii] = id_tuple
+            old_vertex_to_id_map = {}
+            for ii in region_vertex_range:
+                v = m3_vertices[ii]
+                id_tuple = (v.pos.x, v.pos.y, v.pos.z, v.weight0, v.weight1, v.weight2, v.weight3,
+                            v.bone0, v.bone1, v.bone2, v.bone3, v.normal.x, v.normal.y, v.normal.z)
+                old_vertex_to_id_map[ii] = id_tuple
 
-                tris_old = []
-                for face in faces_old:
-                    t0 = old_vertex_to_id_map[face[0]]
-                    t1 = old_vertex_to_id_map[face[1]]
-                    t2 = old_vertex_to_id_map[face[2]]
-                    if t0 != t1 and t0 != t2 and t1 != t2:
-                        tris_old.append(face)
+            tris_old = []
+            for face in faces_old:
+                t0 = old_vertex_to_id_map[face[0]]
+                t1 = old_vertex_to_id_map[face[1]]
+                t2 = old_vertex_to_id_map[face[2]]
+                if t0 != t1 and t0 != t2 and t1 != t2:
+                    tris_old.append(face)
 
-                next_new_vertex = 0
-                old_vertex_to_new_vertex_map = {}
-                new_vertex_to_old_vertex_map = {}
-                vertex_id_new_map = {}
+            next_new_vertex = 0
+            old_vertex_to_new_vertex_map = {}
+            new_vertex_to_old_vertex_map = {}
+            vertex_id_new_map = {}
 
-                region_vert_data = []
+            region_vert_data = []
 
-                for ii in region_vertex_range:
-                    id_tuple = old_vertex_to_id_map[ii]
-                    new_index = vertex_id_new_map.get(id_tuple)
-                    if new_index is None:
-                        new_index = next_new_vertex
-                        next_new_vertex += 1
-                        region_vert_data.append(m3_vertices[ii].pos.x)
-                        region_vert_data.append(m3_vertices[ii].pos.y)
-                        region_vert_data.append(m3_vertices[ii].pos.z)
-                        vertex_id_new_map[id_tuple] = new_index
-                    old_vertex_to_new_vertex_map[ii] = new_index
-                    # store which old vertex indices were merged to a new one
-                    old_vertex_indices = new_vertex_to_old_vertex_map.get(new_index)
-                    if old_vertex_indices is None:
-                        old_vertex_indices = set()
-                        new_vertex_to_old_vertex_map[new_index] = old_vertex_indices
-                    old_vertex_indices.add(ii)
+            for ii in region_vertex_range:
+                id_tuple = old_vertex_to_id_map[ii]
+                new_index = vertex_id_new_map.get(id_tuple)
+                if new_index is None:
+                    new_index = next_new_vertex
+                    next_new_vertex += 1
+                    region_vert_data.append(m3_vertices[ii].pos.x)
+                    region_vert_data.append(m3_vertices[ii].pos.y)
+                    region_vert_data.append(m3_vertices[ii].pos.z)
+                    vertex_id_new_map[id_tuple] = new_index
+                old_vertex_to_new_vertex_map[ii] = new_index
+                # store which old vertex indices were merged to a new one
+                old_vertex_indices = new_vertex_to_old_vertex_map.get(new_index)
+                if old_vertex_indices is None:
+                    old_vertex_indices = set()
+                    new_vertex_to_old_vertex_map[new_index] = old_vertex_indices
+                old_vertex_indices.add(ii)
 
-                # since vertices got merged, the indices of the faces aren't correct anymore.
-                # the old face indices however are still later required to figure out what UV coordinates a face has.
-                region_face_data = []
-                for face_old in tris_old:
-                    i0 = old_vertex_to_new_vertex_map[face_old[0]]
-                    i1 = old_vertex_to_new_vertex_map[face_old[1]]
-                    i2 = old_vertex_to_new_vertex_map[face_old[2]]
-                    if i0 != i1 and i1 != i2 and i0 != i2:
-                        region_face_data.append(i0)
-                        region_face_data.append(i1)
-                        region_face_data.append(i2)
+            # since vertices got merged, the indices of the faces aren't correct anymore.
+            # the old face indices however are still later required to figure out what UV coordinates a face has.
+            region_face_data = []
+            for face_old in tris_old:
+                i0 = old_vertex_to_new_vertex_map[face_old[0]]
+                i1 = old_vertex_to_new_vertex_map[face_old[1]]
+                i2 = old_vertex_to_new_vertex_map[face_old[2]]
+                if i0 != i1 and i1 != i2 and i0 != i2:
+                    region_face_data.append(i0)
+                    region_face_data.append(i1)
+                    region_face_data.append(i2)
 
-                region_tri_range = range(0, len(region_face_data), 3)
+            region_tri_range = range(0, len(region_face_data), 3)
 
-                mesh.vertices.add(len(region_vert_data) / 3)
-                mesh.vertices.foreach_set('co', region_vert_data)
-                mesh.loops.add(len(region_face_data))
-                mesh.loops.foreach_set('vertex_index', region_face_data)
-                mesh.polygons.add(len(region_tri_range))
-                mesh.polygons.foreach_set('loop_start', [ii for ii in region_tri_range])
-                mesh.polygons.foreach_set('loop_total', [3 for ii in region_tri_range])
+            mesh.vertices.add(len(region_vert_data) / 3)
+            mesh.vertices.foreach_set('co', region_vert_data)
+            mesh.loops.add(len(region_face_data))
+            mesh.loops.foreach_set('vertex_index', region_face_data)
+            mesh.polygons.add(len(region_tri_range))
+            mesh.polygons.foreach_set('loop_start', [ii for ii in region_tri_range])
+            mesh.polygons.foreach_set('loop_total', [3 for ii in region_tri_range])
 
-                mesh.validate()
-                mesh.update(calc_edges=True)
+            mesh.validate()
+            mesh.update(calc_edges=True)
 
-                bone_lookup = bone_lookup_full[region.first_bone_lookup_index:region.first_bone_lookup_index + region.bone_lookup_count]
-                for lookup in bone_lookup:
-                    mesh_ob.vertex_groups.new(name=self.final_bone_names[self.m3_get_ref(self.m3_bones[lookup].name)])
+            bone_lookup = bone_lookup_full[region.first_bone_lookup_index:region.first_bone_lookup_index + region.bone_lookup_count]
+            for lookup in bone_lookup:
+                mesh_ob.vertex_groups.new(name=self.final_bone_names[self.m3_get_ref(self.m3_bones[lookup].name)])
 
-                vertex_groups_used = [False for g in mesh_ob.vertex_groups]
+            vertex_groups_used = [False for g in mesh_ob.vertex_groups]
 
-                bpy.context.view_layer.objects.active = mesh_ob
-                bpy.ops.object.mode_set(mode='EDIT')
+            bpy.context.view_layer.objects.active = mesh_ob
+            bpy.ops.object.mode_set(mode='EDIT')
 
-                bm = bmesh.from_edit_mesh(mesh)
+            bm = bmesh.from_edit_mesh(mesh)
 
-                has_vertex_colors = self.m3_model.getNamedBit('vertex_flags', 'has_vertex_colors')
-                color_layer = bm.loops.layers.color.new('m3color') if has_vertex_colors else None
-                alpha_layer = bm.loops.layers.color.new('m3alpha') if has_vertex_colors else None
-                deform_layer = bm.verts.layers.deform.new('m3lookup')
-                sign_layer = bm.faces.layers.int.new('m3sign')
-                uv_maps = []
-                uv_layers = {}
-                for uv_map in ['uv0', 'uv1', 'uv2', 'uv3', 'uv4']:
-                    if v_class_desc.hasField(uv_map):
-                        uv_layers[uv_map] = bm.loops.layers.uv.new(uv_map)
-                        uv_maps.append(uv_map)
+            has_vertex_colors = self.m3_model.getNamedBit('vertex_flags', 'has_vertex_colors')
+            color_layer = bm.loops.layers.color.new('m3color') if has_vertex_colors else None
+            alpha_layer = bm.loops.layers.color.new('m3alpha') if has_vertex_colors else None
+            deform_layer = bm.verts.layers.deform.new('m3lookup')
+            sign_layer = bm.faces.layers.int.new('m3sign')
+            uv_maps = []
+            uv_layers = {}
+            for uv_map in ['uv0', 'uv1', 'uv2', 'uv3', 'uv4']:
+                if v_class_desc.hasField(uv_map):
+                    uv_layers[uv_map] = bm.loops.layers.uv.new(uv_map)
+                    uv_maps.append(uv_map)
 
-                for face in bm.faces:
-                    old_indices = tris_old[face.index]
-                    face.smooth = True
+            for face in bm.faces:
+                old_indices = tris_old[face.index]
+                face.smooth = True
 
-                    for loop_index, loop in enumerate(face.loops):
-                        m3_vert = m3_vertices[old_indices[loop_index]]
-                        for uv_map in uv_maps:
-                            loop[uv_layers[uv_map]].uv = to_bl_uv(getattr(m3_vert, uv_map), region_uv_multiply, region_uv_offset)
+                for loop_index, loop in enumerate(face.loops):
+                    m3_vert = m3_vertices[old_indices[loop_index]]
+                    for uv_map in uv_maps:
+                        loop[uv_layers[uv_map]].uv = to_bl_uv(getattr(m3_vert, uv_map), region_uv_multiply, region_uv_offset)
 
-                        if color_layer:
-                            loop[color_layer] = (m3_vert.col.r / 255, m3_vert.col.g / 255, m3_vert.col.b / 255, 1)
-                            loop[alpha_layer] = (m3_vert.col.a / 255, m3_vert.col.a / 255, m3_vert.col.a / 255, 1)
+                    if color_layer:
+                        loop[color_layer] = (m3_vert.col.r / 255, m3_vert.col.g / 255, m3_vert.col.b / 255, 1)
+                        loop[alpha_layer] = (m3_vert.col.a / 255, m3_vert.col.a / 255, m3_vert.col.a / 255, 1)
 
-                    for vert_index, vert in enumerate(face.verts):
-                        m3_vert = m3_vertices[old_indices[vert_index]]
+                for vert_index, vert in enumerate(face.verts):
+                    m3_vert = m3_vertices[old_indices[vert_index]]
 
-                        for ii in range(0, 4):
-                            weight = getattr(m3_vert, 'weight' + str(ii))
-                            if weight:
-                                vertex_groups_used[getattr(m3_vert, 'bone' + str(ii))] = True
-                                vert[deform_layer][getattr(m3_vert, 'bone' + str(ii))] = weight / 255
+                    for ii in range(0, 4):
+                        weight = getattr(m3_vert, 'weight' + str(ii))
+                        if weight:
+                            vertex_groups_used[getattr(m3_vert, 'bone' + str(ii))] = True
+                            vert[deform_layer][getattr(m3_vert, 'bone' + str(ii))] = weight / 255
 
-                        face[sign_layer] = round(m3_vert.sign)
+                    face[sign_layer] = round(m3_vert.sign)
 
-                for edge in bm.edges:
-                    edge.smooth = len(edge.link_faces) > 1
-                # perform destructive operations only after all uses of m3 vertex data
-                bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=0.00001)
-                bmesh.ops.join_triangles(bm, faces=bm.faces, cmp_uvs=True, angle_face_threshold=1, angle_shape_threshold=1)
+            for edge in bm.edges:
+                edge.smooth = len(edge.link_faces) > 1
+            # perform destructive operations only after all uses of m3 vertex data
+            bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=0.00001)
+            bmesh.ops.join_triangles(bm, faces=bm.faces, cmp_uvs=True, angle_face_threshold=1, angle_shape_threshold=1)
 
-                bmesh.update_edit_mesh(mesh)
-                bm.free()
+            bmesh.update_edit_mesh(mesh)
+            bm.free()
 
-                bpy.ops.object.mode_set(mode='OBJECT')
+            bpy.ops.object.mode_set(mode='OBJECT')
 
-                for g, used in zip(mesh_ob.vertex_groups, vertex_groups_used):
-                    if not used:
-                        mesh_ob.vertex_groups.remove(g)
+            for g, used in zip(mesh_ob.vertex_groups, vertex_groups_used):
+                if not used:
+                    mesh_ob.vertex_groups.remove(g)
 
-                self.rgn_objects[m3_ob.region_index] = mesh_ob
+            self.m3_ref_data[self.m3_division.regions.index]['bl'][m3_ob.region_index] = mesh_ob
 
     def create_lights(self):
         ob = self.ob
@@ -652,8 +656,8 @@ class Importer:
             processor = M3InputProcessor(self, ob, 'm3_ribbons[{}]'.format(len(ob.m3_ribbons) - 1), ribbon, m3_ribbon)
             io_shared.io_ribbon(processor)
 
-            for m3_spline in m3_ribbon.splines:
-                bone_name = m3_bones[m3_ribbon.bone].name
+            for m3_spline in self.m3_get_ref(m3_ribbon.splines):
+                bone_name = self.m3_get_bone_name(m3_spline.bone)
                 bone = ob.data.bones[bone_name]
                 spline = shared.m3_item_add('splines', item_name='Spline', obj=ribbon)
                 spline.bone = bone.bl_handle if bone else ''
@@ -725,6 +729,9 @@ class Importer:
     def create_cloths(self):
         ob = self.ob
 
+        if not hasattr(self.m3_model, 'physics_cloths'):
+            return
+
         for m3_cloth in self.m3_get_ref(self.m3_model.physics_cloths):
             cloth = shared.m3_item_add('m3_cloths', item_name='Cloth', obj=ob)
             processor = M3InputProcessor(self, ob, 'm3_cloths[{}]'.format(len(ob.m3_cloths) - 1), cloth, m3_cloth)
@@ -740,7 +747,7 @@ class Importer:
                     for m3_constraint in m3_constraints:
                         bone_name = self.m3_get_bone_name(m3_constraint.bone)
                         bone = ob.data.bones[bone_name]
-                        constraint = shared.m3_item_add('m3_clothconstraintsets[{}].constraints'.format(constraint_set.bl_index), item_name=bone_name ,obj=ob)
+                        constraint = shared.m3_item_add('m3_clothconstraintsets[{}].constraints'.format(constraint_set.bl_index), item_name=bone_name, obj=ob)
                         constraint.bone = bone.bl_handle if bone else ''
                         constraint.height = m3_constraint.height
                         constraint.radius = m3_constraint.radius
@@ -752,8 +759,21 @@ class Importer:
 
             for m3_object_pair in self.m3_get_ref(m3_cloth.influence_map):
                 object_pair = cloth.object_pairs.add()
-                object_pair.mesh_object = self.rgn_objects[m3_object_pair.influenced_region_index]
-                object_pair.simulator_object = self.rgn_objects[m3_object_pair.simulation_region_index]
+                object_pair.mesh_object = self.bl_get_ref(self.m3_division.regions)[m3_object_pair.influenced_region_index]
+                object_pair.simulator_object = self.bl_get_ref(self.m3_division.regions)[m3_object_pair.simulation_region_index]
+
+    def create_ik_joints(self):
+        ob = self.ob
+        for m3_ik in self.m3_get_ref(self.m3_model.ik_joints):
+            bone1_name = self.m3_get_bone_name(m3_ik.bone1)
+            bone2_name = self.m3_get_bone_name(m3_ik.bone2)
+            bone1 = ob.data.bones[bone1_name]
+            bone2 = ob.data.bones[bone2_name]
+            ik = shared.m3_item_add('m3_ikjoints', obj=ob)
+            ik.bone1 = bone1.bl_handle if bone1 else ''
+            ik.bone2 = bone2.bl_handle if bone2 else ''
+            processor = M3InputProcessor(self, ob, 'm3_ikjoints[{}]'.format(len(ob.m3_ikjoints) - 1), ik, m3_ik)
+            io_shared.io_ik(processor)
 
     def generate_volume_object(self, name, m3_vert_ref, m3_face_ref):
 
