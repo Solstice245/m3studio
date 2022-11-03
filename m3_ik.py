@@ -38,9 +38,9 @@ def draw_props(joint, layout):
     shared.draw_pointer_prop(bpy.context.object, col, 'data.bones', 'm3_ikjoints[{}].bone2'.format(joint.bl_index), 'Bone Joint End', 'BONE_DATA')
 
     col = layout.column(align=True)
-    col.prop(joint, 'max_search_up', text='Max Search Up')
-    col.prop(joint, 'max_search_down', text='Max Search Down')
-    col.prop(joint, 'max_search_speed', text='Max Search Speed')
+    col.prop(joint, 'search_up', text='Search Up')
+    col.prop(joint, 'search_down', text='Search Down')
+    col.prop(joint, 'search_speed', text='Search Speed')
     col = layout.column()
     col.prop(joint, 'goal_threshold', text='Goal Position Threshold')
 
@@ -48,9 +48,9 @@ def draw_props(joint, layout):
 class Properties(shared.M3PropertyGroup):
     bone1: bpy.props.StringProperty(options=set())
     bone2: bpy.props.StringProperty(options=set())
-    max_search_up: bpy.props.FloatProperty(options=set())
-    max_search_down: bpy.props.FloatProperty(options=set())
-    max_search_speed: bpy.props.FloatProperty(options=set(), min=0)
+    search_up: bpy.props.FloatProperty(options=set())
+    search_down: bpy.props.FloatProperty(options=set())
+    search_speed: bpy.props.FloatProperty(options=set(), min=0)
     goal_threshold: bpy.props.FloatProperty(options=set(), min=0)
 
 
