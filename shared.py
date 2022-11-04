@@ -475,11 +475,14 @@ def draw_pointer_prop(ob, layout, search_prop, prop_name, prop_label='', icon=''
     main = layout.row(align=True)
     main.use_property_split = False
 
-    split = main.split(factor=0.4)
-    row = split.row(align=True)
-    row.alignment = 'RIGHT'
-    row.label(text=prop_label)
-    row = split.row(align=True)
+    if prop_label:
+        split = main.split(factor=0.4)
+        row = split.row(align=True)
+        row.alignment = 'RIGHT'
+        row.label(text=prop_label)
+        row = split.row(align=True)
+    else:
+        row = main
     op = row.operator('m3.proppointer_search', text='' if pointer_ob else 'Select', icon='VIEWZOOM')
     op.prop = prop_name
     op.search_prop = search_prop
@@ -492,9 +495,10 @@ def draw_pointer_prop(ob, layout, search_prop, prop_name, prop_label='', icon=''
         op = row.operator('m3.proppointer_unlink', text='', icon='X')
         op.prop = prop_name
 
-    row = main.row()
-    row.alignment = 'RIGHT'
-    row.separator(factor=3.6)
+    if layout.use_property_split and layout.use_property_decorate:
+        row = main.row()
+        row.alignment = 'RIGHT'
+        row.separator(factor=3.6)
 
 
 def draw_volume_props(volume, layout):

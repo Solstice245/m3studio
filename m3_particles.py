@@ -49,7 +49,7 @@ def draw_copy_props(copy, layout):
 
 def draw_props(particle, layout):
     col = layout.column()
-    shared.draw_pointer_prop(bpy.context.object, col, 'm3_materialrefs', 'm3_particle_systems[%d].material' % particle.bl_index, 'Material', 'MATERIAL')
+    shared.draw_pointer_prop(bpy.context.object, col, 'm3_materialrefs', 'm3_particle_systems[%d].material' % particle.bl_index, 'Material', icon='MATERIAL')
     col.prop(particle, 'particle_type', text='Type')
 
     if particle.particle_type == 'RECT_BILLBOARD':

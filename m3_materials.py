@@ -128,6 +128,7 @@ class CompositeSectionProperties(shared.M3PropertyGroup):
 class CompositeProperties(shared.M3PropertyGroup):
     sections: bpy.props.CollectionProperty(type=CompositeSectionProperties)
     sections_index: bpy.props.IntProperty(options=set(), default=-1)
+    unknown: bpy.props.IntProperty(options=set(), min=0)
 
 
 class TerrainProperties(shared.M3PropertyGroup):
@@ -352,7 +353,18 @@ def draw_composite_section_props(section, layout):
 
 
 def draw_composite_props(context, material, layout):
-    shared.draw_collection_list(layout.box(), 'm3_materials_composite[{}].sections'.format(material.bl_index), draw_composite_section_props)
+    layout.prop(material, 'unknown', text='Unknown Number')
+    box = layout.box()
+    box.use_property_split = False
+    op = box.operator('m3.collection_add', text='Add Material Reference')
+    op.collection = 'm3_materials_composite[%d].sections' % (material.bl_index)
+    for item in material.sections:
+        ref_path = 'm3_materials_composite[%d].sections[%d].matref' % (material.bl_index, item.bl_index)
+        row = box.row()
+        shared.draw_pointer_prop(context.object, row, 'm3_materialrefs', ref_path, '', icon='MATERIAL')
+        row.prop(item, 'alpha_factor', text='Alpha Factor')
+        op = row.operator('m3.collection_remove', icon='X', text='')
+        op.collection, op.index = ('m3_materials_composite[%d].sections' % material.bl_index, item.bl_index)
 
 
 def draw_terrain_props(context, material, layout):

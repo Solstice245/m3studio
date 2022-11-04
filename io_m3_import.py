@@ -424,6 +424,13 @@ class Importer:
 
             shared.m3_msgbus_sub(mat, matref, 'name', 'name')
 
+            if m3_matref.type == 3:
+                for m3_section in self.m3_get_ref(m3_mat.sections):
+                    section = shared.m3_item_add('m3_{}[{}].sections'.format(mattype_list[0], len(mat_col) - 1), obj=ob)
+                    section.matref = ob.m3_materialrefs[m3_section.material_reference_index].bl_handle
+                    processor = M3InputProcessor(self, ob, 'm3_{}[{}].sections[{}]'.format(mattype_list[0], len(mat_col) - 1, section.bl_index), section, m3_section)
+                    io_shared.io_material_composite_section(processor)
+
             for layer_name in mattype_layers[m3_matref.type]:
                 m3_layer_field = getattr(m3_mat, 'layer_' + layer_name, None)
                 if not m3_layer_field:
