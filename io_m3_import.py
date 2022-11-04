@@ -749,13 +749,20 @@ class Importer:
             processor = M3InputProcessor(self, ob, 'm3_ribbons[{}]'.format(len(ob.m3_ribbons) - 1), ribbon, m3_ribbon)
             io_shared.io_ribbon(processor)
 
-            for m3_spline in self.m3_get_ref(m3_ribbon.splines):
-                bone_name = self.m3_get_bone_name(m3_spline.bone)
-                bone = ob.data.bones[bone_name]
-                spline = shared.m3_item_add('splines', item_name='Spline', obj=ribbon)
-                spline.bone = bone.bl_handle if bone else ''
-                processor = M3InputProcessor(self, ob, 'm3_ribbons[{}].splines[{}]'.format(len(ob.m3_ribbons) - 1, len(ribbon.splines) - 1), spline, m3_spline)
-                io_shared.io_ribbon_spline(processor)
+            if m3_ribbon.spline.index:
+                for ref in self.bl_ref_objects:
+                    if [m3_ribbon.spline.index] == ref['sections']:
+                        ribbon.spline = ref['ob'].bl_handle
+                else:
+                    m3_spline = self.m3_get_ref(m3_ribbon.spline)
+                    spline = shared.m3_item_add('m3_ribbonsplines', item_name=ribbon.name + '_spline', obj=ob)
+                    ribbon.spline = spline.bl_handle
+                    for m3_point in m3_spline:
+                        bone_name = self.m3_get_bone_name(m3_point.bone)
+                        bone = ob.data.bones[bone_name]
+                        point = shared.m3_item_add('m3_ribbonsplines[{}].points'.format(spline.bl_index), item_name=bone_name, obj=ob)
+                        point.bone = bone.bl_handle if bone else ''
+                    self.m3_ref_data[m3_ribbon.spline.index]['bl'] = spline
 
     def create_projections(self):
         ob = self.ob
@@ -836,6 +843,7 @@ class Importer:
                 rigidbody.physics_shape = physics_shape.bl_handle
                 for m3_volume in m3_physics_shape:
                     volume = shared.m3_item_add('m3_physicsshapes[{}].volumes'.format(physics_shape.bl_index), obj=ob)
+                    volume.shape = volume.bl_rna.properties['shape'].enum_items[getattr(m3_volume, 'shape')].identifier
                     volume.size = (m3_volume.size0, m3_volume.size1, m3_volume.size2)
                     md = to_bl_matrix(m3_volume.matrix).decompose()
                     volume.location = md[0]
@@ -864,6 +872,7 @@ class Importer:
                 else:
                     m3_constraints = self.m3_get_ref(m3_cloth.constraints)
                     constraint_set = shared.m3_item_add('m3_clothconstraintsets', item_name=cloth.name + '_constraints', obj=ob)
+                    cloth.constraint_set = constraint_set.bl_handle
                     for m3_constraint in m3_constraints:
                         bone_name = self.m3_get_bone_name(m3_constraint.bone)
                         bone = ob.data.bones[bone_name]
@@ -875,7 +884,7 @@ class Importer:
                         constraint.location = md[0]
                         constraint.rotation = md[1].to_euler('XYZ')
                         constraint.scale = md[2]
-                    cloth.constraint_set = constraint_set.bl_handle
+                    self.m3_ref_data[m3_rigidbody.physics_shape.index]['bl'] = physics_shape
 
             for m3_object_pair in self.m3_get_ref(m3_cloth.influence_map):
                 object_pair = cloth.object_pairs.add()

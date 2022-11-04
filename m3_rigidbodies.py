@@ -67,7 +67,7 @@ def draw_shape_props(shape, layout):
 def draw_body_props(rigidbody, layout):
     shared.draw_pointer_prop(bpy.context.object, layout, 'm3_physicsshapes', 'm3_rigidbodies[{}].physics_shape'.format(rigidbody.bl_index), 'Physics Body Shape', 'LINKED')
     col = layout.column()
-    col.prop(rigidbody, 'material', text='Physics Material')
+    col.prop(rigidbody, 'physical_material', text='Physical Material')
     # col.prop(rigidbody, 'simulation_type', text='Simulation Type')  # unknown if effective
     col.prop(rigidbody, 'mass', text='Mass')
     col.prop(rigidbody, 'friction', text='Friction')
@@ -113,7 +113,7 @@ class ShapeProperties(shared.M3PropertyGroup):
 class BodyProperties(shared.M3BoneUserPropertyGroup):
     physics_shape: bpy.props.StringProperty(options=set())
     simulation_type: bpy.props.IntProperty(options=set())
-    material: bpy.props.EnumProperty(options=set(), items=bl_enum.physics_materials)
+    physical_material: bpy.props.EnumProperty(options=set(), items=bl_enum.physics_materials)
     mass: bpy.props.FloatProperty(options=set(), default=2400)
     friction: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0, max=1, default=0.5)
     restitution: bpy.props.FloatProperty(options=set(), default=0.1)

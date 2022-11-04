@@ -521,7 +521,7 @@ def io_rigid_body(processor):
     processor.enum('physical_material', since_version=3)
     processor.float('mass', since_version=3)
     processor.float('friction', since_version=3)
-    processor.float('resitution', since_version=3)
+    processor.float('restitution', since_version=3)
     processor.float('damping_linear', since_version=3)
     processor.float('damping_angular', since_version=3)
     processor.float('gravity_factor', since_version=3)

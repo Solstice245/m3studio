@@ -2391,7 +2391,7 @@
             <field till-version="2" name="bone_fb" type="uint16" default-value="0x0"/> <!-- Matches bone, but doesn't seem to be used? -->
             <field till-version="2" name="unknownAt64" size="16" default-value="0x00000000000000000000000000000000"/>
 
-            <field name="simulationType" type="uint16" default-value="1" since-version="3"/>
+            <field name="simulation_type" type="uint16" default-value="1" since-version="3"/>
             <field name="bone" type="uint16" since-version="3"/>
             <field name="physical_material" type="uint32" default-value="0" since-version="3"/>
 
@@ -2665,7 +2665,7 @@
             <field name="star_ratio" type="float" default-value="0.5"/>
             <field name="length" type="FloatAnimationReferenceV0"/>
             <field name="unknown3fbae7d6" type="int32" expected-value="0" till-version="6"/> <!-- haven't seen a Blizzard model where this wouldn't be 0 -->
-            <field name="splines" type="Reference" refTo="SRIB"/>
+            <field name="spline" type="Reference" refTo="SRIB"/>
             <field name="active" type="UInt32AnimationReferenceV0"/>
             <field name="flags" type="uint32" default-value="0" >
                 <bits>

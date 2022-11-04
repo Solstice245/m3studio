@@ -36,12 +36,14 @@ m3_collections_suggested_names = {
     'm3_materiallayers': ['Layer'],
     'm3_materialrefs': ['Material'],
     'm3_particle_systems': ['Particle System'],
+    'm3_particle_copies': ['Particle Copy'],
     'm3_cloths': ['Cloth'],
     'm3_clothconstraintsets': ['Cloth Constraint Set'],
     'm3_physicsshapes': ['Physics Shape'],
     'm3_physicsjoints': ['Joint'],
     'm3_projections': ['Projection'],
     'm3_ribbons': ['Ribbon'],
+    'm3_ribbonsplines': ['Ribbon Spline'],
     'm3_rigidbodies': ['Rigid Body'],
     'm3_turrets': ['Turret'],
     'm3_warps': ['Warp'],
@@ -483,7 +485,10 @@ def draw_pointer_prop(ob, layout, search_prop, prop_name, prop_label='', icon=''
     op.search_prop = search_prop
 
     if pointer_ob:
-        row.prop(pointer_ob, 'name', text='', icon=icon)
+        if icon:
+            row.prop(pointer_ob, 'name', text='', icon=icon)
+        else:
+            row.prop(pointer_ob, 'name', text='')
         op = row.operator('m3.proppointer_unlink', text='', icon='X')
         op.prop = prop_name
 

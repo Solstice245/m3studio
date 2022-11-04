@@ -22,8 +22,10 @@ from . import bl_enum
 
 
 def register_props():
-    bpy.types.Object.m3_ribbons = bpy.props.CollectionProperty(type=Properties)
+    bpy.types.Object.m3_ribbons = bpy.props.CollectionProperty(type=RibbonProperties)
     bpy.types.Object.m3_ribbons_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
+    bpy.types.Object.m3_ribbonsplines = bpy.props.CollectionProperty(type=SplineProperties)
+    bpy.types.Object.m3_ribbonsplines_index = bpy.props.IntProperty(options=set(), default=-1)
 
 
 def update_collection_index(self, context):
@@ -33,35 +35,39 @@ def update_collection_index(self, context):
     shared.auto_update_bone_shapes(ob, 'RIB_')
 
 
+def draw_point_props(point, layout):
+    col = layout.column(align=True)
+    col.prop(point, 'length', text='Length')
+    col.prop(point, 'yaw', text='Yaw')
+    col.prop(point, 'pitch', text='Pitch')
+    col = layout.column(align=True)
+    col.prop(point, 'length_var_shape', text='Length Variation')
+    sub = layout.column(align=True)
+    sub.active = point.length_var_shape != 'NONE'
+    sub.prop(point, 'length_var_frequency', text='Frequency')
+    sub.prop(point, 'length_var_amount', text='Amount')
+    col = layout.column(align=True)
+    col.prop(point, 'yaw_var_shape', text='Yaw Variation')
+    sub = layout.column(align=True)
+    sub.active = point.yaw_var_shape != 'NONE'
+    sub.prop(point, 'yaw_var_frequency', text='Frequency')
+    sub.prop(point, 'yaw_var_amount', text='Amount')
+    col = layout.column(align=True)
+    col.prop(point, 'pitch_var_shape', text='Pitch Variation')
+    sub = layout.column(align=True)
+    sub.active = point.pitch_var_shape != 'NONE'
+    sub.prop(point, 'pitch_var_frequency', text='Frequency')
+    sub.prop(point, 'pitch_var_amount', text='Amount')
+
+
 def draw_spline_props(spline, layout):
-    col = layout.column(align=True)
-    col.prop(spline, 'length', text='Length')
-    col.prop(spline, 'yaw', text='Yaw')
-    col.prop(spline, 'pitch', text='Pitch')
-    col = layout.column(align=True)
-    col.prop(spline, 'length_var_shape', text='Length Variation')
-    sub = layout.column(align=True)
-    sub.active = spline.length_var_shape != 'NONE'
-    sub.prop(spline, 'length_var_frequency', text='Frequency')
-    sub.prop(spline, 'length_var_amount', text='Amount')
-    col = layout.column(align=True)
-    col.prop(spline, 'yaw_var_shape', text='Yaw Variation')
-    sub = layout.column(align=True)
-    sub.active = spline.yaw_var_shape != 'NONE'
-    sub.prop(spline, 'yaw_var_frequency', text='Frequency')
-    sub.prop(spline, 'yaw_var_amount', text='Amount')
-    col = layout.column(align=True)
-    col.prop(spline, 'pitch_var_shape', text='Pitch Variation')
-    sub = layout.column(align=True)
-    sub.active = spline.pitch_var_shape != 'NONE'
-    sub.prop(spline, 'pitch_var_frequency', text='Frequency')
-    sub.prop(spline, 'pitch_var_amount', text='Amount')
+    shared.draw_collection_list(layout.box(), 'm3_ribbonsplines[%d].points' % spline.bl_index, draw_point_props)
 
 
-def draw_props(ribbon, layout):
+def draw_ribbon_props(ribbon, layout):
     col = layout.column(align=True)
-    shared.draw_pointer_prop(bpy.context.object, col, 'm3_materialrefs', 'm3_ribbons[%d].material' % ribbon.bl_index, 'Material', 'MATERIAL')
-    # shared.draw_pinter_prop(bpy.context.object, col, 'm3_ribbon_splines', 'm3_ribbons[{}]'.format(ribbon.bl_index), 'Ribbon Spline')
+    shared.draw_pointer_prop(bpy.context.object, col, 'm3_materialrefs', 'm3_ribbons[%d].material' % ribbon.bl_index, 'Material', icon='MATERIAL')
+    shared.draw_pointer_prop(bpy.context.object, col, 'm3_ribbonsplines', 'm3_ribbons[{}].spline'.format(ribbon.bl_index), 'Ribbon Spline', icon='LINKED')
     col = layout.column(align=True)
     col.prop(ribbon, 'ribbon_type', text='Ribbon Type')
 
@@ -170,7 +176,7 @@ def draw_props(ribbon, layout):
     col.prop(ribbon, 'vertex_alpha', text='Vertex Alpha')
 
 
-class SplineProperties(shared.M3BoneUserPropertyGroup):
+class PointProperties(shared.M3BoneUserPropertyGroup):
     yaw: bpy.props.FloatProperty(name='Spline Yaw')
     yaw_var_shape: bpy.props.EnumProperty(options=set(), items=bl_enum.ribbon_variation_shape)
     yaw_var_amount: bpy.props.FloatProperty(name='Spline Yaw Variation Amount')
@@ -185,9 +191,14 @@ class SplineProperties(shared.M3BoneUserPropertyGroup):
     length_var_frequency: bpy.props.FloatProperty(name='Spline Length Variation Frequency')
 
 
-class Properties(shared.M3BoneUserPropertyGroup):
+class SplineProperties(shared.M3PropertyGroup):
+    points: bpy.props.CollectionProperty(type=PointProperties)
+    points_index: bpy.props.IntProperty(options=set(), default=-1)
+
+
+class RibbonProperties(shared.M3BoneUserPropertyGroup):
     material: bpy.props.StringProperty(options=set())
-    splines: bpy.props.CollectionProperty(type=SplineProperties)
+    spline: bpy.props.StringProperty(options=set())
     ribbon_type: bpy.props.EnumProperty(options=set(), items=bl_enum.ribbon_type)
     cull_method: bpy.props.EnumProperty(options=set(), items=bl_enum.ribbon_cull)
     lod_cut: bpy.props.EnumProperty(options=set(), items=bl_enum.lod)
@@ -261,16 +272,26 @@ class Properties(shared.M3BoneUserPropertyGroup):
     accurate_gpu_tangents: bpy.props.BoolProperty(options=set())  # TODO add to draw method
 
 
-class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
+class RibbonPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_idname = 'OBJECT_PT_M3_RIBBONS'
     bl_label = 'M3 Ribbons'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, 'm3_ribbons', draw_props)
+        shared.draw_collection_list(self.layout, 'm3_ribbons', draw_ribbon_props)
+
+
+class SplinePanel(shared.ArmatureObjectPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_M3_RIBBONSPLINES'
+    bl_label = 'M3 Ribbon Splines'
+
+    def draw(self, context):
+        shared.draw_collection_list(self.layout, 'm3_ribbonsplines', draw_spline_props)
 
 
 classes = (
+    PointProperties,
     SplineProperties,
-    Properties,
-    Panel,
+    RibbonProperties,
+    RibbonPanel,
+    SplinePanel,
 )
