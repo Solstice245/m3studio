@@ -281,7 +281,7 @@ class Importer:
         self.create_forces()
         self.create_warps()
         self.create_hittests()
-        # TODO self.create_rigid_bodies()
+        self.create_rigid_bodies()  # TODO import mesh data of version 2/3
         # TODO self.create_rigid_body_joints()
         self.create_cloths()  # TODO cloth sim vertex flag
         self.create_ik_joints()  # TODO single-bone/length implementation
@@ -798,6 +798,37 @@ class Importer:
             hittest.rotation = md[1].to_euler('XYZ')
             hittest.scale = md[2]
             hittest.mesh_object = self.generate_volume_object(hittest.name, m3_hittest.vertices, m3_hittest.face_data)
+
+    def create_rigid_bodies(self):
+        ob = self.ob
+
+        for m3_rigidbody in self.m3_get_ref(self.m3_model.physics_rigidbodies):
+            bone_name = self.m3_get_bone_name(m3_rigidbody.bone)
+            bone = ob.data.bones[bone_name]
+            rigidbody = shared.m3_item_add('m3_rigidbodies', item_name=bone_name, obj=ob)
+            rigidbody.bone = bone.bl_handle if bone else ''
+            processor = M3InputProcessor(self, ob, 'm3_rigidbodies[{}]'.format(len(ob.m3_rigidbodies) - 1), rigidbody, m3_rigidbody)
+            io_shared.io_rigid_body(processor)
+
+            physics_shape = self.bl_get_ref(m3_rigidbody.physics_shape)
+            if physics_shape:
+                rigidbody.physics_shape = physics_shape.bl_handle
+            else:
+                m3_physics_shape = self.m3_get_ref(m3_rigidbody.physics_shape)
+                physics_shape = shared.m3_item_add('m3_physicsshapes', item_name=rigidbody.name + '_shape', obj=ob)
+                rigidbody.physics_shape = physics_shape.bl_handle
+                for m3_volume in m3_physics_shape:
+                    volume = shared.m3_item_add('m3_physicsshapes[{}].volumes'.format(physics_shape.bl_index), obj=ob)
+                    volume.size = (m3_volume.size0, m3_volume.size1, m3_volume.size2)
+                    md = to_bl_matrix(m3_volume.matrix).decompose()
+                    volume.location = md[0]
+                    volume.rotation = md[1].to_euler('XYZ')
+                    volume.scale = md[2]
+
+                    if m3_volume.structureDescription.structureVersion == 1:
+                        volume.mesh = self.generate_volume_object(physics_shape.name, m3_volume.vertices, m3_volume.face_data)
+
+                self.m3_ref_data[m3_rigidbody.physics_shape.index]['bl'] = physics_shape
 
     def create_cloths(self):
         if not hasattr(self.m3_model, 'physics_cloths'):

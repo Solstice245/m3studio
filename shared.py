@@ -38,6 +38,7 @@ m3_collections_suggested_names = {
     'm3_particles': ['Particle'],
     'm3_cloths': ['Cloth'],
     'm3_clothconstraintsets': ['Cloth Constraint Set'],
+    'm3_physicsshapes': ['Physics Shape'],
     'm3_physicsjoints': ['Joint'],
     'm3_projections': ['Projection'],
     'm3_ribbons': ['Ribbon'],

@@ -22,8 +22,10 @@ from . import bl_enum
 
 
 def register_props():
-    bpy.types.Object.m3_rigidbodies = bpy.props.CollectionProperty(type=Properties)
-    bpy.types.Object.m3_rigidbodies_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
+    bpy.types.Object.m3_physicsshapes = bpy.props.CollectionProperty(type=ShapeProperties)
+    bpy.types.Object.m3_physicsshapes_index = bpy.props.IntProperty(options=set(), default=-1)
+    bpy.types.Object.m3_rigidbodies = bpy.props.CollectionProperty(type=BodyProperties)
+    bpy.types.Object.m3_rigidbodies_index = bpy.props.IntProperty(options=set(), default=-1)
 
 
 def update_collection_index(self, context):
@@ -39,7 +41,7 @@ def bone_shape_update_event(self, context):
     shared.set_bone_shape(ob, bone)
 
 
-def draw_shape_props(shape, layout):
+def draw_volume_props(shape, layout):
     sub = layout.column(align=True)
     sub.prop(shape, 'shape', text='Shape Type')
     if shape.shape in ['CONVEXHULL', 'MESH']:
@@ -58,16 +60,20 @@ def draw_shape_props(shape, layout):
     col.prop(shape, 'scale', text='Scale')
 
 
-def draw_props(rigidbody, layout):
+def draw_shape_props(shape, layout):
+    shared.draw_collection_list(layout.box(), 'm3_physicsshapes[{}].volumes'.format(shape.bl_index), draw_volume_props)
 
-    shared.draw_collection_stack(
-        layout, 'm3_rigidbodies[{}].shapes'.format(rigidbody.bl_index), 'Shape', draw_shape_props, use_name=False, can_duplicate=True,
-        ops=['m3.rigidbody_shape_add', 'm3.rigidbody_shape_remove', 'm3.collection_move', 'm3.rigidbody_shape_duplicate'],
-    )
 
+def draw_body_props(rigidbody, layout):
+    shared.draw_pointer_prop(bpy.context.object, layout, 'm3_physicsshapes', 'm3_rigidbodies[{}].physics_shape'.format(rigidbody.bl_index), 'Physics Body Shape', 'LINKED')
     col = layout.column()
     col.prop(rigidbody, 'material', text='Physics Material')
-    col.prop(rigidbody, 'simulation_type', text='Simulation Type')
+    # col.prop(rigidbody, 'simulation_type', text='Simulation Type')  # unknown if effective
+    col.prop(rigidbody, 'mass', text='Mass')
+    col.prop(rigidbody, 'friction', text='Friction')
+    col.prop(rigidbody, 'restitution', text='Restitution')
+    col.prop(rigidbody, 'damping_linear', text='Linear Damping')
+    col.prop(rigidbody, 'damping_angular', text='Angular Damping')
     col.prop(rigidbody, 'gravity_scale', text='Gravity Scale')
     col.prop(rigidbody, 'priority', text='Priority')
     col = layout.column()
@@ -90,7 +96,7 @@ def draw_props(rigidbody, layout):
     col.prop(rigidbody, 'walkable', text='Walkable')
 
 
-class ShapeProperties(shared.M3PropertyGroup):
+class VolumeProperties(shared.M3PropertyGroup):
     shape: bpy.props.EnumProperty(options=set(), items=bl_enum.physics_shape, update=bone_shape_update_event)
     size: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0, default=(1, 1, 1), update=bone_shape_update_event)
     location: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, update=bone_shape_update_event)
@@ -99,18 +105,23 @@ class ShapeProperties(shared.M3PropertyGroup):
     mesh_object: bpy.props.PointerProperty(type=bpy.types.Object, update=bone_shape_update_event)
 
 
-class Properties(shared.M3BoneUserPropertyGroup):
-    shapes: bpy.props.CollectionProperty(type=ShapeProperties)
+class ShapeProperties(shared.M3PropertyGroup):
+    volumes: bpy.props.CollectionProperty(type=VolumeProperties)
+    volumes_index: bpy.props.IntProperty(options=set(), default=-1)
+
+
+class BodyProperties(shared.M3BoneUserPropertyGroup):
+    physics_shape: bpy.props.StringProperty(options=set())
     simulation_type: bpy.props.IntProperty(options=set())
     material: bpy.props.EnumProperty(options=set(), items=bl_enum.physics_materials)
-    density: bpy.props.FloatProperty(options=set())
-    friction: bpy.props.FloatProperty(options=set())
-    restitution: bpy.props.FloatProperty(options=set())
-    linear_damp: bpy.props.FloatProperty(options=set())
-    angular_damp: bpy.props.FloatProperty(options=set())
+    mass: bpy.props.FloatProperty(options=set(), default=2400)
+    friction: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0, max=1, default=0.5)
+    restitution: bpy.props.FloatProperty(options=set(), default=0.1)
+    damping_linear: bpy.props.FloatProperty(options=set(), default=0.001)
+    damping_angular: bpy.props.FloatProperty(options=set(), default=0.001)
     gravity_scale: bpy.props.FloatProperty(options=set(), default=1)
     local_forces: bpy.props.BoolVectorProperty(options=set(), subtype='LAYER', size=16)
-    world_forces: bpy.props.BoolVectorProperty(options=set(), size=8)
+    world_forces: bpy.props.BoolVectorProperty(options=set(), size=16)
     priority: bpy.props.IntProperty(options=set(), min=0)
     collidable: bpy.props.BoolProperty(options=set())
     stackable: bpy.props.BoolProperty(options=set())
@@ -121,67 +132,26 @@ class Properties(shared.M3BoneUserPropertyGroup):
     do_not_simulate: bpy.props.BoolProperty(options=set())
 
 
-class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
-    bl_idname = 'OBJECT_PT_M3_RIGIDBODIES'
-    bl_label = 'M3 Rigid Bodies'
+class ShapePanel(shared.ArmatureObjectPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_M3_PHYSICSSHAPES'
+    bl_label = 'M3 Physics Shapes'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, 'm3_rigidbodies', draw_props)
+        shared.draw_collection_list(self.layout, 'm3_physicsshapes', draw_shape_props)
 
 
-class M3ShapeOpAdd(shared.M3CollectionOpBase):
-    bl_idname = 'm3.rigidbody_shape_add'
-    bl_label = 'Add Collection Item'
-    bl_description = 'Adds a new item to the collection'
+class BodyPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_M3_PHYSICSRIGIDBODIES'
+    bl_label = 'M3 Physics Rigid Bodies'
 
-    def invoke(self, context, event):
-        rigid_body = context.object.m3_rigidbodies[context.object.m3_rigidbodies_index]
-        shared.m3_item_add('shapes', obj=rigid_body)
-        bone = shared.m3_pointer_get(context.object, 'data.bones', 'm3_rigidbodies[{}].bone'.format(context.object.m3_rigidbodies_index))
-        shared.set_bone_shape(context.object, bone)
-        return {'FINISHED'}
-
-
-class M3ShapeOpRemove(shared.M3CollectionOpBase):
-    bl_idname = 'm3.rigidbody_shape_remove'
-    bl_label = 'Remove Collection Item'
-    bl_description = 'Removes the active item from the collection'
-
-    def invoke(self, context, event):
-        shapes = context.object.m3_rigidbodies[context.object.m3_rigidbodies_index].shapes
-        shapes.remove(self.index)
-
-        for ii in range(self.index, len(shapes)):
-            shapes[ii].bl_index -= 1
-
-        bone = shared.m3_pointer_get(context.object, 'data.bones', 'm3_rigidbodies[{}].bone'.format(context.object.m3_rigidbodies_index))
-        shared.set_bone_shape(context.object, bone)
-
-        return {'FINISHED'}
-
-
-class M3ShapeOpDuplicate(shared.M3CollectionOpBase):
-    bl_idname = 'm3.rigidbody_shape_duplicate'
-    bl_label = 'Duplicate Collection Item'
-    bl_description = 'Duplicates the active item in the collection'
-
-    def invoke(self, context, event):
-        if self.index == -1:
-            return {'FINISHED'}
-
-        rigid_body = context.object.m3_rigidbodies[context.object.m3_rigidbodies_index]
-        shared.m3_item_duplicate('shapes', rigid_body.shapes[self.index], obj=rigid_body)
-        bone = shared.m3_pointer_get(context.object, 'data.bones', 'm3_rigidbodies[{}].bone'.format(context.object.m3_rigidbodies_index))
-        shared.set_bone_shape(context.object, bone)
-
-        return {'FINISHED'}
+    def draw(self, context):
+        shared.draw_collection_list(self.layout, 'm3_rigidbodies', draw_body_props)
 
 
 classes = (
+    VolumeProperties,
     ShapeProperties,
-    Properties,
-    Panel,
-    M3ShapeOpAdd,
-    M3ShapeOpRemove,
-    M3ShapeOpDuplicate,
+    BodyProperties,
+    ShapePanel,
+    BodyPanel,
 )

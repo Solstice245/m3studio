@@ -511,6 +511,27 @@ def io_ribbon_spline(processor):
     processor.anim_float('unknown4')
 
 
+def io_rigid_body(processor):
+    processor.integer('simulation_type', since_version=3)
+    processor.enum('physical_material', since_version=3)
+    processor.float('mass', since_version=3)
+    processor.float('friction', since_version=3)
+    processor.float('resitution', since_version=3)
+    processor.float('damping_linear', since_version=3)
+    processor.float('damping_angular', since_version=3)
+    processor.float('gravity_factor', since_version=3)
+    processor.bit('flags', 'collidable')
+    processor.bit('flags', 'walkable')
+    processor.bit('flags', 'stackable')
+    processor.bit('flags', 'simulate_on_collision')
+    processor.bit('flags', 'ignore_local_bodies')
+    processor.bit('flags', 'always_exists')
+    processor.bit('flags', 'no_simulation')
+    processor.bits_16('local_forces')
+    processor.bits_16('world_forces')
+    processor.integer('priority')
+
+
 def io_cloth(processor):
     processor.float('density')
     processor.float('tracking')

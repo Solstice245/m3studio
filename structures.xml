@@ -2177,21 +2177,21 @@
             <version number="0" size="180"/>
         </versions>
         <fields>
-            <field name="jointType" type="uint32"/>
+            <field name="joint_type" type="uint32"/>
             <field name="bone1" type="uint32"/>
             <field name="bone2" type="uint32"/>
             <field name="matrix1" type="Matrix44"/>
             <field name="matrix2" type="Matrix44"/>
             <field name="limit" type="uint32"/>
-            <field name="limitMin" type="float"/>
-            <field name="limitMax" type="float"/>
-            <field name="coneAngle" type="float"/>
+            <field name="limit_min" type="float"/>
+            <field name="limit_max" type="float"/>
+            <field name="cone_angle" type="float"/>
             <field name="friction" type="uint32"/>
-            <field name="frictionAmount" type="float" default-value="0.2"/>
-            <field name="dampingRatio" type="float" default-value="0.7"/>
-            <field name="angularFrequency" type="float" default-value="5"/>
-            <field name="breakThreshold" type="float" default-value="1"/> <!-- docs indicate this is unused in SC2 -->
-            <field name="shapeCollisionValue" type="int32"/> <!-- some magic value related to how shapes collide with each other ; it might be some kind of bitmask -->
+            <field name="friction_amount" type="float" default-value="0.2"/>
+            <field name="damping_ratio" type="float" default-value="0.7"/>
+            <field name="angular_frequency" type="float" default-value="5"/>
+            <field name="break_threshold" type="float" default-value="1"/> <!-- docs indicate this is unused in SC2 -->
+            <field name="shape_collision_value" type="int32"/> <!-- some magic value related to how shapes collide with each other ; it might be some kind of bitmask -->
         </fields>
     </structure>
 
@@ -2332,7 +2332,7 @@
             <field name="vertices" type="Reference" refTo="VEC3" till-version="1"/>
             <field name="unknownAt84" type="Reference" refTo="U8__" till-version="1"/>
             <field name="face_data" type="Reference" refTo="U16_" till-version="1"/>
-            <field name="planeEquations" type="Reference" refTo="VEC4" till-version="1"/> <!-- Bounding planes used for convex hull shapes? (may include extra radius value?) -->
+            <field name="plane_equations" type="Reference" refTo="VEC4" till-version="1"/> <!-- Bounding planes used for convex hull shapes? (may include extra radius value?) -->
 
             <field name="unknown66ce545e" size="20" expected-value="0x0000000000000000000000000000000000000000" since-version="2"/>
             <field name="unknown66ce545e_b" type="uint32" default-value="0" since-version="2"/>
@@ -2385,52 +2385,39 @@
         </versions>
         <fields>
             <!-- Version 2 specific part: (please try to minimize it if possible) -->
-            <field till-version="2" name="unknownAt0" type="float" default-value="5.0"/>
-            <field till-version="2" name="unknownAt4" type="float" default-value="4.0"/>
-            <field till-version="2" name="unknownAt8" type="float" default-value="0.8"/> <!-- 0.8 in all models? -->
-            <field till-version="2" name="unknownAt12" type="float" default-value="0.0"/>
-            <field till-version="2" name="unknownAt16" type="float" default-value="0.0"/>
-            <field till-version="2" name="unknownAt20" type="float" default-value="0.0"/>
-            <field till-version="2" name="unknownAt24" type="float" default-value="0.0"/>
-            <field till-version="2" name="unknownAt28" type="float" default-value="0.0"/>
-            <field till-version="2" name="unknownAt32" type="float" default-value="0.0"/>
-            <field till-version="2" name="unknownAt36" type="float" default-value="0.0"/>
-            <field till-version="2" name="unknownAt40" type="float" default-value="0.0"/>
-            <field till-version="2" name="unknownAt44" type="float" default-value="0.0"/>
-            <field till-version="2" name="unknownAt48" type="float" default-value="0.0"/>
-            <field till-version="2" name="unknownAt52" type="float" default-value="0.0"/>
-            <field till-version="2" name="unknownAt56" type="float" default-value="0.0"/>
+            <!-- Minimized: unknownAt0 fields seem to have no perceptible effect -->
+            <field till-version="2" name="unknownAt0" size="60"/>
             <field till-version="2" name="bone" type="uint16"/>
-            <field till-version="2" name="boneUnused" type="uint16" default-value="0x0"/> <!-- Matches bone, but doesn't seem to be used? -->
+            <field till-version="2" name="bone_fb" type="uint16" default-value="0x0"/> <!-- Matches bone, but doesn't seem to be used? -->
             <field till-version="2" name="unknownAt64" size="16" default-value="0x00000000000000000000000000000000"/>
 
             <field name="simulationType" type="uint16" default-value="1" since-version="3"/>
             <field name="bone" type="uint16" since-version="3"/>
-            <field name="physicalMaterial" type="uint32" default-value="0" since-version="3"/>
+            <field name="physical_material" type="uint32" default-value="0" since-version="3"/>
 
-            <field name="density" type="float" default-value="2400.0" since-version="3"/>
+            <field name="mass" type="float" default-value="2400.0" since-version="3"/>
             <field name="friction" type="float" default-value="0.7" since-version="3"/>
             <field name="restitution" type="float" default-value="0.1"  since-version="3"/>
-            <field name="linearDamp" type="float" default-value="0.001"  since-version="3"/>
-            <field name="angularDamp" type="float" default-value="0.001" since-version="3"/>
-            <field name="gravityScale" type="float" default-value="1.0"  since-version="3"/>
+            <field name="damping_linear" type="float" default-value="0.001"  since-version="3"/>
+            <field name="damping_angular" type="float" default-value="0.001" since-version="3"/>
+            <field name="gravity_factor" type="float" default-value="1.0"  since-version="3"/>
 
             <field name="unknown8de065e8" type="UInt32AnimationReferenceV0" since-version="4"/>
             <field name="unknown57796a4d" type="float" default-value="1.0" since-version="4"/>
 
-            <field name="physicsShapes" type="Reference" refTo="PHSH"/>
+            <field name="physics_shape" type="Reference" refTo="PHSH"/>
             <field name="flags" type="uint32" default-value="0x1">
                 <bits>
                     <bit mask="0x1" name="collidable"/>
                     <bit mask="0x2" name="walkable"/>
                     <bit mask="0x4" name="stackable"/>
-                    <bit mask="0x8" name="simulateOnCollision"/>
-                    <bit mask="0x10" name="ignoreLocalBodies"/>
-                    <bit mask="0x20" name="alwaysExists"/>
-                    <bit mask="0x80" name="doNotSimulate"/>
+                    <bit mask="0x8" name="simulate_on_collision"/>
+                    <bit mask="0x10" name="ignore_local_bodies"/>
+                    <bit mask="0x20" name="always_exists"/>
+                    <bit mask="0x80" name="no_simulation"/>
                 </bits>
             </field>
-            <field name="localForces" type="uint16" default-value="0x0">
+            <field name="local_forces" type="uint16" default-value="0x0">
                 <bits>
                     <bit mask="0x1" name="1"/>
                     <bit mask="0x2" name="2"/>
@@ -2450,7 +2437,7 @@
                     <bit mask="0x8000" name="16"/>
                 </bits>
             </field>
-            <field name="worldForces" type="uint16" default-value="0x0">
+            <field name="world_forces" type="uint16" default-value="0x0">
                 <bits>
                     <bit mask="0x1" name="wind"/>
                     <bit mask="0x2" name="explosion"/>
