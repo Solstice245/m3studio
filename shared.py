@@ -42,7 +42,7 @@ m3_collections_suggested_names = {
     'm3_projections': ['Projection'],
     'm3_ribbons': ['Ribbon'],
     'm3_rigidbodies': ['Rigid Body'],
-    'm3_turrets': ['TurretLeft', 'TurretRight', 'Turret'],
+    'm3_turrets': ['Turret'],
     'm3_warps': ['Warp'],
 }
 

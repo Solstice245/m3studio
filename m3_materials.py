@@ -342,7 +342,7 @@ def draw_displacement_props(context, material, layout):
 
 
 def draw_composite_section_props(path, section, layout):
-    shared.draw_pointer_prop(bpy.context.object, layout, 'm3_materialrefs', path + '.matref', 'Material', 'LINKED')
+    shared.draw_pointer_prop(bpy.context.object, layout, 'm3_materialrefs', path + '.matref', 'Material', 'MATERIAL')
     layout.prop(section, 'alpha_factor', text='Alpha Factor')
 
 

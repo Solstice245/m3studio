@@ -19,6 +19,7 @@
 options_bone_display = [
     ('NONE', 'None', ''),
     ('ATT_', 'Attachment Points', ''),
+    ('SHBX', 'Shadow Boxes', ''),
     ('CAM_', 'Cameras', ''),
     ('FOR_', 'Forces', ''),
     ('FTHT', 'Hit Test Volumes', ''),
@@ -277,6 +278,11 @@ ribbon_variation_shape = [
     ('SQUARE', 'Square', ''),
     ('NOISE_RANDOM', 'Noise (Random)', ''),
     ('NOISE_CONTINUOUS', 'Noise (Continuous)', ''),
+]
+
+camera_dof = [
+    ('0x0', 'Unknown 0x0', ''),
+    ('0x1', 'Unknown 0x1', ''),
 ]
 
 matref_type = [

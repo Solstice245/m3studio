@@ -227,8 +227,8 @@
         </versions>
         <fields>
             <field name="header" type="AnimationReferenceHeader"/>
-            <field name="default" type="QUAT"/>
-            <field name="null" type="QUAT"/>
+            <field name="default" type="QUATV0"/>
+            <field name="null" type="QUATV0"/>
             <field name="unknown" type="int32" default-value="0" />
         </fields>
     </structure>
@@ -1387,7 +1387,7 @@
                     <bit mask="0x1" name="main_part"/>
                 </bits>
             </field>
-            <field name="group" type="uint8" default-value="1"/>
+            <field name="group_id" type="uint8" default-value="1"/>
             <field name="yaw_flags" type="uint32" default-value="0x2">
                 <bits>
                     <bit mask="0x2" name="yaw_limited"/>
@@ -1419,7 +1419,7 @@
         </versions>
         <fields>
             <!-- List of indices for the PATU list defined in the model -->
-            <field name="partIndex" type="Reference" refTo="U32_"/>
+            <field name="parts" type="Reference" refTo="U32_"/>
             <field name="name" type="Reference" refTo="CHAR"/>
         </fields>
     </structure>
@@ -1672,7 +1672,7 @@
             <version number="0" size="24"/>
         </versions>
         <fields>
-            <field name="materialReferenceIndex" type="uint32"/>
+            <field name="material_reference_index" type="uint32"/>
             <field name="alpha_factor" type="FloatAnimationReferenceV0"/>
         </fields>
     </structure>
@@ -1890,7 +1890,7 @@
         </versions>
         <fields>
             <field name="bone" type="uint32"/>
-            <field name="material_reference" type="uint32"/>
+            <field name="material_reference_index" type="uint32"/>
             <field name="additional_flags" type="uint32" default-value="4" since-version="17" >
                 <bits>
                     <bit mask="0x1" name="speed_randomize"/>
@@ -2127,44 +2127,44 @@
             <version number="5" size="388"/>
         </versions>
         <fields>
-            <field name="projectionType" type="uint32"/>
+            <field name="projection_type" type="uint32"/>
             <field name="bone" type="uint32"/>
-            <field name="materialReferenceIndex" type="uint32"/>
+            <field name="material_reference_index" type="uint32"/>
             <field name="unknown58ae2b94" type="Vector3AnimationReferenceV0"/>
             <field name="unknownf1f7110b" type="FloatAnimationReferenceV0"/>
             <field name="unknown2035f500" type="FloatAnimationReferenceV0"/>
             <field name="unknown80d8189b" type="FloatAnimationReferenceV0"/>
-            <field name="fieldOfView" type="FloatAnimationReferenceV0"/>
-            <field name="aspectRatio" type="FloatAnimationReferenceV0"/>
+            <field name="field_of_view" type="FloatAnimationReferenceV0"/>
+            <field name="aspect_ratio" type="FloatAnimationReferenceV0"/>
             <field name="near" type="FloatAnimationReferenceV0"/>
             <field name="far" type="FloatAnimationReferenceV0"/>
-            <field name="boxBottomZOffset" type="FloatAnimationReferenceV0"/>
-            <field name="boxTopZOffset" type="FloatAnimationReferenceV0"/>
-            <field name="boxLeftXOffset" type="FloatAnimationReferenceV0"/>
-            <field name="boxRightXOffset" type="FloatAnimationReferenceV0"/>
-            <field name="boxFrontYOffset" type="FloatAnimationReferenceV0"/>
-            <field name="boxBackYOffset" type="FloatAnimationReferenceV0"/>
+            <field name="box_offset_z_bottom" type="FloatAnimationReferenceV0"/>
+            <field name="box_offset_z_top" type="FloatAnimationReferenceV0"/>
+            <field name="box_offset_x_left" type="FloatAnimationReferenceV0"/>
+            <field name="box_offset_x_right" type="FloatAnimationReferenceV0"/>
+            <field name="box_offset_y_front" type="FloatAnimationReferenceV0"/>
+            <field name="box_offset_y_back" type="FloatAnimationReferenceV0"/>
             <field name="unknownca4e8e36" default-value="0" type="uint32"/>
-            <field name="alphaOverTimeStart" type="float"/>
-            <field name="alphaOverTimeMid" type="float"/>
-            <field name="alphaOverTimeEnd" type="float"/>
-            <field name="splatLifeTimeAttack" type="float"/>
-            <field name="splatLifeTimeAttackTo" type="float"/>
-            <field name="splatLifeTimeHold" type="float"/>
-            <field name="splatLifeTimeHoldTo" type="float"/>
-            <field name="splatLifeTimeDecay" type="float"/>
-            <field name="splatLifeTimeDecayTo" type="float"/>
-            <field name="attenuationPlaneDistance" type="float"/>
+            <field name="alpha_over_time_init" type="float"/>
+            <field name="alpha_over_time_mid" type="float"/>
+            <field name="alpha_over_time_end" type="float"/>
+            <field name="lifetime_attack" type="float"/>
+            <field name="lifetime_attack_to" type="float"/>
+            <field name="lifetime_hold" type="float"/>
+            <field name="lifetime_hold_to" type="float"/>
+            <field name="lifetime_decay" type="float"/>
+            <field name="lifetime_decay_to" type="float"/>
+            <field name="attenuation_plane_distance" type="float"/>
             <field name="active" type="UInt32AnimationReferenceV0"/>
-            <field name="splatLayer" type="uint32" since-version="4"/>
-            <field name="lodReduce" type="uint32" since-version="4"/>
-            <field name="lodCut" type="uint32" since-version="4"/>
+            <field name="layer" type="uint32" since-version="4"/>
+            <field name="lod_reduce" type="uint32" since-version="4"/>
+            <field name="lod_cut" type="uint32" since-version="4"/>
             <field name="flags" type="uint32" default-value="0" since-version="4">
                 <bits>
-                    <bit mask="0x1" name="staticPosition"/>
-                    <bit mask="0x2" name="unknownFlag0x2"/>
-                    <bit mask="0x4" name="unknownFlag0x4"/>
-                    <bit mask="0x8" name="unknownFlag0x8"/>
+                    <bit mask="0x1" name="static"/>
+                    <bit mask="0x2" name="unknown_flag0x2"/>
+                    <bit mask="0x4" name="unknown_flag0x4"/>
+                    <bit mask="0x8" name="unknown_flag0x8"/>
                 </bits>
             </field>
             <!-- <field name="unknowna0283820" size="18" till-version="4"/> -->
@@ -2278,10 +2278,10 @@
             <field name="shape" type="uint32" default-value="0"/>
             <field name="unknown1" type="uint32" default-value="0"/>
             <field name="bone" type="uint32"/>
-            <field name="flags" type="uint32" default-value="0"  >
+            <field name="flags" type="uint32" default-value="0">
                 <bits>
-                    <bit mask="0x1" name="useFalloff"/>
-                    <bit mask="0x2" name="useHeightGradient"/>
+                    <bit mask="0x1" name="falloff"/>
+                    <bit mask="0x2" name="height_gradient"/>
                     <bit mask="0x4" name="unbounded"/>
                 </bits>
             </field>
@@ -2519,7 +2519,7 @@
 
     <structure name="BBSC">
         <description>
-            Billbord Behavior
+            Billboard Behavior
         </description>
         <versions>
             <version number="0" size="48"/>
@@ -2527,8 +2527,8 @@
         <fields>
             <field name="unknownac35793a" type="Reference"/>
             <field name="bone" type="uint16"/>
-            <field name="billboardType" type="uint8" default-value="6"/>
-            <field name="cameraLookAt" type="uint8" default-value="1"/>
+            <field name="billboard_type" type="uint8" default-value="6"/>
+            <field name="camera_look_at" type="uint8" default-value="1"/>
             <field name="unknown76974b30" type="float" default-value="0.0"/>
             <field name="unknownb7903f37" type="float" default-value="0.0"/>
             <field name="unknown15901615" type="float" default-value="0.0"/>
@@ -2609,7 +2609,7 @@
         <fields>
             <field name="bone" type="uint16"/>
             <field name="bone_fb" type="uint16" expected-value="0"/>
-            <field name="material_reference" type="uint32"/>
+            <field name="material_reference_index" type="uint32"/>
             <field name="additional_flags" type="uint32" default-value="0x8" since-version="8">
                 <bits>
                     <bit mask="0x8" name="world_space"/>
@@ -2782,19 +2782,19 @@
         <fields>
             <field name="bone" type="uint32"/>
             <field name="name" type="Reference" refTo="CHAR"/>
-            <field name="fieldOfView" type="FloatAnimationReferenceV0" since-version="3"/>
-            <field name="useVertFOV" type="uint32" default-value="1" since-version="3"/>
-            <field name="depthOfFieldType" type="uint32" default-value="3" since-version="5"/>
+            <field name="field_of_view" type="FloatAnimationReferenceV0" since-version="3"/>
+            <field name="use_vertical_fov" type="uint32" default-value="1" since-version="3"/>
+            <field name="depth_of_field_type" type="uint32" default-value="3" since-version="5"/>
             <field name="unknown0818df94" size="132" till-version="2"/>
-            <field name="farClip" type="FloatAnimationReferenceV0" since-version="3"/>
-            <field name="nearClip" type="FloatAnimationReferenceV0" since-version="3"/>
+            <field name="far_clip" type="FloatAnimationReferenceV0" since-version="3"/>
+            <field name="near_clip" type="FloatAnimationReferenceV0" since-version="3"/>
             <field name="clip2" type="FloatAnimationReferenceV0" since-version="3"/>
-            <field name="focalDepth" type="FloatAnimationReferenceV0" since-version="3"/>
-            <field name="falloffStart" type="FloatAnimationReferenceV0" since-version="3"/>
-            <field name="falloffEnd" type="FloatAnimationReferenceV0" since-version="3"/>
+            <field name="focal_depth" type="FloatAnimationReferenceV0" since-version="3"/>
+            <field name="falloff_start" type="FloatAnimationReferenceV0" since-version="3"/>
+            <field name="falloff_end" type="FloatAnimationReferenceV0" since-version="3"/>
             <field name="unknown587dc7fb" type="FloatAnimationReferenceV0" since-version="5"/>
             <field name="unknownfff8cb33" type="FloatAnimationReferenceV0" since-version="5"/>
-            <field name="depthOfField" type="FloatAnimationReferenceV0" since-version="3"/>
+            <field name="depth_of_field" type="FloatAnimationReferenceV0" since-version="3"/>
             <field name="unknownf726f834" type="FloatAnimationReferenceV0" since-version="5"/>
             <field name="unknownd506807d" type="FloatAnimationReferenceV0" since-version="5"/>
         </fields>
@@ -2813,7 +2813,7 @@
             <field name="unknowncf03b856" size="4" expected-value="0x00000000"/>
             <field name="radius" type="FloatAnimationReferenceV0"/>
             <field name="unknown9306aac0" type="FloatAnimationReferenceV0"/>
-            <field name="compressionStrength" type="FloatAnimationReferenceV0"/>
+            <field name="compression_strength" type="FloatAnimationReferenceV0"/>
             <field name="unknown50c7f2b4" type="FloatAnimationReferenceV0"/>
             <field name="unknown8d9c977c" type="FloatAnimationReferenceV0"/>
             <field name="unknownca6025a2" type="FloatAnimationReferenceV0"/>

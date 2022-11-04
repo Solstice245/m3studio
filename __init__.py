@@ -41,6 +41,7 @@ from . import m3_ribbons
 from . import m3_rigidbodies
 from . import m3_turrets
 from . import m3_warps
+from . import m3_shadowboxes
 from . import io_m3_import
 
 bl_info = {
@@ -114,17 +115,18 @@ m3_modules = (
     m3_hittests,
     m3_particles,
     m3_ribbons,
+    m3_projections,
     m3_lights,
     m3_forces,
     m3_rigidbodies,
     m3_physicsjoints,
-    m3_turrets,
-    m3_projections,
     m3_billboards,
+    m3_turrets,
     m3_cameras,
-    m3_ik,
     m3_physicscloths,
+    m3_ik,
     m3_warps,
+    m3_shadowboxes,
 )
 
 

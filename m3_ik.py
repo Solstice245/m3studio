@@ -45,6 +45,7 @@ def draw_props(joint, layout):
     col.prop(joint, 'goal_threshold', text='Goal Position Threshold')
 
 
+# TODO Make it so that instead of multiple bone properties, we set joint length
 class Properties(shared.M3PropertyGroup):
     bone1: bpy.props.StringProperty(options=set())
     bone2: bpy.props.StringProperty(options=set())

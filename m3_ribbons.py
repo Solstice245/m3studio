@@ -60,6 +60,8 @@ def draw_spline_props(spline, layout):
 
 def draw_props(ribbon, layout):
     col = layout.column(align=True)
+    shared.draw_pointer_prop(bpy.context.object, col, 'm3_materialrefs', 'm3_ribbons[%d].material' % ribbon.bl_index, 'Material', 'MATERIAL')
+    col = layout.column(align=True)
     col.prop(ribbon, 'ribbon_type', text='Ribbon Type')
 
     if ribbon.ribbon_type == 'CYLINDER':
@@ -69,8 +71,6 @@ def draw_props(ribbon, layout):
         col.prop(ribbon, 'edges', text='Edges')
         col.prop(ribbon, 'star_ratio', text='Cylinder/Planar Ratio')
 
-    col = layout.column(align=True)
-    col.prop(ribbon, 'material', text='Material')
     col = layout.column(align=True)
     col.prop(ribbon, 'lod_reduce', text='LOD Reduction')
     col.prop(ribbon, 'lod_cut', text='Cutoff')

@@ -18,6 +18,7 @@
 
 import bpy
 from . import shared
+from . import bl_enum
 
 
 def register_props():
@@ -41,8 +42,9 @@ def draw_props(camera, layout):
     col.prop(camera, 'focal_depth', text='Focal Depth')
     col.prop(camera, 'falloff_start', text='Falloff Start')
     col.prop(camera, 'falloff_end', text='Fallof End')
+    col.prop(camera, 'depth_of_field_type', text='Depth Of Field Type')
     col.prop(camera, 'depth_of_field', text='Depth Of Field')
-    col.prop(camera, 'unknowne35db92d', text='Unknown E35DB92D')
+    col.prop(camera, 'use_vertical_fov', text='Vertical FOV')
 
 
 class Properties(shared.M3BoneUserPropertyGroup):
@@ -54,7 +56,8 @@ class Properties(shared.M3BoneUserPropertyGroup):
     falloff_start: bpy.props.FloatProperty(name='M3 Camera Falloff Start', default=1)
     falloff_end: bpy.props.FloatProperty(name='M3 Camera Falloff End', default=2)
     depth_of_field: bpy.props.FloatProperty(name='M3 Camera Depth Of Field', default=0.5)
-    unknowne35db92d: bpy.props.IntProperty(options=set(), default=1)
+    depth_of_field_type: bpy.props.EnumProperty(options=set(), items=bl_enum.camera_dof)
+    use_vertical_fov: bpy.props.BoolProperty(options=set())
 
 
 class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):

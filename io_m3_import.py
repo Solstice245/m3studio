@@ -41,6 +41,10 @@ def to_bl_vec3(m3_vector):
     return mathutils.Vector((m3_vector.x, m3_vector.y, m3_vector.z))
 
 
+def to_bl_vec4(m3_vector):
+    return mathutils.Vector((m3_vector.w, m3_vector.x, m3_vector.y, m3_vector.z))
+
+
 def to_bl_color(m3_color):
     return mathutils.Vector((m3_color.r / 255, m3_color.g / 255, m3_color.b / 255, m3_color.a / 255))
 
@@ -119,6 +123,11 @@ class M3InputProcessor:
         if (since_version is not None) and (self.version < since_version):
             return
         setattr(self.bl, field, to_bl_vec3(getattr(self.m3, field)))
+
+    def vec4(self, field, since_version=None):
+        if (since_version is not None) and (self.version < since_version):
+            return
+        setattr(self.bl, field, to_bl_vec4(getattr(self.m3, field)))
 
     def enum(self, field, since_version=None):
         if (since_version is not None) and (self.version < since_version):
@@ -258,18 +267,26 @@ class Importer:
         self.anim_id_to_long_map = {}
 
         self.ob = self.armature_object_new()
-        self.create_animations()
+        self.create_animations()  # TODO
         self.create_bones()
-        self.create_materials()
-        # print('createMesh', timeit(lambda: self.create_mesh(), number=1))
-        self.create_mesh()
-        self.create_lights()
-        self.create_particles()
-        self.create_ribbons()
-        self.create_hittests()
+        self.create_materials()  # TODO finish io of reflection and lens flare materials
+        self.create_mesh()  # TODO mesh import options
         self.create_attachments()
-        self.create_cloths()
-        self.create_ik_joints()
+        self.create_lights()
+        self.create_shadow_boxes()
+        self.create_cameras()
+        self.create_particles()  # TODO finish copy implementation
+        self.create_ribbons()  # TODO finish spline implementation
+        self.create_projections()
+        self.create_forces()
+        self.create_warps()
+        self.create_hittests()
+        # TODO self.create_rigid_bodies()
+        # TODO self.create_rigid_body_joints()
+        self.create_cloths()  # TODO cloth sim vertex flag
+        self.create_ik_joints()  # TODO single-bone/length implementation
+        self.create_turrets()
+        self.create_billboards()
         bpy.context.view_layer.objects.active = self.ob
 
     def armature_object_new(self):
@@ -623,75 +640,6 @@ class Importer:
 
             self.m3_ref_data[self.m3_division.regions.index]['bl'][m3_ob.region_index] = mesh_ob
 
-    def create_lights(self):
-        ob = self.ob
-
-        for m3_light in self.m3_get_ref(self.m3_model.lights):
-            bone_name = self.m3_get_bone_name(m3_light.bone)
-            bone = ob.data.bones[bone_name]
-            light = shared.m3_item_add('m3_lights', item_name=bone_name, obj=ob)
-            light.bone = bone.bl_handle if bone else ''
-            processor = M3InputProcessor(self, ob, 'm3_lights[{}]'.format(len(ob.m3_lights) - 1), light, m3_light)
-            io_shared.io_light(processor)
-
-    def create_particles(self):
-        ob = self.ob
-
-        for m3_particle in self.m3_get_ref(self.m3_model.particles):
-            bone_name = self.m3_get_bone_name(m3_particle.bone)
-            bone = ob.data.bones[bone_name]
-            particle = shared.m3_item_add('m3_particles', item_name=bone_name, obj=ob)
-            particle.bone = bone.bl_handle if bone else ''
-            processor = M3InputProcessor(self, ob, 'm3_particles[{}]'.format(len(ob.m3_particles) - 1), particle, m3_particle)
-            io_shared.io_particle_system(processor)
-
-    def create_ribbons(self):
-        ob = self.ob
-
-        for m3_ribbon in self.m3_get_ref(self.m3_model.ribbons):
-            bone_name = self.m3_get_bone_name(m3_ribbon.bone)
-            bone = ob.data.bones[bone_name]
-            ribbon = shared.m3_item_add('m3_ribbons', item_name=bone_name, obj=ob)
-            ribbon.bone = bone.bl_handle if bone else ''
-            processor = M3InputProcessor(self, ob, 'm3_ribbons[{}]'.format(len(ob.m3_ribbons) - 1), ribbon, m3_ribbon)
-            io_shared.io_ribbon(processor)
-
-            for m3_spline in self.m3_get_ref(m3_ribbon.splines):
-                bone_name = self.m3_get_bone_name(m3_spline.bone)
-                bone = ob.data.bones[bone_name]
-                spline = shared.m3_item_add('splines', item_name='Spline', obj=ribbon)
-                spline.bone = bone.bl_handle if bone else ''
-                processor = M3InputProcessor(self, ob, 'm3_ribbons[{}].splines[{}]'.format(len(ob.m3_ribbons) - 1, len(ribbon.splines) - 1), spline, m3_spline)
-                io_shared.io_ribbon_spline(processor)
-
-    def create_hittests(self):
-        ob = self.ob
-
-        m3_hittest_tight = self.m3_model.hittest_tight
-        bone_name = self.m3_get_bone_name(m3_hittest_tight.bone)
-        bone = ob.data.bones[bone_name]
-        ob.m3_hittest_tight.bone = bone.bl_handle if bone else ''
-        ob.m3_hittest_tight.shape = ob.m3_hittest_tight.bl_rna.properties['shape'].enum_items[m3_hittest_tight.shape].identifier
-        ob.m3_hittest_tight.size = (m3_hittest_tight.size0, m3_hittest_tight.size1, m3_hittest_tight.size2)
-        md = to_bl_matrix(m3_hittest_tight.matrix).decompose()
-        ob.m3_hittest_tight.location = md[0]
-        ob.m3_hittest_tight.rotation = md[1].to_euler('XYZ')
-        ob.m3_hittest_tight.scale = md[2]
-        ob.m3_hittest_tight.mesh_object = self.generate_volume_object(ob.m3_hittest_tight.name, m3_hittest_tight.vertices, m3_hittest_tight.face_data)
-
-        for m3_hittest in self.m3_get_ref(self.m3_model.hittests):
-            bone_name = self.m3_get_bone_name(m3_hittest.bone)
-            bone = ob.data.bones[bone_name]
-            hittest = shared.m3_item_add('m3_hittests', item_name=bone_name, obj=ob)
-            hittest.bone = bone.bl_handle if bone else ''
-            hittest.shape = hittest.bl_rna.properties['shape'].enum_items[getattr(m3_hittest, 'shape')].identifier
-            hittest.size = (m3_hittest.size0, m3_hittest.size1, m3_hittest.size2)
-            md = to_bl_matrix(m3_hittest.matrix).decompose()
-            hittest.location = md[0]
-            hittest.rotation = md[1].to_euler('XYZ')
-            hittest.scale = md[2]
-            hittest.mesh_object = self.generate_volume_object(hittest.name, m3_hittest.vertices, m3_hittest.face_data)
-
     def create_attachments(self):
         ob = self.ob
 
@@ -726,12 +674,136 @@ class Importer:
             # print('point', point, point.name)
             vol.mesh_object = self.generate_volume_object('{}_{}'.format(point.name, vol.name), m3_volume.vertices, m3_volume.face_data)
 
-    def create_cloths(self):
+    def create_lights(self):
         ob = self.ob
 
+        for m3_light in self.m3_get_ref(self.m3_model.lights):
+            bone_name = self.m3_get_bone_name(m3_light.bone)
+            bone = ob.data.bones[bone_name]
+            light = shared.m3_item_add('m3_lights', item_name=bone_name, obj=ob)
+            light.bone = bone.bl_handle if bone else ''
+            processor = M3InputProcessor(self, ob, 'm3_lights[{}]'.format(len(ob.m3_lights) - 1), light, m3_light)
+            io_shared.io_light(processor)
+
+    def create_shadow_boxes(self):
+        if not hasattr(self.m3_model, 'shadow_boxes'):
+            return
+
+        ob = self.ob
+        for m3_shadow_box in self.m3_get_ref(self.m3_model.shadow_boxes):
+            bone_name = self.m3_get_bone_name(m3_shadow_box.bone)
+            bone = ob.data.bones[bone_name]
+            shadow_box = shared.m3_item_add('m3_shadowboxes', item_name=bone_name, obj=ob)
+            shadow_box.bone = bone.bl_handle if bone else ''
+            processor = M3InputProcessor(self, ob, 'm3_shadowboxes[{}]'.format(len(ob.m3_camera) - 1), shadow_box, m3_shadow_box)
+            io_shared.io_shadow_box(processor)
+
+    def create_cameras(self):
+        ob = self.ob
+        for m3_camera in self.m3_get_ref(self.m3_model.cameras):
+            bone_name = self.m3_get_bone_name(m3_camera.bone)
+            bone = ob.data.bones[bone_name]
+            camera = shared.m3_item_add('m3_cameras', item_name=bone_name, obj=ob)
+            camera.bone = bone.bl_handle if bone else ''
+            processor = M3InputProcessor(self, ob, 'm3_cameras[{}]'.format(len(ob.m3_camera) - 1), camera, m3_camera)
+            io_shared.io_camera(processor)
+
+    def create_particles(self):
+        ob = self.ob
+
+        for m3_particle in self.m3_get_ref(self.m3_model.particles):
+            bone_name = self.m3_get_bone_name(m3_particle.bone)
+            bone = ob.data.bones[bone_name]
+            particle = shared.m3_item_add('m3_particles', item_name=bone_name, obj=ob)
+            particle.bone = bone.bl_handle if bone else ''
+            particle.material = ob.m3_materialrefs[m3_particle.material_reference_index].bl_handle
+            processor = M3InputProcessor(self, ob, 'm3_particles[{}]'.format(len(ob.m3_particles) - 1), particle, m3_particle)
+            io_shared.io_particle_system(processor)
+
+    def create_ribbons(self):
+        ob = self.ob
+
+        for m3_ribbon in self.m3_get_ref(self.m3_model.ribbons):
+            bone_name = self.m3_get_bone_name(m3_ribbon.bone)
+            bone = ob.data.bones[bone_name]
+            ribbon = shared.m3_item_add('m3_ribbons', item_name=bone_name, obj=ob)
+            ribbon.bone = bone.bl_handle if bone else ''
+            ribbon.material = ob.m3_materialrefs[m3_ribbon.material_reference_index].bl_handle
+            processor = M3InputProcessor(self, ob, 'm3_ribbons[{}]'.format(len(ob.m3_ribbons) - 1), ribbon, m3_ribbon)
+            io_shared.io_ribbon(processor)
+
+            for m3_spline in self.m3_get_ref(m3_ribbon.splines):
+                bone_name = self.m3_get_bone_name(m3_spline.bone)
+                bone = ob.data.bones[bone_name]
+                spline = shared.m3_item_add('splines', item_name='Spline', obj=ribbon)
+                spline.bone = bone.bl_handle if bone else ''
+                processor = M3InputProcessor(self, ob, 'm3_ribbons[{}].splines[{}]'.format(len(ob.m3_ribbons) - 1, len(ribbon.splines) - 1), spline, m3_spline)
+                io_shared.io_ribbon_spline(processor)
+
+    def create_projections(self):
+        ob = self.ob
+        for m3_projection in self.m3_get_ref(self.m3_model.projections):
+            bone_name = self.m3_get_bone_name(m3_projection.bone)
+            bone = ob.data.bones[bone_name]
+            projection = shared.m3_item_add('m3_projections', item_name=bone_name, obj=ob)
+            projection.bone = bone.bl_handle if bone else ''
+            projection.material = ob.m3_materialrefs[m3_projection.material_reference_index].bl_handle
+            processor = M3InputProcessor(self, ob, 'm3_projections[{}]'.format(len(ob.m3_projection) - 1), projection, m3_projection)
+            io_shared.io_projection(processor)
+
+    def create_forces(self):
+        ob = self.ob
+        for m3_force in self.m3_get_ref(self.m3_model.forces):
+            bone_name = self.m3_get_bone_name(m3_force.bone)
+            bone = ob.data.bones[bone_name]
+            force = shared.m3_item_add('m3_forces', item_name=bone_name, obj=ob)
+            force.bone = bone.bl_handle if bone else ''
+            processor = M3InputProcessor(self, ob, 'm3_forces[{}]'.format(len(ob.m3_force) - 1), force, m3_force)
+            io_shared.io_force(processor)
+
+    def create_warps(self):
+        ob = self.ob
+        for m3_warp in self.m3_get_ref(self.m3_model.warps):
+            bone_name = self.m3_get_bone_name(m3_warp.bone)
+            bone = ob.data.bones[bone_name]
+            warp = shared.m3_item_add('m3_warps', item_name=bone_name, obj=ob)
+            warp.bone = bone.bl_handle if bone else ''
+            processor = M3InputProcessor(self, ob, 'm3_warps[{}]'.format(len(ob.m3_warp) - 1), warp, m3_warp)
+            io_shared.io_warp(processor)
+
+    def create_hittests(self):
+        ob = self.ob
+
+        m3_hittest_tight = self.m3_model.hittest_tight
+        bone_name = self.m3_get_bone_name(m3_hittest_tight.bone)
+        bone = ob.data.bones[bone_name]
+        ob.m3_hittest_tight.bone = bone.bl_handle if bone else ''
+        ob.m3_hittest_tight.shape = ob.m3_hittest_tight.bl_rna.properties['shape'].enum_items[m3_hittest_tight.shape].identifier
+        ob.m3_hittest_tight.size = (m3_hittest_tight.size0, m3_hittest_tight.size1, m3_hittest_tight.size2)
+        md = to_bl_matrix(m3_hittest_tight.matrix).decompose()
+        ob.m3_hittest_tight.location = md[0]
+        ob.m3_hittest_tight.rotation = md[1].to_euler('XYZ')
+        ob.m3_hittest_tight.scale = md[2]
+        ob.m3_hittest_tight.mesh_object = self.generate_volume_object(ob.m3_hittest_tight.name, m3_hittest_tight.vertices, m3_hittest_tight.face_data)
+
+        for m3_hittest in self.m3_get_ref(self.m3_model.hittests):
+            bone_name = self.m3_get_bone_name(m3_hittest.bone)
+            bone = ob.data.bones[bone_name]
+            hittest = shared.m3_item_add('m3_hittests', item_name=bone_name, obj=ob)
+            hittest.bone = bone.bl_handle if bone else ''
+            hittest.shape = hittest.bl_rna.properties['shape'].enum_items[getattr(m3_hittest, 'shape')].identifier
+            hittest.size = (m3_hittest.size0, m3_hittest.size1, m3_hittest.size2)
+            md = to_bl_matrix(m3_hittest.matrix).decompose()
+            hittest.location = md[0]
+            hittest.rotation = md[1].to_euler('XYZ')
+            hittest.scale = md[2]
+            hittest.mesh_object = self.generate_volume_object(hittest.name, m3_hittest.vertices, m3_hittest.face_data)
+
+    def create_cloths(self):
         if not hasattr(self.m3_model, 'physics_cloths'):
             return
 
+        ob = self.ob
         for m3_cloth in self.m3_get_ref(self.m3_model.physics_cloths):
             cloth = shared.m3_item_add('m3_cloths', item_name='Cloth', obj=ob)
             processor = M3InputProcessor(self, ob, 'm3_cloths[{}]'.format(len(ob.m3_cloths) - 1), cloth, m3_cloth)
@@ -774,6 +846,29 @@ class Importer:
             ik.bone2 = bone2.bl_handle if bone2 else ''
             processor = M3InputProcessor(self, ob, 'm3_ikjoints[{}]'.format(len(ob.m3_ikjoints) - 1), ik, m3_ik)
             io_shared.io_ik(processor)
+
+    def create_turrets(self):
+        ob = self.ob
+        for m3_turret in self.m3_get_ref(self.m3_model.turrets):
+            turret = shared.m3_item_add('m3_turrets', item_name=self.m3_get_ref(m3_turret.name), obj=ob)
+            for ii in self.m3_get_ref(m3_turret.parts):
+                m3_part = self.m3_get_ref(self.m3_model.turret_parts)[ii]
+                bone_name = self.m3_get_bone_name(m3_part.bone)
+                bone = ob.data.bones[bone_name]
+                part = shared.m3_item_add('m3_turrets[{}].parts'.format(turret.bl_index), item_name=bone_name, obj=ob)
+                part.bone = bone.bl_handle if bone else ''
+                processor = M3InputProcessor(self, ob, 'm3_turrets[{}].parts[{}]'.format(turret.bl_index, part.bl_index), part, m3_part)
+                io_shared.io_turret_part(processor)
+
+    def create_billboards(self):
+        ob = self.ob
+        for m3_billboard in self.m3_get_ref(self.m3_model.billboards):
+            bone_name = self.m3_get_bone_name(m3_billboard.bone)
+            bone = ob.data.bones[bone_name]
+            billboard = shared.m3_item_add('m3_billboards', item_name=bone_name, obj=ob)
+            billboard.bone = bone.bl_handle if bone else ''
+            processor = M3InputProcessor(self, ob, 'm3_billboards[{}]'.format(len(ob.m3_billboards) - 1), billboard, m3_billboard)
+            io_shared.io_billboard(processor)
 
     def generate_volume_object(self, name, m3_vert_ref, m3_face_ref):
 

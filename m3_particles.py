@@ -48,12 +48,12 @@ def draw_copy_props(copy, layout):
 
 def draw_props(particle, layout):
     col = layout.column()
+    shared.draw_pointer_prop(bpy.context.object, col, 'm3_materialrefs', 'm3_particles[%d].material' % particle.bl_index, 'Material', 'MATERIAL')
     col.prop(particle, 'particle_type', text='Type')
 
     if particle.particle_type == 'RECT_BILLBOARD':
         col.prop(particle, 'length_width_ratio', text='Length/Width Ratio')
 
-    col.prop(particle, 'material', text='Material')
     col.prop(particle, 'distance_limit', text='Distance Limit')
     col = layout.column(align=True)
     col.prop(particle, 'lod_reduce', text='LOD Reduction')

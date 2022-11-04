@@ -220,6 +220,24 @@ def io_light(processor):
     processor.anim_float('falloff')
 
 
+def io_shadow_box(processor):
+    processor.anim_float('length')
+    processor.anim_float('width')
+    processor.anim_float('height')
+
+
+def io_camera(processor):
+    processor.anim_float('field_of_view')
+    processor.integer('use_vertical_fov', since_version=3)
+    processor.enum('depth_of_field_type', since_version=5)
+    processor.anim_float('far_clip', since_version=3)
+    processor.anim_float('near_clip', since_version=3)
+    processor.anim_float('clip2', since_version=3)
+    processor.anim_float('focal_depth', since_version=3)
+    processor.anim_float('falloff_start', since_version=3)
+    processor.anim_float('falloff_end', since_version=3)
+
+
 def io_particle_system(processor):
     processor.anim_float('speed')
     processor.anim_float('speed_random')
@@ -421,6 +439,56 @@ def io_ribbon(processor):
     processor.anim_float('phase_shift')
 
 
+def io_projection(processor):
+    processor.enum('projection_type')
+    processor.anim_float('field_of_view')
+    processor.anim_float('aspect_ratio')
+    processor.anim_float('near')
+    processor.anim_float('far')
+    processor.anim_float('box_offset_z_bottom')
+    processor.anim_float('box_offset_z_top')
+    processor.anim_float('box_offset_x_left')
+    processor.anim_float('box_offset_x_right')
+    processor.anim_float('box_offset_y_front')
+    processor.anim_float('box_offset_y_back')
+    processor.float('alpha_over_time_init')
+    processor.float('alpha_over_time_mid')
+    processor.float('alpha_over_time_end')
+    processor.float('lifetime_attack')
+    processor.float('lifetime_attack_to')
+    processor.float('lifetime_hold')
+    processor.float('lifetime_hold_to')
+    processor.float('lifetime_decay')
+    processor.float('lifetime_decay_to')
+    processor.float('attenuation_plane_distance')
+    processor.integer('active')
+    processor.enum('layer')
+    processor.enum('lod_reduce')
+    processor.enum('lod_cut')
+    processor.bit('flags', 'static')
+    processor.bit('flags', 'unknown_flag0x2')
+    processor.bit('flags', 'unknown_flag0x4')
+    processor.bit('flags', 'unknown_flag0x8')
+
+
+def io_force(processor):
+    processor.enum('type')
+    processor.enum('shape')
+    processor.bit('flags', 'falloff')
+    processor.bit('flags', 'height_gradient')
+    processor.bit('flags', 'unbounded')
+    processor.bits_32('channels')
+    processor.anim_float('strength')
+    processor.anim_float('width')
+    processor.anim_float('height')
+    processor.anim_float('length')
+
+
+def io_warp(processor):
+    processor.anim_float('radius')
+    processor.anim_float('compression_strength')
+
+
 def io_ribbon_spline(processor):
     processor.float('tan1')
     processor.float('tan2')
@@ -470,3 +538,32 @@ def io_ik(processor):
     processor.float('search_down')
     processor.float('speed')
     processor.float('goal_threshold')
+
+
+def io_turret_part(processor):
+    processor.vec4('forward_x', since_version=4)
+    processor.vec4('forward_y', since_version=4)
+    processor.vec4('forward_z', since_version=4)
+    processor.vec4('up_x', since_version=4)
+    processor.vec4('up_y', since_version=4)
+    processor.vec4('up_z', since_version=4)
+    processor.bit('flags', 'main_part')
+    processor.integer('group_id')
+    processor.bit('yaw_flags', 'yaw_limited')
+    processor.float('yaw_min')
+    processor.float('yaw_max')
+    processor.float('yaw_weight', since_version=4)
+    processor.bit('pitch_flags', 'pitch_limited')
+    processor.float('pitch_min')
+    processor.float('pitch_max')
+    processor.float('pitch_weight', since_version=4)
+    processor.integer('unknownAt132')
+    processor.integer('unknownAt136')
+    processor.integer('unknownAt140', since_version=4)
+    processor.integer('unknownAt144', since_version=4)
+    processor.integer('unknownAt148', since_version=4)
+
+
+def io_billboard(processor):
+    processor.enum('billboard_type')
+    processor.integer('camera_look_at')
