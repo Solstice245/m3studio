@@ -145,9 +145,32 @@ def io_material_reflection(processor):
     processor.bit('flags', 'use_layer_blur')
 
 
+def io_starburst(processor):
+    processor.integer('uv_index')
+    processor.float('distance_factor')
+    processor.float('width')
+    processor.float('height')
+    processor.float('width_falloff')
+    processor.float('height_falloff')
+    # processor.integer('unk00')  # ! ignored
+    # processor.integer('unk01')  # ! ignored
+    processor.float('falloff_threshold')
+    processor.float('falloff_rate')
+    processor.color('color')
+    processor.integer('face_source')
+    # processor.float('unk02')  # ! ignored
+    # processor.float('unk03')  # ! ignored
+
+
 def io_material_lens_flare(processor):
     processor.integer('unknown7f492c0a', till_version=2)
-    # TODO
+    processor.integer('uv_columns', since_version=3)
+    processor.integer('uv_rows', since_version=3)
+    processor.float('unk07', since_version=3)
+    processor.anim_float('intensity', since_version=3)
+    processor.anim_color('color', since_version=3)
+    processor.anim_float('intensity2', since_version=3)
+    processor.anim_float('uniform_scale', since_version=3)
 
 
 def io_material_buffer(processor):

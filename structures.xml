@@ -1804,7 +1804,7 @@
            <field name="falloff_threshold" type="float" default-value="0"/>
            <field name="falloff_rate" type="float" default-value="1.0"/>
            <field name="color" type="COL" default-value="0x80ffffff"/>
-           <field name="flag_face_source" type="uint32" default-value="0"/>
+           <field name="face_source" type="uint32" default-value="0"/>
            <field name="unk02" type="float" default-value="0.0"/>
            <field name="unk03" type="float" default-value="0.0"/>
         </fields>

@@ -129,6 +129,11 @@ class M3InputProcessor:
             return
         setattr(self.bl, field, to_bl_vec4(getattr(self.m3, field)))
 
+    def color(self, field, since_version=None):
+        if (since_version is not None) and (self.version < since_version):
+            return
+        setattr(self.bl, field, to_bl_color(getattr(self.m3, field)))
+
     def enum(self, field, since_version=None):
         if (since_version is not None) and (self.version < since_version):
             return
@@ -179,7 +184,9 @@ class M3InputProcessor:
         setattr(self.bl, field, to_bl_vec3(anim_ref.default))
         # self.importer.animate_vec3(self.bl, self.anim_path, anim_ref)
 
-    def anim_color(self, field):
+    def anim_color(self, field, since_version=None):
+        if (since_version is not None) and (self.version < since_version):
+            return
         anim_ref = getattr(self.m3, field)
         default = to_bl_color(anim_ref.default)
         # ! waiting to see when this fails
@@ -430,6 +437,11 @@ class Importer:
                     section.matref = ob.m3_materialrefs[m3_section.material_reference_index].bl_handle
                     processor = M3InputProcessor(self, ob, 'm3_{}[{}].sections[{}]'.format(mattype_list[0], len(mat_col) - 1, section.bl_index), section, m3_section)
                     io_shared.io_material_composite_section(processor)
+            elif m3_matref.type == 11:
+                for m3_starburst in self.m3_get_ref(m3_mat.starbursts):
+                    starburst = shared.m3_item_add('m3_{}[{}].starbursts'.format(mattype_list[0], len(mat_col) - 1), obj=ob)
+                    processor = M3InputProcessor(self, ob, 'm3_{}[{}].starbursts[{}]'.format(mattype_list[0], len(mat_col) - 1, starburst.bl_index), starburst, m3_starburst)
+                    io_shared.io_starburst(processor)
 
             for layer_name in mattype_layers[m3_matref.type]:
                 m3_layer_field = getattr(m3_mat, 'layer_' + layer_name, None)
