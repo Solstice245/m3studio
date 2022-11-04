@@ -275,7 +275,7 @@ class Importer:
         self.create_lights()
         self.create_shadow_boxes()
         self.create_cameras()
-        self.create_particles()  # TODO finish copy implementation
+        self.create_particles()
         self.create_ribbons()  # TODO finish spline implementation
         self.create_projections()
         self.create_forces()
@@ -711,14 +711,31 @@ class Importer:
     def create_particles(self):
         ob = self.ob
 
-        for m3_particle in self.m3_get_ref(self.m3_model.particles):
-            bone_name = self.m3_get_bone_name(m3_particle.bone)
+        m3_systems = self.m3_get_ref(self.m3_model.particle_systems)
+        m3_copies = self.m3_get_ref(self.m3_model.particle_copies)
+
+        for m3_copy in m3_copies:
+            bone_name = self.m3_get_bone_name(m3_copy.bone)
             bone = ob.data.bones[bone_name]
-            particle = shared.m3_item_add('m3_particle_systems', item_name=bone_name, obj=ob)
-            particle.bone = bone.bl_handle if bone else ''
-            particle.material = ob.m3_materialrefs[m3_particle.material_reference_index].bl_handle
-            processor = M3InputProcessor(self, ob, 'm3_particle_systems[{}]'.format(len(ob.m3_particle_systems) - 1), particle, m3_particle)
+            copy = shared.m3_item_add('m3_particle_copies', item_name=bone_name, obj=ob)
+            copy.bone = bone.bl_handle if bone else ''
+            processor = M3InputProcessor(self, ob, 'm3_particle_copies[%d]' % copy.bl_index, copy, m3_copy)
+            io_shared.io_particle_copy(processor)
+
+        for m3_system in m3_systems:
+            bone_name = self.m3_get_bone_name(m3_system.bone)
+            bone = ob.data.bones[bone_name]
+            system = shared.m3_item_add('m3_particle_systems', item_name=bone_name, obj=ob)
+            system.bone = bone.bl_handle if bone else ''
+            system.material = ob.m3_materialrefs[m3_system.material_reference_index].bl_handle
+            processor = M3InputProcessor(self, ob, 'm3_particle_systems[%d]' % system.bl_index, system, m3_system)
             io_shared.io_particle_system(processor)
+
+            for m3_copy_index in self.m3_get_ref(m3_system.copy_indices):
+                copy = ob.m3_particle_copies[-len(m3_copies) + m3_copy_index]
+                system_user = copy.systems.add()
+                system_user.handle = system.bl_handle
+
 
     def create_ribbons(self):
         ob = self.ob

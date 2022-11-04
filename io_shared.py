@@ -351,6 +351,11 @@ def io_particle_system(processor):
     processor.anim_float('trailing_particle_rate')
 
 
+def io_particle_copy(processor):
+    processor.anim_float('emit_rate')
+    processor.anim_float('emit_amount')
+
+
 def io_ribbon(processor):
     processor.bit('additional_flags', 'world_space', since_version=8)
     processor.anim_float('length')
