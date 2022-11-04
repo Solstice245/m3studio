@@ -1820,8 +1820,8 @@
         </versions>
         <fields>
             <field name="name" type="Reference" refTo="CHAR"/>
-            <field name="color_layer" type="Reference" refTo="LAYR"/>
-            <field name="unknown_layer" type="Reference" refTo="LAYR"/>
+            <field name="layer_color" type="Reference" refTo="LAYR"/>
+            <field name="layer_unknown" type="Reference" refTo="LAYR"/>
             <field name="starbursts" type="Reference" refTo="LFSB"/>
             <field name="unknown7f492c0a" type="uint32" default-value="0x40000000" till-version="2"/>
             <field name="unk00" type="uint32" till-version="2"/>

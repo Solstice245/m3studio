@@ -203,7 +203,7 @@ class LensFlareProperties(shared.M3PropertyGroup):
     starbursts_index: bpy.props.IntProperty(options=set(), default=-1)
     uv_columns: bpy.props.IntProperty(options=set(), min=0)
     uv_rows: bpy.props.IntProperty(options=set(), min=0)
-    render_distance: bpy.props.FloatProperty(set=(), min=0)
+    render_distance: bpy.props.FloatProperty(options=set(), min=0)
     intensity: bpy.props.FloatProperty(name='Intensity', min=0)
     intensity2: bpy.props.FloatProperty(name='Intensity 2', min=0)
     uniform_scale: bpy.props.FloatProperty(name='Uniform Scale', min=0, default=1)
