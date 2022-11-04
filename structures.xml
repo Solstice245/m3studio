@@ -1834,7 +1834,7 @@
             <!-- version 2 may have more fields with version 3 in common -->
             <field name="uv_columns" type="uint32" default-value="0" since-version="3"/>
             <field name="uv_rows" type="uint32" default-value="0" since-version="3"/>
-            <field name="unk07" type="float" default-value="0.0" since-version="3"/>
+            <field name="render_distance" type="float" default-value="0.0" since-version="3"/>
             <field name="unknown_ref_char" type="Reference" refTo="CHAR" since-version="3"/>
             <field name="intensity" type="FloatAnimationReferenceV0" since-version="3"/>
             <field name="color" type="ColorAnimationReferenceV0" since-version="3"/>
