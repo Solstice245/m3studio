@@ -127,6 +127,7 @@ class CompositeSectionProperties(shared.M3PropertyGroup):
 
 class CompositeProperties(shared.M3PropertyGroup):
     sections: bpy.props.CollectionProperty(type=CompositeSectionProperties)
+    sections_index: bpy.props.IntProperty(options=set(), default=-1)
 
 
 class TerrainProperties(shared.M3PropertyGroup):
@@ -198,6 +199,7 @@ class LensFlareProperties(shared.M3PropertyGroup):
     layer_color: bpy.props.StringProperty(options=set())
     layer_unknown: bpy.props.StringProperty(options=set())
     starbursts: bpy.props.CollectionProperty(type=LensFlareStarburstProperties)
+    starbursts_index: bpy.props.IntProperty(options=set(), default=-1)
     uv_columns: bpy.props.IntProperty(options=set(), min=0)
     uv_rows: bpy.props.IntProperty(options=set(), min=0)
     intensity: bpy.props.FloatProperty(name='Intensity', min=0)
@@ -341,15 +343,16 @@ def draw_displacement_props(context, material, layout):
     layout.prop(material, 'strength_factor', text='Strength Multiplier')
 
 
-def draw_composite_section_props(path, section, layout):
-    shared.draw_pointer_prop(bpy.context.object, layout, 'm3_materialrefs', path + '.matref', 'Material', 'MATERIAL')
+def draw_composite_section_props(section, layout):
+    matref = bpy.context.object.m3_materialrefs[bpy.context.object.m3_materialrefs_index]
+    mat = m3_material_get(bpy.context.object, matref)
+    section_matref_path = 'm3_materials_composite[{}].sections[{}].matref'.format(mat.bl_index, section.bl_index)
+    shared.draw_pointer_prop(bpy.context.object, layout, 'm3_materialrefs', section_matref_path, 'Material', icon='MATERIAL')
     layout.prop(section, 'alpha_factor', text='Alpha Factor')
 
 
 def draw_composite_props(context, material, layout):
-    shared.draw_collection_stack(
-        layout, 'm3_materials_composite[{}].sections'.format(material.bl_index), 'Section', draw_composite_section_props,
-        use_name=False, can_duplicate=False, ops=[], send_path=True)
+    shared.draw_collection_list(layout.box(), 'm3_materials_composite[{}].sections'.format(material.bl_index), draw_composite_section_props)
 
 
 def draw_terrain_props(context, material, layout):
@@ -450,7 +453,7 @@ def draw_lensflare_props(context, material, layout):
     layout.separator()
     layout.prop(material, 'color', text='Tint Color')
     layout.separator()
-    shared.draw_collection_stack(layout, 'm3_materials_lensflare[{}].starbursts'.format(material.bl_index), 'Starburst', draw_lensflare_starburst_props)
+    shared.draw_collection_list(layout.box(), 'm3_materials_lensflare[{}].starbursts'.format(material.bl_index), draw_lensflare_starburst_props, label='Starbursts:')
 
 
 mat_type_dict = {

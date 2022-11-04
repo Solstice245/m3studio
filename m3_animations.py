@@ -110,19 +110,6 @@ def draw_animation_props(animation, layout):
     row.prop(animation, 'concurrent', text='Concurrent')
 
 
-def draw_animation_handle(ob, anim, layout, index):
-    search_prop = 'm3_animations'
-    prop_name = 'm3_animation_groups[{}].animations[{}].handle'.format(ob.m3_animation_groups_index, index)
-    pointer_ob = shared.m3_pointer_get(ob, search_prop, prop_name)
-    row = layout.row(align=True)
-    row.use_property_split = False
-    op = row.operator('m3.proppointer_search', text=pointer_ob.name if pointer_ob else 'Select Animation', icon='VIEWZOOM')
-    op.prop = prop_name
-    op.search_prop = search_prop
-    op = row.operator('m3.animation_handle_remove', text='', icon='X')
-    op.index = index
-
-
 def draw_group_props(anim_group, layout):
     col = layout.column(align=True)
     col.prop(anim_group, 'frame_start', text='Frame Start')
@@ -138,20 +125,13 @@ def draw_group_props(anim_group, layout):
     col.prop(anim_group, 'not_looping', text='Does Not Loop')
     col.prop(anim_group, 'always_global', text='Always Global')
     col.prop(anim_group, 'global_in_previewer', text='Global In Previewer')
-    box = layout.box()
-    box.operator('m3.animation_handle_add')
-    for ii, anim in enumerate(anim_group.animations):
-        draw_animation_handle(bpy.context.object, anim, box, ii)
+    shared.draw_handle_list(bpy.context.object, layout.box(), 'm3_animations', 'm3_animation_groups[{}].animations'.format(anim_group.bl_index), 'Animation')
 
 
 class AnimationProperties(shared.M3PropertyGroup):
     action: bpy.props.PointerProperty(type=bpy.types.Action, update=anim_update)
     priority: bpy.props.IntProperty(options=set(), min=0)
     concurrent: bpy.props.BoolProperty(options=set())
-
-
-class AnimationHandleProperties(bpy.types.PropertyGroup):
-    handle: bpy.props.StringProperty(options=set())
 
 
 class GroupProperties(shared.M3PropertyGroup):
@@ -164,7 +144,7 @@ class GroupProperties(shared.M3PropertyGroup):
     not_looping: bpy.props.BoolProperty(options=set())
     always_global: bpy.props.BoolProperty(options=set())
     global_in_previewer: bpy.props.BoolProperty(options=set())
-    animations: bpy.props.CollectionProperty(type=AnimationHandleProperties)
+    animations: bpy.props.CollectionProperty(type=shared.M3HandlePropertyGroup)
 
 
 class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
@@ -204,39 +184,10 @@ class M3AnimationActionUnlinkOp(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class M3AnimationHandleAddOp(bpy.types.Operator):
-    bl_idname = 'm3.animation_handle_add'
-    bl_label = 'Add Animation To Group'
-    bl_description = 'Adds a new item to the collection'
-    bl_options = {'UNDO'}
-
-    def invoke(self, context, event):
-        anim_group = context.object.m3_animation_groups[context.object.m3_animation_groups_index]
-        anim_group.animations.add()
-        return {'FINISHED'}
-
-
-class M3AnimationHandleRemoveOp(bpy.types.Operator):
-    bl_idname = 'm3.animation_handle_remove'
-    bl_label = 'Remove Animation From Group'
-    bl_description = 'Removes the item from the collection'
-    bl_options = {'UNDO'}
-
-    index: bpy.props.IntProperty(options=set())
-
-    def invoke(self, context, event):
-        anim_group = context.object.m3_animation_groups[context.object.m3_animation_groups_index]
-        anim_group.animations.remove(self.index)
-        return {'FINISHED'}
-
-
 classes = (
     AnimationProperties,
-    AnimationHandleProperties,
     GroupProperties,
     Panel,
     M3AnimationActionNewOp,
     M3AnimationActionUnlinkOp,
-    M3AnimationHandleAddOp,
-    M3AnimationHandleRemoveOp,
 )

@@ -40,11 +40,12 @@ def update_collection_index(self, context):
 
 
 def draw_props(point, layout):
-    shared.draw_collection_stack(layout, 'm3_attachmentpoints[{}].volumes'.format(point.bl_index), 'Volume', shared.draw_volume_props)
+    shared.draw_collection_list(layout.box(), 'm3_attachmentpoints[{}].volumes'.format(point.bl_index), shared.draw_volume_props, label='Volumes:')
 
 
 class Properties(shared.M3BoneUserPropertyGroup):
     volumes: bpy.props.CollectionProperty(type=shared.M3VolumePropertyGroup)
+    volumes_index: bpy.props.IntProperty(options=set(), default=-1)
 
 
 class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):

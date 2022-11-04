@@ -42,7 +42,7 @@ def draw_constraint_props(constraint, layout):
 
 
 def draw_constraint_set_props(constraint_set, layout):
-    shared.draw_collection_stack(layout, 'm3_clothconstraintsets[{}].constraints'.format(constraint_set.bl_index), 'Constraint Volumes', draw_constraint_props)
+    shared.draw_collection_list(layout, 'm3_clothconstraintsets[{}].constraints'.format(constraint_set.bl_index), draw_constraint_props)
 
 
 def draw_object_pair_props(pair, layout):
@@ -107,6 +107,7 @@ class ConstraintProperties(shared.M3BoneUserPropertyGroup):
 
 class ConstraintSetProperties(shared.M3PropertyGroup):
     constraints: bpy.props.CollectionProperty(type=ConstraintProperties)
+    constraints_index: bpy.props.IntProperty(options=set(), default=-1)
 
 
 class ObjectPairProperties(shared.M3PropertyGroup):

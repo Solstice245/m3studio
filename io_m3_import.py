@@ -714,10 +714,10 @@ class Importer:
         for m3_particle in self.m3_get_ref(self.m3_model.particles):
             bone_name = self.m3_get_bone_name(m3_particle.bone)
             bone = ob.data.bones[bone_name]
-            particle = shared.m3_item_add('m3_particles', item_name=bone_name, obj=ob)
+            particle = shared.m3_item_add('m3_particle_systems', item_name=bone_name, obj=ob)
             particle.bone = bone.bl_handle if bone else ''
             particle.material = ob.m3_materialrefs[m3_particle.material_reference_index].bl_handle
-            processor = M3InputProcessor(self, ob, 'm3_particles[{}]'.format(len(ob.m3_particles) - 1), particle, m3_particle)
+            processor = M3InputProcessor(self, ob, 'm3_particle_systems[{}]'.format(len(ob.m3_particle_systems) - 1), particle, m3_particle)
             io_shared.io_particle_system(processor)
 
     def create_ribbons(self):

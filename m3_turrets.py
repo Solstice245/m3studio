@@ -71,7 +71,7 @@ def draw_part_props(part, layout):
 
 
 def draw_props(turret, layout):
-    shared.draw_collection_stack(layout, 'm3_turrets[{}].parts'.format(turret.bl_index), 'Turret Part', draw_part_props)
+    shared.draw_collection_list(layout.box(), 'm3_turrets[{}].parts'.format(turret.bl_index), draw_part_props)
 
 
 class PartProperties(shared.M3BoneUserPropertyGroup):
@@ -100,6 +100,7 @@ class PartProperties(shared.M3BoneUserPropertyGroup):
 
 class Properties(shared.M3PropertyGroup):
     parts: bpy.props.CollectionProperty(type=PartProperties)
+    parts_index: bpy.props.IntProperty(options=set(), default=-1)
 
 
 class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):

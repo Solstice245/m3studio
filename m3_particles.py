@@ -22,13 +22,15 @@ from . import bl_enum
 
 
 def register_props():
-    bpy.types.Object.m3_particles = bpy.props.CollectionProperty(type=Properties)
-    bpy.types.Object.m3_particles_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
+    bpy.types.Object.m3_particle_systems = bpy.props.CollectionProperty(type=SystemProperties)
+    bpy.types.Object.m3_particle_systems_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
+    bpy.types.Object.m3_particle_copies = bpy.props.CollectionProperty(type=CopyProperties)
+    bpy.types.Object.m3_particle_copies_index = bpy.props.IntProperty(options=set(), default=-1)
 
 
 def update_collection_index(self, context):
     ob = context.object
-    bl = ob.m3_particles[ob.m3_particles_index]
+    bl = ob.m3_particle_systems[ob.m3_particle_systems_index]
     shared.select_bones_handles(ob, [bl.bone])
     shared.auto_update_bone_shapes(ob, 'PAR_')
 
@@ -36,19 +38,18 @@ def update_collection_index(self, context):
 def bone_shape_update_event(self, context):
     shared.set_bone_shape(context.object, shared.m3_pointer_get(context.object, 'data.bones', self.bone, True))
 
-    for copy in self.copies:
-        shared.set_bone_shape(context.object, shared.m3_pointer_get(context.object, 'data.bones', copy.bone, True))
-
 
 def draw_copy_props(copy, layout):
     col = layout.column(align=True)
     col.prop(copy, 'emit_rate', text='Emission Rate')
     col.prop(copy, 'emit_amount', text='Emission Amount')
+    layout.separator()
+    shared.draw_handle_list(bpy.context.object, layout.box(), 'm3_particle_systems', 'm3_particle_copies[{}].systems'.format(copy.bl_index), 'Particle System')
 
 
 def draw_props(particle, layout):
     col = layout.column()
-    shared.draw_pointer_prop(bpy.context.object, col, 'm3_materialrefs', 'm3_particles[%d].material' % particle.bl_index, 'Material', 'MATERIAL')
+    shared.draw_pointer_prop(bpy.context.object, col, 'm3_materialrefs', 'm3_particle_systems[%d].material' % particle.bl_index, 'Material', 'MATERIAL')
     col.prop(particle, 'particle_type', text='Type')
 
     if particle.particle_type == 'RECT_BILLBOARD':
@@ -63,9 +64,7 @@ def draw_props(particle, layout):
     col.prop(particle, 'emit_rate', text='Rate')
     col.prop(particle, 'emit_amount', text='Amount')
     col.separator()
-    shared.draw_collection_stack(layout, 'm3_particles[{}].copies'.format(particle.bl_index), 'Particle Copy', draw_copy_props)
     col = layout.column(align=True)
-    col.separator()
     col.prop(particle, 'emit_type', text='Emission Type')
     col.prop(particle, 'emit_shape', text='Emission Area Shape')
 
@@ -95,25 +94,25 @@ def draw_props(particle, layout):
             box = col.box()
             box.use_property_split = False
             op = box.operator('m3.collection_add', text='Add Spline Point')
-            op.collection = 'm3_particles[%d].emit_shape_spline' % particle.bl_index
-            for index, item in enumerate(particle.emit_shape_spline):
+            op.collection = 'm3_particle_systems[%d].emit_shape_spline' % particle.bl_index
+            for item in particle.emit_shape_spline:
                 row = box.row(align=True)
                 row.prop(item, 'location', index=0, text='X')
                 row.prop(item, 'location', index=1, text='Y')
                 row.prop(item, 'location', index=2, text='Z')
                 row.separator()
                 op = row.operator('m3.collection_remove', icon='X', text='')
-                op.collection, op.index = ('m3_particles[%d].emit_shape_spline' % particle.bl_index, index)
+                op.collection, op.index = ('m3_particle_systems[%d].emit_shape_spline' % particle.bl_index, item.bl_index)
         elif particle.emit_shape == 'MESH':
             box = col.box()
             box.use_property_split = False
             op = box.operator('m3.collection_add', text='Add Mesh Object')
-            op.collection = 'm3_particles[%d].emit_shape_mesh' % particle.bl_index
-            for index, item in enumerate(particle.emit_shape_mesh):
+            op.collection = 'm3_particle_systems[%d].emit_shape_mesh' % particle.bl_index
+            for item in particle.emit_shape_mesh:
                 row = box.row()
                 row.prop(item, 'bl_object', text='')
                 op = row.operator('m3.collection_remove', icon='X', text='')
-                op.collection, op.index = ('m3_particles[%d].emit_shape_mesh' % particle.bl_index, index)
+                op.collection, op.index = ('m3_particle_systems[%d].emit_shape_mesh' % particle.bl_index, item.bl_index)
 
     col = layout.column(align=True)
     col.prop(particle, 'emit_speed', text='Emission Speed')
@@ -232,7 +231,7 @@ def draw_props(particle, layout):
     sub.prop(particle, 'phase1_length', text='Phase 1 Length')
     col = layout.column(align=True)
     col.separator()
-    shared.draw_pointer_prop(bpy.context.object, col, 'm3_particles', 'm3_particles[%d].trail_particle' % particle.bl_index, 'Trailing Particle', 'LINKED')
+    shared.draw_pointer_prop(bpy.context.object, col, 'm3_particle_systems', 'm3_particle_systems[%d].trail_particle' % particle.bl_index, 'Trailing Particle', 'LINKED')
     col.prop(particle, 'trail_chance', text='Chance')
     col.prop(particle, 'trail_rate', text='Rate')
     col = layout.column()
@@ -277,13 +276,13 @@ class SplinePointProperties(shared.M3PropertyGroup):
 
 
 class CopyProperties(shared.M3BoneUserPropertyGroup):
+    systems: bpy.props.CollectionProperty(type=shared.M3HandlePropertyGroup)
     emit_rate: bpy.props.FloatProperty(name='Particle Copy Emission Rate', min=0)
     emit_amount: bpy.props.IntProperty(name='Particle Copy Emission Amount', min=0)
 
 
-class Properties(shared.M3BoneUserPropertyGroup):
+class SystemProperties(shared.M3BoneUserPropertyGroup):
     material: bpy.props.StringProperty(options=set())
-    copies: bpy.props.CollectionProperty(type=CopyProperties)
     particle_type: bpy.props.EnumProperty(options=set(), items=bl_enum.particle_type)
     length_width_ratio: bpy.props.FloatProperty(default=1)
     distance_limit: bpy.props.FloatProperty(options=set(), min=0)
@@ -389,17 +388,26 @@ class Properties(shared.M3BoneUserPropertyGroup):
     copy: bpy.props.BoolProperty(options=set())
 
 
-class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
-    bl_idname = 'OBJECT_PT_M3_PARTICLES'
-    bl_label = 'M3 Particles'
+class CopyPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_m3_particle_copies'
+    bl_label = 'M3 Particle Copies'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, 'm3_particles', draw_props)
+        shared.draw_collection_list(self.layout, 'm3_particle_copies', draw_copy_props)
+
+
+class SystemPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_m3_particle_systems'
+    bl_label = 'M3 Particle Systems'
+
+    def draw(self, context):
+        shared.draw_collection_list(self.layout, 'm3_particle_systems', draw_props)
 
 
 classes = (
     SplinePointProperties,
     CopyProperties,
-    Properties,
-    Panel,
+    SystemProperties,
+    SystemPanel,
+    CopyPanel,
 )

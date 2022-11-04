@@ -61,6 +61,7 @@ def draw_spline_props(spline, layout):
 def draw_props(ribbon, layout):
     col = layout.column(align=True)
     shared.draw_pointer_prop(bpy.context.object, col, 'm3_materialrefs', 'm3_ribbons[%d].material' % ribbon.bl_index, 'Material', 'MATERIAL')
+    # shared.draw_pinter_prop(bpy.context.object, col, 'm3_ribbon_splines', 'm3_ribbons[{}]'.format(ribbon.bl_index), 'Ribbon Spline')
     col = layout.column(align=True)
     col.prop(ribbon, 'ribbon_type', text='Ribbon Type')
 
@@ -80,9 +81,7 @@ def draw_props(ribbon, layout):
     col.prop(ribbon, 'yaw', text='Yaw')
     col.prop(ribbon, 'pitch', text='Pitch')
     col.separator()
-    shared.draw_collection_stack(layout, 'm3_ribbons[{}].splines'.format(ribbon.bl_index), 'Spline', draw_spline_props)
     col = layout.column(align=True)
-    col.separator()
     col.prop(ribbon, 'gravity', text='Gravity')
     col = layout.column(align=True)
     col.prop(ribbon, 'cull_method', text='Division Cull Type')
