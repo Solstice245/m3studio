@@ -133,7 +133,16 @@ def io_material_creep(processor):
 
 
 def io_material_reflection(processor):
-    pass  # TODO
+    processor.anim_float('reflection_strength')
+    processor.anim_float('displacement_strength')
+    processor.anim_float('reflection_offset', since_version=2)
+    processor.anim_float('blur_angle', since_version=2)
+    processor.anim_float('blur_distance', since_version=2)
+    processor.bit('flags', 'use_layer_norm')
+    processor.bit('flags', 'use_layer_strength')
+    processor.bit('flags', 'render_in_transparent_pass')
+    processor.bit('flags', 'blurring')
+    processor.bit('flags', 'use_layer_blur')
 
 
 def io_material_lens_flare(processor):

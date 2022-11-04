@@ -175,10 +175,10 @@ class ReflectionProperties(shared.M3PropertyGroup):
     reflection_offset: bpy.props.FloatProperty(name='Reflection Offset')
     reflection_strength: bpy.props.FloatProperty(name='Reflection Strength', default=1)
     displacement_strength: bpy.props.FloatProperty(name='Displacement Strength', default=1)
-    normal: bpy.props.BoolProperty(options=set())
-    strength: bpy.props.BoolProperty(options=set())
-    blur: bpy.props.BoolProperty(options=set())
-    blur_mask: bpy.props.BoolProperty(options=set())
+    use_layer_norm: bpy.props.BoolProperty(options=set())
+    use_layer_strength: bpy.props.BoolProperty(options=set())
+    blurring: bpy.props.BoolProperty(options=set())
+    use_layer_blur: bpy.props.BoolProperty(options=set())
     render_transparent_pass: bpy.props.BoolProperty(options=set())
 
 
@@ -397,8 +397,8 @@ def draw_stb_props(context, material, layout):
 
 def draw_reflection_props(context, material, layout):
     draw_layer_pointer_prop(context.object, layout, material, 'layer_norm', 'Normal')
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_norm', 'Strength')
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_norm', 'Blur')
+    draw_layer_pointer_prop(context.object, layout, material, 'layer_strength', 'Strength')
+    draw_layer_pointer_prop(context.object, layout, material, 'layer_blur', 'Blur')
     layout.separator()
     layout.prop(material, 'reflection_offset', text='Reflection Offset')
     layout.prop(material, 'reflection_strength', text='Reflection Strength')
@@ -409,10 +409,10 @@ def draw_reflection_props(context, material, layout):
     layout.separator()
     col = layout.column_flow(columns=2)
     col.use_property_split = False
-    col.prop(material, 'normal', text='Use Normal')
-    col.prop(material, 'strength', text='Use Strength')
-    col.prop(material, 'blur', text='Use Blur')
-    col.prop(material, 'blur_mask', text='Use Blur Mask')
+    col.prop(material, 'use_layer_norm', text='Use Normal Layer')
+    col.prop(material, 'use_layer_strength', text='Use Strength Layer')
+    col.prop(material, 'blurring', text='Blurring')
+    col.prop(material, 'use_layer_blur', text='Use Blur Layer')
     col = layout.column()
     col.use_property_split = False
     col.alignment = 'LEFT'

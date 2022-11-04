@@ -1853,21 +1853,21 @@
         <fields>
             <field name="name" type="Reference" refTo="CHAR"/>
             <field name="unknown8f5ea924" type="uint32" default-value="0"/>
-            <field name="reflectionStrength" type="FloatAnimationReferenceV0"/> <!-- default-value="1.0" -->
-            <field name="displacementStrength" type="FloatAnimationReferenceV0"/> <!-- default-value="1.0" -->
-            <field name="reflectionOffset" type="FloatAnimationReferenceV0" since-version="2"/> <!-- default-value="0.0" -->
-            <field name="blurAngle" type="FloatAnimationReferenceV0" since-version="2"/> <!-- default-value="0.0" -->
-            <field name="blurDistance" type="FloatAnimationReferenceV0" since-version="2"/> <!-- default-value="2.0" -->
-            <field name="normalLayer" type="Reference" refTo="LAYR"/>
-            <field name="strengthLayer" type="Reference" refTo="LAYR"/>
-            <field name="blurLayer" type="Reference" refTo="LAYR" since-version="2"/>
+            <field name="reflection_strength" type="FloatAnimationReferenceV0"/> <!-- default-value="1.0" -->
+            <field name="displacement_strength" type="FloatAnimationReferenceV0"/> <!-- default-value="1.0" -->
+            <field name="reflection_offset" type="FloatAnimationReferenceV0" since-version="2"/> <!-- default-value="0.0" -->
+            <field name="blur_angle" type="FloatAnimationReferenceV0" since-version="2"/> <!-- default-value="0.0" -->
+            <field name="blur_distance" type="FloatAnimationReferenceV0" since-version="2"/> <!-- default-value="2.0" -->
+            <field name="layer_norm" type="Reference" refTo="LAYR"/>
+            <field name="layer_strength" type="Reference" refTo="LAYR"/>
+            <field name="layer_blur" type="Reference" refTo="LAYR" since-version="2"/>
             <field name="flags" type="uint32">
                 <bits>
-                    <bit mask="0x1" name="enableNormalLayer"/>
-                    <bit mask="0x2" name="enableStrengthLayer"/>
-                    <bit mask="0x4" name="renderInTransparentPass"/>
-                    <bit mask="0x8" name="enableBlur"/>
-                    <bit mask="0x16" name="enableBlurMask"/>
+                    <bit mask="0x1" name="use_layer_norm"/>
+                    <bit mask="0x2" name="use_layer_strength"/>
+                    <bit mask="0x4" name="render_in_transparent_pass"/>
+                    <bit mask="0x8" name="blurring"/>
+                    <bit mask="0x16" name="use_layer_blur"/>
                 </bits>
             </field>
             <field name="unknown49626d0e" type="uint32" since-version="3"/>

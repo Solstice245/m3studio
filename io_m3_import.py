@@ -160,7 +160,9 @@ class M3InputProcessor:
     def anim_uint32(self, field):
         self.anim_integer(field)
 
-    def anim_float(self, field):
+    def anim_float(self, field, since_version=None):
+        if (since_version is not None) and (self.version < since_version):
+            return
         anim_ref = getattr(self.m3, field)
         setattr(self.bl, field, anim_ref.default)
         # self.importer.float_key(self.bl, self.anim_path, field, anim_ref)
@@ -228,7 +230,7 @@ mattype_layers = {
     7: ['creep'],
     8: ['color', 'noise1', 'noise2'],
     9: ['diff', 'spec', 'normal'],
-    10: ['normal', 'strength', 'blur'],
+    10: ['norm', 'strength', 'blur'],
     11: ['color', 'unknown'],
     12: []
 }
@@ -269,14 +271,14 @@ class Importer:
         self.ob = self.armature_object_new()
         self.create_animations()  # TODO
         self.create_bones()
-        self.create_materials()  # TODO finish io of reflection and lens flare materials
+        self.create_materials()  # TODO finish io of composite and lens flare materials
         self.create_mesh()  # TODO mesh import options
         self.create_attachments()
         self.create_lights()
         self.create_shadow_boxes()
         self.create_cameras()
         self.create_particles()
-        self.create_ribbons()  # TODO finish spline implementation
+        self.create_ribbons()
         self.create_projections()
         self.create_forces()
         self.create_warps()
