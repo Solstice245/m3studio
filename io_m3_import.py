@@ -278,7 +278,7 @@ class Importer:
         self.ob = self.armature_object_new()
         self.create_animations()  # TODO
         self.create_bones()
-        self.create_materials()  # TODO finish io of composite and lens flare materials
+        self.create_materials()
         self.create_mesh()  # TODO mesh import options
         self.create_attachments()
         self.create_lights()
@@ -291,7 +291,7 @@ class Importer:
         self.create_warps()
         self.create_hittests()
         self.create_rigid_bodies()  # TODO import mesh data of version 2/3
-        # TODO self.create_rigid_body_joints()
+        self.create_rigid_body_joints()
         self.create_cloths()  # TODO cloth sim vertex flag
         self.create_ik_joints()  # TODO single-bone/length implementation
         self.create_turrets()
@@ -757,7 +757,6 @@ class Importer:
                 system_user = copy.systems.add()
                 system_user.handle = system.bl_handle
 
-
     def create_ribbons(self):
         ob = self.ob
 
@@ -875,6 +874,33 @@ class Importer:
                         volume.mesh = self.generate_volume_object(physics_shape.name, m3_volume.vertices, m3_volume.face_data)
 
                 self.m3_ref_data[m3_rigidbody.physics_shape.index]['bl'] = physics_shape
+
+    def create_rigid_body_joints(self):
+        ob = self.ob
+
+        for m3_joint in self.m3_get_ref(self.m3_model.physics_joints):
+            bone1_name = self.m3_get_bone_name(m3_joint.bone1)
+            bone2_name = self.m3_get_bone_name(m3_joint.bone2)
+            bone1 = ob.data.bones[bone1_name]
+            bone2 = ob.data.bones[bone2_name]
+
+            joint = shared.m3_item_add('m3_physicsjoints', item_name=(bone1.name if bone1 else '') + '_joint', obj=ob)
+
+            for rb in ob.m3_rigidbodies:
+                if bone1 and rb.bone == bone1.bl_handle:
+                    joint.rigidbody1 = rb.bl_handle
+                if bone2 and rb.bone == bone2.bl_handle:
+                    joint.rigidbody2 = rb.bl_handle
+
+            processor = M3InputProcessor(self, ob, 'm3_physicsjoints[%d]' % joint.bl_index, joint, m3_joint)
+            io_shared.io_rigid_body_joint(processor)
+
+            md = to_bl_matrix(m3_joint.matrix1).decompose()
+            joint.location1 = md[0]
+            joint.rotation1 = md[1].to_euler('XYZ')
+            md = to_bl_matrix(m3_joint.matrix2).decompose()
+            joint.location2 = md[0]
+            joint.rotation2 = md[1].to_euler('XYZ')
 
     def create_cloths(self):
         if not hasattr(self.m3_model, 'physics_cloths'):

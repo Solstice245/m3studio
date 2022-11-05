@@ -805,7 +805,7 @@ def set_bone_shape(ob, bone):
             bone.show_wire = False
 
 
-classes = {
+classes = (
     M3PropertyGroup,
     M3HandlePropertyGroup,
     M3VolumePropertyGroup,
@@ -821,4 +821,4 @@ classes = {
     M3HandleOpRemove,
     M3PropPointerOpUnlink,
     M3PropPointerOpSearch,
-}
+)

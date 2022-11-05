@@ -2182,12 +2182,12 @@
             <field name="bone2" type="uint32"/>
             <field name="matrix1" type="Matrix44"/>
             <field name="matrix2" type="Matrix44"/>
-            <field name="limit" type="uint32"/>
+            <field name="limit_bool" type="uint32"/>
             <field name="limit_min" type="float"/>
             <field name="limit_max" type="float"/>
-            <field name="cone_angle" type="float"/>
-            <field name="friction" type="uint32"/>
-            <field name="friction_amount" type="float" default-value="0.2"/>
+            <field name="limit_angle" type="float"/>
+            <field name="friction_bool" type="uint32"/>
+            <field name="friction" type="float" default-value="0.2"/>
             <field name="damping_ratio" type="float" default-value="0.7"/>
             <field name="angular_frequency" type="float" default-value="5"/>
             <field name="break_threshold" type="float" default-value="1"/> <!-- docs indicate this is unused in SC2 -->

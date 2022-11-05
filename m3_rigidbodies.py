@@ -37,8 +37,8 @@ def update_collection_index(self, context):
 
 def bone_shape_update_event(self, context):
     ob = context.object
-    bone = shared.m3_pointer_get(ob, 'data.bones', 'm3_rigidbodies[{}].bone'.format(ob.m3_rigidbodies_index))
-    shared.set_bone_shape(ob, bone)
+    # bone = shared.m3_pointer_get(ob, 'data.bones', 'm3_rigidbodies[{}].bone'.format(ob.m3_rigidbodies_index))
+    # shared.set_bone_shape(ob, bone)
 
 
 def draw_volume_props(shape, layout):

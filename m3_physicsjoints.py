@@ -28,22 +28,22 @@ def register_props():
 
 def update_collection_index(self, context):
     ob = context.object
-    bl = ob.m3_physicsjoints[ob.m3_physicsjoints_index]
-    shared.select_bones_handles(ob, [bl.bone1, bl.bone2])
+    # bl = ob.m3_physicsjoints[ob.m3_physicsjoints_index]
+    # shared.select_bones_handles(ob, [bl.bone1, bl.bone2])
 
 
 def draw_props(joint, layout):
     col = layout.column()
 
-    shared.draw_pointer_prop(bpy.context.object, col, 'data.bones', 'm3_physicsjoints[{}].bone1'.format(joint.bl_index), 'Bone Joint Start', 'BONE_DATA')
-    if shared.m3_pointer_get(bpy.context.object, 'data.bones', 'm3_physicsjoints[{}].bone1'.format(joint.bl_index)):
+    shared.draw_pointer_prop(bpy.context.object, col, 'm3_rigidbodies', 'm3_physicsjoints[{}].rigidbody1'.format(joint.bl_index), 'Joint Start', icon='LINKED')
+    if shared.m3_pointer_get(bpy.context.object, 'm3_rigidbodies', 'm3_physicsjoints[{}].rigidbody1'.format(joint.bl_index)):
         col.prop(joint, 'location1', text='Location')
         col.prop(joint, 'rotation1', text='Rotation')
 
     col = layout.column()
 
-    shared.draw_pointer_prop(bpy.context.object, col, 'data.bones', 'm3_physicsjoints[{}].bone2'.format(joint.bl_index), 'Bone Joint End', 'BONE_DATA')
-    if shared.m3_pointer_get(bpy.context.object, 'data.bones', 'm3_physicsjoints[{}].bone2'.format(joint.bl_index)):
+    shared.draw_pointer_prop(bpy.context.object, col, 'm3_rigidbodies', 'm3_physicsjoints[{}].rigidbody2'.format(joint.bl_index), 'Joint End', icon='LINKED')
+    if shared.m3_pointer_get(bpy.context.object, 'm3_rigidbodies', 'm3_physicsjoints[{}].rigidbody2'.format(joint.bl_index)):
         col.prop(joint, 'location2', text='Location')
         col.prop(joint, 'rotation2', text='Rotation')
 
@@ -72,8 +72,8 @@ def draw_props(joint, layout):
 
 
 class Properties(shared.M3PropertyGroup):
-    bone1: bpy.props.StringProperty(options=set())
-    bone2: bpy.props.StringProperty(options=set())
+    rigidbody1: bpy.props.StringProperty(options=set())
+    rigidbody2: bpy.props.StringProperty(options=set())
     location1: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3)
     location2: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3)
     rotation1: bpy.props.FloatVectorProperty(options=set(), subtype='EULER', size=3)

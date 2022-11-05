@@ -569,6 +569,20 @@ def io_rigid_body(processor):
     processor.integer('priority')
 
 
+def io_rigid_body_joint(processor):
+    processor.enum('joint_type')
+    processor.integer('limit_bool')
+    processor.float('limit_min')
+    processor.float('limit_max')
+    processor.float('limit_angle')
+    processor.integer('friction_bool')
+    processor.float('friction')
+    processor.float('damping_ratio')
+    processor.float('angular_frequency')
+    # processor.integer('break_threshold')  # ! ignored
+    # processor.integer('shape_collision_value')  # ! ignored
+
+
 def io_cloth(processor):
     processor.float('density')
     processor.float('tracking')
