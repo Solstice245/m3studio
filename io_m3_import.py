@@ -290,7 +290,7 @@ class Importer:
         self.create_forces()
         self.create_warps()
         self.create_hittests()
-        self.create_rigid_bodies()  # TODO import mesh data of version 2/3
+        self.create_rigid_bodies()
         self.create_rigid_body_joints()
         self.create_cloths()  # TODO cloth sim vertex flag
         self.create_ik_joints()  # TODO single-bone/length implementation
@@ -693,7 +693,7 @@ class Importer:
             vol.rotation = md[1].to_euler('XYZ')
             vol.scale = md[2]
             # print('point', point, point.name)
-            vol.mesh_object = self.generate_volume_object('{}_{}'.format(point.name, vol.name), m3_volume.vertices, m3_volume.face_data)
+            vol.mesh_object = self.generate_basic_volume_object('{}_{}'.format(point.name, vol.name), m3_volume.vertices, m3_volume.face_data)
 
     def create_lights(self):
         ob = self.ob
@@ -828,7 +828,7 @@ class Importer:
         ob.m3_hittest_tight.location = md[0]
         ob.m3_hittest_tight.rotation = md[1].to_euler('XYZ')
         ob.m3_hittest_tight.scale = md[2]
-        ob.m3_hittest_tight.mesh_object = self.generate_volume_object(ob.m3_hittest_tight.name, m3_hittest_tight.vertices, m3_hittest_tight.face_data)
+        ob.m3_hittest_tight.mesh_object = self.generate_basic_volume_object(ob.m3_hittest_tight.name, m3_hittest_tight.vertices, m3_hittest_tight.face_data)
 
         for m3_hittest in self.m3_get_ref(self.m3_model.hittests):
             bone_name = self.m3_get_bone_name(m3_hittest.bone)
@@ -841,7 +841,7 @@ class Importer:
             hittest.location = md[0]
             hittest.rotation = md[1].to_euler('XYZ')
             hittest.scale = md[2]
-            hittest.mesh_object = self.generate_volume_object(hittest.name, m3_hittest.vertices, m3_hittest.face_data)
+            hittest.mesh_object = self.generate_basic_volume_object(hittest.name, m3_hittest.vertices, m3_hittest.face_data)
 
     def create_rigid_bodies(self):
         ob = self.ob
@@ -871,7 +871,10 @@ class Importer:
                     volume.scale = md[2]
 
                     if m3_volume.structureDescription.structureVersion == 1:
-                        volume.mesh = self.generate_volume_object(physics_shape.name, m3_volume.vertices, m3_volume.face_data)
+                        volume.mesh = self.generate_basic_volume_object(physics_shape.name, m3_volume.vertices, m3_volume.face_data)
+                    else:
+                        args = (physics_shape.name, m3_volume.vertices, m3_volume.polygon_related, m3_volume.loops, m3_volume.polygons)
+                        volume.mesh = self.generate_rigidbody_volume_object(*args)
 
                 self.m3_ref_data[m3_rigidbody.physics_shape.index]['bl'] = physics_shape
 
@@ -974,9 +977,9 @@ class Importer:
             processor = M3InputProcessor(self, ob, 'm3_billboards[{}]'.format(len(ob.m3_billboards) - 1), billboard, m3_billboard)
             io_shared.io_billboard(processor)
 
-    def generate_volume_object(self, name, m3_vert_ref, m3_face_ref):
+    def generate_basic_volume_object(self, name, m3_vert_ref, m3_face_ref):
 
-        if not m3_vert_ref.index and not m3_face_ref.index:
+        if not m3_vert_ref.index or not m3_face_ref.index:
             return
 
         for ref in self.bl_ref_objects:
@@ -1012,6 +1015,62 @@ class Importer:
         me.update(calc_edges=True)
 
         self.bl_ref_objects.append({'sections': [m3_vert_ref.index, m3_face_ref.index], 'ob': me_ob})
+
+        return me_ob
+
+    def generate_rigidbody_volume_object(self, name, m3_vert_ref, m3_poly_related_ref, m3_loop_ref, m3_poly_ref):
+
+        if not m3_vert_ref.index or not m3_loop_ref.index or not m3_poly_ref.index:
+            return
+
+        for ref in self.bl_ref_objects:
+            if [m3_vert_ref.index, m3_loop_ref.index, m3_poly_ref] == ref['sections']:
+                return ref['ob']
+
+        me = bpy.data.meshes.new(name)
+        me_ob = bpy.data.objects.new(me.name, me)
+        me_ob.display_type = 'WIRE'
+        me_ob.parent = self.ob
+        me_ob.hide_viewport = True
+        me_ob.hide_render = True
+        bpy.context.scene.collection.objects.link(me_ob)
+
+        bl_vert_data = []
+        for v in self.m3_get_ref(m3_vert_ref):
+            bl_vert_data.append(v.x)
+            bl_vert_data.append(v.y)
+            bl_vert_data.append(v.z)
+
+        bl_loop_data = self.m3_get_ref(m3_loop_ref)
+        bl_poly_data = self.m3_get_ref(m3_poly_ref)
+
+        loop_indices = {ii: [] for ii in bl_poly_data}
+        bl_loop_data_ordered = []
+        for ii in bl_poly_data:
+            loop_index = ii
+            while loop_index not in loop_indices[ii]:
+                loop_indices[ii].append(loop_index)
+                bl_loop_data_ordered.append(bl_loop_data[loop_index].vertex)
+                loop_index = bl_loop_data[loop_index].loop
+
+        bl_loop_start_ordered = []
+        num = 0
+        for ii in loop_indices:
+            bl_loop_start_ordered.append(num)
+            num += len(loop_indices[ii])
+
+        me.vertices.add(len(bl_vert_data) / 3)
+        me.vertices.foreach_set('co', bl_vert_data)
+        me.loops.add(len(bl_loop_data))
+        me.loops.foreach_set('vertex_index', [ii for ii in bl_loop_data_ordered])
+        me.polygons.add(len(bl_poly_data))
+        me.polygons.foreach_set('loop_start', [ii for ii in bl_loop_start_ordered])
+        me.polygons.foreach_set('loop_total', [len(loop_indices[ii]) for ii in bl_poly_data])
+
+        me.validate()
+        me.update(calc_edges=True)
+
+        self.bl_ref_objects.append({'sections': [m3_vert_ref.index, m3_loop_ref.index, m3_poly_ref], 'ob': me_ob})
 
         return me_ob
 
