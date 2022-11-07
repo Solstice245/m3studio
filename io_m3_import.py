@@ -293,7 +293,7 @@ class Importer:
         self.create_rigid_bodies()
         self.create_rigid_body_joints()
         self.create_cloths()  # TODO cloth sim vertex flag
-        self.create_ik_joints()  # TODO single-bone/length implementation
+        self.create_ik_joints()
         self.create_turrets()
         self.create_billboards()
         bpy.context.view_layer.objects.active = self.ob
