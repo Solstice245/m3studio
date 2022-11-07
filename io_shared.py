@@ -608,7 +608,7 @@ def io_cloth(processor):
 def io_ik(processor):
     processor.float('search_up')
     processor.float('search_down')
-    processor.float('speed')
+    processor.float('search_speed')
     processor.float('goal_threshold')
 
 

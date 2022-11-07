@@ -28,27 +28,23 @@ def register_props():
 def update_collection_index(self, context):
     ob = context.object
     bl = ob.m3_ikjoints[ob.m3_ikjoints_index]
-    shared.select_bones_handles(ob, [bl.bone1, bl.bone2])
+    shared.select_bones_handles(ob, bl.bone)
 
 
 def draw_props(joint, layout):
     col = layout.column(align=True)
-
-    shared.draw_pointer_prop(bpy.context.object, col, 'data.bones', 'm3_ikjoints[{}].bone1'.format(joint.bl_index), 'Bone Joint Start', 'BONE_DATA')
-    shared.draw_pointer_prop(bpy.context.object, col, 'data.bones', 'm3_ikjoints[{}].bone2'.format(joint.bl_index), 'Bone Joint End', 'BONE_DATA')
-
-    col = layout.column(align=True)
+    col.prop(joint, 'joint_length', text='Joint Length')
+    col.separator()
     col.prop(joint, 'search_up', text='Search Up')
     col.prop(joint, 'search_down', text='Search Down')
     col.prop(joint, 'search_speed', text='Search Speed')
-    col = layout.column()
+    col.separator()
     col.prop(joint, 'goal_threshold', text='Goal Position Threshold')
 
 
-# TODO Make it so that instead of multiple bone properties, we set joint length
 class Properties(shared.M3PropertyGroup):
-    bone1: bpy.props.StringProperty(options=set())
-    bone2: bpy.props.StringProperty(options=set())
+    bone: bpy.props.StringProperty(options=set())
+    joint_length: bpy.props.IntProperty(options=set(), min=1)
     search_up: bpy.props.FloatProperty(options=set())
     search_down: bpy.props.FloatProperty(options=set())
     search_speed: bpy.props.FloatProperty(options=set(), min=0)

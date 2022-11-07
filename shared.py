@@ -89,6 +89,9 @@ def m3_item_get_name(collection_name, prefix='', obj=None):
     suggested_names = m3_collections_suggested_names.get(collection_name)
     used_names = {item.name for item in collection}
 
+    if prefix not in used_names:
+        return prefix
+
     if not prefix and suggested_names:
         for name in suggested_names:
             prefix = name
@@ -195,14 +198,6 @@ def m3_msgbus_sub(self, sub, key, owner):
 
 def bone_shape_update_event(self, context):
     set_bone_shape(context.object, m3_pointer_get(context.object, 'data.bones', self.bone, True))
-
-
-def bone1_shape_update_event(self, context):
-    set_bone_shape(context.object, m3_pointer_get(context.object, 'data.bones', self.bone1, True))
-
-
-def bone2_shape_update_event(self, context):
-    set_bone_shape(context.object, m3_pointer_get(context.object, 'data.bones', self.bone2, True))
 
 
 def select_bones_handles(ob, bl_handles):

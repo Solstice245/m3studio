@@ -2730,11 +2730,11 @@
         </versions>
         <fields>
             <field name="unknownIKJTRef01" type="Reference"/>
-            <field name="bone1" type="uint16"/>
-            <field name="bone2" type="uint16"/>
+            <field name="bone_base" type="uint16"/>
+            <field name="bone_target" type="uint16"/>
             <field name="search_up" type="float"/>
             <field name="search_down" type="float"/>
-            <field name="speed" type="float"/>
+            <field name="search_speed" type="float"/>
             <field name="goal_threshold" type="float"/>
         </fields>
     </structure>

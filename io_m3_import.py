@@ -944,13 +944,21 @@ class Importer:
     def create_ik_joints(self):
         ob = self.ob
         for m3_ik in self.m3_get_ref(self.m3_model.ik_joints):
-            bone1_name = self.m3_get_bone_name(m3_ik.bone1)
-            bone2_name = self.m3_get_bone_name(m3_ik.bone2)
-            bone1 = ob.data.bones[bone1_name]
-            bone2 = ob.data.bones[bone2_name]
-            ik = shared.m3_item_add('m3_ikjoints', obj=ob)
-            ik.bone1 = bone1.bl_handle if bone1 else ''
-            ik.bone2 = bone2.bl_handle if bone2 else ''
+            bone_base_name = self.m3_get_bone_name(m3_ik.bone_base)
+            bone_target_name = self.m3_get_bone_name(m3_ik.bone_target)
+            bone_base = ob.data.bones[bone_base_name]
+            bone_target = ob.data.bones[bone_target_name]
+            ik = shared.m3_item_add('m3_ikjoints', item_name=bone_target_name, obj=ob)
+            ik.bone = bone_target.bl_handle if bone_target else ''
+
+            if bone_base and bone_target:
+                joint_length = 0
+                parent_bone = bone_target
+                while parent_bone and parent_bone != bone_base:
+                    parent_bone = parent_bone.parent
+                    joint_length += 1
+                ik.joint_length = joint_length
+
             processor = M3InputProcessor(self, ob, 'm3_ikjoints[{}]'.format(len(ob.m3_ikjoints) - 1), ik, m3_ik)
             io_shared.io_ik(processor)
 
