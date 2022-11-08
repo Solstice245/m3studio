@@ -46,24 +46,11 @@ def draw_constraint_set_props(constraint_set, layout):
     shared.draw_collection_list(layout, constraint_set.constraints, draw_constraint_props)
 
 
-def draw_object_pair_props(pair, layout):
-    layout.prop(pair, 'mesh_object', text='Mesh Object')
-    layout.prop(pair, 'simulator_object', text='Simulator Object')
-
-
 def draw_cloth_props(cloth, layout):
-    box = layout.box()
-    box.use_property_split = False
-    op = box.operator('m3.collection_add', text='Add Mesh/Simulator Object Pair')
-    op.collection = cloth.object_pairs.path_from_id()
-    for ii, item in enumerate(cloth.object_pairs):
-        row = box.row()
-        row.prop(item, 'mesh_object', text='')
-        row.prop(item, 'simulator_object', text='')
-        op = row.operator('m3.collection_remove', icon='X', text='')
-        op.collection, op.index = (cloth.object_pairs.path_from_id(), ii)
+    layout.prop(cloth, 'mesh_object', text='Mesh Object')
+    layout.prop(cloth, 'simulator_object', text='Simulator Object')
     layout.separator()
-    shared.draw_pointer_prop(col, cloth.id_data.m3_clothconstraintsets, cloth, 'constraint_set', label='Constraint Set', icon='LINKED')
+    shared.draw_pointer_prop(layout, cloth.id_data.m3_clothconstraintsets, cloth, 'constraint_set', label='Constraint Set', icon='LINKED')
     layout.separator()
     layout.prop(cloth, 'density', text='Cloth Density')
     layout.separator()
@@ -83,9 +70,8 @@ def draw_cloth_props(cloth, layout):
     col.prop(cloth, 'explosion_scale', text='Explosion Force')
     col.prop(cloth, 'wind_scale', text='Wind')
     layout.separator()
-    col = layout.column()
-    col.prop(cloth, 'drag_factor', text='Drag')
-    col.prop(cloth, 'lift_factor', text='Lift')
+    layout.prop(cloth, 'drag_factor', text='Drag')
+    layout.prop(cloth, 'lift_factor', text='Lift')
     layout.separator()
     col = layout.column(align=True)
     col.prop(cloth, 'skin_collision', text='Skin Collision')
@@ -111,13 +97,9 @@ class ConstraintSetProperties(shared.M3PropertyGroup):
     constraints_index: bpy.props.IntProperty(options=set(), default=-1)
 
 
-class ObjectPairProperties(shared.M3PropertyGroup):
+class ClothProperties(shared.M3PropertyGroup):
     mesh_object: bpy.props.PointerProperty(type=bpy.types.Object)
     simulator_object: bpy.props.PointerProperty(type=bpy.types.Object)
-
-
-class ClothProperties(shared.M3PropertyGroup):
-    object_pairs: bpy.props.CollectionProperty(type=ObjectPairProperties)
     constraint_set: bpy.props.StringProperty(options=set())
     density: bpy.props.FloatProperty(options=set(), min=0, default=10)
     tracking: bpy.props.FloatProperty(options=set(), min=0, default=0.25)
@@ -153,13 +135,12 @@ class ClothConstraintsPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Cloth Constraint Sets'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, context.object.m3_clothconstrainsets, draw_constraint_set_props)
+        shared.draw_collection_list(self.layout, context.object.m3_clothconstraintsets, draw_constraint_set_props)
 
 
 classes = (
     ConstraintProperties,
     ConstraintSetProperties,
-    ObjectPairProperties,
     ClothProperties,
     ClothPanel,
     ClothConstraintsPanel,

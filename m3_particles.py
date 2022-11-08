@@ -36,7 +36,8 @@ def update_collection_index(self, context):
 
 
 def bone_shape_update_event(self, context):
-    shared.set_bone_shape(context.object, shared.m3_pointer_get(context.object, 'data.bones', self.bone, True))
+    # shared.set_bone_shape(context.object, shared.m3_pointer_get(context.object, 'data.bones', self.bone, True))
+    pass
 
 
 def draw_copy_props(copy, layout):

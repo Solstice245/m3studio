@@ -21,29 +21,6 @@ import bmesh
 from . import shared
 
 
-class SignOpSet(bpy.types.Operator):
-    bl_idname = 'm3.vertex_sign_set'
-    bl_label = 'Set faces'
-    bl_description = 'Sets the selected faces to the sign inversion group'
-    bl_options = {'UNDO'}
-
-    def invoke(self, context, event):
-        for ob in context.selected_objects:
-            if ob.type != 'MESH':
-                continue
-
-            me = ob.data
-            bm = bmesh.from_edit_mesh(me)
-
-            group = m3_get_vertex_sign(bm)
-            for face in bm.faces:
-                face[group] = 1 if face.select else 0
-
-            bmesh.update_edit_mesh(me)
-
-        return {'FINISHED'}
-
-
 class SignOpSelect(bpy.types.Operator):
     bl_idname = 'm3.vertex_sign_select'
     bl_label = 'Select faces'
@@ -58,9 +35,32 @@ class SignOpSelect(bpy.types.Operator):
             me = ob.data
             bm = bmesh.from_edit_mesh(me)
 
-            group = m3_get_vertex_sign(bm)
+            group = bm_layer_vertex_sign(bm)
             for face in bm.faces:
                 face.select = True if face[group] else face.select
+
+            bmesh.update_edit_mesh(me)
+
+        return {'FINISHED'}
+
+
+class SignOpSet(bpy.types.Operator):
+    bl_idname = 'm3.vertex_sign_set'
+    bl_label = 'Set faces'
+    bl_description = 'Sets the selected faces to the sign inversion group'
+    bl_options = {'UNDO'}
+
+    def invoke(self, context, event):
+        for ob in context.selected_objects:
+            if ob.type != 'MESH':
+                continue
+
+            me = ob.data
+            bm = bmesh.from_edit_mesh(me)
+
+            group = bm_layer_vertex_sign(bm)
+            for face in bm.faces:
+                face[group] = 1 if face.select else 0
 
             bmesh.update_edit_mesh(me)
 
@@ -81,7 +81,7 @@ class SignOpAdd(bpy.types.Operator):
             me = ob.data
             bm = bmesh.from_edit_mesh(me)
 
-            group = m3_get_vertex_sign(bm)
+            group = bm_layer_vertex_sign(bm)
             for face in bm.faces:
                 face[group] = 1 if face.select else face[group]
 
@@ -104,7 +104,7 @@ class SignOpRemove(bpy.types.Operator):
             me = ob.data
             bm = bmesh.from_edit_mesh(me)
 
-            group = m3_get_vertex_sign(bm)
+            group = bm_layer_vertex_sign(bm)
             for face in bm.faces:
                 face[group] = 0 if face.select else face[group]
 
@@ -127,7 +127,7 @@ class SignOpInvert(bpy.types.Operator):
             me = ob.data
             bm = bmesh.from_edit_mesh(me)
 
-            group = m3_get_vertex_sign(bm)
+            group = bm_layer_vertex_sign(bm)
             for face in bm.faces:
                 face[group] = (1 if face[group] == 0 else 0) if face.select else face[group]
 
@@ -136,8 +136,58 @@ class SignOpInvert(bpy.types.Operator):
         return {'FINISHED'}
 
 
-def m3_get_vertex_sign(bm):
+def bm_layer_vertex_sign(bm):
     return bm.faces.layers.int.get('m3sign') or bm.faces.layers.int.new('m3sign')
+
+
+class ClothSimOpSelect(bpy.types.Operator):
+    bl_idname = 'm3.cloth_sim_select'
+    bl_label = 'Select vertices'
+    bl_description = 'Selects the assigned vertices of the cloth simulation'
+    bl_options = {'UNDO'}
+
+    def invoke(self, context, event):
+        for ob in context.selected_objects:
+            if ob.type != 'MESH':
+                continue
+
+            me = ob.data
+            bm = bmesh.from_edit_mesh(me)
+
+            group = bm_layer_cloth_sim(bm)
+            for vert in bm.verts:
+                vert.select = True if vert[group] else vert.select
+
+            bmesh.update_edit_mesh(me)
+
+        return {'FINISHED'}
+
+
+class ClothSimOpSet(bpy.types.Operator):
+    bl_idname = 'm3.cloth_sim_set'
+    bl_label = 'Set vertices'
+    bl_description = 'Sets the selected vertices to the cloth simulation'
+    bl_options = {'UNDO'}
+
+    def invoke(self, context, event):
+        for ob in context.selected_objects:
+            if ob.type != 'MESH':
+                continue
+
+            me = ob.data
+            bm = bmesh.from_edit_mesh(me)
+
+            group = bm_layer_cloth_sim(bm)
+            for vert in bm.verts:
+                vert[group] = 1 if vert.select else 0
+
+            bmesh.update_edit_mesh(me)
+
+        return {'FINISHED'}
+
+
+def bm_layer_cloth_sim(bm):
+    return bm.verts.layers.int.get('m3clothsim') or bm.verts.layers.int.new('m3clothsim')
 
 
 class Panel(bpy.types.Panel):
@@ -155,40 +205,45 @@ class Panel(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
+        layout.use_property_split = True
         ob = context.object
+        parent = ob.parent if ob.parent.type == 'ARMATURE' else None
 
-        col = layout.column()
-        col.label(text='M3 Material:')
-        row = col.row(align=True)
-        row.use_property_split = False
-        pointer_ob = shared.m3_pointer_get(ob.parent, 'm3_materialrefs', ob.m3_material_ref, prop_resolved=True)
-        op = row.operator('m3.proppointer_search', text='' if pointer_ob else 'Select', icon='VIEWZOOM')
-        op.ob_name = ob.name
-        op.search_ob_name = ob.parent.name if ob.parent else ''
-        op.prop = 'm3_material_ref'
-        op.search_prop = 'm3_materialrefs'
-        if pointer_ob:
-            row.prop(pointer_ob, 'name', text='', icon='MATERIAL')
-            op = row.operator('m3.proppointer_unlink', text='', icon='X')
-            op.prop = 'm3_material_ref'
+        if parent:
+            shared.draw_pointer_prop(layout.column(), parent.m3_materialrefs, ob, 'm3_material_ref', label='M3 Material', icon='MATERIAL')
 
         if ob.mode == 'EDIT':
             layout.separator()
-            col = layout.column()
-            col.label(text='M3 Vertex Normal Sign:')
-            col.operator('m3.vertex_sign_select', text='Select')
+            layout.label(text='M3 Vertex Normal Sign:')
+            layout.operator('m3.vertex_sign_select', text='Select')
             col = layout.column_flow(columns=2)
             col.operator('m3.vertex_sign_set', text='Set To Selected')
             col.operator('m3.vertex_sign_invert', text='Invert Selected')
             col.operator('m3.vertex_sign_add', text='Add Selected')
             col.operator('m3.vertex_sign_remove', text='Remove Selected')
 
+        mesh_cloth = None
+        if parent:
+            for cloth in parent.m3_cloths:
+                if ob == cloth.simulator_object:
+                    mesh_cloth = cloth
+                    break
+
+        if mesh_cloth and ob.mode == 'EDIT':
+            layout.separator()
+            layout.label(text='M3 Cloth Simulation Flag:')
+            row = layout.row()
+            row.operator('m3.cloth_sim_select', text='Select')
+            row.operator('m3.cloth_sim_set', text='Set To Selected')
+
 
 classes = (
     Panel,
-    SignOpSet,
     SignOpSelect,
+    SignOpSet,
     SignOpAdd,
     SignOpRemove,
     SignOpInvert,
+    ClothSimOpSelect,
+    ClothSimOpSet,
 )

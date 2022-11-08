@@ -292,7 +292,7 @@ class Importer:
         self.create_hittests()
         self.create_rigid_bodies()
         self.create_rigid_body_joints()
-        self.create_cloths()  # TODO cloth sim vertex flag
+        self.create_cloths()
         self.create_ik_joints()
         self.create_turrets()
         self.create_billboards()
@@ -643,7 +643,7 @@ class Importer:
                             vertex_groups_used[getattr(m3_vert, 'bone' + str(ii))] = True
                             vert[deform_layer][getattr(m3_vert, 'bone' + str(ii))] = weight / 255
 
-                    face[sign_layer] = round(m3_vert.sign)
+                    face[sign_layer] = 1 if round(m3_vert.sign) > 0 else 0
 
             for edge in bm.edges:
                 edge.smooth = len(edge.link_faces) > 1
@@ -863,7 +863,7 @@ class Importer:
                 physics_shape = shared.m3_item_add(ob.m3_physicsshapes, item_name=rigidbody.name + '_shape')
                 rigidbody.physics_shape = physics_shape.bl_handle
                 for m3_volume in m3_physics_shape:
-                    volume = shared.m3_item_add(physics_shape)
+                    volume = shared.m3_item_add(physics_shape.volumes)
                     volume.shape = volume.bl_rna.properties['shape'].enum_items[getattr(m3_volume, 'shape')].identifier
                     volume.size = (m3_volume.size0, m3_volume.size1, m3_volume.size2)
                     md = to_bl_matrix(m3_volume.matrix).decompose()
@@ -927,7 +927,7 @@ class Importer:
                     for m3_constraint in m3_constraints:
                         bone_name = self.m3_get_bone_name(m3_constraint.bone)
                         bone = ob.data.bones[bone_name]
-                        constraint = shared.m3_item_add(constraint_set, item_name=bone_name)
+                        constraint = shared.m3_item_add(constraint_set.constraints, item_name=bone_name)
                         constraint.bone = bone.bl_handle if bone else ''
                         constraint.height = m3_constraint.height
                         constraint.radius = m3_constraint.radius
@@ -935,12 +935,31 @@ class Importer:
                         constraint.location = md[0]
                         constraint.rotation = md[1].to_euler('XYZ')
                         constraint.scale = md[2]
-                    self.m3_ref_data[m3_rigidbody.physics_shape.index]['bl'] = physics_shape
+                    self.m3_ref_data[m3_cloth.constraints.index]['bl'] = constraint_set
 
-            for m3_object_pair in self.m3_get_ref(m3_cloth.influence_map):
-                object_pair = cloth.object_pairs.add()
-                object_pair.mesh_object = self.bl_get_ref(self.m3_division.regions)[m3_object_pair.influenced_region_index]
-                object_pair.simulator_object = self.bl_get_ref(self.m3_division.regions)[m3_object_pair.simulation_region_index]
+            m3_cloth_objects = self.m3_get_ref(m3_cloth.influence_map)[0]
+            cloth.mesh_object = self.bl_get_ref(self.m3_division.regions)[m3_cloth_objects.influenced_region_index]
+            cloth.simulator_object = self.bl_get_ref(self.m3_division.regions)[m3_cloth_objects.simulation_region_index]
+
+            # because create_mesh() can perform destructive operations, cloth vertex data can possibly become corrupted.
+            # if problems occur it may be necessary to make the new/old vertex data maps accessible outside of the create_mesh() function.
+            if not cloth.simulator_object:
+                continue
+
+            cloth_vertex_sim = self.m3_get_ref(m3_cloth.vertex_simulated)
+
+            bpy.context.view_layer.objects.active = cloth.simulator_object
+            bpy.ops.object.mode_set(mode='EDIT')
+            me = cloth.simulator_object.data
+            bm = bmesh.from_edit_mesh(me)
+
+            layer = bm.verts.layers.int.get('m3clothsim') or bm.verts.layers.int.new('m3clothsim')
+            for vert in bm.verts:
+                vert[layer] = cloth_vertex_sim[vert.index]
+
+            bmesh.update_edit_mesh(me)
+            bpy.ops.object.mode_set(mode='OBJECT')
+
 
     def create_ik_joints(self):
         ob = self.ob
