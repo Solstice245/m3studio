@@ -32,6 +32,7 @@ def update_collection_index(self, context):
 
 
 def draw_constraint_props(constraint, layout):
+    shared.draw_pointer_prop(layout, constraint.id_data.data.bones, constraint, 'bone', bone_search=True, label='Bone', icon='BONE_DATA')
     col = layout.column()
     col.prop(constraint, 'radius', text='Radius')
     col.prop(constraint, 'height', text='Height')
@@ -42,7 +43,7 @@ def draw_constraint_props(constraint, layout):
 
 
 def draw_constraint_set_props(constraint_set, layout):
-    shared.draw_collection_list(layout, 'm3_clothconstraintsets[{}].constraints'.format(constraint_set.bl_index), draw_constraint_props)
+    shared.draw_collection_list(layout, constraint_set.constraints, draw_constraint_props)
 
 
 def draw_object_pair_props(pair, layout):
@@ -54,15 +55,15 @@ def draw_cloth_props(cloth, layout):
     box = layout.box()
     box.use_property_split = False
     op = box.operator('m3.collection_add', text='Add Mesh/Simulator Object Pair')
-    op.collection = 'm3_cloths[%d].object_pairs' % cloth.bl_index
-    for index, item in enumerate(cloth.object_pairs):
+    op.collection = cloth.object_pairs.path_from_id()
+    for ii, item in enumerate(cloth.object_pairs):
         row = box.row()
         row.prop(item, 'mesh_object', text='')
         row.prop(item, 'simulator_object', text='')
         op = row.operator('m3.collection_remove', icon='X', text='')
-        op.collection, op.index = ('m3_cloths[%d].object_pairs' % cloth.bl_index, index)
+        op.collection, op.index = (cloth.object_pairs.path_from_id(), ii)
     layout.separator()
-    shared.draw_pointer_prop(bpy.context.object, layout, 'm3_clothconstraintsets', 'm3_cloths[%d].constraint_set' % cloth.bl_index, 'Constraint Set', 'LINKED')
+    shared.draw_pointer_prop(col, cloth.id_data.m3_clothconstraintsets, cloth, 'constraint_set', label='Constraint Set', icon='LINKED')
     layout.separator()
     layout.prop(cloth, 'density', text='Cloth Density')
     layout.separator()
@@ -144,7 +145,7 @@ class ClothPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Cloths'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, 'm3_cloths', draw_cloth_props)
+        shared.draw_collection_list(self.layout, context.object.m3_cloths, draw_cloth_props)
 
 
 class ClothConstraintsPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
@@ -152,7 +153,7 @@ class ClothConstraintsPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Cloth Constraint Sets'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, 'm3_clothconstraintsets', draw_constraint_set_props)
+        shared.draw_collection_list(self.layout, context.object.m3_clothconstrainsets, draw_constraint_set_props)
 
 
 classes = (

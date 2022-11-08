@@ -61,13 +61,13 @@ def draw_point_props(point, layout):
 
 
 def draw_spline_props(spline, layout):
-    shared.draw_collection_list(layout.box(), 'm3_ribbonsplines[%d].points' % spline.bl_index, draw_point_props)
+    shared.draw_collection_list(layout.box(), spline.points, draw_point_props)
 
 
 def draw_ribbon_props(ribbon, layout):
-    col = layout.column(align=True)
-    shared.draw_pointer_prop(bpy.context.object, col, 'm3_materialrefs', 'm3_ribbons[%d].material' % ribbon.bl_index, 'Material', icon='MATERIAL')
-    shared.draw_pointer_prop(bpy.context.object, col, 'm3_ribbonsplines', 'm3_ribbons[{}].spline'.format(ribbon.bl_index), 'Ribbon Spline', icon='LINKED')
+    shared.draw_pointer_prop(layout, ribbon.id_data.data.bones, ribbon, 'bone', bone_search=True, label='Bone', icon='BONE_DATA')
+    shared.draw_pointer_prop(layout, ribbon.id_data.m3_materialrefs, ribbon, 'material', label='Material', icon='MATERIAL')
+    shared.draw_pointer_prop(layout, ribbon.id_data.m3_ribbonsplines, ribbon, 'spline', label='Ribbon Spline', icon='LINKED')
     col = layout.column(align=True)
     col.prop(ribbon, 'ribbon_type', text='Ribbon Type')
 
@@ -171,7 +171,7 @@ def draw_ribbon_props(ribbon, layout):
     col.prop(ribbon, 'scale_time_parent', text='Scale Time By Parent')
     col.prop(ribbon, 'local_time', text='Local Time')
     col.prop(ribbon, 'simulate_init', text='Simulate On Init')
-    col.prop(ribbon, 'scale_size', text='Smooth Size')
+    col.prop(ribbon, 'scale_smooth', text='Smooth Size')
     col.prop(ribbon, 'scale_smooth_bezier', text='Smooth Size Bezier')
     col.prop(ribbon, 'vertex_alpha', text='Vertex Alpha')
 
@@ -277,7 +277,7 @@ class RibbonPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Ribbons'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, 'm3_ribbons', draw_ribbon_props)
+        shared.draw_collection_list(self.layout, context.object.m3_ribbons, draw_ribbon_props)
 
 
 class SplinePanel(shared.ArmatureObjectPanel, bpy.types.Panel):
@@ -285,7 +285,7 @@ class SplinePanel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Ribbon Splines'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, 'm3_ribbonsplines', draw_spline_props)
+        shared.draw_collection_list(self.layout, context.object.m3_ribbonsplines, draw_spline_props)
 
 
 classes = (

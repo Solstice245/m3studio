@@ -40,7 +40,8 @@ def update_collection_index(self, context):
 
 
 def draw_props(point, layout):
-    shared.draw_collection_list(layout.box(), 'm3_attachmentpoints[{}].volumes'.format(point.bl_index), shared.draw_volume_props, label='Volumes:')
+    shared.draw_pointer_prop(layout, point.id_data.data.bones, point, 'bone', bone_search=True, label='Bone', icon='BONE_DATA')
+    shared.draw_collection_list(layout.box(), point.volumes, shared.draw_volume_props, label='Volumes:')
 
 
 class Properties(shared.M3BoneUserPropertyGroup):
@@ -53,7 +54,7 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Attachment Points'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, 'm3_attachmentpoints', draw_props)
+        shared.draw_collection_list(self.layout, context.object.m3_attachmentpoints, draw_props)
 
 
 classes = (

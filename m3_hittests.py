@@ -39,12 +39,12 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
+        ob = context.object
         layout.use_property_split = True
         layout.label(text='Tight Hit Test:')
-        shared.draw_pointer_prop(bpy.context.object, layout, 'data.bones', 'm3_hittest_tight.bone', 'Bone', 'BONE_DATA')
-        shared.draw_volume_props(context.object.m3_hittest_tight, layout)
+        shared.draw_volume_props(ob.m3_hittest_tight, layout)
         layout.label(text='Fuzzy Hit Tests:')
-        shared.draw_collection_list(layout, 'm3_hittests', shared.draw_volume_props)
+        shared.draw_collection_list(layout, ob.m3_hittests, shared.draw_volume_props)
 
 
 classes = (

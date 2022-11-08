@@ -61,11 +61,12 @@ def draw_volume_props(shape, layout):
 
 
 def draw_shape_props(shape, layout):
-    shared.draw_collection_list(layout.box(), 'm3_physicsshapes[{}].volumes'.format(shape.bl_index), draw_volume_props)
+    shared.draw_collection_list(layout.box(), shape.volumes, draw_volume_props)
 
 
 def draw_body_props(rigidbody, layout):
-    shared.draw_pointer_prop(bpy.context.object, layout, 'm3_physicsshapes', 'm3_rigidbodies[{}].physics_shape'.format(rigidbody.bl_index), 'Physics Body Shape', 'LINKED')
+    shared.draw_pointer_prop(layout, rigidbody.id_data.data.bones, rigidbody, 'bone', bone_search=True, label='Bone', icon='BONE_DATA')
+    shared.draw_pointer_prop(layout, rigidbody.id_data.m3_physicsshapes, rigidbody, 'physics_shape', label='Physics Body Shape', icon='LINKED')
     col = layout.column()
     col.prop(rigidbody, 'physical_material', text='Physical Material')
     # col.prop(rigidbody, 'simulation_type', text='Simulation Type')  # unknown if effective
@@ -137,7 +138,7 @@ class ShapePanel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Physics Shapes'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, 'm3_physicsshapes', draw_shape_props)
+        shared.draw_collection_list(self.layout, context.object.m3_physicsshapes, draw_shape_props)
 
 
 class BodyPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
@@ -145,7 +146,7 @@ class BodyPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Physics Rigid Bodies'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, 'm3_rigidbodies', draw_body_props)
+        shared.draw_collection_list(self.layout, context.object.m3_rigidbodies, draw_body_props)
 
 
 classes = (

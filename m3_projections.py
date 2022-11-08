@@ -34,7 +34,8 @@ def update_collection_index(self, context):
 
 def draw_props(projection, layout):
     col = layout.column()
-    shared.draw_pointer_prop(bpy.context.object, col, 'm3_materialrefs', 'm3_projections[%d].material' % projection.bl_index, 'Material', 'MATERIAL')
+    shared.draw_pointer_prop(col, projection.id_data.data.bones, projection, 'bone', bone_search=True, label='Bone', icon='BONE_DATA')
+    shared.draw_pointer_prop(col, projection.id_data.m3_materialrefs, projection, 'material', label='Material', icon='MATERIAL')
     col.prop(projection, 'projection_type', text='Type')
     col.prop(projection, 'layer', text='Layer')
     col = layout.column()
@@ -113,7 +114,7 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Projections'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, 'm3_projections', draw_props)
+        shared.draw_collection_list(self.layout, context.object.m3_projections, draw_props)
 
 
 classes = (

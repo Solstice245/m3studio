@@ -35,15 +35,15 @@ def update_collection_index(self, context):
 def draw_props(joint, layout):
     col = layout.column()
 
-    shared.draw_pointer_prop(bpy.context.object, col, 'm3_rigidbodies', 'm3_physicsjoints[{}].rigidbody1'.format(joint.bl_index), 'Joint Start', icon='LINKED')
-    if shared.m3_pointer_get(bpy.context.object, 'm3_rigidbodies', 'm3_physicsjoints[{}].rigidbody1'.format(joint.bl_index)):
+    shared.draw_pointer_prop(col, joint.id_data.m3_rigidbodies, joint, 'rigidbody1', label='Joint Start', icon='LINKED')
+    if shared.m3_pointer_get(joint.id_data.m3_rigidbodies, joint.rigidbody1):
         col.prop(joint, 'location1', text='Location')
         col.prop(joint, 'rotation1', text='Rotation')
 
     col = layout.column()
 
-    shared.draw_pointer_prop(bpy.context.object, col, 'm3_rigidbodies', 'm3_physicsjoints[{}].rigidbody2'.format(joint.bl_index), 'Joint End', icon='LINKED')
-    if shared.m3_pointer_get(bpy.context.object, 'm3_rigidbodies', 'm3_physicsjoints[{}].rigidbody2'.format(joint.bl_index)):
+    shared.draw_pointer_prop(col, joint.id_data.m3_rigidbodies, joint, 'rigidbody2', label='Joint End', icon='LINKED')
+    if shared.m3_pointer_get(joint.id_data.m3_rigidbodies, joint.rigidbody2):
         col.prop(joint, 'location2', text='Location')
         col.prop(joint, 'rotation2', text='Rotation')
 
@@ -94,7 +94,7 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Physics Joints'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, 'm3_physicsjoints', draw_props)
+        shared.draw_collection_list(self.layout, context.object.m3_physicsjoints, draw_props)
 
 
 classes = (

@@ -34,6 +34,7 @@ def update_collection_index(self, context):
 
 
 def draw_props(force, layout):
+    shared.draw_pointer_prop(layout, force.id_data.data.bones, force, 'bone', bone_search=True, label='Bone', icon='BONE_DATA')
     col = layout.column()
     col.prop(force, 'force_type', text='Type')
     col = layout.column(align=True)
@@ -66,7 +67,7 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Forces'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, 'm3_forces', draw_props)
+        shared.draw_collection_list(self.layout, context.object.m3_forces, draw_props)
 
 
 classes = (

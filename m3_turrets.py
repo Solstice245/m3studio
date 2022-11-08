@@ -35,6 +35,7 @@ def update_collection_index(self, context):
 
 
 def draw_part_props(part, layout):
+    shared.draw_pointer_prop(layout, part.id_data.data.bones, part, 'bone', bone_search=True, label='Bone', icon='BONE_DATA')
     col = layout.column()
     col.prop(part, 'group_id', text='Part Group')
     col.prop(part, 'main_part', text='Main Part')
@@ -71,7 +72,7 @@ def draw_part_props(part, layout):
 
 
 def draw_props(turret, layout):
-    shared.draw_collection_list(layout.box(), 'm3_turrets[{}].parts'.format(turret.bl_index), draw_part_props)
+    shared.draw_collection_list(layout.box(), turret.parts, draw_part_props)
 
 
 class PartProperties(shared.M3BoneUserPropertyGroup):
@@ -108,7 +109,7 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Turrets'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, 'm3_turrets', draw_props)
+        shared.draw_collection_list(self.layout, context.object.m3_turrets, draw_props)
 
 
 classes = (

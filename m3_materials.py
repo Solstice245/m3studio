@@ -345,27 +345,18 @@ def draw_displacement_props(context, material, layout):
     layout.prop(material, 'strength_factor', text='Strength Multiplier')
 
 
-def draw_composite_section_props(section, layout):
-    matref = bpy.context.object.m3_materialrefs[bpy.context.object.m3_materialrefs_index]
-    mat = m3_material_get(bpy.context.object, matref)
-    section_matref_path = 'm3_materials_composite[{}].sections[{}].matref'.format(mat.bl_index, section.bl_index)
-    shared.draw_pointer_prop(bpy.context.object, layout, 'm3_materialrefs', section_matref_path, 'Material', icon='MATERIAL')
-    layout.prop(section, 'alpha_factor', text='Alpha Factor')
-
-
 def draw_composite_props(context, material, layout):
     layout.prop(material, 'unknown', text='Unknown Number')
     box = layout.box()
     box.use_property_split = False
     op = box.operator('m3.collection_add', text='Add Material Reference')
-    op.collection = 'm3_materials_composite[%d].sections' % (material.bl_index)
-    for item in material.sections:
-        ref_path = 'm3_materials_composite[%d].sections[%d].matref' % (material.bl_index, item.bl_index)
+    op.collection = material.sections.path_from_id()
+    for ii, item in enumerate(material.sections):
         row = box.row()
-        shared.draw_pointer_prop(context.object, row, 'm3_materialrefs', ref_path, '', icon='MATERIAL')
+        shared.draw_pointer_prop(row, section.id_data.m3_materialrefs, section, 'matref', icon='MATERIAL')
         row.prop(item, 'alpha_factor', text='Alpha Factor')
         op = row.operator('m3.collection_remove', icon='X', text='')
-        op.collection, op.index = ('m3_materials_composite[%d].sections' % material.bl_index, item.bl_index)
+        op.collection, op.index = (material.sections.path_from_id(), ii)
 
 
 def draw_terrain_props(context, material, layout):
@@ -468,7 +459,7 @@ def draw_lensflare_props(context, material, layout):
     layout.separator()
     layout.prop(material, 'color', text='Tint Color')
     layout.separator()
-    shared.draw_collection_list(layout.box(), 'm3_materials_lensflare[{}].starbursts'.format(material.bl_index), draw_lensflare_starburst_props, label='Starbursts:')
+    shared.draw_collection_list(layout.box(), material.starbursts, draw_lensflare_starburst_props, label='Starbursts:')
 
 
 mat_type_dict = {
@@ -553,9 +544,9 @@ class M3MaterialLayerOpAdd(bpy.types.Operator):
         layer = m3_material_layer_get(ob, getattr(mat, self.layer_name))
 
         if layer:
-            new_layer = shared.m3_item_duplicate('m3_materiallayers', layer)
+            new_layer = shared.m3_item_duplicate(ob.materiallayers, layer)
         else:
-            new_layer = shared.m3_item_add('m3_materiallayers')
+            new_layer = shared.m3_item_add(ob.materiallayers)
 
         setattr(mat, self.layer_name, new_layer.bl_handle)
 
@@ -634,8 +625,9 @@ class M3MaterialOpAdd(bpy.types.Operator):
     mat_type: bpy.props.StringProperty()
 
     def invoke(self, context, event):
-        matref = shared.m3_item_add('m3_materialrefs', item_name=mat_type_dict[self.mat_type]['name'])
-        mat = shared.m3_item_add(self.mat_type, item_name=matref.name)
+        ob = context.object
+        matref = shared.m3_item_add(ob.m3_materialrefs, item_name=mat_type_dict[self.mat_type]['name'])
+        mat = shared.m3_item_add(getattr(ob, self.mat_type), item_name=matref.name)
         matref.mat_type = self.mat_type
         matref.mat_handle = mat.bl_handle
 
@@ -656,14 +648,17 @@ class M3MaterialOpRemove(bpy.types.Operator):
         ob = context.object
         matrefs = ob.m3_materialrefs
         matref = matrefs[ob.m3_materialrefs_index]
-        mat = m3_material_get(ob, matref)
 
-        getattr(ob, matref.mat_type).remove(mat.bl_index)
+        mat_col = getattr(ob, matref.mat_type)
+        for ii, item in enumerate(mat_col):
+            if item.bl_handle == matref.mat_handle:
+                mat_col.remove(ii)
+                break
+
         ob.m3_materialrefs.remove(ob.m3_materialrefs_index)
 
         shared.remove_m3_action_keyframes(ob, matref.mat_type, ob.m3_materialrefs_index)
         for ii in range(ob.m3_materialrefs_index, len(matrefs)):
-            matrefs[ii].bl_index -= 1
             shared.shift_m3_action_keyframes(ob, matref.mat_type, ii + 1)
 
         ob.m3_materialrefs_index -= 1 if (ob.m3_materialrefs_index == 0 and len(matrefs) > 0) or ob.m3_materialrefs_index == len(matrefs) else 0
@@ -684,8 +679,6 @@ class M3MaterialOpMove(bpy.types.Operator):
         matrefs = ob.m3_materialrefs
 
         if (ob.m3_materialrefs_index < len(matrefs) - self.shift and ob.m3_materialrefs_index >= -self.shift):
-            matrefs[ob.m3_materialrefs_index].bl_index += self.shift
-            matrefs[ob.m3_materialrefs_index + self.shift].bl_index -= self.shift
             matrefs.move(ob.m3_materialrefs_index, ob.m3_materialrefs_index + self.shift)
             ob.m3_materialrefs_index += self.shift
 
@@ -701,13 +694,14 @@ class M3MaterialOpDuplicate(bpy.types.Operator):
     def invoke(self, context, event):
         matrefs = context.object.m3_materialrefs
         matref = matrefs[context.object.m3_materialrefs_index]
+        mat_col = getattr(ob, matref.mat_type)
         mat = m3_material_get(context.object, matref)
 
         if context.object.m3_materialrefs_index == -1:
             return {'FINISHED'}
 
-        new_mat = shared.m3_item_duplicate(matref.mat_type, mat)
-        new_matref = shared.m3_item_duplicate('m3_materialrefs', matref)
+        new_mat = shared.m3_item_duplicate(mat_col, mat)
+        new_matref = shared.m3_item_duplicate(matrefs, matref)
         new_matref.mat_handle = new_mat.bl_handle
 
         context.object.m3_materialrefs_index = len(matrefs) - 1

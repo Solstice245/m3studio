@@ -54,39 +54,9 @@ def m3_handle_gen():
     return '%064x' % random.getrandbits(256)
 
 
-def m3_ob_getter(name, obj=None):
-    if obj is None:
-        obj = bpy.context.object
-    for attr in name.split('.'):
-        index = None
-        lbs = attr.split('[', 1)
-        if len(lbs) > 1:
-            rbs = lbs[1].split(']', 1)
-            index = int(rbs[0])
-        if index is not None:
-            obj = getattr(obj, lbs[0])[index]
-        else:
-            obj = getattr(obj, attr, None)
-        if obj is None:
-            return None
-    return obj
-
-
-def m3_ob_setter(name, value, obj='default'):
-    rsp = name.rsplit('.', 1)
-    if obj == 'default':
-        obj = bpy.context.object
-    if len(rsp) > 1:
-        obj = m3_ob_getter(rsp[0], obj=obj)
-        if obj is not None:
-            setattr(obj, rsp[1], value)
-    else:
-        setattr(obj, rsp[0], value)
-
-
-def m3_item_get_name(collection_name, prefix='', obj=None):
-    collection = m3_ob_getter(collection_name, obj=obj)
-    suggested_names = m3_collections_suggested_names.get(collection_name)
+def m3_item_get_name(collection, prefix=''):
+    # TODO restore name suggestion functionality
+    suggested_names = None  # m3_collections_suggested_names.get(collection_name)
     used_names = {item.name for item in collection}
 
     if prefix not in used_names:
@@ -110,19 +80,15 @@ def m3_item_get_name(collection_name, prefix='', obj=None):
         num += 1
 
 
-def m3_item_add(collection_name, item_name='', obj=None):
-    collection = m3_ob_getter(collection_name, obj=obj)
+def m3_item_add(collection, item_name=''):
     item = collection.add()
-    item.bl_display = True
     item.bl_handle = m3_handle_gen()
-    item.bl_index = len(collection) - 1
-    item.name = m3_item_get_name(collection_name, item_name, obj=obj)
+    item.name = m3_item_get_name(collection, item_name)
     return item
 
 
-def m3_item_duplicate(collection_name, src, obj=None):
-    collection = m3_ob_getter(collection_name, obj=obj)
-    dst = m3_item_add(collection_name, obj=obj)
+def m3_item_duplicate(collection, src):
+    dst = m3_item_add(collection)
 
     if (type(dst) != type(src)):
         collection.remove(len(collection) - 1)
@@ -134,10 +100,10 @@ def m3_item_duplicate(collection_name, src, obj=None):
             setattr(dst, key, prop)
         else:
             for item in prop:
-                m3_item_duplicate(key, item, obj=dst)
+                m3_item_duplicate(prop, item)
 
     dst.name = ''
-    dst.name = m3_item_get_name(collection_name, src.name, obj=obj)
+    dst.name = m3_item_get_name(collection, src.name)
 
     return dst
 
@@ -163,13 +129,28 @@ def m3_item_find_bones(item):
     return bone_list
 
 
-def m3_pointer_get(ob, search_prop, prop_name, prop_resolved=False):
-    prop = m3_ob_getter(prop_name, obj=ob) if not prop_resolved else prop_name
-    if not prop or not ob:
+def m3_collection_index_set(bl, value):
+    ob = bl.id_data
+    rsp = bl.path_from_id().rsplit('.', 1)
+    if len(rsp) == 1:
+        setattr(ob, rsp[0] + '_index', value)
+    else:
+        setattr(ob.path_resolve(rsp[0]), rsp[1] + '_index', value)
+
+
+def bl_resolved_set(ob, bl, value):
+    rsp = bl.rsplit('.', 1)
+    if len(rsp) == 1:
+        setattr(ob, rsp[0], value)
+    else:
+        setattr(ob.path_resolve(rsp[0]), rsp[1], value)
+
+
+def m3_pointer_get(search_data, handle):
+    if not handle:
         return None
-    data = m3_ob_getter(search_prop, obj=ob)
-    for item in data:
-        if item.bl_handle == prop:
+    for item in search_data:
+        if item.bl_handle == handle:
             return item
     return None
 
@@ -197,7 +178,8 @@ def m3_msgbus_sub(self, sub, key, owner):
 
 
 def bone_shape_update_event(self, context):
-    set_bone_shape(context.object, m3_pointer_get(context.object, 'data.bones', self.bone, True))
+    # set_bone_shape(context.object, m3_pointer_get(context.object, 'data.bones', self.bone, True))
+    pass  # TODO need to completely revamp bone shape system
 
 
 def select_bones_handles(ob, bl_handles):
@@ -227,14 +209,8 @@ class ArmatureObjectPanel(bpy.types.Panel):
 
 
 class M3PropertyGroup(bpy.types.PropertyGroup):
-    bl_display: bpy.props.BoolProperty(default=False)
-    bl_index: bpy.props.IntProperty(options=set())
     bl_handle: bpy.props.StringProperty(options=set())
     name: bpy.props.StringProperty(options=set())
-
-
-class M3HandlePropertyGroup(bpy.types.PropertyGroup):
-    handle: bpy.props.StringProperty(options=set())
 
 
 class M3BoneUserPropertyGroup(M3PropertyGroup):
@@ -270,10 +246,9 @@ class M3CollectionOpAdd(M3CollectionOpBase):
     bl_description = 'Adds a new item to the collection'
 
     def invoke(self, context, event):
-        item = m3_item_add(self.collection)
-
-        m3_ob_setter(self.collection + '_index', item.bl_index)
-
+        collection = context.object.path_resolve(self.collection)
+        m3_item_add(collection)
+        m3_collection_index_set(collection, len(collection) - 1)
         return {'FINISHED'}
 
 
@@ -283,7 +258,7 @@ class M3CollectionOpRemove(M3CollectionOpBase):
     bl_description = 'Removes the active item from the collection'
 
     def invoke(self, context, event):
-        collection = m3_ob_getter(self.collection)
+        collection = context.object.path_resolve(self.collection)
 
         if self.index not in range(len(collection)):
             return {'FINISHED'}
@@ -293,10 +268,9 @@ class M3CollectionOpRemove(M3CollectionOpBase):
 
         remove_m3_action_keyframes(context.object, self.collection, self.index)
         for ii in range(self.index, len(collection)):
-            collection[ii].bl_index -= 1
             shift_m3_action_keyframes(context.object, self.collection, ii + 1)
 
-        m3_ob_setter(self.collection + '_index', self.index - (1 if self.index == len(collection) else 0))
+        m3_collection_index_set(collection, self.index - (1 if self.index == len(collection) else 0))
 
         for bone in context.object.data.bones:
             if bone.bl_handle in bone_list:
@@ -311,14 +285,12 @@ class M3CollectionOpMove(M3CollectionOpBase):
     bl_description = 'Moves the active item up/down in the list'
 
     def invoke(self, context, event):
-        collection = m3_ob_getter(self.collection)
+        collection = context.object.path_resolve(self.collection)
 
         if (self.index < len(collection) - self.shift and self.index >= -self.shift):
-            collection[self.index].bl_index += self.shift
-            collection[self.index + self.shift].bl_index -= self.shift
             collection.move(self.index, self.index + self.shift)
             swap_m3_action_keyframes(context.object, self.collection, self.index, self.index + self.shift)
-            m3_ob_setter(self.collection + '_index', self.index + self.shift)
+            m3_collection_index_set(collection, self.index + self.shift)
 
         return {'FINISHED'}
 
@@ -329,26 +301,13 @@ class M3CollectionOpDuplicate(M3CollectionOpBase):
     bl_description = 'Duplicates the active item in the collection'
 
     def invoke(self, context, event):
-        collection = m3_ob_getter(self.collection)
+        collection = context.object.path_resolve(self.collection)
 
         if self.index == -1:
             return {'FINISHED'}
 
-        m3_item_duplicate(self.collection, collection[self.index])
-
-        m3_ob_setter(self.collection + '_index', len(collection) - 1)
-
-        return {'FINISHED'}
-
-
-class M3CollectionOpDisplayToggle(M3CollectionOpBase):
-    bl_idname = 'm3.collection_displaytoggle'
-    bl_label = 'Toggle Collection Item Visibility'
-    bl_description = 'Shows/hides the properties of the item in the list'
-
-    def invoke(self, context, event):
-        collection = m3_ob_getter(self.collection)
-        collection[self.index].bl_display = not collection[self.index].bl_display
+        m3_item_duplicate(collection, collection[self.index])
+        m3_collection_index_set(collection, len(collection) - 1)
 
         return {'FINISHED'}
 
@@ -359,7 +318,7 @@ class M3HandleOpAdd(M3CollectionOpBase):
     bl_description = 'Adds a new item to the li'
 
     def invoke(self, context, event):
-        m3_item_add(self.collection)
+        m3_item_add(context.object.path_resolve(self.collection))
         return {'FINISHED'}
 
 
@@ -371,13 +330,13 @@ class M3HandleOpRemove(M3CollectionOpBase):
     index: bpy.props.IntProperty(options=set())
 
     def invoke(self, context, event):
-        m3_ob_getter(self.collection).remove(self.index)
+        context.object.path_resolve(self.collection).remove(self.index)
         return {'FINISHED'}
 
 
 def m3_prop_pointer_enum(self, context):
-    search_ob = bpy.data.objects.get(self.search_ob_name if self.search_ob_name else self.ob_name)
-    for item in m3_ob_getter(self.search_prop, obj=search_ob):
+    search_ob = bpy.data.objects.get(self.search_ob_name if self.search_ob_name else self.ob_name) or bpy.context.object
+    for item in search_ob.path_resolve(self.search_prop):
         yield item.bl_handle, item.name, ''
 
 
@@ -400,18 +359,19 @@ class M3PropPointerOpSearch(bpy.types.Operator):
         return {'RUNNING_MODAL'}
 
     def execute(self, context):
-        ob = bpy.data.objects.get(self.ob_name)
+        ob = bpy.data.objects.get(self.ob_name) or bpy.context.object
         search_ob = bpy.data.objects.get(self.search_ob_name) if self.search_ob_name else ob
 
         is_bone_search_prop = self.search_prop in ['data.bones', 'data.edit_bones']
 
         if is_bone_search_prop:
-            bone_before = m3_pointer_get(search_ob, 'data.bones', self.prop)
+            bone_before = m3_pointer_get(search_ob.path_resolve(self.search_prop), ob.path_resolve(self.prop))
 
-        m3_ob_setter(self.prop, self.enum, obj=ob)
+        bl_resolved_set(ob, self.prop, self.enum)
 
         if is_bone_search_prop:
-            bone_after = m3_pointer_get(search_ob, 'data.bones', self.prop)
+            bone_after = m3_pointer_get(search_ob.path_resolve(self.search_prop), ob.path_resolve(self.prop))
+
             set_bone_shape(search_ob, bone_before)
             set_bone_shape(search_ob, bone_after)
 
@@ -429,58 +389,56 @@ class M3PropPointerOpUnlink(bpy.types.Operator):
         is_bone_search_prop = hasattr(context.object.data, 'bones')
         if is_bone_search_prop:
             bone = m3_pointer_get(context.object, 'data.bones', self.prop)
-        m3_ob_setter(self.prop, '')
+        bl_resolved_set(ob, self.prop, '')
         if is_bone_search_prop:
             set_bone_shape(context.object, bone)
         return {'FINISHED'}
 
 
 # TODO Make it so that handle list items must be unique
-def draw_handle_list(ob, layout, search_prop, collection_name, prop_label=''):
-    op = layout.operator('m3.handle_add', text=('Add ' + prop_label) if prop_label else None)
-    op.collection = collection_name
-    for ii, item in enumerate(m3_ob_getter(collection_name)):
-        draw_handle_list_item(bpy.context.object, layout, ii, search_prop, collection_name, prop_label)
+def draw_handle_list(layout, search_data, collection, label=''):
+    op = layout.operator('m3_handle_add', text=('Add' + label) if label else None)
+    op.collection = collection.path_from_id()
+    for ii, item in enumerate(collection):
+        draw_handle_list_item(layout, search_data, collection, label, item, ii)
 
 
-def draw_handle_list_item(ob, layout, index, search_prop, collection_name, prop_label=''):
-
-    pointer_ob = m3_pointer_get(ob, search_prop, '{}[{}].handle'.format(collection_name, index))
+def draw_handle_list_item(layout, search_data, collection, label, item, index):
+    pointer_ob = m3_pointer_get(search_data, item.handle)
 
     row = layout.row(align=True)
     row.use_property_split = False
-    op = row.operator('m3.proppointer_search', text=pointer_ob.name if pointer_ob else 'Select ' + prop_label, icon='VIEWZOOM')
-    op.prop = '{}[{}].handle'.format(collection_name, index)
-    op.search_prop = search_prop
+    op = row.operator('m3.proppointer_search', text=pointer_ob.name if pointer_ob else 'Select ' + label, icon='VIEWZOOM')
+    op.prop = item.path_from_id('handle')
+    op.search_prop = search_data.path_from_id()
     op = row.operator('m3.handle_remove', text='', icon='X')
-    op.collection = collection_name
+    op.collection = collection.path_from_id()
     op.index = index
 
 
-def draw_pointer_prop(ob, layout, search_prop, prop_name, prop_label='', icon=''):
+def draw_pointer_prop(layout, search_data, data, prop, bone_search=False, label='', icon=''):
 
-    if m3_ob_getter(prop_name, obj=ob) is None:
-        return
+    arm = None
+    if bone_search:
+        arm = search_data.id_data
+        search_data = arm.edit_bones if arm.is_editmode else arm.bones
 
-    if search_prop == 'data.bones' and ob.mode == 'EDIT':
-        search_prop = 'data.edit_bones'
-
-    pointer_ob = m3_pointer_get(ob, search_prop, prop_name)
+    pointer_ob = m3_pointer_get(search_data, getattr(data, prop))
 
     main = layout.row(align=True)
     main.use_property_split = False
 
-    if prop_label:
+    if label:
         split = main.split(factor=0.4)
         row = split.row(align=True)
         row.alignment = 'RIGHT'
-        row.label(text=prop_label)
+        row.label(text=label)
         row = split.row(align=True)
     else:
         row = main
     op = row.operator('m3.proppointer_search', text='' if pointer_ob else 'Select', icon='VIEWZOOM')
-    op.prop = prop_name
-    op.search_prop = search_prop
+    op.prop = data.path_from_id(prop)
+    op.search_prop = search_data.path_from_id() if not arm else 'data.' + search_data.path_from_id()
 
     if pointer_ob:
         if icon:
@@ -488,7 +446,7 @@ def draw_pointer_prop(ob, layout, search_prop, prop_name, prop_label='', icon=''
         else:
             row.prop(pointer_ob, 'name', text='')
         op = row.operator('m3.proppointer_unlink', text='', icon='X')
-        op.prop = prop_name
+        op.prop = data.path_from_id(prop)
 
     if layout.use_property_split and layout.use_property_decorate:
         row = main.row()
@@ -497,6 +455,7 @@ def draw_pointer_prop(ob, layout, search_prop, prop_name, prop_label='', icon=''
 
 
 def draw_volume_props(volume, layout):
+    draw_pointer_prop(layout, volume.id_data.data.bones, volume, 'bone', bone_search=True, label='Bone', icon='BONE_DATA')
     sub = layout.column(align=True)
     sub.prop(volume, 'shape', text='Shape Type')
     if volume.shape == 'CUBE':
@@ -514,9 +473,10 @@ def draw_volume_props(volume, layout):
     col.prop(volume, 'scale', text='Scale')
 
 
-def draw_collection_list(layout, collection_path, draw_func, can_duplicate=True, ops=[], label=''):
-    collection = m3_ob_getter(collection_path)
-    index = m3_ob_getter(collection_path + '_index')
+def draw_collection_list(layout, collection, draw_func, can_duplicate=True, ops=[], label=''):
+    ob = collection.id_data
+    collection_path = collection.path_from_id()
+    index = ob.path_resolve(collection_path + '_index')
     rows = 5 if len(collection) else 3
 
     if not ops:
@@ -525,10 +485,10 @@ def draw_collection_list(layout, collection_path, draw_func, can_duplicate=True,
     rsp = collection_path.rsplit('.', 1)
     if len(rsp) == 1:
         list_str = collection_path
-        list_obj = bpy.context.object
+        list_obj = ob
     else:
         list_str = rsp[1]
-        list_obj = m3_ob_getter(rsp[0])
+        list_obj = ob.path_resolve(rsp[0])
 
     if label:
         layout.label(text=label)
@@ -561,7 +521,6 @@ def draw_collection_list(layout, collection_path, draw_func, can_duplicate=True,
 
     col = layout.column()
     col.use_property_split = True
-    draw_pointer_prop(bpy.context.object, col, 'data.bones', '{}[{}].{}'.format(collection_path, index, 'bone'), 'Bone', 'BONE_DATA')
     draw_func(item, col)
 
 
@@ -726,10 +685,10 @@ def set_bone_shape(ob, bone):
             if particle.emit_shape_cutout:
                 add_mesh_data(particle.bone, mesh_gen_data_cutout)
 
-            for copy in particle.copies:
-                add_mesh_data(copy.bone, mesh_gen_data)
-                if particle.emit_shape_cutout:
-                    add_mesh_data(copy.bone, mesh_gen_data_cutout)
+            # for copy in particle.copies:
+            #     add_mesh_data(copy.bone, mesh_gen_data)
+            #     if particle.emit_shape_cutout:
+            #         add_mesh_data(copy.bone, mesh_gen_data_cutout)
 
     elif ob.m3_options.bone_shapes == 'PHRB':
         for rigid_body in ob.m3_rigidbodies:
@@ -802,7 +761,6 @@ def set_bone_shape(ob, bone):
 
 classes = (
     M3PropertyGroup,
-    M3HandlePropertyGroup,
     M3VolumePropertyGroup,
     M3BoneUserPropertyGroup,
     M3ObjectPropertyGroup,
@@ -811,7 +769,6 @@ classes = (
     M3CollectionOpRemove,
     M3CollectionOpMove,
     M3CollectionOpDuplicate,
-    M3CollectionOpDisplayToggle,
     M3HandleOpAdd,
     M3HandleOpRemove,
     M3PropPointerOpUnlink,

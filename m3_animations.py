@@ -53,7 +53,7 @@ def get_default_values(ob, new_action, old_action):
     props = new_props.difference(old_props)
 
     for prop in props:
-        val = shared.m3_ob_getter(prop[0], obj=ob)
+        val = ob.path_resolve(prop[0])
         if type(val) not in [float, int, bool, None]:
             val = val[prop[1]]
         if val is not None:
@@ -66,12 +66,12 @@ def get_default_values(ob, new_action, old_action):
         prop = (fcurve.data_path, fcurve.array_index)
         if prop in unanim_props:
             default_val = fcurve.evaluate(0)
-            attr = shared.m3_ob_getter(prop[0], obj=ob)
+            attr = ob.path_resolve(prop[0])
             if attr is not None:
                 if type(default_val) in [float, int, bool]:
-                    shared.m3_ob_setter(prop[0], default_val, obj=ob)
+                    shared.bl_resolved_set(ob, prop[0], default_val)
                 else:
-                    shared.m3_ob_setter(prop[0] + '[{}]'.format(prop[1]), default_val, obj=ob)
+                    shared.bl_resolved_set(ob, prop[0] + '[{}]'.format(prop[1]), default_val)
             else:
                 removed_default_props.add(prop)
 
@@ -125,7 +125,7 @@ def draw_group_props(anim_group, layout):
     col.prop(anim_group, 'not_looping', text='Does Not Loop')
     col.prop(anim_group, 'always_global', text='Always Global')
     col.prop(anim_group, 'global_in_previewer', text='Global In Previewer')
-    shared.draw_handle_list(bpy.context.object, layout.box(), 'm3_animations', 'm3_animation_groups[{}].animations'.format(anim_group.bl_index), 'Animation')
+    shared.draw_handle_list(layout.box(), anim_group.id_data.m3_animations, anim_group.animations, label='Animation')
 
 
 class AnimationProperties(shared.M3PropertyGroup):
@@ -144,7 +144,7 @@ class GroupProperties(shared.M3PropertyGroup):
     not_looping: bpy.props.BoolProperty(options=set())
     always_global: bpy.props.BoolProperty(options=set())
     global_in_previewer: bpy.props.BoolProperty(options=set())
-    animations: bpy.props.CollectionProperty(type=shared.M3HandlePropertyGroup)
+    animations: bpy.props.CollectionProperty(type=shared.M3PropertyGroup)
 
 
 class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
@@ -152,11 +152,9 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Animations'
 
     def draw(self, context):
-        self.layout.label(text='Animation Sequences:')
-        shared.draw_collection_list(self.layout, 'm3_animations', draw_animation_props, can_duplicate=False)
+        shared.draw_collection_list(self.layout, context.object.m3_animations, draw_animation_props, can_duplicate=False, label='Animation Sequences:')
         self.layout.separator()
-        self.layout.label(text='Animation Groups:')
-        shared.draw_collection_list(self.layout, 'm3_animation_groups', draw_group_props)
+        shared.draw_collection_list(self.layout, context.object.m3_animation_groups, draw_group_props, label='Animation Groups:')
 
 
 class M3AnimationActionNewOp(bpy.types.Operator):

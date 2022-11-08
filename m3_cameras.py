@@ -34,6 +34,7 @@ def update_collection_index(self, context):
 
 
 def draw_props(camera, layout):
+    shared.draw_pointer_prop(layout, camera.id_data.data.bones, camera, 'bone', bone_search=True, label='Bone', icon='BONE_DATA')
     col = layout.column(align=True)
     col.prop(camera, 'field_of_view', text='Field Of View')
     col.prop(camera, 'far_clip', text='Far Clip')
@@ -65,7 +66,7 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Cameras'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, 'm3_cameras', draw_props)
+        shared.draw_collection_list(self.layout, context.object.m3_cameras, draw_props)
 
 
 classes = (

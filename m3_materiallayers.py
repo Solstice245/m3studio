@@ -136,7 +136,7 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Material Layers'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, 'm3_materiallayers', draw_props)
+        shared.draw_collection_list(self.layout, context.object.m3_materiallayers, draw_props)
 
 
 classes = (

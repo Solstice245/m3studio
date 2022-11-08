@@ -60,10 +60,10 @@ def to_bl_matrix(m3_matrix):
 
 class M3InputProcessor:
 
-    def __init__(self, importer, ob, anim_path, bl, m3):
+    def __init__(self, importer, bl, m3):
         self.importer = importer
-        self.ob = ob
-        self.anim_path = anim_path
+        # self.ob = ob  # * use bl.id_data
+        # self.anim_path = anim_path  # * use bl.path_from_id()
         self.bl = bl
         self.m3 = m3
         self.version = m3.structureDescription.structureVersion
@@ -420,10 +420,11 @@ class Importer:
             mattype_list = matref_to_mattype[m3_matref.type]
             m3_mat = self.m3_get_ref(getattr(self.m3_model, mattype_list[0]))[m3_matref.index]
 
-            matref = shared.m3_item_add('m3_materialrefs', item_name=self.m3[m3_mat.name.index].content, obj=ob)
+            matref = shared.m3_item_add(ob.m3_materialrefs, item_name=self.m3[m3_mat.name.index].content)
             mat_col = getattr(ob, 'm3_' + mattype_list[0])
-            mat = shared.m3_item_add('m3_' + mattype_list[0], item_name=matref.name, obj=ob)
-            processor = M3InputProcessor(self, ob, 'm3_{}[{}]'.format(mattype_list[0], len(mat_col) - 1), mat, m3_mat)
+            mat = shared.m3_item_add(mat_col, item_name=matref.name)
+
+            processor = M3InputProcessor(self, mat, m3_mat)
             mattype_list[1](processor)
 
             matref.mat_type = 'm3_' + matref_to_mattype[m3_matref.type][0]
@@ -433,14 +434,14 @@ class Importer:
 
             if m3_matref.type == 3:
                 for m3_section in self.m3_get_ref(m3_mat.sections):
-                    section = shared.m3_item_add('m3_{}[{}].sections'.format(mattype_list[0], len(mat_col) - 1), obj=ob)
+                    section = shared.m3_item_add(mat.sections)
                     section.matref = ob.m3_materialrefs[m3_section.material_reference_index].bl_handle
-                    processor = M3InputProcessor(self, ob, 'm3_{}[{}].sections[{}]'.format(mattype_list[0], len(mat_col) - 1, section.bl_index), section, m3_section)
+                    processor = M3InputProcessor(self, section, m3_section)
                     io_shared.io_material_composite_section(processor)
             elif m3_matref.type == 11:
                 for m3_starburst in self.m3_get_ref(m3_mat.starbursts):
-                    starburst = shared.m3_item_add('m3_{}[{}].starbursts'.format(mattype_list[0], len(mat_col) - 1), obj=ob)
-                    processor = M3InputProcessor(self, ob, 'm3_{}[{}].starbursts[{}]'.format(mattype_list[0], len(mat_col) - 1, starburst.bl_index), starburst, m3_starburst)
+                    starburst = shared.m3_item_add(mat.starbursts)
+                    processor = M3InputProcessor(self, starburst, m3_starburst)
                     io_shared.io_starburst(processor)
 
             for layer_name in mattype_layers[m3_matref.type]:
@@ -458,9 +459,9 @@ class Importer:
                 if not m3_layer_bitmap_str and not m3_layer.getNamedBit('flags', 'color'):
                     continue
 
-                layer = shared.m3_item_add('m3_materiallayers', item_name=mat.name + '_' + layer_name, obj=ob)
+                layer = shared.m3_item_add(ob.m3_materiallayers, item_name=mat.name + '_' + layer_name)
                 layer.color_bitmap = m3_layer_bitmap_str
-                processor = M3InputProcessor(self, ob, 'm3_materiallayers[{}]'.format(len(ob.m3_materiallayers) - 1), layer, m3_layer)
+                processor = M3InputProcessor(self, layer, m3_layer)
                 io_shared.io_material_layer(processor)
 
                 layer.color_type = 'COLOR' if m3_layer.getNamedBit('flags', 'color') else 'BITMAP'
@@ -669,7 +670,7 @@ class Importer:
         for m3_point in self.m3_get_ref(self.m3_model.attachment_points):
             bone_name = self.m3_get_bone_name(m3_point.bone)
             bone = ob.data.bones[bone_name]
-            point = shared.m3_item_add('m3_attachmentpoints', item_name=self.m3_get_ref(m3_point.name)[4:], obj=ob)
+            point = shared.m3_item_add(ob.m3_attachmentpoints, item_name=self.m3_get_ref(m3_point.name)[4:])
             point.bone = bone.bl_handle if bone else ''
             # print('point set', point.name)
             if not bone_point.get(bone_name) or bone_name.startswith('Vol'):
@@ -684,7 +685,7 @@ class Importer:
             bone1 = ob.data.bones[bone1_name]
             if not point:
                 continue
-            vol = shared.m3_item_add('m3_attachmentpoints[{}].volumes'.format(point_index), item_name='Volume', obj=ob)
+            vol = shared.m3_item_add(point.volumes, item_name='Volume')
             vol.bone = bone1.bl_handle if bone1 else ''
             vol.shape = vol.bl_rna.properties['shape'].enum_items[getattr(m3_volume, 'shape')].identifier
             vol.size = (m3_volume.size0, m3_volume.size1, m3_volume.size2)
@@ -701,9 +702,9 @@ class Importer:
         for m3_light in self.m3_get_ref(self.m3_model.lights):
             bone_name = self.m3_get_bone_name(m3_light.bone)
             bone = ob.data.bones[bone_name]
-            light = shared.m3_item_add('m3_lights', item_name=bone_name, obj=ob)
+            light = shared.m3_item_add(ob.m3_lights, item_name=bone_name)
             light.bone = bone.bl_handle if bone else ''
-            processor = M3InputProcessor(self, ob, 'm3_lights[{}]'.format(len(ob.m3_lights) - 1), light, m3_light)
+            processor = M3InputProcessor(self, light, m3_light)
             io_shared.io_light(processor)
 
     def create_shadow_boxes(self):
@@ -714,9 +715,9 @@ class Importer:
         for m3_shadow_box in self.m3_get_ref(self.m3_model.shadow_boxes):
             bone_name = self.m3_get_bone_name(m3_shadow_box.bone)
             bone = ob.data.bones[bone_name]
-            shadow_box = shared.m3_item_add('m3_shadowboxes', item_name=bone_name, obj=ob)
+            shadow_box = shared.m3_item_add(ob.m3_shadowboxes, item_name=bone_name)
             shadow_box.bone = bone.bl_handle if bone else ''
-            processor = M3InputProcessor(self, ob, 'm3_shadowboxes[{}]'.format(len(ob.m3_camera) - 1), shadow_box, m3_shadow_box)
+            processor = M3InputProcessor(self, shadow_box, m3_shadow_box)
             io_shared.io_shadow_box(processor)
 
     def create_cameras(self):
@@ -724,9 +725,9 @@ class Importer:
         for m3_camera in self.m3_get_ref(self.m3_model.cameras):
             bone_name = self.m3_get_bone_name(m3_camera.bone)
             bone = ob.data.bones[bone_name]
-            camera = shared.m3_item_add('m3_cameras', item_name=bone_name, obj=ob)
+            camera = shared.m3_item_add(ob.m3_cameras, item_name=bone_name)
             camera.bone = bone.bl_handle if bone else ''
-            processor = M3InputProcessor(self, ob, 'm3_cameras[{}]'.format(len(ob.m3_camera) - 1), camera, m3_camera)
+            processor = M3InputProcessor(self, camera, m3_camera)
             io_shared.io_camera(processor)
 
     def create_particles(self):
@@ -738,18 +739,18 @@ class Importer:
         for m3_copy in m3_copies:
             bone_name = self.m3_get_bone_name(m3_copy.bone)
             bone = ob.data.bones[bone_name]
-            copy = shared.m3_item_add('m3_particle_copies', item_name=bone_name, obj=ob)
+            copy = shared.m3_item_add(ob.m3_particle_copies, item_name=bone_name)
             copy.bone = bone.bl_handle if bone else ''
-            processor = M3InputProcessor(self, ob, 'm3_particle_copies[%d]' % copy.bl_index, copy, m3_copy)
+            processor = M3InputProcessor(self, copy, m3_copy)
             io_shared.io_particle_copy(processor)
 
         for m3_system in m3_systems:
             bone_name = self.m3_get_bone_name(m3_system.bone)
             bone = ob.data.bones[bone_name]
-            system = shared.m3_item_add('m3_particle_systems', item_name=bone_name, obj=ob)
+            system = shared.m3_item_add(ob.m3_particle_systems, item_name=bone_name)
             system.bone = bone.bl_handle if bone else ''
             system.material = ob.m3_materialrefs[m3_system.material_reference_index].bl_handle
-            processor = M3InputProcessor(self, ob, 'm3_particle_systems[%d]' % system.bl_index, system, m3_system)
+            processor = M3InputProcessor(self, system, m3_system)
             io_shared.io_particle_system(processor)
 
             for m3_copy_index in self.m3_get_ref(m3_system.copy_indices):
@@ -763,10 +764,10 @@ class Importer:
         for m3_ribbon in self.m3_get_ref(self.m3_model.ribbons):
             bone_name = self.m3_get_bone_name(m3_ribbon.bone)
             bone = ob.data.bones[bone_name]
-            ribbon = shared.m3_item_add('m3_ribbons', item_name=bone_name, obj=ob)
+            ribbon = shared.m3_item_add(ob.m3_ribbons, item_name=bone_name)
             ribbon.bone = bone.bl_handle if bone else ''
             ribbon.material = ob.m3_materialrefs[m3_ribbon.material_reference_index].bl_handle
-            processor = M3InputProcessor(self, ob, 'm3_ribbons[{}]'.format(len(ob.m3_ribbons) - 1), ribbon, m3_ribbon)
+            processor = M3InputProcessor(self, ribbon, m3_ribbon)
             io_shared.io_ribbon(processor)
 
             if m3_ribbon.spline.index:
@@ -775,12 +776,12 @@ class Importer:
                         ribbon.spline = ref['ob'].bl_handle
                 else:
                     m3_spline = self.m3_get_ref(m3_ribbon.spline)
-                    spline = shared.m3_item_add('m3_ribbonsplines', item_name=ribbon.name + '_spline', obj=ob)
+                    spline = shared.m3_item_add(ob.m3_ribbonsplines, item_name=ribbon.name + '_spline')
                     ribbon.spline = spline.bl_handle
                     for m3_point in m3_spline:
                         bone_name = self.m3_get_bone_name(m3_point.bone)
                         bone = ob.data.bones[bone_name]
-                        point = shared.m3_item_add('m3_ribbonsplines[{}].points'.format(spline.bl_index), item_name=bone_name, obj=ob)
+                        point = shared.m3_item_add(spline.points, item_name=bone_name)
                         point.bone = bone.bl_handle if bone else ''
                     self.m3_ref_data[m3_ribbon.spline.index]['bl'] = spline
 
@@ -789,10 +790,10 @@ class Importer:
         for m3_projection in self.m3_get_ref(self.m3_model.projections):
             bone_name = self.m3_get_bone_name(m3_projection.bone)
             bone = ob.data.bones[bone_name]
-            projection = shared.m3_item_add('m3_projections', item_name=bone_name, obj=ob)
+            projection = shared.m3_item_add(ob.m3_projections, item_name=bone_name)
             projection.bone = bone.bl_handle if bone else ''
             projection.material = ob.m3_materialrefs[m3_projection.material_reference_index].bl_handle
-            processor = M3InputProcessor(self, ob, 'm3_projections[{}]'.format(len(ob.m3_projection) - 1), projection, m3_projection)
+            processor = M3InputProcessor(self, projection, m3_projection)
             io_shared.io_projection(processor)
 
     def create_forces(self):
@@ -800,9 +801,9 @@ class Importer:
         for m3_force in self.m3_get_ref(self.m3_model.forces):
             bone_name = self.m3_get_bone_name(m3_force.bone)
             bone = ob.data.bones[bone_name]
-            force = shared.m3_item_add('m3_forces', item_name=bone_name, obj=ob)
+            force = shared.m3_item_add(ob.m3_forces, item_name=bone_name)
             force.bone = bone.bl_handle if bone else ''
-            processor = M3InputProcessor(self, ob, 'm3_forces[{}]'.format(len(ob.m3_force) - 1), force, m3_force)
+            processor = M3InputProcessor(self, force, m3_force)
             io_shared.io_force(processor)
 
     def create_warps(self):
@@ -810,9 +811,9 @@ class Importer:
         for m3_warp in self.m3_get_ref(self.m3_model.warps):
             bone_name = self.m3_get_bone_name(m3_warp.bone)
             bone = ob.data.bones[bone_name]
-            warp = shared.m3_item_add('m3_warps', item_name=bone_name, obj=ob)
+            warp = shared.m3_item_add(ob.m3_warps, item_name=bone_name)
             warp.bone = bone.bl_handle if bone else ''
-            processor = M3InputProcessor(self, ob, 'm3_warps[{}]'.format(len(ob.m3_warp) - 1), warp, m3_warp)
+            processor = M3InputProcessor(self, warp, m3_warp)
             io_shared.io_warp(processor)
 
     def create_hittests(self):
@@ -833,7 +834,7 @@ class Importer:
         for m3_hittest in self.m3_get_ref(self.m3_model.hittests):
             bone_name = self.m3_get_bone_name(m3_hittest.bone)
             bone = ob.data.bones[bone_name]
-            hittest = shared.m3_item_add('m3_hittests', item_name=bone_name, obj=ob)
+            hittest = shared.m3_item_add(ob.m3_hittests, item_name=bone_name)
             hittest.bone = bone.bl_handle if bone else ''
             hittest.shape = hittest.bl_rna.properties['shape'].enum_items[getattr(m3_hittest, 'shape')].identifier
             hittest.size = (m3_hittest.size0, m3_hittest.size1, m3_hittest.size2)
@@ -849,9 +850,9 @@ class Importer:
         for m3_rigidbody in self.m3_get_ref(self.m3_model.physics_rigidbodies):
             bone_name = self.m3_get_bone_name(m3_rigidbody.bone)
             bone = ob.data.bones[bone_name]
-            rigidbody = shared.m3_item_add('m3_rigidbodies', item_name=bone_name, obj=ob)
+            rigidbody = shared.m3_item_add(ob.m3_rigidbodies, item_name=bone_name)
             rigidbody.bone = bone.bl_handle if bone else ''
-            processor = M3InputProcessor(self, ob, 'm3_rigidbodies[{}]'.format(len(ob.m3_rigidbodies) - 1), rigidbody, m3_rigidbody)
+            processor = M3InputProcessor(self, rigidbody, m3_rigidbody)
             io_shared.io_rigid_body(processor)
 
             physics_shape = self.bl_get_ref(m3_rigidbody.physics_shape)
@@ -859,10 +860,10 @@ class Importer:
                 rigidbody.physics_shape = physics_shape.bl_handle
             else:
                 m3_physics_shape = self.m3_get_ref(m3_rigidbody.physics_shape)
-                physics_shape = shared.m3_item_add('m3_physicsshapes', item_name=rigidbody.name + '_shape', obj=ob)
+                physics_shape = shared.m3_item_add(ob.m3_physicsshapes, item_name=rigidbody.name + '_shape')
                 rigidbody.physics_shape = physics_shape.bl_handle
                 for m3_volume in m3_physics_shape:
-                    volume = shared.m3_item_add('m3_physicsshapes[{}].volumes'.format(physics_shape.bl_index), obj=ob)
+                    volume = shared.m3_item_add(physics_shape)
                     volume.shape = volume.bl_rna.properties['shape'].enum_items[getattr(m3_volume, 'shape')].identifier
                     volume.size = (m3_volume.size0, m3_volume.size1, m3_volume.size2)
                     md = to_bl_matrix(m3_volume.matrix).decompose()
@@ -887,7 +888,7 @@ class Importer:
             bone1 = ob.data.bones[bone1_name]
             bone2 = ob.data.bones[bone2_name]
 
-            joint = shared.m3_item_add('m3_physicsjoints', item_name=(bone1.name if bone1 else '') + '_joint', obj=ob)
+            joint = shared.m3_item_add(ob.m3_physicsjoints, item_name=(bone1.name if bone1 else '') + '_joint')
 
             for rb in ob.m3_rigidbodies:
                 if bone1 and rb.bone == bone1.bl_handle:
@@ -895,7 +896,7 @@ class Importer:
                 if bone2 and rb.bone == bone2.bl_handle:
                     joint.rigidbody2 = rb.bl_handle
 
-            processor = M3InputProcessor(self, ob, 'm3_physicsjoints[%d]' % joint.bl_index, joint, m3_joint)
+            processor = M3InputProcessor(self, joint, m3_joint)
             io_shared.io_rigid_body_joint(processor)
 
             md = to_bl_matrix(m3_joint.matrix1).decompose()
@@ -911,8 +912,8 @@ class Importer:
 
         ob = self.ob
         for m3_cloth in self.m3_get_ref(self.m3_model.physics_cloths):
-            cloth = shared.m3_item_add('m3_cloths', item_name='Cloth', obj=ob)
-            processor = M3InputProcessor(self, ob, 'm3_cloths[{}]'.format(len(ob.m3_cloths) - 1), cloth, m3_cloth)
+            cloth = shared.m3_item_add(ob.m3_cloths, item_name='Cloth')
+            processor = M3InputProcessor(self, cloth, m3_cloth)
             io_shared.io_cloth(processor)
 
             if m3_cloth.constraints.index:
@@ -921,12 +922,12 @@ class Importer:
                         cloth.constraint_set = ref['ob'].bl_handle
                 else:
                     m3_constraints = self.m3_get_ref(m3_cloth.constraints)
-                    constraint_set = shared.m3_item_add('m3_clothconstraintsets', item_name=cloth.name + '_constraints', obj=ob)
+                    constraint_set = shared.m3_item_add(ob.m3_clothconstraintsets, item_name=cloth.name + '_constraints')
                     cloth.constraint_set = constraint_set.bl_handle
                     for m3_constraint in m3_constraints:
                         bone_name = self.m3_get_bone_name(m3_constraint.bone)
                         bone = ob.data.bones[bone_name]
-                        constraint = shared.m3_item_add('m3_clothconstraintsets[{}].constraints'.format(constraint_set.bl_index), item_name=bone_name, obj=ob)
+                        constraint = shared.m3_item_add(constraint_set, item_name=bone_name)
                         constraint.bone = bone.bl_handle if bone else ''
                         constraint.height = m3_constraint.height
                         constraint.radius = m3_constraint.radius
@@ -948,7 +949,7 @@ class Importer:
             bone_target_name = self.m3_get_bone_name(m3_ik.bone_target)
             bone_base = ob.data.bones[bone_base_name]
             bone_target = ob.data.bones[bone_target_name]
-            ik = shared.m3_item_add('m3_ikjoints', item_name=bone_target_name, obj=ob)
+            ik = shared.m3_item_add(ob.m3_ikjoints, item_name=bone_target_name)
             ik.bone = bone_target.bl_handle if bone_target else ''
 
             if bone_base and bone_target:
@@ -959,20 +960,20 @@ class Importer:
                     joint_length += 1
                 ik.joint_length = joint_length
 
-            processor = M3InputProcessor(self, ob, 'm3_ikjoints[{}]'.format(len(ob.m3_ikjoints) - 1), ik, m3_ik)
+            processor = M3InputProcessor(self, ik, m3_ik)
             io_shared.io_ik(processor)
 
     def create_turrets(self):
         ob = self.ob
         for m3_turret in self.m3_get_ref(self.m3_model.turrets):
-            turret = shared.m3_item_add('m3_turrets', item_name=self.m3_get_ref(m3_turret.name), obj=ob)
+            turret = shared.m3_item_add(ob.m3_turrets, item_name=self.m3_get_ref(m3_turret.name))
             for ii in self.m3_get_ref(m3_turret.parts):
                 m3_part = self.m3_get_ref(self.m3_model.turret_parts)[ii]
                 bone_name = self.m3_get_bone_name(m3_part.bone)
                 bone = ob.data.bones[bone_name]
-                part = shared.m3_item_add('m3_turrets[{}].parts'.format(turret.bl_index), item_name=bone_name, obj=ob)
+                part = shared.m3_item_add(turret.parts, item_name=bone_name)
                 part.bone = bone.bl_handle if bone else ''
-                processor = M3InputProcessor(self, ob, 'm3_turrets[{}].parts[{}]'.format(turret.bl_index, part.bl_index), part, m3_part)
+                processor = M3InputProcessor(self, part, m3_part)
                 io_shared.io_turret_part(processor)
 
     def create_billboards(self):
@@ -980,9 +981,9 @@ class Importer:
         for m3_billboard in self.m3_get_ref(self.m3_model.billboards):
             bone_name = self.m3_get_bone_name(m3_billboard.bone)
             bone = ob.data.bones[bone_name]
-            billboard = shared.m3_item_add('m3_billboards', item_name=bone_name, obj=ob)
+            billboard = shared.m3_item_add(ob.m3_billboards, item_name=bone_name)
             billboard.bone = bone.bl_handle if bone else ''
-            processor = M3InputProcessor(self, ob, 'm3_billboards[{}]'.format(len(ob.m3_billboards) - 1), billboard, m3_billboard)
+            processor = M3InputProcessor(self, billboard, m3_billboard)
             io_shared.io_billboard(processor)
 
     def generate_basic_volume_object(self, name, m3_vert_ref, m3_face_ref):
