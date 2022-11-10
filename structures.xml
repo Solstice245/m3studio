@@ -1176,14 +1176,14 @@
             <field name="unknown0" type="int32" default-value="-1"/>
             <field name="unknown1" type="int32" default-value="-1"/>
             <field name="name" type="Reference" refTo="CHAR"/>
-            <field name="animStartInMS" type="uint32"/>
-            <field name="animEndInMS" type="uint32"/>
-            <field name="movementSpeed" type="float"/>
+            <field name="anim_ms_start" type="uint32"/>
+            <field name="anim_ms_end" type="uint32"/>
+            <field name="movement_speed" type="float"/>
             <field name="flags" type="uint32" default-value="0" >
                 <bits>
-                    <bit mask="0x1" name="notLooping"/>
-                    <bit mask="0x2" name="alwaysGlobal"/>
-                    <bit mask="0x8" name="globalInPreviewer"/>
+                    <bit mask="0x1" name="not_looping"/>
+                    <bit mask="0x2" name="always_global"/>
+                    <bit mask="0x8" name="global_in_previewer"/>
                 </bits>
             </field>
             <field name="frequency" type="uint32"/>
@@ -1191,7 +1191,7 @@
             <field name="unknown3" type="uint32" expected-value="1"/>
             <field name="unknown4" type="uint32" expected-value="100"/>
             <field till-version="1" name="unknown5" type="uint32" default-value="0"/>
-            <field name="boundingSphere" type="BNDS"/>
+            <field name="bounding_sphere" type="BNDS"/>
             <field name="unknownRefSEQSBeta01" type="Reference"/>
         </fields>
     </structure>

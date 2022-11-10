@@ -397,19 +397,19 @@ class M3PropPointerOpUnlink(bpy.types.Operator):
 
 # TODO Make it so that handle list items must be unique
 def draw_handle_list(layout, search_data, collection, label=''):
-    op = layout.operator('m3_handle_add', text=('Add' + label) if label else None)
+    op = layout.operator('m3.handle_add', text=('Add ' + label) if label else None)
     op.collection = collection.path_from_id()
     for ii, item in enumerate(collection):
         draw_handle_list_item(layout, search_data, collection, label, item, ii)
 
 
 def draw_handle_list_item(layout, search_data, collection, label, item, index):
-    pointer_ob = m3_pointer_get(search_data, item.handle)
+    pointer_ob = m3_pointer_get(search_data, item.bl_handle)
 
     row = layout.row(align=True)
     row.use_property_split = False
     op = row.operator('m3.proppointer_search', text=pointer_ob.name if pointer_ob else 'Select ' + label, icon='VIEWZOOM')
-    op.prop = item.path_from_id('handle')
+    op.prop = item.path_from_id('bl_handle')
     op.search_prop = search_data.path_from_id()
     op = row.operator('m3.handle_remove', text='', icon='X')
     op.collection = collection.path_from_id()

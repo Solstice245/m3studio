@@ -26,6 +26,13 @@ from . import io_shared
 from . import shared
 
 
+FRAME_RATE = 30
+
+
+def to_bl_frame(m3_ms):
+    return round(m3_ms / 1000) * FRAME_RATE
+
+
 def to_bl_uv(m3_uv, uv_multiply, uv_offset):
     return (
         (m3_uv.x * (uv_multiply / 16.0) / 2048.0) + uv_offset,
@@ -62,8 +69,6 @@ class M3InputProcessor:
 
     def __init__(self, importer, bl, m3):
         self.importer = importer
-        # self.ob = ob  # * use bl.id_data
-        # self.anim_path = anim_path  # * use bl.path_from_id()
         self.bl = bl
         self.m3 = m3
         self.version = m3.structureDescription.structureVersion
@@ -151,7 +156,7 @@ class M3InputProcessor:
     def anim_integer(self, field):
         anim_ref = getattr(self.m3, field)
         setattr(self.bl, field, anim_ref.default)
-        # self.importer.animate_integer(self.ob, self.anim_path, field, anim_ref)
+        # self.importer.key_integer(self.bl.id_data, self.bl.path_from_id(field), anim_ref)
 
     def anim_int16(self, field):
         self.anim_integer(field)
@@ -170,7 +175,7 @@ class M3InputProcessor:
             return
         anim_ref = getattr(self.m3, field)
         setattr(self.bl, field, anim_ref.default)
-        # self.importer.float_key(self.bl, self.anim_path, field, anim_ref)
+        # self.importer.key_float(self.bl, self.anim_path, field, anim_ref)
 
     def anim_vec2(self, field):
         anim_ref = getattr(self.m3, field)
@@ -256,6 +261,9 @@ class Importer:
         return self.final_bone_names[self.m3_get_ref(self.m3_bones[bone_index].name)]
 
     def m3_import(self, filename):
+        # TODO make fps an import option
+        bpy.context.scene.render.fps = FRAME_RATE
+
         self.m3 = io_m3.loadSections(filename)
 
         self.m3_ref_data = []
@@ -275,6 +283,7 @@ class Importer:
         self.animations = []
         self.anim_id_to_long_map = {}
 
+        # TODO model boundings
         self.ob = self.armature_object_new()
         self.create_animations()  # TODO
         self.create_bones()
@@ -309,7 +318,12 @@ class Importer:
 
         return ob
 
-    def float_key(self, ob, path, anim_id, default):
+    # working things out such that foreach_set is used
+    # would likely make this code significantly faster.
+    def key_integer(self, ob, path, ref):
+        pass
+
+    def key_float(self, ob, path, anim_id, default):
         defaultAction = shared.getOrCreateDefaultActionFor(ob)
         shared.setDefaultValue(defaultAction, path, 0, default)
 
@@ -320,7 +334,16 @@ class Importer:
                 insertLinearKeyFrame(curve, frame, value)
 
     def create_animations(self):
-        pass
+        ob = self.ob
+
+        for m3_anim_group in self.m3_get_ref(self.m3_model.sequences):
+            anim_group_name = self.m3_get_ref(m3_anim_group.name)
+            anim_group = shared.m3_item_add(ob.m3_animation_groups, anim_group_name)
+            processor = M3InputProcessor(self, anim_group, m3_anim_group)
+            io_shared.io_anim_group(processor)
+
+            anim_group.frame_start = to_bl_frame(m3_anim_group.anim_ms_start)
+            anim_group.frame_end = to_bl_frame(m3_anim_group.anim_ms_end)
 
     def create_bones(self):
 
@@ -959,7 +982,6 @@ class Importer:
 
             bmesh.update_edit_mesh(me)
             bpy.ops.object.mode_set(mode='OBJECT')
-
 
     def create_ik_joints(self):
         ob = self.ob

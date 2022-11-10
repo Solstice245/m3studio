@@ -147,14 +147,20 @@ class GroupProperties(shared.M3PropertyGroup):
     animations: bpy.props.CollectionProperty(type=shared.M3PropertyGroup)
 
 
-class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
+class SequencePanel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_idname = 'OBJECT_PT_M3_ANIMATIONS'
     bl_label = 'M3 Animations'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, context.object.m3_animations, draw_animation_props, can_duplicate=False, label='Animation Sequences:')
-        self.layout.separator()
-        shared.draw_collection_list(self.layout, context.object.m3_animation_groups, draw_group_props, label='Animation Groups:')
+        shared.draw_collection_list(self.layout, context.object.m3_animations, draw_animation_props, can_duplicate=False)
+
+
+class GroupPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_M3_ANIMATIONGROUPS'
+    bl_label = 'M3 Animation Groups'
+
+    def draw(self, context):
+        shared.draw_collection_list(self.layout, context.object.m3_animation_groups, draw_group_props)
 
 
 class M3AnimationActionNewOp(bpy.types.Operator):
@@ -185,7 +191,8 @@ class M3AnimationActionUnlinkOp(bpy.types.Operator):
 classes = (
     AnimationProperties,
     GroupProperties,
-    Panel,
+    SequencePanel,
+    GroupPanel,
     M3AnimationActionNewOp,
     M3AnimationActionUnlinkOp,
 )

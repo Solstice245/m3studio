@@ -29,6 +29,14 @@ rot_fix_matrix = mathutils.Matrix(((0, 1, 0, 0),
 rot_fix_matrix_transpose = rot_fix_matrix.transposed()
 
 
+def io_anim_group(processor):
+    processor.float('movement_speed')
+    processor.integer('frequency')
+    processor.bit('flags', 'not_looping')
+    processor.bit('flags', 'always_global')
+    processor.bit('flags', 'global_in_previewer')
+
+
 def io_material_standard(processor):
     processor.bit('additional_flags', 'depth_blend_falloff')
     processor.bit('additional_flags', 'vertex_color')
