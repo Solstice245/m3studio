@@ -53,6 +53,10 @@ def to_bl_vec4(m3_vector):
     return mathutils.Vector((m3_vector.w, m3_vector.x, m3_vector.y, m3_vector.z))
 
 
+def to_bl_quat(m3_vector):
+    return mathutils.Quaternion((m3_vector.w, m3_vector.x, m3_vector.y, m3_vector.z))
+
+
 def to_bl_color(m3_color):
     return mathutils.Vector((m3_color.r / 255, m3_color.g / 255, m3_color.b / 255, m3_color.a / 255))
 
@@ -397,7 +401,6 @@ class Importer:
         self.create_ik_joints()
         self.create_turrets()
         self.create_billboards()
-        bpy.context.view_layer.objects.active = self.ob
 
     def armature_object_new(self):
         scene = bpy.context.scene
@@ -556,9 +559,25 @@ class Importer:
 
             return rolls
 
-        def get_edit_bones(bone_heads, bone_tails, bone_rolls):
-            bpy.ops.object.mode_set(mode='EDIT', toggle=False)
+        def get_bind_scales():
+            bind_scales = []
+            for iref in self.m3_bone_rests:
+                mat = to_bl_matrix(iref.matrix)
+                loc, rot, scl = mat.decompose()
+                bind_scales.append(scl)
+            return bind_scales
 
+        def get_bind_matrices(bind_scales):
+            bind_matrices = []
+            for bind_scale in bind_scales:
+                matrix = mathutils.Matrix()
+                matrix[0][0] = bind_scale.x
+                matrix[1][1] = bind_scale.y
+                matrix[2][2] = bind_scale.z
+                bind_matrices.append(matrix)
+            return bind_matrices
+
+        def get_edit_bones(bone_heads, bone_tails, bone_rolls, bind_scales):
             edit_bones = []
             for index, m3_bone in enumerate(self.m3_bones):
                 m3_bone_name = self.m3[m3_bone.name.index].content
@@ -568,6 +587,7 @@ class Importer:
                 edit_bone.head = bone_heads[index]
                 edit_bone.tail = bone_tails[index]
                 edit_bone.roll = bone_rolls[index]
+                # edit_bone.m3_bind_scale = bind_scales[index]  # ! commenting out for now
 
                 if m3_bone.parent != -1:
                     parent_edit_bone = self.ob.data.edit_bones[m3_bone.parent]
@@ -577,16 +597,61 @@ class Importer:
                     if parent_child_vector.length < 0.000001:
                         edit_bone.use_connect = True
                 edit_bones.append(edit_bone)
-            bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
 
             return edit_bones
 
+        def get_edit_bone_relations(edit_bones):
+            rel_mats = []
+            for m3_bone, edit_bone in zip(self.m3_bones, edit_bones):
+                if m3_bone.parent != -1:
+                    parent_edit_bone = self.ob.data.edit_bones.get(self.m3_get_bone_name(m3_bone.parent))
+                    rel_mats.append((parent_edit_bone.matrix.inverted() @ edit_bone.matrix))
+                else:
+                    rel_mats.append(edit_bone.matrix)
+
+            return rel_mats
+
+        def adjust_pose_bones(edit_bone_relations, bind_matrices):
+
+            for ii, m3_bone, rel_mat, bind_mat in zip(range(len(self.m3_bones)), self.m3_bones, edit_bone_relations, bind_matrices):
+                pose_bone = self.ob.pose.bones.get(self.m3_get_bone_name(ii))
+                loc, rot, scl = to_bl_vec3(m3_bone.location.default), to_bl_quat(m3_bone.rotation.default), to_bl_vec3(m3_bone.scale.default)
+
+                if m3_bone.parent != -1:
+                    # TODO perforamcne optimization: cache bindScaleMatrices[bone.parent].inverted()
+                    # TODO find out why it's just the scale that need to be applied
+                    # ^^ carry over from m3addon
+                    left_mat = rel_mat.inverted() @ io_shared.rot_fix_matrix_transpose @ bind_matrices[m3_bone.parent].inverted()
+                else:
+                    left_mat = rel_mat.inverted()
+
+                right_mat = bind_mat @ io_shared.rot_fix_matrix
+
+                pose_bone_mat = rot.to_matrix().to_4x4()
+                pose_bone_mat.col[0] *= scl.x
+                pose_bone_mat.col[1] *= scl.y
+                pose_bone_mat.col[2] *= scl.z
+                pose_bone_mat.translation = loc
+                loc, rot, scl = (left_mat @ pose_bone_mat @ right_mat).decompose()
+
+                pose_bone.scale = scl
+                pose_bone.rotation_quaternion = rot
+                pose_bone.location = loc
+
+        bpy.context.view_layer.objects.active = self.ob
         bone_rests = [to_bl_matrix(iref.matrix).inverted() @ io_shared.rot_fix_matrix for iref in self.m3_bone_rests]
         bone_heads = [matrix.translation for matrix in bone_rests]
         bone_vectors = [matrix.col[1].to_3d().normalized() for matrix in bone_rests]
         bone_tails = get_bone_tails(bone_heads, bone_vectors)
         bone_rolls = get_bone_rolls(bone_rests, bone_heads, bone_tails)
-        get_edit_bones(bone_heads, bone_tails, bone_rolls)
+        bind_scales = get_bind_scales()
+        bind_matrices = get_bind_matrices(bind_scales)
+        bpy.ops.object.mode_set(mode='EDIT', toggle=False)
+        edit_bones = get_edit_bones(bone_heads, bone_tails, bone_rolls, bind_scales)
+        edit_bone_relations = get_edit_bone_relations(edit_bones)
+        bpy.ops.object.mode_set(mode='POSE')
+        adjust_pose_bones(edit_bone_relations, bind_matrices)
+        bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
 
     def create_materials(self):
         ob = self.ob
