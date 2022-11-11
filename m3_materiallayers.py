@@ -129,6 +129,7 @@ class Properties(shared.M3PropertyGroup):
     video_restart: bpy.props.BoolProperty(name='Video Restart', options={'ANIMATABLE'}, default=True)
     noise_amplitude: bpy.props.FloatProperty(options=set(), default=0.8)
     noise_frequency: bpy.props.FloatProperty(options=set(), default=0.5)
+    unknowna44bf452: bpy.props.FloatProperty()  # no UI
 
 
 class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):

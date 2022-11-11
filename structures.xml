@@ -1143,12 +1143,12 @@
         </versions>
         <fields>
             <field name="name" type="Reference"  refTo="CHAR"/>
-            <field name="runsConcurrent" type="uint16" default-value="0"/>
+            <field name="runs_concurrent" type="uint16" default-value="0"/>
             <field name="priority" type="uint16" default-value="0"/>
-            <field name="stsIndex" type="uint16"/>
-            <field name="stsIndexCopy" type="uint16"/>
-            <field name="animIds" type="Reference" refTo="U32_"/>
-            <field name="animRefs" type="Reference" refTo="U32_"/>
+            <field name="sts_index" type="uint16"/> <!-- seems to not have any use -->
+            <field name="sts_index_fb" type="uint16"/>
+            <field name="anim_ids" type="Reference" refTo="U32_"/>
+            <field name="anim_refs" type="Reference" refTo="U32_"/>
             <field name="unknownAt44" type="uint32" expected-value="0"/>
             <field name="sdev" type="Reference" refTo="SDEV"/>
             <field name="sd2v" type="Reference" refTo="SD2V"/>
@@ -1156,10 +1156,10 @@
             <field name="sd4q" type="Reference" refTo="SD4Q"/>
             <field name="sdcc" type="Reference" refTo="SDCC"/>
             <field name="sdr3" type="Reference" refTo="SDR3"/>
-            <field name="unknownRef8" type="Reference"/>
+            <field name="sd08" type="Reference"/> <!-- unknown -->
             <field name="sds6" type="Reference" refTo="SDS6"/>
             <field name="sdu6" type="Reference" refTo="SDU6"/>
-            <field name="unknownRef11" type="Reference"/>
+            <field name="sd11" type="Reference"/> <!-- unknown -->
             <field name="sdu3" type="Reference" refTo="SDU3"/>
             <field name="sdfg" type="Reference" refTo="SDFG"/>
             <field name="sdmb" type="Reference" refTo="SDMB"/>
@@ -1206,7 +1206,7 @@
         </versions>
         <fields>
             <field name="name" type="Reference" refTo="CHAR"/>
-            <field name="stcIndices" type="Reference" refTo="U32_"/>
+            <field name="stc_indices" type="Reference" refTo="U32_"/>
         </fields>
     </structure>
 
@@ -1893,19 +1893,19 @@
             <field name="material_reference_index" type="uint32"/>
             <field name="additional_flags" type="uint32" default-value="4" since-version="17" >
                 <bits>
-                    <bit mask="0x1" name="speed_randomize"/>
+                    <bit mask="0x1" name="emit_speed_randomize"/>
                     <bit mask="0x2" name="lifespan_randomize"/>
                     <bit mask="0x4" name="mass_randomize"/>
                     <bit mask="0x8" name="trailing"/>
                 </bits>
             </field>
-            <field name="speed" type="FloatAnimationReferenceV0"/>
-            <field name="speed_random" type="FloatAnimationReferenceV0"/>
-            <field till-version="12" name="speed_randomize" type="uint32"/>
-            <field name="angle_x" type="FloatAnimationReferenceV0"/>
-            <field name="angle_y" type="FloatAnimationReferenceV0"/>
-            <field name="spread_x" type="FloatAnimationReferenceV0"/>
-            <field name="spread_y" type="FloatAnimationReferenceV0"/>
+            <field name="emit_speed" type="FloatAnimationReferenceV0"/>
+            <field name="emit_speed_random" type="FloatAnimationReferenceV0"/>
+            <field till-version="12" name="emit_speed_randomize" type="uint32"/>
+            <field name="emit_angle_x" type="FloatAnimationReferenceV0"/>
+            <field name="emit_angle_y" type="FloatAnimationReferenceV0"/>
+            <field name="emit_spread_x" type="FloatAnimationReferenceV0"/>
+            <field name="emit_spread_y" type="FloatAnimationReferenceV0"/>
             <field name="lifespan" type="FloatAnimationReferenceV0"/>
             <field name="lifespan_random" type="FloatAnimationReferenceV0"/>
             <field till-version="12" name="lifespan_randomize" type="uint32"/>
@@ -2094,9 +2094,9 @@
             <field name="nullOfUnknown21ca0cea" type="uint32" expected-value="0x00000000"/>
             <field name="endOfUnknown21ca0cea" type="uint32" default-value="0xffffffff"/>
             <field name="unknown1e97145f" type="FloatAnimationReferenceV0"/> <!-- default 1.0 -->
-            <field name="trailing_particle" type="int32" default-value="-1"/>
-            <field name="trailing_particle_chance" type="float" default-value="0.0"/>
-            <field name="trailing_particle_rate" type="FloatAnimationReferenceV0"/>
+            <field name="trail_particle" type="int32" default-value="-1"/>
+            <field name="trail_chance" type="float" default-value="0.0"/>
+            <field name="trail_rate" type="FloatAnimationReferenceV0"/>
             <field name="unknownfdab7ff3" type="uint32" default-value="0xffffffff"/>
             <field name="unknown7d4a9e6b" type="uint32" expected-value="0x00000000"/>
             <field name="usedModel" type="Reference" refTo="SCHR"/>

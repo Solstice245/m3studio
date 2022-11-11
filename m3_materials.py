@@ -77,6 +77,8 @@ class StandardProperties(shared.M3PropertyGroup):
     envi_const_multiply: bpy.props.FloatProperty(options=set(), min=0, default=1)
     envi_diff_multiply: bpy.props.FloatProperty(options=set(), min=0, default=0)
     envi_spec_multiply: bpy.props.FloatProperty(options=set(), min=0, default=0)
+    parallax_height: bpy.props.FloatProperty(name='Parallax Height', default=0)  # no UI
+    unknown_animation_ref: bpy.props.IntProperty(name='Unknown', min=0, default=0) # no UI
 
     vertex_color: bpy.props.BoolProperty(options=set())
     vertex_alpha: bpy.props.BoolProperty(options=set())

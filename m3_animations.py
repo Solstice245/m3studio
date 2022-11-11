@@ -23,21 +23,14 @@ from . import shared
 def register_props():
     bpy.types.Object.m3_animations_default = bpy.props.PointerProperty(type=bpy.types.Action)
     bpy.types.Object.m3_animations = bpy.props.CollectionProperty(type=AnimationProperties)
-    bpy.types.Object.m3_animations_index = bpy.props.IntProperty(options=set(), default=-1, update=anim_update)
+    bpy.types.Object.m3_animations_index = bpy.props.IntProperty(options=set(), default=-1)  # TODO rework update code later
     bpy.types.Object.m3_animation_groups = bpy.props.CollectionProperty(type=GroupProperties)
     bpy.types.Object.m3_animation_groups_index = bpy.props.IntProperty(options=set(), default=-1)
 
 
 def set_default_value(action, path, index, value):
-    fcurve = None
-    for c in action.fcurves:
-        if c.data_path == path and c.array_index == index:
-            fcurve = c
-            break
-    if fcurve is None:
-        fcurve = action.fcurves.new(path, index=index)
-    keyframe = fcurve.keyframe_points.insert(0, value)
-    keyframe.interpolation = 'CONSTANT'
+    fcurve = action.fcurves.find(path, index=index) or action.fcurves.new(path, index=index)
+    fcurve.keyframe_points.insert(0, value, options={'REPLACE'})
 
 
 def get_default_values(ob, new_action, old_action):
@@ -129,7 +122,7 @@ def draw_group_props(anim_group, layout):
 
 
 class AnimationProperties(shared.M3PropertyGroup):
-    action: bpy.props.PointerProperty(type=bpy.types.Action, update=anim_update)
+    action: bpy.props.PointerProperty(type=bpy.types.Action)  # TODO rework update code later
     priority: bpy.props.IntProperty(options=set(), min=0)
     concurrent: bpy.props.BoolProperty(options=set())
 

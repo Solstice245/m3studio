@@ -220,8 +220,8 @@ def io_material_layer(processor):
     processor.anim_vec2('uv_offset')
     processor.anim_vec3('uv_angle')
     processor.anim_vec2('uv_tiling')
-    processor.anim_uint32('unknowna4ec0796')
-    processor.anim_float('unknowna44bf452')
+    # processor.anim_uint32('unknowna4ec0796')  # ! unknown
+    # processor.anim_float('unknowna44bf452')  # ! unknown
     processor.anim_float('color_brightness')
     processor.anim_vec3('uv_triplanar_offset', since_version=24)
     processor.anim_vec3('uv_triplanar_scale', since_version=24)
@@ -279,14 +279,14 @@ def io_camera(processor):
 
 
 def io_particle_system(processor):
-    processor.anim_float('speed')
-    processor.anim_float('speed_random')
-    processor.boolean('speed_randomize', till_version=12)
-    processor.bit('additional_flags', 'speed_randomize', since_version=17)
-    processor.anim_float('angle_x')
-    processor.anim_float('angle_y')
-    processor.anim_float('spread_x')
-    processor.anim_float('spread_y')
+    processor.anim_float('emit_speed')
+    processor.anim_float('emit_speed_random')
+    processor.boolean('emit_speed_randomize', till_version=12)
+    processor.bit('additional_flags', 'emit_speed_randomize', since_version=17)
+    processor.anim_float('emit_angle_x')
+    processor.anim_float('emit_angle_y')
+    processor.anim_float('emit_spread_x')
+    processor.anim_float('emit_spread_y')
     processor.anim_float('lifespan')
     processor.anim_float('lifespan_random')
     processor.boolean('lifespan_randomize', till_version=12)
@@ -387,8 +387,8 @@ def io_particle_system(processor):
     processor.float('wind_multiplier')
     processor.enum('lod_reduce')
     processor.enum('lod_cut')
-    processor.float('trailing_particle_chance')
-    processor.anim_float('trailing_particle_rate')
+    processor.float('trail_chance')
+    processor.anim_float('trail_rate')
 
 
 def io_particle_copy(processor):
@@ -506,7 +506,7 @@ def io_projection(processor):
     processor.float('lifetime_decay')
     processor.float('lifetime_decay_to')
     processor.float('attenuation_plane_distance')
-    processor.integer('active')
+    processor.anim_uint32('active')
     processor.enum('layer')
     processor.enum('lod_reduce')
     processor.enum('lod_cut')

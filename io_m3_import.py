@@ -24,13 +24,14 @@ import mathutils
 from . import io_m3
 from . import io_shared
 from . import shared
+from .m3_animations import set_default_value
 
 
 FRAME_RATE = 30
 
 
 def to_bl_frame(m3_ms):
-    return round(m3_ms / 1000) * FRAME_RATE
+    return round(m3_ms / 1000 * FRAME_RATE)
 
 
 def to_bl_uv(m3_uv, uv_multiply, uv_offset):
@@ -156,7 +157,7 @@ class M3InputProcessor:
     def anim_integer(self, field):
         anim_ref = getattr(self.m3, field)
         setattr(self.bl, field, anim_ref.default)
-        # self.importer.key_integer(self.bl.id_data, self.bl.path_from_id(field), anim_ref)
+        self.importer.key_base(self.bl, field, anim_ref)
 
     def anim_int16(self, field):
         self.anim_integer(field)
@@ -175,19 +176,21 @@ class M3InputProcessor:
             return
         anim_ref = getattr(self.m3, field)
         setattr(self.bl, field, anim_ref.default)
-        # self.importer.key_float(self.bl, self.anim_path, field, anim_ref)
+        self.importer.key_base(self.bl, field, anim_ref)
 
     def anim_vec2(self, field):
         anim_ref = getattr(self.m3, field)
-        setattr(self.bl, field, to_bl_vec2(anim_ref.default))
-        # self.importer.animate_vec2(self.bl, self.anim_path, anim_ref)
+        default = to_bl_vec2(anim_ref.default)
+        setattr(self.bl, field, default)
+        self.importer.key_vec(self.bl, field, anim_ref, default)
 
     def anim_vec3(self, field, since_version=None):
         if (since_version is not None) and (self.version < since_version):
             return
         anim_ref = getattr(self.m3, field)
-        setattr(self.bl, field, to_bl_vec3(anim_ref.default))
-        # self.importer.animate_vec3(self.bl, self.anim_path, anim_ref)
+        default = to_bl_vec3(anim_ref.default)
+        setattr(self.bl, field, default)
+        self.importer.key_vec(self.bl, field, anim_ref, default)
 
     def anim_color(self, field, since_version=None):
         if (since_version is not None) and (self.version < since_version):
@@ -202,7 +205,7 @@ class M3InputProcessor:
         # else:
         #     setattr(self.bl, field, default)
 
-        # self.importer.animate_color(self.bl, self.anim_path, anim_ref)
+        self.importer.key_vec(self.bl, field, anim_ref, default)
 
     def anim_boundings(self):
         anim_ref = self.m3
@@ -217,6 +220,95 @@ class M3InputProcessor:
         self.bl.radius = default.radius
         # self.importer.animate_boundings(self.bl, animPathMinBorder, animPathMaxBorder, animPathRadius, anim_id, self.bl.minBorder, self.bl.maxBorder, self.bl.radius)
 
+
+def m3_key_evnt(key_frames, key_values):
+    pass  # handle these specially
+
+
+def m3_key_vec2(key_frames, key_values):
+    ll = [[], []]
+
+    for key_frame, key_value in zip(key_frames, key_values):
+        ll[0].append(to_bl_frame(key_frame))
+        ll[0].append(key_value.x)
+        ll[1].append(to_bl_frame(key_frame))
+        ll[1].append(key_value.y)
+
+    return ll
+
+
+def m3_key_vec3(key_frames, key_values):
+    ll = [[], [], []]
+
+    for key_frame, key_value in zip(key_frames, key_values):
+        ll[0].append(to_bl_frame(key_frame))
+        ll[0].append(key_value.x)
+        ll[1].append(to_bl_frame(key_frame))
+        ll[1].append(key_value.y)
+        ll[2].append(to_bl_frame(key_frame))
+        ll[2].append(key_value.z)
+
+    return ll
+
+
+def m3_key_quat(key_frames, key_values):
+    ll = [[], [], [], []]
+
+    for key_frame, key_value in zip(key_frames, key_values):
+        ll[0].append(to_bl_frame(key_frame))
+        ll[0].append(key_value.w)
+        ll[1].append(to_bl_frame(key_frame))
+        ll[1].append(key_value.x)
+        ll[2].append(to_bl_frame(key_frame))
+        ll[2].append(key_value.y)
+        ll[3].append(to_bl_frame(key_frame))
+        ll[3].append(key_value.z)
+
+    return ll
+
+
+def m3_key_colo(key_frames, key_values):
+    ll = [[], [], [], []]
+
+    for key_frame, key_value in zip(key_frames, key_values):
+        ll[0].append(to_bl_frame(key_frame))
+        ll[0].append(key_value.r)
+        ll[1].append(to_bl_frame(key_frame))
+        ll[1].append(key_value.g)
+        ll[2].append(to_bl_frame(key_frame))
+        ll[2].append(key_value.b)
+        ll[3].append(to_bl_frame(key_frame))
+        ll[3].append(key_value.a)
+
+    return ll
+
+
+def m3_key_real(key_frames, key_values):
+    ll = []
+
+    for key_frame, key_value in zip(key_frames, key_values):
+        ll.append(to_bl_frame(key_frame))
+        ll.append(key_value)
+
+    return ll
+
+
+def m3_key_sd08(key_frames, key_values):
+    pass  # undefined
+
+
+def m3_key_sd11(key_frames, key_values):
+    pass  # undefined
+
+
+def m3_key_bnds(key_frames, key_values):
+    pass  # handle these specially
+
+
+m3_key_type_collection_method = [
+    m3_key_evnt, m3_key_vec2, m3_key_vec3, m3_key_quat, m3_key_colo, m3_key_real, m3_key_sd08,
+    m3_key_real, m3_key_real, m3_key_sd11, m3_key_real, m3_key_real, m3_key_bnds,
+]
 
 matref_to_mattype = {
     1: ['materials_standard', io_shared.io_material_standard],
@@ -278,14 +370,14 @@ class Importer:
         self.m3_bones = self.m3_get_ref(self.m3_model.bones)
         self.m3_bone_rests = self.m3_get_ref(self.m3_model.bone_rests)
 
-        self.sequence_stc_anim_id_set = {}
+        self.stc_id_data = {}
         self.final_bone_names = {}
         self.animations = []
         self.anim_id_to_long_map = {}
 
         # TODO model boundings
         self.ob = self.armature_object_new()
-        self.create_animations()  # TODO
+        self.create_animations()
         self.create_bones()
         self.create_materials()
         self.create_mesh()  # TODO mesh import options
@@ -318,23 +410,52 @@ class Importer:
 
         return ob
 
-    # working things out such that foreach_set is used
-    # would likely make this code significantly faster.
-    def key_integer(self, ob, path, ref):
-        pass
+    def key_base(self, bl, field, ref):
 
-    def key_float(self, ob, path, anim_id, default):
-        defaultAction = shared.getOrCreateDefaultActionFor(ob)
-        shared.setDefaultValue(defaultAction, path, 0, default)
+        if not hasattr(bl, field):
+            return
 
-        self.addAnimIdData(animId, objectId=shared.animObjectIdScene, animPath=path)
-        for action, timeValueMap in self.actionAndTimeValueMapPairsFor(animId):
-            curve = action.fcurves.new(path, index=0)
-            for frame, value in frameValuePairs(timeValueMap):
-                insertLinearKeyFrame(curve, frame, value)
+        path = bl.path_from_id(field)
+        set_default_value(bl.id_data.m3_animations_default, path, 0, ref.default)
+        anim_id_data = self.stc_id_data.get(ref.header.id)
+
+        if not anim_id_data:
+            return
+
+        for action_name in anim_id_data.keys():
+            anim_id_action_data = anim_id_data[action_name]
+            fcurves = bpy.data.actions.get(action_name).fcurves
+            fcurve = fcurves.new(path, index=0)
+            fcurve.keyframe_points.add(len(anim_id_action_data) / 2)
+            fcurve.keyframe_points.foreach_set('co', anim_id_action_data)
+
+    def key_vec(self, bl, field, ref, default):
+
+        if not hasattr(bl, field):
+            return
+
+        path = bl.path_from_id(field)
+
+        for ii, val in enumerate(default):
+            set_default_value(bl.id_data.m3_animations_default, path, ii, val)
+
+        anim_id_data = self.stc_id_data.get(ref.header.id)
+
+        if not anim_id_data:
+            return
+
+        for action_name in anim_id_data.keys():
+            anim_id_action_data = anim_id_data[action_name]
+            for index, index_data in enumerate(anim_id_action_data):
+                fcurves = bpy.data.actions.get(action_name).fcurves
+                fcurve = fcurves.new(path, index=index)
+                fcurve.keyframe_points.add(len(index_data) / 2)
+                fcurve.keyframe_points.foreach_set('co', index_data)
 
     def create_animations(self):
         ob = self.ob
+
+        ob.m3_animations_default = bpy.data.actions.new(ob.name + '_DEFAULTS')
 
         for m3_anim_group in self.m3_get_ref(self.m3_model.sequences):
             anim_group_name = self.m3_get_ref(m3_anim_group.name)
@@ -344,6 +465,37 @@ class Importer:
 
             anim_group.frame_start = to_bl_frame(m3_anim_group.anim_ms_start)
             anim_group.frame_end = to_bl_frame(m3_anim_group.anim_ms_end)
+
+        m3_stcs = self.m3_get_ref(self.m3_model.sequence_transformation_collections)
+        for m3_anim in m3_stcs:
+            anim_name = self.m3_get_ref(m3_anim.name)
+            anim = shared.m3_item_add(ob.m3_animations, anim_name)
+            anim.runs_concurrent = m3_anim.runs_concurrent
+            anim.priority = m3_anim.priority
+            anim.action = bpy.data.actions.new(ob.name + '_' + anim_name)
+
+            m3_key_type_collection_list = [
+                m3_anim.sdev, m3_anim.sd2v, m3_anim.sd3v, m3_anim.sd4q, m3_anim.sdcc, m3_anim.sdr3, m3_anim.sd08,
+                m3_anim.sds6, m3_anim.sdu6, m3_anim.sd11, m3_anim.sdu3, m3_anim.sdfg, m3_anim.sdmb,
+            ]
+
+            for stc_id, stc_ref in zip(self.m3_get_ref(m3_anim.anim_ids), self.m3_get_ref(m3_anim.anim_refs)):
+                anim_type = stc_ref >> 16
+                anim_index = stc_ref & 0xffff
+                m3_key_type_collection = m3_key_type_collection_list[anim_type]
+                m3_key_entries = self.m3_get_ref(m3_key_type_collection)[anim_index]
+                if not self.stc_id_data.get(stc_id):
+                    self.stc_id_data[stc_id] = {}
+                stc_id_to_frames_values = m3_key_type_collection_method[anim_type](self.m3_get_ref(m3_key_entries.frames), self.m3_get_ref(m3_key_entries.keys))
+                self.stc_id_data[stc_id][anim.action.name] = stc_id_to_frames_values
+
+        m3_stgs = self.m3_get_ref(self.m3_model.sequence_transformation_groups)
+        for ii, m3_stc_group in enumerate(m3_stgs):
+            m3_stc_indices = self.m3_get_ref(m3_stc_group.stc_indices)
+            for stc_index in m3_stc_indices:
+                anim_group = ob.m3_animation_groups[-len(m3_stgs) + ii]
+                anim_index = anim_group.animations.add()
+                anim_index.bl_handle = ob.m3_animations[-len(m3_stcs) + stc_index].bl_handle
 
     def create_bones(self):
 
