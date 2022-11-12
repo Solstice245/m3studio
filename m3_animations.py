@@ -30,7 +30,7 @@ def register_props():
 
 def set_default_value(action, path, index, value):
     fcurve = action.fcurves.find(path, index=index) or action.fcurves.new(path, index=index)
-    fcurve.keyframe_points.insert(0, value, options={'REPLACE'})
+    fcurve.keyframe_points.insert(0, value)
 
 
 def get_default_values(ob, new_action, old_action):
