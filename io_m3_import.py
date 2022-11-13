@@ -1003,36 +1003,27 @@ class Importer:
     def create_attachments(self):
         ob = self.ob
 
-        bone_point = {}
+        m3_volumes = self.m3_get_ref(self.m3_model.attachment_volumes)
 
         for m3_point in self.m3_get_ref(self.m3_model.attachment_points):
             bone_name = self.m3_get_bone_name(m3_point.bone)
             bone = ob.data.bones[bone_name]
             point = shared.m3_item_add(ob.m3_attachmentpoints, item_name=self.m3_get_ref(m3_point.name)[4:])
             point.bone = bone.bl_handle if bone else ''
-            # print('point set', point.name)
-            if not bone_point.get(bone_name) or bone_name.startswith('Vol'):
-                bone_point[bone_name] = (point, len(getattr(ob, 'm3_attachmentpoints')) - 1)
 
-        # print(bone_point)
-
-        for m3_volume in self.m3_get_ref(self.m3_model.attachment_volumes):
-            bone0_name = self.m3_get_bone_name(m3_volume.bone0)
-            point, point_index = bone_point[bone0_name]
-            bone1_name = self.m3_get_bone_name(m3_volume.bone1)
-            bone1 = ob.data.bones[bone1_name]
-            if not point:
-                continue
-            vol = shared.m3_item_add(point.volumes, item_name='Volume')
-            vol.bone = bone1.bl_handle if bone1 else ''
-            vol.shape = vol.bl_rna.properties['shape'].enum_items[getattr(m3_volume, 'shape')].identifier
-            vol.size = (m3_volume.size0, m3_volume.size1, m3_volume.size2)
-            md = to_bl_matrix(m3_volume.matrix).decompose()
-            vol.location = md[0]
-            vol.rotation = md[1].to_euler('XYZ')
-            vol.scale = md[2]
-            # print('point', point, point.name)
-            vol.mesh_object = self.generate_basic_volume_object('{}_{}'.format(point.name, vol.name), m3_volume.vertices, m3_volume.face_data)
+            for m3_volume in m3_volumes:
+                if m3_volume.bone0 == m3_point.bone:
+                    m3_vol_bone_name = self.m3_get_bone_name(m3_volume.bone1)
+                    m3_vol_bone = ob.data.bones[m3_vol_bone_name]
+                    vol = shared.m3_item_add(point.volumes, item_name='Volume')
+                    vol.bone = m3_vol_bone.bl_handle if m3_vol_bone else ''
+                    vol.shape = vol.bl_rna.properties['shape'].enum_items[getattr(m3_volume, 'shape')].identifier
+                    vol.size = (m3_volume.size0, m3_volume.size1, m3_volume.size2)
+                    md = to_bl_matrix(m3_volume.matrix).decompose()
+                    vol.location = md[0]
+                    vol.rotation = md[1].to_euler('XYZ')
+                    vol.scale = md[2]
+                    vol.mesh_object = self.generate_basic_volume_object('{}_{}'.format(point.name, vol.name), m3_volume.vertices, m3_volume.face_data)
 
     def create_lights(self):
         ob = self.ob
