@@ -21,6 +21,7 @@ import math
 import bpy
 import bmesh
 import mathutils
+from math import sqrt
 from . import io_m3
 from . import io_shared
 from . import shared
@@ -488,11 +489,23 @@ class Importer:
                 anim_index = stc_ref & 0xffff
                 m3_key_type_collection = m3_key_type_collection_list[anim_type]
                 m3_key_entries = self.m3_get_ref(m3_key_type_collection)[anim_index]
+
                 if not self.stc_id_data.get(stc_id):
                     self.stc_id_data[stc_id] = {}
-                frames = sorted(list(set(to_bl_frame(ms) for ms in self.m3_get_ref(m3_key_entries.frames))))
-                stc_id_to_frames_values = m3_key_type_collection_method[anim_type](frames, self.m3_get_ref(m3_key_entries.keys))
-                self.stc_id_data[stc_id][anim.action.name] = stc_id_to_frames_values
+
+                frames = []
+                ignored_indices = []
+                for ii, ms in enumerate(self.m3_get_ref(m3_key_entries.frames)):
+                    frame = to_bl_frame(ms)
+                    if frame not in frames:
+                        frames.append(frame)
+                    else:
+                        ignored_indices.append(ii)
+
+                m3_keys = self.m3_get_ref(m3_key_entries.keys)
+                keys = [m3_keys[ii] for ii in range(len(m3_keys)) if ii not in ignored_indices]
+
+                self.stc_id_data[stc_id][anim.action.name] = m3_key_type_collection_method[anim_type](frames, keys)
 
         m3_stgs = self.m3_get_ref(self.m3_model.sequence_transformation_groups)
         for ii, m3_stc_group in enumerate(m3_stgs):
@@ -603,6 +616,16 @@ class Importer:
                 bone_mat = mathutils.Matrix.LocRotScale(*bone_mat_comp)
                 pose_bone = self.ob.pose.bones.get(self.m3_get_bone_name(ii))
                 pose_bone.matrix_basis = left_mat @ bone_mat @ right_mat
+                set_default_value(self.ob.m3_animations_default, pose_bone.path_from_id('location'), 0, pose_bone.location[0])
+                set_default_value(self.ob.m3_animations_default, pose_bone.path_from_id('location'), 1, pose_bone.location[1])
+                set_default_value(self.ob.m3_animations_default, pose_bone.path_from_id('location'), 2, pose_bone.location[2])
+                set_default_value(self.ob.m3_animations_default, pose_bone.path_from_id('rotation_quaternion'), 0, pose_bone.rotation_quaternion[0])
+                set_default_value(self.ob.m3_animations_default, pose_bone.path_from_id('rotation_quaternion'), 1, pose_bone.rotation_quaternion[1])
+                set_default_value(self.ob.m3_animations_default, pose_bone.path_from_id('rotation_quaternion'), 2, pose_bone.rotation_quaternion[2])
+                set_default_value(self.ob.m3_animations_default, pose_bone.path_from_id('rotation_quaternion'), 3, pose_bone.rotation_quaternion[3])
+                set_default_value(self.ob.m3_animations_default, pose_bone.path_from_id('scale'), 0, pose_bone.scale[0])
+                set_default_value(self.ob.m3_animations_default, pose_bone.path_from_id('scale'), 1, pose_bone.scale[1])
+                set_default_value(self.ob.m3_animations_default, pose_bone.path_from_id('scale'), 2, pose_bone.scale[2])
                 animate_pose_bone(m3_bone, pose_bone, left_mat, right_mat)
 
         def animate_pose_bone(m3_bone, pose_bone, left_mat, right_mat):
@@ -616,9 +639,24 @@ class Importer:
             default_scl = m3_bone.scale.default
 
             for action_name in action_name_set:
-                anim_data_loc = id_data_loc.get(action_name, [[0, default_loc.x], [0, default_loc.y], [0, default_loc.z]])
-                anim_data_rot = id_data_rot.get(action_name, [[0, default_rot.w], [0, default_rot.x], [0, default_rot.y], [0, default_rot.z]])
-                anim_data_scl = id_data_scl.get(action_name, [[0, default_scl.x], [0, default_scl.y], [0, default_scl.z]])
+                anim_data_loc = id_data_loc.get(action_name, None)
+                anim_data_rot = id_data_rot.get(action_name, None)
+                anim_data_scl = id_data_scl.get(action_name, None)
+
+                anim_data_loc_none = not anim_data_loc
+                if anim_data_loc_none:
+                    anim_data_loc_none = True
+                    anim_data_loc = [[0, default_loc.x], [0, default_loc.y], [0, default_loc.z]]
+
+                anim_data_rot_none = not anim_data_rot
+                if anim_data_rot_none:
+                    anim_data_rot_none = True
+                    anim_data_rot = [[0, default_rot.w], [0, default_rot.x], [0, default_rot.y], [0, default_rot.z]]
+
+                anim_data_scl_none = not anim_data_scl
+                if anim_data_scl_none:
+                    anim_data_scl_none = True
+                    anim_data_scl = [[0, default_scl.x], [0, default_scl.y], [0, default_scl.z]]
 
                 anim_frames = [anim_data_loc[0][::2], anim_data_rot[0][::2], anim_data_scl[0][::2]]
                 anim_frames_set = set().union(*anim_frames)
@@ -628,7 +666,6 @@ class Importer:
 
                 # we put in original data first so that we can evaluate the fcurves.
                 # blender interpolates the data we need to apply the correction matrices for us.
-                # TODO need to somehow get spherical linear interpolation for rotation instead
                 # * can we interpolate based on interpolation of m3 anim header?
                 fcurves = bpy.data.actions.get(action_name).fcurves
                 # store fcurve references so that we don't have to find them later
@@ -663,6 +700,7 @@ class Importer:
                     eval_scl = mathutils.Vector([fcurve.evaluate(frame) for fcurve in fcurves_scl])
 
                     loc, rot, scl = (left_mat @ mathutils.Matrix.LocRotScale(eval_loc, eval_rot, eval_scl) @ right_mat).decompose()
+
                     if frame in anim_frames[0]:
                         new_anim_data[0].append(loc)
 
@@ -673,21 +711,30 @@ class Importer:
                         new_anim_data[2].append(scl)
 
                 # second pass animation data, after evaluation
-                new_anim_data_loc = m3_key_collect_vec3(sorted(list(anim_frames[0])), new_anim_data[0])
-                new_anim_data_rot = m3_key_collect_quat(sorted(list(anim_frames[1])), new_anim_data[1])
-                new_anim_data_scl = m3_key_collect_vec3(sorted(list(anim_frames[2])), new_anim_data[2])
+                new_anim_data_loc = m3_key_collect_vec3(anim_frames[0], new_anim_data[0])
+                new_anim_data_rot = m3_key_collect_quat(anim_frames[1], new_anim_data[1])
+                new_anim_data_scl = m3_key_collect_vec3(anim_frames[2], new_anim_data[2])
 
                 for index, index_data in enumerate(new_anim_data_loc):
                     fcurve = fcurves_loc[index]
-                    fcurve.keyframe_points.foreach_set('co', index_data)
+                    if anim_data_loc_none:
+                        fcurves.remove(fcurve)
+                    else:
+                        fcurve.keyframe_points.foreach_set('co', index_data)
 
                 for index, index_data in enumerate(new_anim_data_rot):
                     fcurve = fcurves_rot[index]
-                    fcurve.keyframe_points.foreach_set('co', index_data)
+                    if anim_data_rot_none:
+                        fcurves.remove(fcurve)
+                    else:
+                        fcurve.keyframe_points.foreach_set('co', index_data)
 
                 for index, index_data in enumerate(new_anim_data_scl):
                     fcurve = fcurves_scl[index]
-                    fcurve.keyframe_points.foreach_set('co', index_data)
+                    if anim_data_scl_none:
+                        fcurves.remove(fcurve)
+                    else:
+                        fcurve.keyframe_points.foreach_set('co', index_data)
 
         bpy.context.view_layer.objects.active = self.ob
         bone_rests = [to_bl_matrix(iref.matrix).inverted() @ io_shared.rot_fix_matrix for iref in self.m3_bone_rests]
