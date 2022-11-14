@@ -404,8 +404,8 @@ class Importer:
         self.create_turrets()
         self.create_billboards()
 
-        bpy.context.view_layer.objects.active = ob
-        ob.select_set(True)
+        bpy.context.view_layer.objects.active = self.ob
+        self.ob.select_set(True)
 
     def armature_object_new(self):
         scene = bpy.context.scene
