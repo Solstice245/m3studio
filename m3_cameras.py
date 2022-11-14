@@ -30,7 +30,7 @@ def update_collection_index(self, context):
     ob = context.object
     bl = ob.m3_cameras[ob.m3_cameras_index]
     shared.select_bones_handles(ob, [bl.bone])
-    shared.auto_update_bone_shapes(ob, 'CAM_')
+    shared.auto_update_bone_display_mode(ob, 'CAM_')
 
 
 def draw_props(camera, layout):

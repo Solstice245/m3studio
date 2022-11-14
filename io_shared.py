@@ -94,7 +94,7 @@ def io_material_standard(processor):
 
 def io_material_displacement(processor):
     processor.integer('unknown0')
-    processor.anim_float('strength')
+    processor.anim_float('strength_factor')
     processor.integer('priority')
 
 

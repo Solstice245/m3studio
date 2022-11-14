@@ -29,7 +29,7 @@ def update_collection_index(self, context):
     ob = context.object
     bl = ob.m3_shadowboxes[ob.m3_shadowboxes_index]
     shared.select_bones_handles(ob, [bl.bone])
-    shared.auto_update_bone_shapes(ob, 'SHBX')
+    shared.auto_update_bone_display_mode(ob, 'SHBX')
 
 
 def draw_props(shbx, layout):

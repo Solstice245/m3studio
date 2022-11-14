@@ -29,7 +29,7 @@ def update_collection_index(self, context):
     ob = context.object
     bl = ob.m3_warps[ob.m3_warps_index]
     shared.select_bones_handles(ob, [bl.bone])
-    shared.auto_update_bone_shapes(ob, 'WRP_')
+    shared.auto_update_bone_display_mode(ob, 'WRP_')
 
 
 def draw_props(warp, layout):

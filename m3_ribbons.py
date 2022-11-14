@@ -32,7 +32,7 @@ def update_collection_index(self, context):
     ob = context.object
     bl = ob.m3_ribbons[ob.m3_ribbons_index]
     shared.select_bones_handles(ob, [bl.bone])
-    shared.auto_update_bone_shapes(ob, 'RIB_')
+    shared.auto_update_bone_display_mode(ob, 'RIB_')
 
 
 def draw_point_props(point, layout):

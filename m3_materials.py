@@ -22,7 +22,7 @@ from . import bl_enum
 
 
 def register_props():
-    bpy.types.Object.m3_materialrefs = bpy.props.CollectionProperty(type=Properties)
+    bpy.types.Object.m3_materialrefs = bpy.props.CollectionProperty(type=ReferenceProperties)
     bpy.types.Object.m3_materialrefs_index = bpy.props.IntProperty(options=set(), default=-1)
     bpy.types.Object.m3_materials_standard = bpy.props.CollectionProperty(type=StandardProperties)
     bpy.types.Object.m3_materials_displacement = bpy.props.CollectionProperty(type=DisplacementProperties)
@@ -78,7 +78,7 @@ class StandardProperties(shared.M3PropertyGroup):
     envi_diff_multiply: bpy.props.FloatProperty(options=set(), min=0, default=0)
     envi_spec_multiply: bpy.props.FloatProperty(options=set(), min=0, default=0)
     parallax_height: bpy.props.FloatProperty(name='Parallax Height', default=0)  # no UI
-    unknown_animation_ref: bpy.props.IntProperty(name='Unknown', min=0, default=0) # no UI
+    unknown_animation_ref: bpy.props.IntProperty(name='Unknown', min=0, default=0)  # no UI
 
     vertex_color: bpy.props.BoolProperty(options=set())
     vertex_alpha: bpy.props.BoolProperty(options=set())
@@ -486,7 +486,7 @@ def draw_props(context, matref, layout):
     mat_type_dict[matref.mat_type]['draw'](context, mat, layout)
 
 
-class Properties(shared.M3PropertyGroup):
+class ReferenceProperties(shared.M3PropertyGroup):
     mat_type: bpy.props.EnumProperty(options=set(), items=bl_enum.matref_type)
     mat_handle: bpy.props.StringProperty(options=set())
 
@@ -724,7 +724,7 @@ classes = (
     ReflectionProperties,
     LensFlareStarburstProperties,
     LensFlareProperties,
-    Properties,
+    ReferenceProperties,
     Panel,
     M3MaterialOpAddPopup,
     M3MaterialOpAdd,

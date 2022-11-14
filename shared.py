@@ -82,8 +82,8 @@ def m3_item_get_name(collection, prefix=''):
 
 def m3_item_add(collection, item_name=''):
     item = collection.add()
-    item.bl_handle = m3_handle_gen()
-    item.name = m3_item_get_name(collection, item_name)
+    item['bl_handle'] = m3_handle_gen()
+    item['name'] = m3_item_get_name(collection, item_name)
     return item
 
 
@@ -183,7 +183,7 @@ def bone_shape_update_event(self, context):
 
 
 def select_bones_handles(ob, bl_handles):
-    if ob.m3_options.auto_select_bones:
+    if ob.m3_options.auto_update_bone_selection:
         for bone in ob.data.bones:
             bone.select = bone.bl_handle in bl_handles
             bone.select_tail = bone.select
@@ -191,10 +191,10 @@ def select_bones_handles(ob, bl_handles):
                 ob.data.bones.active = bone
 
 
-def auto_update_bone_shapes(ob, setting):
-    if ob.m3_options.auto_update_bone_shapes:
-        if ob.m3_options.bone_shapes != setting:
-            ob.m3_options.bone_shapes = setting
+def auto_update_bone_display_mode(ob, setting):
+    if ob.m3_options.auto_update_bone_display_mode:
+        if ob.m3_options.bone_display_mode != setting:
+            ob.m3_options.bone_display_mode = setting
 
 
 class ArmatureObjectPanel(bpy.types.Panel):
@@ -614,7 +614,7 @@ def set_bone_shape(ob, bone):
 
         data[0] += new_data[0]
 
-    if ob.m3_options.bone_shapes == 'ATT_':
+    if ob.m3_options.bone_display_mode == 'ATT_':
         for point in ob.m3_attachmentpoints:
             add_mesh_data(point.bone, mesh_gen.point())
             for volume in point.volumes:
@@ -628,18 +628,18 @@ def set_bone_shape(ob, bone):
                 elif volume.shape == 'MESH' and volume.mesh_object:
                     add_mesh_data(volume.bone, volume.mesh_object.data, mat)
 
-    elif ob.m3_options.bone_shapes == 'CAM_':
+    elif ob.m3_options.bone_display_mode == 'CAM_':
         for camera in ob.m3_cameras:
             add_mesh_data(camera.bone, mesh_gen.camera(0.5, camera.focal_depth))
 
-    elif ob.m3_options.bone_shapes == 'LITE':
+    elif ob.m3_options.bone_display_mode == 'LITE':
         for light in ob.m3_lights:
             if light.shape == 'POINT':
                 add_mesh_data(light.bone, mesh_gen.sphere(light.attenuation_far))
             elif light.shape == 'SPOT':
                 add_mesh_data(light.bone, mesh_gen.cone(light.falloff, light.attenuation_far))
 
-    elif ob.m3_options.bone_shapes == 'FOR_':
+    elif ob.m3_options.bone_display_mode == 'FOR_':
         for force in ob.m3_forces:
             if force.shape == 'CUBE':
                 add_mesh_data(force.bone, mesh_gen.cube(force.size))
@@ -652,7 +652,7 @@ def set_bone_shape(ob, bone):
             elif force.shape == 'CONEDOME':
                 add_mesh_data(force.bone, mesh_gen.cone_dome(force.size[1], force.size[0]))
 
-    elif ob.m3_options.bone_shapes == 'PAR_':
+    elif ob.m3_options.bone_display_mode == 'PAR_':
         for particle in ob.m3_particle_systems:
 
             mesh_gen_data = [[], [], []]
@@ -690,7 +690,7 @@ def set_bone_shape(ob, bone):
             #     if particle.emit_shape_cutout:
             #         add_mesh_data(copy.bone, mesh_gen_data_cutout)
 
-    elif ob.m3_options.bone_shapes == 'PHRB':
+    elif ob.m3_options.bone_display_mode == 'PHRB':
         for rigid_body in ob.m3_rigidbodies:
             for shape in rigid_body.shapes:
                 mat = (shape.location, shape.rotation, shape.scale)
@@ -705,7 +705,7 @@ def set_bone_shape(ob, bone):
                 elif (shape.shape == 'CONVEXHULL' or shape.shape == 'MESH') and shape.mesh_object:
                     add_mesh_data(volume.bone, volume.mesh_object.data, mat)
 
-    elif ob.m3_options.bone_shapes == 'FTHT':
+    elif ob.m3_options.bone_display_mode == 'FTHT':
         mat = (ob.m3_hittest_tight.location, ob.m3_hittest_tight.rotation, ob.m3_hittest_tight.scale)
         if ob.m3_hittest_tight.shape == 'CUBE':
             add_mesh_data(ob.m3_hittest_tight.bone, mesh_gen.cube(ob.m3_hittest_tight.size), mat)
@@ -726,13 +726,13 @@ def set_bone_shape(ob, bone):
             elif hittest.shape == 'MESH' and hittest.mesh_object:
                 add_mesh_data(hittest.bone, hittest.mesh_object.data, mat)
 
-    elif ob.m3_options.bone_shapes == 'PHCL':
+    elif ob.m3_options.bone_display_mode == 'PHCL':
         for cloth in ob.m3_cloths:
             pass  # TODO
             # for constraint in cloth.constraints:
             #     add_mesh_data(constraint.bone, mesh_gen.capsule((0, constraint.height, 0), constraint.radius))
 
-    elif ob.m3_options.bone_shapes == 'WRP_':
+    elif ob.m3_options.bone_display_mode == 'WRP_':
         for warp in ob.m3_warps:
             add_mesh_data(warp.bone, mesh_gen.sphere(warp.radius))
 

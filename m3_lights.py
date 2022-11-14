@@ -30,7 +30,7 @@ def update_collection_index(self, context):
     ob = context.object
     bl = ob.m3_lights[ob.m3_lights_index]
     shared.select_bones_handles(ob, [bl.bone])
-    shared.auto_update_bone_shapes(ob, 'LITE')
+    shared.auto_update_bone_display_mode(ob, 'LITE')
 
 
 def draw_props(light, layout):

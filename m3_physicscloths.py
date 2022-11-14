@@ -28,7 +28,7 @@ def register_props():
 
 
 def update_collection_index(self, context):
-    shared.auto_update_bone_shapes(context.object, 'PHCL')
+    shared.auto_update_bone_display_mode(context.object, 'PHCL')
 
 
 def draw_constraint_props(constraint, layout):

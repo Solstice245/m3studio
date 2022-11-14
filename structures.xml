@@ -1658,7 +1658,7 @@
         <fields>
             <field name="name" type="Reference" refTo="CHAR"/>
             <field name="unknown0" type="uint32" default-value="0"/>
-            <field name="strength" type="FloatAnimationReferenceV0"/>
+            <field name="strength_factor" type="FloatAnimationReferenceV0"/>
             <field name="layer_norm" type="Reference" refTo="LAYR"/>
             <field name="layer_strength" type="Reference" refTo="LAYR"/>
             <field name="flags" type="uint32" default-value="0"/>

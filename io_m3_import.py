@@ -383,7 +383,7 @@ class Importer:
 
         # TODO model boundings
         self.ob = self.armature_object_new()
-        self.create_animations()
+        self.create_animations()  # TODO handle EVNT data
         self.create_bones()
         self.create_materials()
         self.create_mesh()  # TODO mesh import options
@@ -404,14 +404,15 @@ class Importer:
         self.create_turrets()
         self.create_billboards()
 
+        bpy.context.view_layer.objects.active = ob
+        ob.select_set(True)
+
     def armature_object_new(self):
         scene = bpy.context.scene
         arm = bpy.data.armatures.new(name='Armature')
         ob = bpy.data.objects.new('Armature', arm)
         ob.location = scene.cursor.location
         scene.collection.objects.link(ob)
-        bpy.context.view_layer.objects.active = ob
-        ob.select_set(True)
 
         return ob
 
@@ -468,16 +469,16 @@ class Importer:
             processor = M3InputProcessor(self, anim_group, m3_anim_group)
             io_shared.io_anim_group(processor)
 
-            anim_group.frame_start = to_bl_frame(m3_anim_group.anim_ms_start)
-            anim_group.frame_end = to_bl_frame(m3_anim_group.anim_ms_end)
+            anim_group['frame_start'] = to_bl_frame(m3_anim_group.anim_ms_start)
+            anim_group['frame_end'] = to_bl_frame(m3_anim_group.anim_ms_end)
 
         m3_stcs = self.m3_get_ref(self.m3_model.sequence_transformation_collections)
         for m3_anim in m3_stcs:
             anim_name = self.m3_get_ref(m3_anim.name)
             anim = shared.m3_item_add(ob.m3_animations, anim_name)
-            anim.runs_concurrent = m3_anim.runs_concurrent
-            anim.priority = m3_anim.priority
-            anim.action = bpy.data.actions.new(ob.name + '_' + anim_name)
+            anim['runs_concurrent'] = m3_anim.runs_concurrent
+            anim['priority'] = m3_anim.priority
+            anim['action'] = bpy.data.actions.new(ob.name + '_' + anim_name)
 
             m3_key_type_collection_list = [
                 m3_anim.sdev, m3_anim.sd2v, m3_anim.sd3v, m3_anim.sd4q, m3_anim.sdcc, m3_anim.sdr3, m3_anim.sd08,
@@ -1203,7 +1204,7 @@ class Importer:
                     if m3_volume.structureDescription.structureVersion == 1:
                         volume.mesh = self.generate_basic_volume_object(physics_shape.name, m3_volume.vertices, m3_volume.face_data)
                     else:
-                        args = (physics_shape.name, m3_volume.vertices, m3_volume.polygon_related, m3_volume.loops, m3_volume.polygons)
+                        args = (physics_shape.name, m3_volume.vertices, m3_volume.polygons_related, m3_volume.loops, m3_volume.polygons)
                         volume.mesh = self.generate_rigidbody_volume_object(*args)
 
                 self.m3_ref_data[m3_rigidbody.physics_shape.index]['bl'] = physics_shape
