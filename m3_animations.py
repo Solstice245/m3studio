@@ -112,24 +112,20 @@ def anim_group_frame_update(self, context):
 
 def draw_animation_props(animation, layout):
     layout.template_ID(animation, 'action', new='m3.animation_action_new', unlink='m3.animation_action_unlink')
-    row = layout.row()
-    row.use_property_split = False
-    row.alignment = 'CENTER'
-    row.split(factor=0.5)
-    row.label(text='Priority')
-    row.prop(animation, 'priority', text='')
-    row.prop(animation, 'concurrent', text='Concurrent')
+    col = layout.column()
+    col.prop(animation, 'concurrent', text='Concurrent')
+    col.prop(animation, 'priority', text='Priority')
+    row = layout.row(heading='Simulate Physics')
+    row.prop(animation, 'simulate', text='')
+    col = row.column()
+    col.active = animation.simulate
+    col.prop(animation, 'simulate_frame', text='On Frame')
 
 
 def draw_group_props(anim_group, layout):
     col = layout.column(align=True)
     col.prop(anim_group, 'frame_start', text='Frame Start')
     col.prop(anim_group, 'frame_end', text='End')
-    row = layout.row(heading='Simulate Physics')
-    row.prop(anim_group, 'simulate', text='')
-    col = row.column()
-    col.active = anim_group.simulate
-    col.prop(anim_group, 'simulate_frame', text='On Frame')
     col = layout.column()
     col.prop(anim_group, 'frequency', text='Frequency')
     col.prop(anim_group, 'movement_speed', text='Movement Speed')
@@ -143,13 +139,13 @@ class AnimationProperties(shared.M3PropertyGroup):
     action: bpy.props.PointerProperty(type=bpy.types.Action, update=anim_update)
     priority: bpy.props.IntProperty(options=set(), min=0)
     concurrent: bpy.props.BoolProperty(options=set())
+    simulate: bpy.props.BoolProperty(options=set())
+    simulate_frame: bpy.props.IntProperty(options=set(), min=0)
 
 
 class GroupProperties(shared.M3PropertyGroup):
     frame_start: bpy.props.IntProperty(options=set(), min=0, update=anim_group_frame_update)
     frame_end: bpy.props.IntProperty(options=set(), min=0, default=60, update=anim_group_frame_update)
-    simulate: bpy.props.BoolProperty(options=set())
-    simulate_frame: bpy.props.IntProperty(options=set(), min=0)
     movement_speed: bpy.props.FloatProperty(options=set())
     frequency: bpy.props.IntProperty(options=set(), min=0, default=100)
     not_looping: bpy.props.BoolProperty(options=set())

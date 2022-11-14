@@ -383,7 +383,7 @@ class Importer:
 
         # TODO model boundings
         self.ob = self.armature_object_new()
-        self.create_animations()  # TODO handle EVNT data
+        self.create_animations()
         self.create_bones()
         self.create_materials()
         self.create_mesh()  # TODO mesh import options
@@ -507,6 +507,15 @@ class Importer:
                 keys = [m3_keys[ii] for ii in range(len(m3_keys)) if ii not in ignored_indices]
 
                 self.stc_id_data[stc_id][anim.action.name] = m3_key_type_collection_method[anim_type](frames, keys)
+
+                # consider making a dedicated property type and collection list for events
+                if m3_key_type_collection == m3_anim.sdev:
+                    for ii, frame in enumerate(frames):
+                        key = keys[ii]
+                        event_name = self.m3_get_ref(key.name)
+                        if event_name == 'Evt_Simulate':
+                            anim['simulate'] = True
+                            anim['simulate_frame'] = frame
 
         m3_stgs = self.m3_get_ref(self.m3_model.sequence_transformation_groups)
         for ii, m3_stc_group in enumerate(m3_stgs):
