@@ -23,6 +23,13 @@ from . import shared
 def register_props():
     bpy.types.Object.m3_turrets = bpy.props.CollectionProperty(type=Properties)
     bpy.types.Object.m3_turrets_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
+    bpy.types.Object.m3_turrets_part_version = bpy.props.EnumProperty(options=set(), items=turret_part_versions, default='4')
+
+
+turret_part_versions = (
+    ('1', '1', 'Version 1'),
+    ('4', '4', 'Version 4'),
+)
 
 
 def update_collection_index(self, context):
@@ -35,17 +42,24 @@ def update_collection_index(self, context):
 
 
 def draw_part_props(part, layout):
+    version = int(part.id_data.m3_turrets_part_version)
+
     shared.draw_pointer_prop(layout, part.id_data.data.bones, part, 'bone', bone_search=True, label='Bone', icon='BONE_DATA')
     col = layout.column()
     col.prop(part, 'group_id', text='Part Group')
     col.prop(part, 'main_part', text='Main Part')
-    col.prop(part, 'forward_x', text='Forward Vector X')
-    col.prop(part, 'forward_y', text='Forward Vector Y')
-    col.prop(part, 'forward_z', text='Forward Vector Z')
-    col.separator()
-    col.prop(part, 'up_x', text='Upward Vector X')
-    col.prop(part, 'up_y', text='Upward Vector Y')
-    col.prop(part, 'up_z', text='Upward Vector Z')
+
+    if version >= 4:
+        col.prop(part, 'forward_x', text='Forward Vector X')
+        col.prop(part, 'forward_y', text='Forward Vector Y')
+        col.prop(part, 'forward_z', text='Forward Vector Z')
+        col.separator()
+        col.prop(part, 'up_x', text='Upward Vector X')
+        col.prop(part, 'up_y', text='Upward Vector Y')
+        col.prop(part, 'up_z', text='Upward Vector Z')
+    else:
+        col.prop(part, 'matrix', text='Matrix')
+
     col = layout.column()
     col.separator()
     col.prop(part, 'yaw_weight', text='Yaw Weight')
@@ -76,6 +90,7 @@ def draw_props(turret, layout):
 
 
 class PartProperties(shared.M3BoneUserPropertyGroup):
+    matrix: bpy.props.FloatVectorProperty(options=set(), size=(4, 4), subtype='MATRIX')
     forward_x: bpy.props.FloatVectorProperty(options=set(), size=4, default=(0, -1, 0, 0))
     forward_y: bpy.props.FloatVectorProperty(options=set(), size=4, default=(1, 0, 0, 0))
     forward_z: bpy.props.FloatVectorProperty(options=set(), size=4, default=(0, 0, 1, 0))

@@ -25,6 +25,7 @@ def register_props():
     bpy.types.Object.m3_materialrefs = bpy.props.CollectionProperty(type=ReferenceProperties)
     bpy.types.Object.m3_materialrefs_index = bpy.props.IntProperty(options=set(), default=-1)
     bpy.types.Object.m3_materials_standard = bpy.props.CollectionProperty(type=StandardProperties)
+    bpy.types.Object.m3_materials_standard_version = bpy.props.EnumProperty(options=set(), items=standard_versions, default='20')
     bpy.types.Object.m3_materials_displacement = bpy.props.CollectionProperty(type=DisplacementProperties)
     bpy.types.Object.m3_materials_composite = bpy.props.CollectionProperty(type=CompositeProperties)
     bpy.types.Object.m3_materials_terrain = bpy.props.CollectionProperty(type=TerrainProperties)
@@ -33,8 +34,31 @@ def register_props():
     bpy.types.Object.m3_materials_creep = bpy.props.CollectionProperty(type=CreepProperties)
     bpy.types.Object.m3_materials_stb = bpy.props.CollectionProperty(type=SplatTerrainBakeProperties)
     bpy.types.Object.m3_materials_reflection = bpy.props.CollectionProperty(type=ReflectionProperties)
+    bpy.types.Object.m3_materials_reflection_version = bpy.props.EnumProperty(options=set(), items=reflection_versions, default='2')
     bpy.types.Object.m3_materials_lensflare = bpy.props.CollectionProperty(type=LensFlareProperties)
-    bpy.types.Object.m3_material_ref = bpy.props.StringProperty(options=set())
+    # bpy.types.Object.m3_materials_lensflare_version = bpy.props.EnumProperty(options=set(), items=lensflare_versions)
+    # ^^ include this once LFLR version 2 is sufficiently documented
+
+
+standard_versions = (
+    ('15', '15', 'Version 15'),
+    ('16', '16', 'Version 16'),
+    ('17', '17', 'Version 17'),
+    ('18', '18', 'Version 18'),
+    ('19', '19', 'Version 19'),
+    ('20', '20', 'Version 20'),
+)
+
+reflection_versions = (
+    ('1', '1', 'Version 1'),
+    ('2', '2', 'Version 2'),
+    ('3', '3', 'Version 3'),
+)
+
+lensflare_versions = (
+    ('2', '2', 'Version 2'),
+    ('3', '3', 'Version 3'),
+)
 
 
 def init_msgbus(ob, context):
@@ -256,10 +280,15 @@ def draw_layer_pointer_prop(ob, layout, material, layer_name, label='test'):
 
 
 def draw_standard_props(context, material, layout):
+    version = int(material.id_data.m3_materials_standard_version)
+
     draw_layer_pointer_prop(context.object, layout, material, 'layer_diff', 'Diffuse')
     draw_layer_pointer_prop(context.object, layout, material, 'layer_decal', 'Decal')
     draw_layer_pointer_prop(context.object, layout, material, 'layer_spec', 'Specular')
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_gloss', 'Gloss')
+
+    if version >= 16:
+        draw_layer_pointer_prop(context.object, layout, material, 'layer_gloss', 'Gloss')
+
     draw_layer_pointer_prop(context.object, layout, material, 'layer_emis1', 'Emissive 1')
     draw_layer_pointer_prop(context.object, layout, material, 'layer_emis2', 'Emissive 2')
     draw_layer_pointer_prop(context.object, layout, material, 'layer_envi', 'Environment')
@@ -270,10 +299,13 @@ def draw_standard_props(context, material, layout):
     draw_layer_pointer_prop(context.object, layout, material, 'layer_height', 'Height')
     draw_layer_pointer_prop(context.object, layout, material, 'layer_light', 'Light')
     draw_layer_pointer_prop(context.object, layout, material, 'layer_ao', 'Ambient Occlusion')
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_norm_blend1_mask', 'Normal Blend 1 Mask')
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_norm_blend2_mask', 'Normal Blend 2 Mask')
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_norm_blend1', 'Normal Blend 1')
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_norm_blend2', 'Normal Blend 2')
+
+    if version >= 19:
+        draw_layer_pointer_prop(context.object, layout, material, 'layer_norm_blend1_mask', 'Normal Blend 1 Mask')
+        draw_layer_pointer_prop(context.object, layout, material, 'layer_norm_blend2_mask', 'Normal Blend 2 Mask')
+        draw_layer_pointer_prop(context.object, layout, material, 'layer_norm_blend1', 'Normal Blend 1')
+        draw_layer_pointer_prop(context.object, layout, material, 'layer_norm_blend2', 'Normal Blend 2')
+
     layout.separator()
     col = layout.column()
     col.prop(material, 'blend_mode', text='Blend Mode')
@@ -289,11 +321,14 @@ def draw_standard_props(context, material, layout):
     col.prop(material, 'specularity', text='Specularity')
     col.prop(material, 'spec_multiply', text='Multiply')
     col.separator()
-    col = layout.column(align=True)
-    col.prop(material, 'envi_const_multiply', text='Environment Multiply')
-    col.prop(material, 'envi_diff_multiply', text='Diffuse')
-    col.prop(material, 'envi_spec_multiply', text='Specular')
-    col.separator()
+
+    if version >= 20:
+        col = layout.column(align=True)
+        col.prop(material, 'envi_const_multiply', text='Environment Multiply')
+        col.prop(material, 'envi_diff_multiply', text='Diffuse')
+        col.prop(material, 'envi_spec_multiply', text='Specular')
+        col.separator()
+
     col = layout.column_flow(align=True, columns=2)
     col.use_property_split = False
     col.prop(material, 'vertex_color', text='Vertex Color')
@@ -402,16 +437,27 @@ def draw_stb_props(context, material, layout):
 
 
 def draw_reflection_props(context, material, layout):
+    version = str(material.id_data.m3_materials_reflection_version)
+
     draw_layer_pointer_prop(context.object, layout, material, 'layer_norm', 'Normal')
     draw_layer_pointer_prop(context.object, layout, material, 'layer_strength', 'Strength')
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_blur', 'Blur')
+
+    if version >= 2:
+        draw_layer_pointer_prop(context.object, layout, material, 'layer_blur', 'Blur')
+
     layout.separator()
-    layout.prop(material, 'reflection_offset', text='Reflection Offset')
+
+    if version >= 2:
+        layout.prop(material, 'reflection_offset', text='Reflection Offset')
+
     layout.prop(material, 'reflection_strength', text='Reflection Strength')
     layout.prop(material, 'displacement_strength', text='Displacement Strength')
-    layout.separator()
-    layout.prop(material, 'blur_angle', text='Blur Angle')
-    layout.prop(material, 'blur_distance', text='Blur Distance')
+
+    if version >= 2:
+        layout.separator()
+        layout.prop(material, 'blur_angle', text='Blur Angle')
+        layout.prop(material, 'blur_distance', text='Blur Distance')
+
     layout.separator()
     col = layout.column_flow(columns=2)
     col.use_property_split = False

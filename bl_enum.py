@@ -16,7 +16,7 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-options_bone_display = [
+options_bone_display = (
     ('NONE', 'None', ''),
     ('ATT_', 'Attachment Points', ''),
     ('SHBX', 'Shadow Boxes', ''),
@@ -30,10 +30,10 @@ options_bone_display = [
     ('PHRB', 'Physics Rigid Bodies', ''),
     ('PHCL', 'Physics Cloths', ''),
     ('WRP_', 'Vertex Warpers', ''),
-]
+)
 
-attachmentpoint_keys = [
-    ('None', '(None)'),
+attachmentpoint_keys = (
+    ('None', '(None)', ''),
     ('Air', 'Air', ''),
     ('Alternate', 'Alternate', ''),
     ('Armor', 'Armor', ''),
@@ -98,9 +98,9 @@ attachmentpoint_keys = [
     ('Waist', 'Waist', ''),
     ('Weapon', 'Weapon', ''),
     ('Work', 'Work', ''),
-]
+)
 
-world_forces = [
+world_forces = (
     (0, 'Wind'),
     (1, 'Explosion'),
     (2, 'Energy'),
@@ -109,33 +109,33 @@ world_forces = [
     (5, 'Grass'),
     (6, 'Brush'),
     (7, 'Trees'),
-]
+)
 
-anim_smoothing = [
+anim_smoothing = (
     ('LINEAR', 'Linear', 'Linear interpolation. No usage of hold time'),
     ('SMOOTH', 'Smooth', 'Smooth interpolation. No usage of hold time'),
     ('BEZIER', 'Bezier', 'Bezier interpolation. No usage of hold time'),
     ('LINEARHOLD', 'Linear (Hold)', 'Linear interpolation. Uses hold time'),
     ('BEZIERHOLD', 'Bezier (Hold)', 'Bezier interpolation. Uses hold time'),
-]
+)
 
-lod = [
+lod = (
     ('NULL', 'None', 'LOD has no effect'),
     ('LOW', 'Low', 'LOD cutoff or reduction takes effect if graphics are Low'),
     ('MEDIUM', 'Medium', 'LOD cutoff or reduction takes effect if graphics are Medium'),
     ('HIGH', 'High', 'LOD cutoff or reduction takes effect if graphics are High'),
     ('ULTRA', 'Ultra', 'LOD cutoff or reduction takes effect if graphics are Ultra'),
-]
+)
 
-volume_shape = [
+volume_shape = (
     ('CUBE', 'Cube', 'Volume with a cubical shape'),
     ('SPHERE', 'Sphere', 'Volume with a spherical shape'),
     ('CAPSULE', 'Capsule', 'Volume with a capsular shape'),
     ('CYLINDER', 'Cylinder', 'Volume with a cylindrical shape'),
     ('MESH', 'Mesh', 'Volume with a shape matching the assigned mesh'),
-]
+)
 
-billboard_type = [
+billboard_type = (
     ('WORLDX', 'World X', 'Aligns the bone\'s X axis to the world view'),
     ('WORLDX', 'World Y', 'Aligns the bone\'s Y axis to the world view'),
     ('WORLDX', 'World Z', 'Aligns the bone\'s Z axis to the world view'),
@@ -143,30 +143,30 @@ billboard_type = [
     ('LOCALY', 'Local Y', 'Aligns the bone\'s Y axis to the local view'),
     ('LOCALZ', 'Local Z', 'Aligns the bone\'s Z axis to the local view'),
     ('FULL', 'Full', 'Aligns all of the bone\'s axis to the world view'),
-]
+)
 
-force_type = [
+force_type = (
     ('DIRECTIONAL', 'Directional', 'Particles get accelerated in a particular direction'),
     ('RADIAL', 'Radial', 'Particles get accelerated away from the force'),
     ('DAMPENING', 'Dampening', 'Particles get decelerated by the force'),
     ('VORTEX', 'Vortex', 'Particles get accelerated around the force. This type does not work when the shape is cubical'),
-]
+)
 
-force_shape = [
+force_shape = (
     ('SPHERE', 'Sphere', 'This force has a volume with a spherical shape'),
     ('CYLINDER', 'Cylinder', 'This force has a volume with a cylindrical shape'),
     ('CUBE', 'Cube', 'This force has a volume with a cubical shape'),
     ('HEMISPHERE', 'Hemisphere', 'This force has a volume with a half spherical shape'),
     ('CONEDOME', 'Cone Dome', 'This force has a volume with conical shape that is rounded on one end'),
-]
+)
 
-light_shape = [
+light_shape = (
     ('UNKNOWN', 'Unknown', 'Placeholder value for unused light shape value'),
     ('POINT', 'Point', 'Light is generated around a point'),
     ('SPOT', 'Spot', 'Light is generated from a point'),
-]
+)
 
-particle_type = [
+particle_type = (
     ('BILLBOARD', 'Square Billboards', 'The emitted particles are square shaped and always face the camera'),
     ('SPEED_ROTSCALE_BILLBOARD', 'Speed Scaled and Rotated Billboards', 'The emitted particles are scaled and rotated according to their speed'),
     ('UNKNOWN_02', 'Unknown Particle Type 2', ''),
@@ -178,9 +178,9 @@ particle_type = [
     ('UNKNOWN_08', 'Unknown Particle Type 8', ''),
     ('RAY', 'Ray from Spawn Location', 'The emitted particles are stretched from the spawn location'),
     ('UNKNOWN_10', 'Unknown Particle Type 10', ''),
-]
+)
 
-particle_shape = [
+particle_shape = (
     ('POINT', 'Point', 'Particles spawn at a certain point'),
     ('PLANE', 'Plane', 'Particles spawn within the area of the defined plane'),
     ('SPHERE', 'Sphere', 'Particles spawn within the area of the defined sphere'),
@@ -189,22 +189,22 @@ particle_shape = [
     ('DISC', 'Disc', 'Particles spawn within the area of the defined disc'),
     ('SPLINE', 'Spline', 'Particles spawn on the vertices of a mesh'),
     ('MESH', 'Mesh', 'Particles spawn on faces of a mesh. A mesh using vertex colors can control the probability of emission using the red channel'),
-]
+)
 
-particle_emit_type = [
+particle_emit_type = (
     ('CONSTANT', 'Constant', 'Emitted particles move along the normal of the emitter with configurable spread'),
     ('RADIAL', 'Radial', 'Emitted particles move in all outward directions from the emitter'),
     ('ZAXIS', 'Z-Axis', 'Emitted particles move in a random direction along the Z axis of the emitter'),
     ('RANDOM', 'Random', 'Emitted particles move in an entirely arbitrary direction'),
     ('MESH', 'Mesh Normal', 'Emitted particles move along the normal of the face being used as the emitter'),
-]
+)
 
-projection_type = [
+projection_type = (
     ('ORTHONORMAL', 'Orthonormal', 'Makes the projector behave like a box. It will be the same width no matter how close it is to the target surface'),
     ('PERSPECTIVE', 'Perspective', 'Makes the projector behave like a camera. The closer the projector is to the surface, the smaller the effect will be'),
-]
+)
 
-projection_layer = [
+projection_layer = (
     ('GENERIC1', 'Layer 1', 'Is a generic layer that occurs above creep, that is open for use as the user sees fit'),
     ('GENERIC2', 'Layer 2', 'Is a generic layer that occurs above creep, that is open for use as the user sees fit'),
     ('GENERIC2', 'Layer 3', 'Is a generic layer that occurs above creep, that is open for use as the user sees fit'),
@@ -215,9 +215,9 @@ projection_layer = [
     ('UI', 'UI', 'Used for in-world effects that are part of the user interface, such as selection circles'),
     ('UNDERCREEP', 'Under Creep', 'Is a general use layer that occurs below creep. Is most often used for effects that appear above roads, but below creep'),
     ('HARDTILE', 'Hardtile', 'Is the most common layer for terrain decoration. Roads are also drawn on this layer'),
-]
+)
 
-physics_materials = [
+physics_materials = (
     ('BONE', 'Bone', ''),
     ('CLOTHHVY', 'Cloth Heavy', ''),
     ('CLOTHLGT', 'Cloth Light', ''),
@@ -240,37 +240,37 @@ physics_materials = [
     ('SNOW', 'Snow', ''),
     ('WATER', 'Water', ''),
     ('WOOD', 'Wood', ''),
-]
+)
 
-physics_shape = [
+physics_shape = (
     ('CUBE', 'Cube', 'Cubical physics shape'),
     ('SPHERE', 'Sphere', 'Spherical physics shape'),
     ('CAPSULE', 'Capsule', 'Capsular physics shape'),
     ('CYLINDER', 'Cylinder', 'Cylindrical physics shape'),
     ('CONVEXHULL', 'Convex Hull', 'The physics shape is the convex hull of the selected object\'s mesh'),
     ('MESH', 'Mesh', 'The physics shape is the same shape as the selected object\'s mesh'),
-]
+)
 
-physics_joint_type = [
+physics_joint_type = (
     ('SPHERE', 'Spherical', 'Allows the joint to move freely on any axis'),
     ('REVOLVE', 'Revolute', 'Allows the joint to move only on the Z axis, like a door hinge'),
     ('CONE', 'Conical', 'Allows the joint to move freely like a spherical joint, but constrains movement to the cone angle around the Z axis'),
     ('WELD', 'Welded', 'Restrains the joint\'s movement, but is not perfectly rigid'),
-]
+)
 
-ribbon_type = [
+ribbon_type = (
     ('PLANAR_BILLBOARD', 'Planar Billboard', 'The ribbon\'s shape is that of plane, and the rotation is adjusted to face the camera as much as possible'),
     ('PLANAR', 'Planar', 'The ribbon\'s shape is of that of a plane'),
     ('CYLINDER', 'Cylinder', 'The ribbon\'s shape is that of a cylinder'),
     ('STAR', 'Star', 'The ribbon\'s shape is a mixture between the planar and cylinder shape.\nThe ratio is determined by the "Inner Radius" property'),
-]
+)
 
-ribbon_cull = [
+ribbon_cull = (
     ('TIME', 'Lifespan', 'Ribbon elements are destroyed after having existed for the specified lifespan.'),
     ('LENGTH', 'Length Based', 'Ribbon elements are destroyed after reaching the specified maximum length'),
-]
+)
 
-ribbon_variation_shape = [
+ribbon_variation_shape = (
     ('NONE', 'None', ''),
     ('SIN', 'Sin', ''),
     ('COS', 'Cos', ''),
@@ -278,27 +278,27 @@ ribbon_variation_shape = [
     ('SQUARE', 'Square', ''),
     ('NOISE_RANDOM', 'Noise (Random)', ''),
     ('NOISE_CONTINUOUS', 'Noise (Continuous)', ''),
-]
+)
 
-camera_dof = [
+camera_dof = (
     ('0x0', 'Unknown 0x0', ''),
     ('0x1', 'Unknown 0x1', ''),
-]
+)
 
-matref_type = [
+matref_type = (
     ('m3_materials_standard', 'Standard', 'Used for most purposes'),
     ('m3_materials_displacement', 'Displacement', 'Used to create rippling effects'),
     ('m3_materials_composite', 'Composite', 'Used to combine multiple materials into one'),
     ('m3_materials_terrain', 'Terrain', 'Used to draw terrain textures in the game map over the mesh'),
     ('m3_materials_creep', 'Creep', 'Used to draw creep which exists in the game map over the mesh'),
     ('m3_materials_volume', 'Volume', 'Used to draw volumetric shapes'),
-    ('m3_materials_volumenoise', 'Volume Noise', 'Used to draw volumetric shapes. Has additional functionality compared to the Volume material type'),
-    ('m3_materials_stb', 'Splat Terrain Bake', 'Used typically for static shapes drawn over terrain'),
-    ('m3_materials_reflection', 'Reflection', 'Used for special reflection effects. Currently not supported'),
-    ('m3_materials_lensflare', 'Lens Flare', 'Used for lens flare effects. Currently not supported'),
-]
+    ('m3_materials_volumenoise', 'Volume Noise (MV25+)', 'Used to draw volumetric shapes. Has additional functionality compared to the Volume material type'),
+    ('m3_materials_stb', 'Splat Terrain Bake (MV26+)', 'Used typically for static shapes drawn over terrain'),
+    ('m3_materials_reflection', 'Reflection (MV28+)', 'Used for special reflection effects. Currently not supported'),
+    ('m3_materials_lensflare', 'Lens Flare (MV29+)', 'Used for lens flare effects. Currently not supported'),
+)
 
-mat_blend = [
+mat_blend = (
     ('OPAQUE', 'Opaque', 'Render output has no transparency except where the alpha mask value exceeds the cutout threshold'),
     ('ALPHAB', 'Alpha Blend', 'Render output is blended on the basis of the alpha mask'),
     ('ADD', 'Add', 'Render output is transparent on the basis of color value'),
@@ -307,37 +307,37 @@ mat_blend = [
     ('MOD2', 'Mod 2x', 'Render output is similar to Opaque, but the alpha mask cutout is applied with greater fidelity'),
     ('UNK6', 'Unknown 0x06', 'Undocumented'),
     ('UNK7', 'Unknown 0x07', 'Undocumented'),
-]
+)
 
-mat_layer_blend = [
+mat_layer_blend = (
     ('MOD', 'Mod', 'No description yet'),
     ('MOD2', 'Mod 2x', 'No description yet'),
     ('ADD', 'Add', 'Render output is transparent on the basis of color value'),
     ('BLEND', 'Blend', 'Render output is layered over previous layers'),
     ('TEAMEMIS', 'Team Color Emissive Add', 'Render output is team colored from the alpha channel (or single color channel)'),
     ('TEAMDIFF', 'Team Color Diffuse Add', 'No description yet'),
-]
+)
 
-mat_spec = [
+mat_spec = (
     ('RGB', 'RGB', 'Mode for multi-channel specular maps'),
     ('A', 'Alpha', 'Mode for single channel specular maps'),
-]
+)
 
-material_layer_type = [
+material_layer_type = (
     ('BITMAP', 'Bitmap', 'Renders using the image defined in the image path property'),
     ('COLOR', 'Color', 'Renders using the color defined in the color value property'),
-]
+)
 
-material_layer_channel = [
+material_layer_channel = (
     ('RGB', 'RGB', 'Use red, green and blue color channels'),
     ('ARGB', 'ARGB', 'Use alpha, red, green, and blue color channels'),
     ('A', 'Alpha Only', 'Use alpha channel only'),
     ('R', 'Red Only', 'Use red color channel only'),
     ('G', 'Green Only', 'Use green color channel only'),
     ('B', 'Blue Only', 'Use blue color channel only')
-]
+)
 
-uv_source = [
+uv_source = (
     ('UV1', 'Default', 'First UV layer of mesh or generated whole image UVs for particles'),
     ('UV2', 'UV Layer 2', 'Second UV layer which can be used for decals'),
     ('REFCUBE', 'Ref Cubic Env', 'For Env. Layer: Reflective Cubic Environment'),
@@ -354,18 +354,18 @@ uv_source = [
     ('PLANARWX', 'Planar World X', 'Planar World X'),
     ('PLANARWY', 'Planar World Y', 'Planar World Y'),
     ('SCREEN', 'Screen space', 'Screen space'),
-    ('TRIPLANARW', 'Tri Planar World', 'Tri Planar World'),
-    ('TRIPLANARL', 'Tri Planar Local', 'Tri Planar Local'),
-    ('TRIPLANARLZ', 'Tri Planar Local Z', 'Tri Planar Local Z')
-]
+    ('TRIPLANARW', 'Tri Planar World (V24+)', 'Tri Planar World. Only functional on layers at or above version 24'),
+    ('TRIPLANARL', 'Tri Planar Local (V24+)', 'Tri Planar Local. Only functional on layers at or above version 24'),
+    ('TRIPLANARLZ', 'Tri Planar Local Z (V24+)', 'Tri Planar Local Z. Only functional on layers at or above version 24')
+)
 
-fresnel_type = [
+fresnel_type = (
     ('DISABLED', 'Disabled', 'Fresnel is disabled'),
     ('ENABLED', 'Enabled', 'Strength of layer is based on fresnel formula'),
     ('INVERTED', 'Enabled; Inverted', 'Strenth of layer is based on inverted fresnel formula')
-]
+)
 
-rtt_channel = [
+rtt_channel = (
     ('0', 'Layer 0', 'Render To Texture Layer 0'),
     ('1', 'Layer 1', 'Render To Texture Layer 1'),
     ('2', 'Layer 2', 'Render To Texture Layer 2'),
@@ -374,9 +374,9 @@ rtt_channel = [
     ('5', 'Layer 5', 'Render To Texture Layer 5'),
     ('6', 'Layer 6', 'Render To Texture Layer 6'),
     ('NONE', 'None', 'None'),
-]
+)
 
-video_mode = [
+video_mode = (
     ('LOOP', 'Loop', 'Loop'),
     ('HOLD', 'Hold', 'Hold')
-]
+)

@@ -21,8 +21,8 @@ import bpy
 from bpy.app.handlers import persistent
 from . import shared
 from . import m3_bone
-from . import m3_mesh_object
-from . import m3_options
+from . import m3_object_armature
+from . import m3_object_mesh
 from . import m3_animations
 from . import m3_attachmentpoints
 from . import m3_billboards
@@ -107,7 +107,8 @@ def top_bar_export(self, context):
 
 m3_modules = (
     m3_bone,
-    m3_options,
+    m3_object_armature,
+    m3_object_mesh,
     m3_animations,
     m3_materiallayers,
     m3_materials,
@@ -140,7 +141,6 @@ def m3_module_classes():
 
 classes = (
     *shared.classes,
-    *m3_mesh_object.classes,
     *m3_module_classes(),
     M3ImportOperator,
     M3ScenePanel,

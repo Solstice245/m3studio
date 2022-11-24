@@ -23,8 +23,15 @@ from . import shared
 def register_props():
     bpy.types.Object.m3_cloths = bpy.props.CollectionProperty(type=ClothProperties)
     bpy.types.Object.m3_cloths_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
+    bpy.types.Object.m3_cloths_version = bpy.props.EnumProperty(options=set(), items=cloth_versions, default='4')
     bpy.types.Object.m3_clothconstraintsets = bpy.props.CollectionProperty(type=ConstraintSetProperties)
     bpy.types.Object.m3_clothconstraintsets_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
+
+
+cloth_versions = (
+    ('2', '2', 'Version 2'),
+    ('4', '4', 'Version 4'),
+)
 
 
 def update_collection_index(self, context):
@@ -47,6 +54,8 @@ def draw_constraint_set_props(constraint_set, layout):
 
 
 def draw_cloth_props(cloth, layout):
+    version = str(cloth.id_data.m3_cloths_version)
+
     layout.prop(cloth, 'mesh_object', text='Mesh Object')
     layout.prop(cloth, 'simulator_object', text='Simulator Object')
     layout.separator()
@@ -72,16 +81,18 @@ def draw_cloth_props(cloth, layout):
     layout.separator()
     layout.prop(cloth, 'drag_factor', text='Drag')
     layout.prop(cloth, 'lift_factor', text='Lift')
-    layout.separator()
-    col = layout.column(align=True)
-    col.prop(cloth, 'skin_collision', text='Skin Collision')
-    sub = col.column(align=True)
-    sub.active = cloth.skin_collision
-    sub.prop(cloth, 'skin_offset', text='Offset')
-    sub.prop(cloth, 'skin_exponent', text='Exponent')
-    sub.prop(cloth, 'skin_stiffness', text='Stiffness')
-    layout.separator()
-    layout.prop(cloth, 'local_wind', text='Local Wind')
+
+    if version >= 4:
+        layout.separator()
+        col = layout.column(align=True)
+        col.prop(cloth, 'skin_collision', text='Skin Collision')
+        sub = col.column(align=True)
+        sub.active = cloth.skin_collision
+        sub.prop(cloth, 'skin_offset', text='Offset')
+        sub.prop(cloth, 'skin_exponent', text='Exponent')
+        sub.prop(cloth, 'skin_stiffness', text='Stiffness')
+        layout.separator()
+        layout.prop(cloth, 'local_wind', text='Local Wind')
 
 
 class ConstraintProperties(shared.M3BoneUserPropertyGroup):
@@ -127,7 +138,12 @@ class ClothPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Cloths'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, context.object.m3_cloths, draw_cloth_props)
+        model_version = int(context.object.m3_model_version)
+
+        if model_version >= 28:
+            shared.draw_collection_list(self.layout, context.object.m3_cloths, draw_cloth_props)
+        else:
+            self.layout.label(icon='ERROR', text='M3 model version must be at least 28')
 
 
 class ClothConstraintsPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
@@ -135,7 +151,12 @@ class ClothConstraintsPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Cloth Constraint Sets'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, context.object.m3_clothconstraintsets, draw_constraint_set_props)
+        model_version = int(context.object.m3_model_version)
+
+        if model_version >= 28:
+            shared.draw_collection_list(self.layout, context.object.m3_clothconstraintsets, draw_constraint_set_props)
+        else:
+            self.layout.label(icon='ERROR', text='M3 model version must be at least 28')
 
 
 classes = (

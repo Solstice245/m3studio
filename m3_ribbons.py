@@ -24,8 +24,20 @@ from . import bl_enum
 def register_props():
     bpy.types.Object.m3_ribbons = bpy.props.CollectionProperty(type=RibbonProperties)
     bpy.types.Object.m3_ribbons_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
+    bpy.types.Object.m3_ribbons_version = bpy.props.EnumProperty(options=set(), items=ribbon_version, default='9')
     bpy.types.Object.m3_ribbonsplines = bpy.props.CollectionProperty(type=SplineProperties)
     bpy.types.Object.m3_ribbonsplines_index = bpy.props.IntProperty(options=set(), default=-1)
+
+
+# TODO UI stuff
+ribbon_version = (
+    ('4', '4', 'Version 4'),
+    ('5', '5', 'Version 5'),
+    ('6', '6', 'Version 6'),
+    ('7', '7', 'Version 7'),
+    ('8', '8', 'Version 8'),
+    ('9', '9', 'Version 9'),
+)
 
 
 def update_collection_index(self, context):
@@ -45,19 +57,19 @@ def draw_point_props(point, layout):
     sub = layout.column(align=True)
     sub.active = point.length_var_shape != 'NONE'
     sub.prop(point, 'length_var_frequency', text='Frequency')
-    sub.prop(point, 'length_var_amount', text='Amount')
+    sub.prop(point, 'length_var_amplitude', text='Amount')
     col = layout.column(align=True)
     col.prop(point, 'yaw_var_shape', text='Yaw Variation')
     sub = layout.column(align=True)
     sub.active = point.yaw_var_shape != 'NONE'
     sub.prop(point, 'yaw_var_frequency', text='Frequency')
-    sub.prop(point, 'yaw_var_amount', text='Amount')
+    sub.prop(point, 'yaw_var_amplitude', text='Amount')
     col = layout.column(align=True)
     col.prop(point, 'pitch_var_shape', text='Pitch Variation')
     sub = layout.column(align=True)
     sub.active = point.pitch_var_shape != 'NONE'
     sub.prop(point, 'pitch_var_frequency', text='Frequency')
-    sub.prop(point, 'pitch_var_amount', text='Amount')
+    sub.prop(point, 'pitch_var_amplitude', text='Amount')
 
 
 def draw_spline_props(spline, layout):
@@ -136,31 +148,31 @@ def draw_ribbon_props(ribbon, layout):
     sub = col.column(align=True)
     sub.active = ribbon.amplitude_var_shape != 'NONE'
     sub.prop(ribbon, 'amplitude_var_frequency', text='Frequency')
-    sub.prop(ribbon, 'amplitude_var_amount', text='Amount')
+    sub.prop(ribbon, 'amplitude_var_amplitude', text='Amount')
     col = layout.column(align=True)
     col.prop(ribbon, 'direction_var_shape', text='Direction Variation')
     sub = col.column(align=True)
     sub.active = ribbon.direction_var_shape != 'NONE'
     sub.prop(ribbon, 'direction_var_frequency', text='Frequency')
-    sub.prop(ribbon, 'direction_var_amount', text='Amount')
+    sub.prop(ribbon, 'direction_var_amplitude', text='Amount')
     col = layout.column(align=True)
     col.prop(ribbon, 'length_var_shape', text='Length Variation')
     sub = col.column(align=True)
     sub.active = ribbon.length_var_shape != 'NONE'
     sub.prop(ribbon, 'length_var_frequency', text='Frequency')
-    sub.prop(ribbon, 'length_var_amount', text='Amount')
+    sub.prop(ribbon, 'length_var_amplitude', text='Amount')
     col = layout.column(align=True)
     col.prop(ribbon, 'scale_var_shape', text='Scale Variation')
     sub = col.column(align=True)
     sub.active = ribbon.scale_var_shape != 'NONE'
     sub.prop(ribbon, 'scale_var_frequency', text='Frequency')
-    sub.prop(ribbon, 'scale_var_amount', text='Amount')
+    sub.prop(ribbon, 'scale_var_amplitude', text='Amount')
     col = layout.column(align=True)
     col.prop(ribbon, 'alpha_var_shape', text='Alpha Variation')
     sub = col.column(align=True)
     sub.active = ribbon.alpha_var_shape != 'NONE'
     sub.prop(ribbon, 'alpha_var_frequency', text='Frequency')
-    sub.prop(ribbon, 'alpha_var_amount', text='Amount')
+    sub.prop(ribbon, 'alpha_var_amplitude', text='Amount')
     col = layout.column_flow(align=True, columns=2)
     col.use_property_split = False
     col.prop(ribbon, 'collide_terrain', text='Collide Terrain')
@@ -179,15 +191,15 @@ def draw_ribbon_props(ribbon, layout):
 class PointProperties(shared.M3BoneUserPropertyGroup):
     yaw: bpy.props.FloatProperty(name='Spline Yaw')
     yaw_var_shape: bpy.props.EnumProperty(options=set(), items=bl_enum.ribbon_variation_shape)
-    yaw_var_amount: bpy.props.FloatProperty(name='Spline Yaw Variation Amount')
+    yaw_var_amplitude: bpy.props.FloatProperty(name='Spline Yaw Variation Amount')
     yaw_var_frequency: bpy.props.FloatProperty(name='Spline Yaw Variation Frequency')
     pitch: bpy.props.FloatProperty(name='Spline Pitch')
     pitch_var_shape: bpy.props.EnumProperty(options=set(), items=bl_enum.ribbon_variation_shape)
-    pitch_var_amount: bpy.props.FloatProperty(name='Spline Pitch Variation Amount')
+    pitch_var_amplitude: bpy.props.FloatProperty(name='Spline Pitch Variation Amount')
     pitch_var_frequency: bpy.props.FloatProperty(name='Spline Pitch Variation Frequency')
     length: bpy.props.FloatProperty(name='Spline Length')
     length_var_shape: bpy.props.EnumProperty(options=set(), items=bl_enum.ribbon_variation_shape)
-    length_var_amount: bpy.props.FloatProperty(name='Spline Length Variation Amount')
+    length_var_amplitude: bpy.props.FloatProperty(name='Spline Length Variation Amount')
     length_var_frequency: bpy.props.FloatProperty(name='Spline Length Variation Frequency')
 
 
@@ -241,19 +253,19 @@ class RibbonProperties(shared.M3BoneUserPropertyGroup):
     world_forces: bpy.props.BoolVectorProperty(options=set(), subtype='LAYER', size=16)  # TODO
     world_space: bpy.props.BoolProperty(options=set())
     amplitude_var_shape: bpy.props.EnumProperty(options=set(), items=bl_enum.ribbon_variation_shape)
-    amplitude_var_amount: bpy.props.FloatProperty(name='Amplitude Variation Amount')
+    amplitude_var_amplitude: bpy.props.FloatProperty(name='Amplitude Variation Amount')
     amplitude_var_frequency: bpy.props.FloatProperty(name='Amplitude Variation Frequency')
     direction_var_shape: bpy.props.EnumProperty(options=set(), items=bl_enum.ribbon_variation_shape)
-    direction_var_amount: bpy.props.FloatProperty(name='Directional Variation Amount')
+    direction_var_amplitude: bpy.props.FloatProperty(name='Directional Variation Amount')
     direction_var_frequency: bpy.props.FloatProperty(name='Directional Variation Frequency')
     length_var_shape: bpy.props.EnumProperty(options=set(), items=bl_enum.ribbon_variation_shape)
-    length_var_amount: bpy.props.FloatProperty(name='Length Variation Amount')
+    length_var_amplitude: bpy.props.FloatProperty(name='Length Variation Amount')
     length_var_frequency: bpy.props.FloatProperty(name='Length Variation Frequency')
     scale_var_shape: bpy.props.EnumProperty(options=set(), items=bl_enum.ribbon_variation_shape)
-    scale_var_amount: bpy.props.FloatProperty(name='Scale Variation Amount')
+    scale_var_amplitude: bpy.props.FloatProperty(name='Scale Variation Amount')
     scale_var_frequency: bpy.props.FloatProperty(name='Scale Variation Frequency')
     alpha_var_shape: bpy.props.EnumProperty(options=set(), items=bl_enum.ribbon_variation_shape)
-    alpha_var_amount: bpy.props.FloatProperty(name='Alpha Variation Amount')
+    alpha_var_amplitude: bpy.props.FloatProperty(name='Alpha Variation Amount')
     alpha_var_frequency: bpy.props.FloatProperty(name='Alpha Variation Frequency')
     parent_velocity: bpy.props.FloatProperty(name='Parent Velocity')  # TODO
     phase_shift: bpy.props.FloatProperty(name='Phase Shift')  # TODO

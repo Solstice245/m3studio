@@ -24,8 +24,24 @@ from . import bl_enum
 def register_props():
     bpy.types.Object.m3_particle_systems = bpy.props.CollectionProperty(type=SystemProperties)
     bpy.types.Object.m3_particle_systems_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
+    bpy.types.Object.m3_particle_systems_version = bpy.props.EnumProperty(options=set(), items=particle_system_versions, default='24')
     bpy.types.Object.m3_particle_copies = bpy.props.CollectionProperty(type=CopyProperties)
     bpy.types.Object.m3_particle_copies_index = bpy.props.IntProperty(options=set(), default=-1)
+
+
+# TODO UI stuff
+particle_system_versions = (
+    ('10', '10', 'Version 10'),
+    ('11', '11', 'Version 11'),
+    ('12', '12', 'Version 12'),
+    ('17', '17', 'Version 17'),
+    ('18', '18', 'Version 18'),
+    ('19', '19', 'Version 19'),
+    ('21', '21', 'Version 21'),
+    ('22', '22', 'Version 22'),
+    ('23', '23', 'Version 23'),
+    ('24', '24', 'Version 24'),
+)
 
 
 def update_collection_index(self, context):
@@ -393,6 +409,8 @@ class SystemProperties(shared.M3BoneUserPropertyGroup):
     local_time: bpy.props.BoolProperty(options=set())
     simulate_init: bpy.props.BoolProperty(options=set())
     copy: bpy.props.BoolProperty(options=set())
+    relative: bpy.props.BoolProperty(options=set())  # TODO draw
+    always_set: bpy.props.BoolProperty(options=set())  # TODO draw
 
 
 class CopyPanel(shared.ArmatureObjectPanel, bpy.types.Panel):

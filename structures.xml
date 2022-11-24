@@ -1305,7 +1305,7 @@
         <fields>
             <field name="faces" type="Reference" refTo="U16_"/>
             <field name="regions" type="Reference" refTo="REGN"/>
-            <field name="objects" type="Reference" refTo="BAT_"/>
+            <field name="batches" type="Reference" refTo="BAT_"/>
             <field name="msec" type="Reference" refTo="MSEC"/>
             <!-- m3: 1, m3a: 0 -->
             <field name="unknown" type="uint32" default-value="1"/>

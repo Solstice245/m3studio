@@ -23,9 +23,18 @@ from . import bl_enum
 
 def register_props():
     bpy.types.Object.m3_physicsshapes = bpy.props.CollectionProperty(type=ShapeProperties)
-    bpy.types.Object.m3_physicsshapes_index = bpy.props.IntProperty(options=set(), default=-1)
+    bpy.types.Object.m3_physicsshapes_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
     bpy.types.Object.m3_rigidbodies = bpy.props.CollectionProperty(type=BodyProperties)
-    bpy.types.Object.m3_rigidbodies_index = bpy.props.IntProperty(options=set(), default=-1)
+    bpy.types.Object.m3_rigidbodies_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
+    bpy.types.Object.m3_rigidbodies_version = bpy.props.EnumProperty(options=set(), items=rigid_body_versions, default='4')
+
+
+# need better documentation of non version 3 version
+rigid_body_versions = (
+    ('2', '2', 'Version 2'),
+    ('3', '3', 'Version 3'),
+    ('4', '4', 'Version 4'),
+)
 
 
 def update_collection_index(self, context):
@@ -33,12 +42,14 @@ def update_collection_index(self, context):
     bl = ob.m3_rigidbodies[ob.m3_rigidbodies_index]
     shared.select_bones_handles(ob, [bl.bone])
     shared.auto_update_bone_display_mode(ob, 'PHRB')
-
-
-def bone_shape_update_event(self, context):
-    ob = context.object
-    # bone = shared.m3_pointer_get(ob, 'data.bones', 'm3_rigidbodies[{}].bone'.format(ob.m3_rigidbodies_index))
-    # shared.set_bone_shape(ob, bone)
+    force_mesh_update = False
+    shape = shared.m3_pointer_get(ob.m3_physicsshapes, bl.physics_shape)
+    for vol in shape.volumes:
+        if vol.shape == 'MESH':
+            force_mesh_update = True
+            break
+    if force_mesh_update:
+        ob.m3_options.bone_display_mode = 'PHRB'
 
 
 def draw_volume_props(shape, layout):
@@ -98,12 +109,12 @@ def draw_body_props(rigidbody, layout):
 
 
 class VolumeProperties(shared.M3PropertyGroup):
-    shape: bpy.props.EnumProperty(options=set(), items=bl_enum.physics_shape, update=bone_shape_update_event)
-    size: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0, default=(1, 1, 1), update=bone_shape_update_event)
-    location: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, update=bone_shape_update_event)
-    rotation: bpy.props.FloatVectorProperty(options=set(), subtype='EULER', unit='ROTATION', size=3, default=(0, 0, 0), update=bone_shape_update_event)
-    scale: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0, default=(1, 1, 1), update=bone_shape_update_event)
-    mesh_object: bpy.props.PointerProperty(type=bpy.types.Object, update=bone_shape_update_event)
+    shape: bpy.props.EnumProperty(options=set(), items=bl_enum.physics_shape, update=shared.bone_shape_update_event)
+    size: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0, default=(1, 1, 1), update=shared.bone_shape_update_event)
+    location: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, update=shared.bone_shape_update_event)
+    rotation: bpy.props.FloatVectorProperty(options=set(), subtype='EULER', unit='ROTATION', size=3, default=(0, 0, 0), update=shared.bone_shape_update_event)
+    scale: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0, default=(1, 1, 1), update=shared.bone_shape_update_event)
+    mesh_object: bpy.props.PointerProperty(type=bpy.types.Object, update=shared.bone_shape_update_event)
 
 
 class ShapeProperties(shared.M3PropertyGroup):

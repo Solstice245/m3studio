@@ -24,9 +24,22 @@ from . import bl_enum
 def register_props():
     bpy.types.Object.m3_materiallayers = bpy.props.CollectionProperty(type=Properties)
     bpy.types.Object.m3_materiallayers_index = bpy.props.IntProperty(options=set(), default=-1)
+    bpy.types.Object.m3_materiallayers_version = bpy.props.EnumProperty(options=set(), items=layer_versions, default='26')
+
+
+layer_versions = (
+    ('20', '20', 'Version 20'),
+    ('21', '21', 'Version 21'),
+    ('22', '22', 'Version 22'),
+    ('24', '24', 'Version 24'),
+    ('25', '25', 'Version 25'),
+    ('26', '26', 'Version 26'),
+)
 
 
 def draw_props(layer, layout):
+    version = int(layer.id_data.m3_materiallayers_version)
+
     col = layout.column(align=True)
     col.prop(layer, 'color_type', text='Layer Type')
     if layer.color_type == 'BITMAP':
@@ -55,24 +68,32 @@ def draw_props(layer, layout):
     sub.prop(layer, 'uv_flipbook_rows', text='Flipbook Rows')
     sub.prop(layer, 'uv_flipbook_columns', text='Columns')
     col.prop(layer, 'uv_flipbook_frame', text='Frame')
-    if 'TRIPLANAR' in layer.uv_source:
+
+    if version >= 24 and 'TRIPLANAR' in layer.uv_source:
         layout.prop(layer, 'uv_triplanar_offset', text='Triplanar Offset')
         layout.prop(layer, 'uv_triplanar_scale', text='Triplanar Scale')
+
     layout.separator()
-    col = layout.column(align=True)
-    col.prop(layer, 'noise_amplitude', text='Volume Noise Amplitude')
-    col.prop(layer, 'noise_frequency', text='Frequency')
-    layout.separator()
+
+    if version >= 24:
+        col = layout.column(align=True)
+        col.prop(layer, 'noise_amplitude', text='Volume Noise Amplitude')
+        col.prop(layer, 'noise_frequency', text='Frequency')
+        layout.separator()
+
     layout.prop(layer, 'fresnel_type', text='Fresel Mode')
     if layer.fresnel_type != 'DISABLED':
         layout.prop(layer, 'fresnel_exponent', text='Exponent')
         col = layout.column(align=True)
         col.prop(layer, 'fresnel_min', text='Minimum')
         col.prop(layer, 'fresnel_max', text='Maximum')
-        layout.prop(layer, 'fresnel_mask', text='Mask')
-        col = layout.column(align=True)
-        col.prop(layer, 'fresnel_yaw', text='Yaw')
-        col.prop(layer, 'fresnel_pitch', text='Pitch')
+
+        if version >= 25:
+            layout.prop(layer, 'fresnel_mask', text='Mask')
+            col = layout.column(align=True)
+            col.prop(layer, 'fresnel_yaw', text='Yaw')
+            col.prop(layer, 'fresnel_pitch', text='Pitch')
+
         row = layout.row()
         row.prop(layer, 'fresnel_local_transform', text='Local Transform')
         row.prop(layer, 'fresnel_do_not_mirror', text='Don\'t Mirror')

@@ -23,6 +23,27 @@ from . import bl_enum
 
 def register_props():
     bpy.types.Object.m3_options = bpy.props.PointerProperty(type=Properties)
+    bpy.types.Object.m3_model_version = bpy.props.EnumProperty(options=set(), items=model_versions, default='29')
+    bpy.types.Object.m3_mesh_version = bpy.props.EnumProperty(options=set(), items=mesh_versions, default='5')
+
+
+model_versions = (
+    ('20', '20', 'Version 20'),
+    ('21', '21', 'Version 21'),
+    ('23', '23', 'Version 23'),
+    ('25', '25', 'Version 25'),
+    ('26', '26', 'Version 26'),
+    ('28', '28', 'Version 28'),
+    ('29', '29', 'Version 29'),
+    ('30', '30', 'Version 30'),
+)
+
+mesh_versions = (
+    ('2', '2', 'Version 2'),
+    ('3', '3', 'Version 3'),
+    ('4', '4', 'Version 4'),
+    ('5', '5', 'Version 5'),
+)
 
 
 def update_bone_display_mode(self, context):
@@ -49,9 +70,10 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Object Options'
 
     def draw(self, context):
+        ob = context.object
         layout = self.layout
         layout.use_property_split = True
-        options = context.object.m3_options
+        options = ob.m3_options
 
         col = layout.column(align=True)
         col.prop(options, 'bone_display_mode', text='Bone Display')
@@ -60,6 +82,19 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
         col.separator()
         col.prop(options, 'auto_update_timeline', text='Auto Update Animation Timeline')
         col.prop(options, 'auto_update_action', text='Auto Update Animation Action')
+        col.separator()
+        col = layout.column()
+        col.prop(ob, 'm3_model_version', text='M3 Model Version')
+        col.prop(ob, 'm3_mesh_version', text='M3 Mesh Version')
+        col.prop(ob, 'm3_materiallayers_version', text='M3 Material Layer Version')
+        col.prop(ob, 'm3_materials_standard_version', text='M3 Standard Material Version')
+        col.prop(ob, 'm3_materials_reflection_version', text='M3 Reflection Material Version')
+        col.prop(ob, 'm3_cameras_version', text='M3 Camera Version')
+        col.prop(ob, 'm3_particle_systems_version', text='M3 Particle System Version')
+        col.prop(ob, 'm3_ribbons_version', text='M3 Ribbon Version')
+        col.prop(ob, 'm3_rigidbodies_version', text='M3 Rigid Body Version')
+        col.prop(ob, 'm3_turrets_part_version', text='M3 Turret Part Version')
+        col.prop(ob, 'm3_cloths_version', text='M3 Cloth Version')
 
 
 classes = (

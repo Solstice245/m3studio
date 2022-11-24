@@ -24,6 +24,15 @@ from . import bl_enum
 def register_props():
     bpy.types.Object.m3_cameras = bpy.props.CollectionProperty(type=Properties)
     bpy.types.Object.m3_cameras_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
+    bpy.types.Object.m3_cameras_version = bpy.props.EnumProperty(options=set(), items=camera_versions, default='5')
+
+
+camera_versions = (
+    ('2', '2', 'Version 2'),
+    # version 2 is largely undocumented
+    ('3', '3', 'Version 3'),
+    ('5', '5', 'Version 5'),
+)
 
 
 def update_collection_index(self, context):
@@ -34,6 +43,8 @@ def update_collection_index(self, context):
 
 
 def draw_props(camera, layout):
+    version = int(camera.id_data.m3_cameras_version)
+
     shared.draw_pointer_prop(layout, camera.id_data.data.bones, camera, 'bone', bone_search=True, label='Bone', icon='BONE_DATA')
     col = layout.column(align=True)
     col.prop(camera, 'field_of_view', text='Field Of View')
@@ -43,7 +54,8 @@ def draw_props(camera, layout):
     col.prop(camera, 'focal_depth', text='Focal Depth')
     col.prop(camera, 'falloff_start', text='Falloff Start')
     col.prop(camera, 'falloff_end', text='Fallof End')
-    col.prop(camera, 'depth_of_field_type', text='Depth Of Field Type')
+    if version >= 5:
+        col.prop(camera, 'depth_of_field_type', text='Depth Of Field Type')
     col.prop(camera, 'depth_of_field', text='Depth Of Field')
     col.prop(camera, 'use_vertical_fov', text='Vertical FOV')
 

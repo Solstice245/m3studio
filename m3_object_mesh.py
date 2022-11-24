@@ -21,6 +21,10 @@ import bmesh
 from . import shared
 
 
+def register_props():
+    bpy.types.Object.m3_mesh_material_refs = bpy.props.CollectionProperty(type=shared.M3PropertyGroup)
+
+
 class SignOpSelect(bpy.types.Operator):
     bl_idname = 'm3.vertex_sign_select'
     bl_label = 'Select faces'
@@ -210,7 +214,16 @@ class Panel(bpy.types.Panel):
         parent = ob.parent if ob.parent.type == 'ARMATURE' else None
 
         if parent:
-            shared.draw_pointer_prop(layout.column(), parent.m3_materialrefs, ob, 'm3_material_ref', label='M3 Material', icon='MATERIAL')
+            box = layout.box()
+            box.use_property_decorate = False
+            op = box.operator('m3.handle_add', text='Add Material Reference')
+            op.collection = ob.m3_mesh_material_refs.path_from_id()
+            for ii, matref in enumerate(ob.m3_mesh_material_refs):
+                row = box.row()
+                shared.draw_pointer_prop(row, parent.m3_materialrefs, matref, 'bl_handle', icon='MATERIAL')
+                op = row.operator('m3.handle_remove', text='', icon='X')
+                op.collection = ob.m3_mesh_material_refs.path_from_id()
+                op.index = ii
 
         if ob.mode == 'EDIT':
             layout.separator()
