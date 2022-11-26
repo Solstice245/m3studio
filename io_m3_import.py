@@ -842,7 +842,7 @@ class Importer:
 
         v_class_desc = io_m3.structures[v_class].get_version(0)
         v_count = len(m3_vertices) // v_class_desc.size
-        m3_vertices = v_class_desc.createInstances(buffer=m3_vertices.content, count=v_count)
+        m3_vertices = v_class_desc.instances(buffer=m3_vertices.content, count=v_count)
         bone_lookup_full = self.m3[self.m3_model.bone_lookup]
 
         m3_faces = self.m3[self.m3_division.faces]

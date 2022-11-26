@@ -292,7 +292,7 @@ class Exporter:
                         loop_indices_used.add(loop.index)
 
                     vert = loop.vert
-                    m3_vert = m3_vertex_struct.createInstance()
+                    m3_vert = m3_vertex_struct.instance()
 
                     m3_vert.pos = to_m3_vec3(ob.matrix_local @ vert.co)
 
