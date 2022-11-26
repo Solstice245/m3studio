@@ -43,6 +43,7 @@ from . import m3_turrets
 from . import m3_warps
 from . import m3_shadowboxes
 from . import io_m3_import
+from . import io_m3_export
 
 bl_info = {
     'name': 'M3: Used by Blizzard\'s StarCraft 2 and Heroes of the Storm',
@@ -68,6 +69,7 @@ class M3ScenePanel(bpy.types.Panel):
         layout = self.layout
 
         layout.operator('m3.import')
+        layout.operator('m3.export')
 
 
 class M3ImportOperator(bpy.types.Operator):
@@ -90,6 +92,26 @@ class M3ImportOperator(bpy.types.Operator):
     def invoke(self, context, event):
         # io_m3_import.m3_import(self.test_goliath)
         print(timeit(lambda: io_m3_import.m3_import(self.test_doc), number=1))
+        return {'RUNNING_MODAL'}
+
+    def execute(self, context):
+        # print(timeit(lambda: m3_import.M3Import(self.test_goliath), number=1))
+        return {'FINISHED'}
+
+
+class M3ExportOperator(bpy.types.Operator):
+    bl_idname = 'm3.export'
+    bl_label = 'Export M3'
+
+    filename_ext = '.m3'
+    filter_glob: bpy.props.StringProperty(options={'HIDDEN'}, default='*.m3;*.m3a')
+    filepath: bpy.props.StringProperty(name='File Path', description='File path for import operation', maxlen=1023, default='')
+
+    test_doc = 'C:\\Users\\John Wharton\\Documents\\M3Test_export.m3'
+
+    def invoke(self, context, event):
+        # io_m3_import.m3_import(self.test_goliath)
+        print(timeit(lambda: io_m3_export.m3_export(context.active_object, self.test_doc), number=1))
         return {'RUNNING_MODAL'}
 
     def execute(self, context):
@@ -143,6 +165,7 @@ classes = (
     *shared.classes,
     *m3_module_classes(),
     M3ImportOperator,
+    M3ExportOperator,
     M3ScenePanel,
 )
 

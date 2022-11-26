@@ -21,8 +21,12 @@ import bmesh
 from . import shared
 
 
+desc_mesh_export = 'The mesh will be exported to m3'
+
+
 def register_props():
     bpy.types.Object.m3_mesh_material_refs = bpy.props.CollectionProperty(type=shared.M3PropertyGroup)
+    bpy.types.Object.m3_mesh_export = bpy.props.BoolProperty(options=set(), default=True, description=desc_mesh_export)
 
 
 class SignOpSelect(bpy.types.Operator):

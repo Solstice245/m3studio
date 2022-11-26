@@ -194,7 +194,7 @@
             <field name="header" type="AnimationReferenceHeader"/>
             <field name="default" type="VEC3V0"/>
             <field name="null" type="VEC3V0"/>
-            <field name="unknown" type="int32" default-value="0" />
+            <field name="unknown" type="int32" default_value="0" />
         </fields>
     </structure>
     <structure name="SVC3" >
@@ -217,7 +217,7 @@
             <field name="header" type="AnimationReferenceHeader"/>
             <field name="default" type="VEC2V0"/>
             <field name="null" type="VEC2V0"/>
-            <field name="unknown" type="int32" default-value="0" />
+            <field name="unknown" type="int32" default_value="0" />
         </fields>
     </structure>
     <structure name="QuaternionAnimationReference">
@@ -229,7 +229,7 @@
             <field name="header" type="AnimationReferenceHeader"/>
             <field name="default" type="QUATV0"/>
             <field name="null" type="QUATV0"/>
-            <field name="unknown" type="int32" default-value="0" />
+            <field name="unknown" type="int32" default_value="0" />
         </fields>
     </structure>
     <structure name="UInt32AnimationReference">
@@ -241,7 +241,7 @@
             <field name="header" type="AnimationReferenceHeader"/>
             <field name="default" type="uint32"/>
             <field name="null" type="uint32"/>
-            <field name="unknown" type="int32" default-value="0" />
+            <field name="unknown" type="int32" default_value="0" />
         </fields>
     </structure>
     <structure name="UInt16AnimationReference">
@@ -253,7 +253,7 @@
             <field name="header" type="AnimationReferenceHeader"/>
             <field name="default" type="uint16"/>
             <field name="null" type="uint16"/>
-            <field name="unknown" type="int32" default-value="0" />
+            <field name="unknown" type="int32" default_value="0" />
         </fields>
     </structure>
     <structure name="Int16AnimationReference">
@@ -265,7 +265,7 @@
             <field name="header" type="AnimationReferenceHeader"/>
             <field name="default" type="int16"/>
             <field name="null" type="int16"/>
-            <field name="unknown" type="int32" default-value="0" />
+            <field name="unknown" type="int32" default_value="0" />
         </fields>
     </structure>
     <structure name="UInt8AnimationReference">
@@ -277,7 +277,7 @@
             <field name="header" type="AnimationReferenceHeader"/>
             <field name="default" type="uint8"/>
             <field name="null" type="uint8"/>
-            <field name="unknown" type="int32" default-value="0" />
+            <field name="unknown" type="int32" default_value="0" />
         </fields>
     </structure>
     <structure name="FloatAnimationReference">
@@ -289,7 +289,7 @@
             <field name="header" type="AnimationReferenceHeader"/>
             <field name="default" type="float"/>
             <field name="null" type="float"/>
-            <field name="unknown" type="int32" default-value="0" />
+            <field name="unknown" type="int32" default_value="0" />
         </fields>
     </structure>
     <structure name="Unknown4ByteAnimationReference">
@@ -299,9 +299,9 @@
         </versions>
         <fields>
             <field name="header" type="AnimationReferenceHeader"/>
-            <field name="default" size="4" default-value="0x00000000"/>
-            <field name="null" size="4" default-value="0x00000000"/>
-            <field name="unknown" type="int32" default-value="0" />
+            <field name="default" size="4" default_value="0x00000000"/>
+            <field name="null" size="4" default_value="0x00000000"/>
+            <field name="unknown" type="int32" default_value="0" />
         </fields>
     </structure>
     <structure name="ColorAnimationReference">
@@ -313,7 +313,7 @@
             <field name="header" type="AnimationReferenceHeader"/>
             <field name="default" type="COL"/>
             <field name="null" type="COL"/>
-            <field name="unknown" type="int32" default-value="0" />
+            <field name="unknown" type="int32" default_value="0" />
         </fields>
     </structure>
     <structure name="FlagAnimationReference">
@@ -325,7 +325,7 @@
             <field name="header" type="AnimationReferenceHeader"/>
             <field name="default" type="uint32"/>
             <field name="null" type="uint32"/>
-            <field name="unknown" type="int32" default-value="0" />
+            <field name="unknown" type="int32" default_value="0" />
         </fields>
     </structure>
     <structure name="BNDSAnimationReference">
@@ -337,7 +337,7 @@
             <field name="header" type="AnimationReferenceHeader"/>
             <field name="default" type="BNDS"/>
             <field name="null" type="BNDS"/>
-            <field name="unknown" type="int32" default-value="0" />
+            <field name="unknown" type="int32" default_value="0" />
         </fields>
     </structure>
     <structure name="SR32">
@@ -428,18 +428,6 @@
             <field name="value7" type="uint8"/>
         </fields>
     </structure>
-    <structure name="MD34IndexEntry">
-        <description>Entry of the tag index. Position and size of the tag index gets desribed by MD34</description>
-        <versions>
-            <version number="0" size="16"/>
-        </versions>
-        <fields>
-            <field name="tag" type="tag"/>
-            <field name="offset" type="uint32"/>
-            <field name="repetitions" type="uint32"/>
-            <field name="version" type="uint32"/>
-        </fields>
-    </structure>
     <structure name="VertexFormat0x182027d">
         <description>Vertex with one UV coordinate and vertex color</description>
         <versions>
@@ -447,20 +435,20 @@
         </versions>
         <fields>
             <field name="pos" type="VEC3V0"/>
-            <field name="weight0" type="uint8" default-value="0"/>
-            <field name="weight1" type="uint8" default-value="0"/>
-            <field name="weight2" type="uint8" default-value="0"/>
-            <field name="weight3" type="uint8" default-value="0"/>
-            <field name="bone0" type="uint8" default-value="0"/>
-            <field name="bone1" type="uint8" default-value="0"/>
-            <field name="bone2" type="uint8" default-value="0"/>
-            <field name="bone3" type="uint8" default-value="0"/>
+            <field name="weight0" type="uint8" default_value="0"/>
+            <field name="weight1" type="uint8" default_value="0"/>
+            <field name="weight2" type="uint8" default_value="0"/>
+            <field name="weight3" type="uint8" default_value="0"/>
+            <field name="lookup0" type="uint8" default_value="0"/>
+            <field name="lookup1" type="uint8" default_value="0"/>
+            <field name="lookup2" type="uint8" default_value="0"/>
+            <field name="lookup3" type="uint8" default_value="0"/>
             <field name="normal" type="Vector3As3Fixed8V0"/>
             <field name="sign" type="fixed8"/>
             <field name="col" type="COL"/>
             <field name="uv0" type="Vector2As2int16V0"/>
             <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default-value="1.0"/> <!-- Can be -1.0 in old 3ds max exporter files -->
+            <field name="unused" type="fixed8" default_value="1.0"/> <!-- Can be -1.0 in old 3ds max exporter files -->
         </fields>
     </structure>
     <structure name="VertexFormat0x182007d" >
@@ -470,19 +458,19 @@
         </versions>
         <fields>
             <field name="pos" type="VEC3V0"/>
-            <field name="weight0" type="uint8" default-value="0"/>
-            <field name="weight1" type="uint8" default-value="0"/>
-            <field name="weight2" type="uint8" default-value="0"/>
-            <field name="weight3" type="uint8" default-value="0"/>
-            <field name="bone0" type="uint8" default-value="0"/>
-            <field name="bone1" type="uint8" default-value="0"/>
-            <field name="bone2" type="uint8" default-value="0"/>
-            <field name="bone3" type="uint8" default-value="0"/>
+            <field name="weight0" type="uint8" default_value="0"/>
+            <field name="weight1" type="uint8" default_value="0"/>
+            <field name="weight2" type="uint8" default_value="0"/>
+            <field name="weight3" type="uint8" default_value="0"/>
+            <field name="lookup0" type="uint8" default_value="0"/>
+            <field name="lookup1" type="uint8" default_value="0"/>
+            <field name="lookup2" type="uint8" default_value="0"/>
+            <field name="lookup3" type="uint8" default_value="0"/>
             <field name="normal" type="Vector3As3Fixed8V0"/>
             <field name="sign" type="fixed8"/>
             <field name="uv0" type="Vector2As2int16V0"/>
             <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default-value="1.0"/>
+            <field name="unused" type="fixed8" default_value="1.0"/>
         </fields>
     </structure>
     <structure name="VertexFormat0x186007d" >
@@ -492,20 +480,20 @@
         </versions>
         <fields>
             <field name="pos" type="VEC3V0"/>
-            <field name="weight0" type="uint8" default-value="0"/>
-            <field name="weight1" type="uint8" default-value="0"/>
-            <field name="weight2" type="uint8" default-value="0"/>
-            <field name="weight3" type="uint8" default-value="0"/>
-            <field name="bone0" type="uint8" default-value="0"/>
-            <field name="bone1" type="uint8" default-value="0"/>
-            <field name="bone2" type="uint8" default-value="0"/>
-            <field name="bone3" type="uint8" default-value="0"/>
+            <field name="weight0" type="uint8" default_value="0"/>
+            <field name="weight1" type="uint8" default_value="0"/>
+            <field name="weight2" type="uint8" default_value="0"/>
+            <field name="weight3" type="uint8" default_value="0"/>
+            <field name="lookup0" type="uint8" default_value="0"/>
+            <field name="lookup1" type="uint8" default_value="0"/>
+            <field name="lookup2" type="uint8" default_value="0"/>
+            <field name="lookup3" type="uint8" default_value="0"/>
             <field name="normal" type="Vector3As3Fixed8V0"/>
             <field name="sign" type="fixed8"/>
             <field name="uv0" type="Vector2As2int16V0"/>
             <field name="uv1" type="Vector2As2int16V0"/>
             <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default-value="1.0"/>
+            <field name="unused" type="fixed8" default_value="1.0"/>
         </fields>
     </structure>
     <structure name="VertexFormat0x186027d" >
@@ -515,21 +503,21 @@
         </versions>
         <fields>
             <field name="pos" type="VEC3V0"/>
-            <field name="weight0" type="uint8" default-value="0"/>
-            <field name="weight1" type="uint8" default-value="0"/>
-            <field name="weight2" type="uint8" default-value="0"/>
-            <field name="weight3" type="uint8" default-value="0"/>
-            <field name="bone0" type="uint8" default-value="0"/>
-            <field name="bone1" type="uint8" default-value="0"/>
-            <field name="bone2" type="uint8" default-value="0"/>
-            <field name="bone3" type="uint8" default-value="0"/>
+            <field name="weight0" type="uint8" default_value="0"/>
+            <field name="weight1" type="uint8" default_value="0"/>
+            <field name="weight2" type="uint8" default_value="0"/>
+            <field name="weight3" type="uint8" default_value="0"/>
+            <field name="lookup0" type="uint8" default_value="0"/>
+            <field name="lookup1" type="uint8" default_value="0"/>
+            <field name="lookup2" type="uint8" default_value="0"/>
+            <field name="lookup3" type="uint8" default_value="0"/>
             <field name="normal" type="Vector3As3Fixed8V0"/>
             <field name="sign" type="fixed8"/>
             <field name="col" type="COL"/>
             <field name="uv0" type="Vector2As2int16V0"/>
             <field name="uv1" type="Vector2As2int16V0"/>
             <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default-value="1.0"/>
+            <field name="unused" type="fixed8" default_value="1.0"/>
         </fields>
     </structure>
     <structure name="VertexFormat0x18e007d">
@@ -539,21 +527,21 @@
         </versions>
         <fields>
             <field name="pos" type="VEC3V0"/>
-            <field name="weight0" type="uint8" default-value="0"/>
-            <field name="weight1" type="uint8" default-value="0"/>
-            <field name="weight2" type="uint8" default-value="0"/>
-            <field name="weight3" type="uint8" default-value="0"/>
-            <field name="bone0" type="uint8" default-value="0"/>
-            <field name="bone1" type="uint8" default-value="0"/>
-            <field name="bone2" type="uint8" default-value="0"/>
-            <field name="bone3" type="uint8" default-value="0"/>
+            <field name="weight0" type="uint8" default_value="0"/>
+            <field name="weight1" type="uint8" default_value="0"/>
+            <field name="weight2" type="uint8" default_value="0"/>
+            <field name="weight3" type="uint8" default_value="0"/>
+            <field name="lookup0" type="uint8" default_value="0"/>
+            <field name="lookup1" type="uint8" default_value="0"/>
+            <field name="lookup2" type="uint8" default_value="0"/>
+            <field name="lookup3" type="uint8" default_value="0"/>
             <field name="normal" type="Vector3As3Fixed8V0"/>
             <field name="sign" type="fixed8"/>
             <field name="uv0" type="Vector2As2int16V0"/>
             <field name="uv1" type="Vector2As2int16V0"/>
             <field name="uv2" type="Vector2As2int16V0"/>
             <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default-value="1.0"/>
+            <field name="unused" type="fixed8" default_value="1.0"/>
         </fields>
     </structure>
     <structure name="VertexFormat0x18e027d" >
@@ -563,14 +551,14 @@
         </versions>
         <fields>
             <field name="pos" type="VEC3V0"/>
-            <field name="weight0" type="uint8" default-value="0"/>
-            <field name="weight1" type="uint8" default-value="0"/>
-            <field name="weight2" type="uint8" default-value="0"/>
-            <field name="weight3" type="uint8" default-value="0"/>
-            <field name="bone0" type="uint8" default-value="0"/>
-            <field name="bone1" type="uint8" default-value="0"/>
-            <field name="bone2" type="uint8" default-value="0"/>
-            <field name="bone3" type="uint8" default-value="0"/>
+            <field name="weight0" type="uint8" default_value="0"/>
+            <field name="weight1" type="uint8" default_value="0"/>
+            <field name="weight2" type="uint8" default_value="0"/>
+            <field name="weight3" type="uint8" default_value="0"/>
+            <field name="lookup0" type="uint8" default_value="0"/>
+            <field name="lookup1" type="uint8" default_value="0"/>
+            <field name="lookup2" type="uint8" default_value="0"/>
+            <field name="lookup3" type="uint8" default_value="0"/>
             <field name="normal" type="Vector3As3Fixed8V0"/>
             <field name="sign" type="fixed8"/>
             <field name="col" type="COL"/>
@@ -578,7 +566,7 @@
             <field name="uv1" type="Vector2As2int16V0"/>
             <field name="uv2" type="Vector2As2int16V0"/>
             <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default-value="1.0"/>
+            <field name="unused" type="fixed8" default_value="1.0"/>
         </fields>
     </structure>
     <structure name="VertexFormat0x19e007d" >
@@ -588,14 +576,14 @@
         </versions>
         <fields>
             <field name="pos" type="VEC3V0"/>
-            <field name="weight0" type="uint8" default-value="0"/>
-            <field name="weight1" type="uint8" default-value="0"/>
-            <field name="weight2" type="uint8" default-value="0"/>
-            <field name="weight3" type="uint8" default-value="0"/>
-            <field name="bone0" type="uint8" default-value="0"/>
-            <field name="bone1" type="uint8" default-value="0"/>
-            <field name="bone2" type="uint8" default-value="0"/>
-            <field name="bone3" type="uint8" default-value="0"/>
+            <field name="weight0" type="uint8" default_value="0"/>
+            <field name="weight1" type="uint8" default_value="0"/>
+            <field name="weight2" type="uint8" default_value="0"/>
+            <field name="weight3" type="uint8" default_value="0"/>
+            <field name="lookup0" type="uint8" default_value="0"/>
+            <field name="lookup1" type="uint8" default_value="0"/>
+            <field name="lookup2" type="uint8" default_value="0"/>
+            <field name="lookup3" type="uint8" default_value="0"/>
             <field name="normal" type="Vector3As3Fixed8V0"/>
             <field name="sign" type="fixed8"/>
             <field name="uv0" type="Vector2As2int16V0"/>
@@ -603,7 +591,7 @@
             <field name="uv2" type="Vector2As2int16V0"/>
             <field name="uv3" type="Vector2As2int16V0"/>
             <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default-value="1.0"/>
+            <field name="unused" type="fixed8" default_value="1.0"/>
         </fields>
     </structure>
 
@@ -614,14 +602,14 @@
         </versions>
         <fields>
             <field name="pos" type="VEC3V0"/>
-            <field name="weight0" type="uint8" default-value="0"/>
-            <field name="weight1" type="uint8" default-value="0"/>
-            <field name="weight2" type="uint8" default-value="0"/>
-            <field name="weight3" type="uint8" default-value="0"/>
-            <field name="bone0" type="uint8" default-value="0"/>
-            <field name="bone1" type="uint8" default-value="0"/>
-            <field name="bone2" type="uint8" default-value="0"/>
-            <field name="bone3" type="uint8" default-value="0"/>
+            <field name="weight0" type="uint8" default_value="0"/>
+            <field name="weight1" type="uint8" default_value="0"/>
+            <field name="weight2" type="uint8" default_value="0"/>
+            <field name="weight3" type="uint8" default_value="0"/>
+            <field name="lookup0" type="uint8" default_value="0"/>
+            <field name="lookup1" type="uint8" default_value="0"/>
+            <field name="lookup2" type="uint8" default_value="0"/>
+            <field name="lookup3" type="uint8" default_value="0"/>
             <field name="normal" type="Vector3As3Fixed8V0"/>
             <field name="sign" type="fixed8"/>
             <field name="col" type="COL"/>
@@ -630,7 +618,7 @@
             <field name="uv2" type="Vector2As2int16V0"/>
             <field name="uv3" type="Vector2As2int16V0"/>
             <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default-value="1.0"/>
+            <field name="unused" type="fixed8" default_value="1.0"/>
         </fields>
     </structure>
 
@@ -641,20 +629,20 @@
         </versions>
         <fields>
             <field name="pos" type="VEC3V0"/>
-            <field name="weight0" type="uint8" default-value="0"/>
-            <field name="weight1" type="uint8" default-value="0"/>
-            <field name="weight2" type="uint8" default-value="0"/>
-            <field name="weight3" type="uint8" default-value="0"/>
-            <field name="bone0" type="uint8" default-value="0"/>
-            <field name="bone1" type="uint8" default-value="0"/>
-            <field name="bone2" type="uint8" default-value="0"/>
-            <field name="bone3" type="uint8" default-value="0"/>
+            <field name="weight0" type="uint8" default_value="0"/>
+            <field name="weight1" type="uint8" default_value="0"/>
+            <field name="weight2" type="uint8" default_value="0"/>
+            <field name="weight3" type="uint8" default_value="0"/>
+            <field name="lookup0" type="uint8" default_value="0"/>
+            <field name="lookup1" type="uint8" default_value="0"/>
+            <field name="lookup2" type="uint8" default_value="0"/>
+            <field name="lookup3" type="uint8" default_value="0"/>
             <field name="normal" type="Vector3As3Fixed8V0"/>
             <field name="sign" type="fixed8"/>
             <field name="col" type="COL"/>
             <field name="uv0" type="Vector2As2int16V0"/>
             <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default-value="1.0"/> <!-- Can be -1.0 in old 3ds max exporter files -->
+            <field name="unused" type="fixed8" default_value="1.0"/> <!-- Can be -1.0 in old 3ds max exporter files -->
         </fields>
     </structure>
     <structure name="VertexFormat0x1820061" >
@@ -664,19 +652,19 @@
         </versions>
         <fields>
             <field name="pos" type="VEC3V0"/>
-            <field name="weight0" type="uint8" default-value="0"/>
-            <field name="weight1" type="uint8" default-value="0"/>
-            <field name="weight2" type="uint8" default-value="0"/>
-            <field name="weight3" type="uint8" default-value="0"/>
-            <field name="bone0" type="uint8" default-value="0"/>
-            <field name="bone1" type="uint8" default-value="0"/>
-            <field name="bone2" type="uint8" default-value="0"/>
-            <field name="bone3" type="uint8" default-value="0"/>
+            <field name="weight0" type="uint8" default_value="0"/>
+            <field name="weight1" type="uint8" default_value="0"/>
+            <field name="weight2" type="uint8" default_value="0"/>
+            <field name="weight3" type="uint8" default_value="0"/>
+            <field name="lookup0" type="uint8" default_value="0"/>
+            <field name="lookup1" type="uint8" default_value="0"/>
+            <field name="lookup2" type="uint8" default_value="0"/>
+            <field name="lookup3" type="uint8" default_value="0"/>
             <field name="normal" type="Vector3As3Fixed8V0"/>
             <field name="sign" type="fixed8"/>
             <field name="uv0" type="Vector2As2int16V0"/>
             <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default-value="1.0"/>
+            <field name="unused" type="fixed8" default_value="1.0"/>
         </fields>
     </structure>
     <structure name="VertexFormat0x1860061" >
@@ -686,20 +674,20 @@
         </versions>
         <fields>
             <field name="pos" type="VEC3V0"/>
-            <field name="weight0" type="uint8" default-value="0"/>
-            <field name="weight1" type="uint8" default-value="0"/>
-            <field name="weight2" type="uint8" default-value="0"/>
-            <field name="weight3" type="uint8" default-value="0"/>
-            <field name="bone0" type="uint8" default-value="0"/>
-            <field name="bone1" type="uint8" default-value="0"/>
-            <field name="bone2" type="uint8" default-value="0"/>
-            <field name="bone3" type="uint8" default-value="0"/>
+            <field name="weight0" type="uint8" default_value="0"/>
+            <field name="weight1" type="uint8" default_value="0"/>
+            <field name="weight2" type="uint8" default_value="0"/>
+            <field name="weight3" type="uint8" default_value="0"/>
+            <field name="lookup0" type="uint8" default_value="0"/>
+            <field name="lookup1" type="uint8" default_value="0"/>
+            <field name="lookup2" type="uint8" default_value="0"/>
+            <field name="lookup3" type="uint8" default_value="0"/>
             <field name="normal" type="Vector3As3Fixed8V0"/>
             <field name="sign" type="fixed8"/>
             <field name="uv0" type="Vector2As2int16V0"/>
             <field name="uv1" type="Vector2As2int16V0"/>
             <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default-value="1.0"/>
+            <field name="unused" type="fixed8" default_value="1.0"/>
         </fields>
     </structure>
     <structure name="VertexFormat0x1860261" >
@@ -709,21 +697,21 @@
         </versions>
         <fields>
             <field name="pos" type="VEC3V0"/>
-            <field name="weight0" type="uint8" default-value="0"/>
-            <field name="weight1" type="uint8" default-value="0"/>
-            <field name="weight2" type="uint8" default-value="0"/>
-            <field name="weight3" type="uint8" default-value="0"/>
-            <field name="bone0" type="uint8" default-value="0"/>
-            <field name="bone1" type="uint8" default-value="0"/>
-            <field name="bone2" type="uint8" default-value="0"/>
-            <field name="bone3" type="uint8" default-value="0"/>
+            <field name="weight0" type="uint8" default_value="0"/>
+            <field name="weight1" type="uint8" default_value="0"/>
+            <field name="weight2" type="uint8" default_value="0"/>
+            <field name="weight3" type="uint8" default_value="0"/>
+            <field name="lookup0" type="uint8" default_value="0"/>
+            <field name="lookup1" type="uint8" default_value="0"/>
+            <field name="lookup2" type="uint8" default_value="0"/>
+            <field name="lookup3" type="uint8" default_value="0"/>
             <field name="normal" type="Vector3As3Fixed8V0"/>
             <field name="sign" type="fixed8"/>
             <field name="col" type="COL"/>
             <field name="uv0" type="Vector2As2int16V0"/>
             <field name="uv1" type="Vector2As2int16V0"/>
             <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default-value="1.0"/>
+            <field name="unused" type="fixed8" default_value="1.0"/>
         </fields>
     </structure>
     <structure name="VertexFormat0x18e0061">
@@ -733,21 +721,21 @@
         </versions>
         <fields>
             <field name="pos" type="VEC3V0"/>
-            <field name="weight0" type="uint8" default-value="0"/>
-            <field name="weight1" type="uint8" default-value="0"/>
-            <field name="weight2" type="uint8" default-value="0"/>
-            <field name="weight3" type="uint8" default-value="0"/>
-            <field name="bone0" type="uint8" default-value="0"/>
-            <field name="bone1" type="uint8" default-value="0"/>
-            <field name="bone2" type="uint8" default-value="0"/>
-            <field name="bone3" type="uint8" default-value="0"/>
+            <field name="weight0" type="uint8" default_value="0"/>
+            <field name="weight1" type="uint8" default_value="0"/>
+            <field name="weight2" type="uint8" default_value="0"/>
+            <field name="weight3" type="uint8" default_value="0"/>
+            <field name="lookup0" type="uint8" default_value="0"/>
+            <field name="lookup1" type="uint8" default_value="0"/>
+            <field name="lookup2" type="uint8" default_value="0"/>
+            <field name="lookup3" type="uint8" default_value="0"/>
             <field name="normal" type="Vector3As3Fixed8V0"/>
             <field name="sign" type="fixed8"/>
             <field name="uv0" type="Vector2As2int16V0"/>
             <field name="uv1" type="Vector2As2int16V0"/>
             <field name="uv2" type="Vector2As2int16V0"/>
             <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default-value="1.0"/>
+            <field name="unused" type="fixed8" default_value="1.0"/>
         </fields>
     </structure>
     <structure name="VertexFormat0x18e0261" >
@@ -757,14 +745,14 @@
         </versions>
         <fields>
             <field name="pos" type="VEC3V0"/>
-            <field name="weight0" type="uint8" default-value="0"/>
-            <field name="weight1" type="uint8" default-value="0"/>
-            <field name="weight2" type="uint8" default-value="0"/>
-            <field name="weight3" type="uint8" default-value="0"/>
-            <field name="bone0" type="uint8" default-value="0"/>
-            <field name="bone1" type="uint8" default-value="0"/>
-            <field name="bone2" type="uint8" default-value="0"/>
-            <field name="bone3" type="uint8" default-value="0"/>
+            <field name="weight0" type="uint8" default_value="0"/>
+            <field name="weight1" type="uint8" default_value="0"/>
+            <field name="weight2" type="uint8" default_value="0"/>
+            <field name="weight3" type="uint8" default_value="0"/>
+            <field name="lookup0" type="uint8" default_value="0"/>
+            <field name="lookup1" type="uint8" default_value="0"/>
+            <field name="lookup2" type="uint8" default_value="0"/>
+            <field name="lookup3" type="uint8" default_value="0"/>
             <field name="normal" type="Vector3As3Fixed8V0"/>
             <field name="sign" type="fixed8"/>
             <field name="col" type="COL"/>
@@ -772,7 +760,7 @@
             <field name="uv1" type="Vector2As2int16V0"/>
             <field name="uv2" type="Vector2As2int16V0"/>
             <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default-value="1.0"/>
+            <field name="unused" type="fixed8" default_value="1.0"/>
         </fields>
     </structure>
     <structure name="VertexFormat0x19e0061" >
@@ -782,14 +770,14 @@
         </versions>
         <fields>
             <field name="pos" type="VEC3V0"/>
-            <field name="weight0" type="uint8" default-value="0"/>
-            <field name="weight1" type="uint8" default-value="0"/>
-            <field name="weight2" type="uint8" default-value="0"/>
-            <field name="weight3" type="uint8" default-value="0"/>
-            <field name="bone0" type="uint8" default-value="0"/>
-            <field name="bone1" type="uint8" default-value="0"/>
-            <field name="bone2" type="uint8" default-value="0"/>
-            <field name="bone3" type="uint8" default-value="0"/>
+            <field name="weight0" type="uint8" default_value="0"/>
+            <field name="weight1" type="uint8" default_value="0"/>
+            <field name="weight2" type="uint8" default_value="0"/>
+            <field name="weight3" type="uint8" default_value="0"/>
+            <field name="lookup0" type="uint8" default_value="0"/>
+            <field name="lookup1" type="uint8" default_value="0"/>
+            <field name="lookup2" type="uint8" default_value="0"/>
+            <field name="lookup3" type="uint8" default_value="0"/>
             <field name="normal" type="Vector3As3Fixed8V0"/>
             <field name="sign" type="fixed8"/>
             <field name="uv0" type="Vector2As2int16V0"/>
@@ -797,7 +785,7 @@
             <field name="uv2" type="Vector2As2int16V0"/>
             <field name="uv3" type="Vector2As2int16V0"/>
             <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default-value="1.0"/>
+            <field name="unused" type="fixed8" default_value="1.0"/>
         </fields>
     </structure>
 
@@ -808,14 +796,14 @@
         </versions>
         <fields>
             <field name="pos" type="VEC3V0"/>
-            <field name="weight0" type="uint8" default-value="0"/>
-            <field name="weight1" type="uint8" default-value="0"/>
-            <field name="weight2" type="uint8" default-value="0"/>
-            <field name="weight3" type="uint8" default-value="0"/>
-            <field name="bone0" type="uint8" default-value="0"/>
-            <field name="bone1" type="uint8" default-value="0"/>
-            <field name="bone2" type="uint8" default-value="0"/>
-            <field name="bone3" type="uint8" default-value="0"/>
+            <field name="weight0" type="uint8" default_value="0"/>
+            <field name="weight1" type="uint8" default_value="0"/>
+            <field name="weight2" type="uint8" default_value="0"/>
+            <field name="weight3" type="uint8" default_value="0"/>
+            <field name="lookup0" type="uint8" default_value="0"/>
+            <field name="lookup1" type="uint8" default_value="0"/>
+            <field name="lookup2" type="uint8" default_value="0"/>
+            <field name="lookup3" type="uint8" default_value="0"/>
             <field name="normal" type="Vector3As3Fixed8V0"/>
             <field name="sign" type="fixed8"/>
             <field name="col" type="COL"/>
@@ -824,7 +812,7 @@
             <field name="uv2" type="Vector2As2int16V0"/>
             <field name="uv3" type="Vector2As2int16V0"/>
             <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default-value="1.0"/>
+            <field name="unused" type="fixed8" default_value="1.0"/>
         </fields>
     </structure>
 
@@ -835,20 +823,20 @@
         </versions>
         <fields>
             <field name="pos" type="VEC3V0"/>
-            <field name="weight0" type="uint8" default-value="0"/>
-            <field name="weight1" type="uint8" default-value="0"/>
-            <field name="weight2" type="uint8" default-value="0"/>
-            <field name="weight3" type="uint8" default-value="0"/>
-            <field name="bone0" type="uint8" default-value="0"/>
-            <field name="bone1" type="uint8" default-value="0"/>
-            <field name="bone2" type="uint8" default-value="0"/>
-            <field name="bone3" type="uint8" default-value="0"/>
+            <field name="weight0" type="uint8" default_value="0"/>
+            <field name="weight1" type="uint8" default_value="0"/>
+            <field name="weight2" type="uint8" default_value="0"/>
+            <field name="weight3" type="uint8" default_value="0"/>
+            <field name="lookup0" type="uint8" default_value="0"/>
+            <field name="lookup1" type="uint8" default_value="0"/>
+            <field name="lookup2" type="uint8" default_value="0"/>
+            <field name="lookup3" type="uint8" default_value="0"/>
             <field name="normal" type="Vector3As3Fixed8V0"/>
             <field name="sign" type="fixed8"/>
             <field name="uv0" type="Vector2As2int16V0"/>
             <field name="uv1" type="Vector2As2int16V0"/>
             <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default-value="1.0"/>
+            <field name="unused" type="fixed8" default_value="1.0"/>
         </fields>
     </structure>
 
@@ -859,21 +847,21 @@
         </versions>
         <fields>
             <field name="pos" type="VEC3V0"/>
-            <field name="weight0" type="uint8" default-value="0"/>
-            <field name="weight1" type="uint8" default-value="0"/>
-            <field name="weight2" type="uint8" default-value="0"/>
-            <field name="weight3" type="uint8" default-value="0"/>
-            <field name="bone0" type="uint8" default-value="0"/>
-            <field name="bone1" type="uint8" default-value="0"/>
-            <field name="bone2" type="uint8" default-value="0"/>
-            <field name="bone3" type="uint8" default-value="0"/>
+            <field name="weight0" type="uint8" default_value="0"/>
+            <field name="weight1" type="uint8" default_value="0"/>
+            <field name="weight2" type="uint8" default_value="0"/>
+            <field name="weight3" type="uint8" default_value="0"/>
+            <field name="lookup0" type="uint8" default_value="0"/>
+            <field name="lookup1" type="uint8" default_value="0"/>
+            <field name="lookup2" type="uint8" default_value="0"/>
+            <field name="lookup3" type="uint8" default_value="0"/>
             <field name="normal" type="Vector3As3Fixed8V0"/>
             <field name="sign" type="fixed8"/>
             <field name="col" type="COL"/>
             <field name="uv0" type="Vector2As2int16V0"/>
             <field name="uv1" type="Vector2As2int16V0"/>
             <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default-value="1.0"/>
+            <field name="unused" type="fixed8" default_value="1.0"/>
         </fields>
     </structure>
 
@@ -884,14 +872,14 @@
         </versions>
         <fields>
             <field name="pos" type="VEC3V0"/>
-            <field name="weight0" type="uint8" default-value="0"/>
-            <field name="weight1" type="uint8" default-value="0"/>
-            <field name="weight2" type="uint8" default-value="0"/>
-            <field name="weight3" type="uint8" default-value="0"/>
-            <field name="bone0" type="uint8" default-value="0"/>
-            <field name="bone1" type="uint8" default-value="0"/>
-            <field name="bone2" type="uint8" default-value="0"/>
-            <field name="bone3" type="uint8" default-value="0"/>
+            <field name="weight0" type="uint8" default_value="0"/>
+            <field name="weight1" type="uint8" default_value="0"/>
+            <field name="weight2" type="uint8" default_value="0"/>
+            <field name="weight3" type="uint8" default_value="0"/>
+            <field name="lookup0" type="uint8" default_value="0"/>
+            <field name="lookup1" type="uint8" default_value="0"/>
+            <field name="lookup2" type="uint8" default_value="0"/>
+            <field name="lookup3" type="uint8" default_value="0"/>
             <field name="normal" type="Vector3As3Fixed8V0"/>
             <field name="sign" type="fixed8"/>
             <field name="color" type="COL"/>
@@ -899,7 +887,7 @@
             <field name="uv1" type="Vector2As2int16V0"/>
             <field name="uv2" type="Vector2As2int16V0"/>
             <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default-value="1.0"/>
+            <field name="unused" type="fixed8" default_value="1.0"/>
         </fields>
     </structure>
 
@@ -910,21 +898,21 @@
         </versions>
         <fields>
             <field name="pos" type="VEC3V0"/>
-            <field name="weight0" type="uint8" default-value="0"/>
-            <field name="weight1" type="uint8" default-value="0"/>
-            <field name="weight2" type="uint8" default-value="0"/>
-            <field name="weight3" type="uint8" default-value="0"/>
-            <field name="bone0" type="uint8" default-value="0"/>
-            <field name="bone1" type="uint8" default-value="0"/>
-            <field name="bone2" type="uint8" default-value="0"/>
-            <field name="bone3" type="uint8" default-value="0"/>
+            <field name="weight0" type="uint8" default_value="0"/>
+            <field name="weight1" type="uint8" default_value="0"/>
+            <field name="weight2" type="uint8" default_value="0"/>
+            <field name="weight3" type="uint8" default_value="0"/>
+            <field name="lookup0" type="uint8" default_value="0"/>
+            <field name="lookup1" type="uint8" default_value="0"/>
+            <field name="lookup2" type="uint8" default_value="0"/>
+            <field name="lookup3" type="uint8" default_value="0"/>
             <field name="normal" type="Vector3As3Fixed8V0"/>
             <field name="sign" type="fixed8"/>
             <field name="uv0" type="Vector2As2int16V0"/>
             <field name="uv1" type="Vector2As2int16V0"/>
             <field name="uv2" type="Vector2As2int16V0"/>
             <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default-value="1.0"/>
+            <field name="unused" type="fixed8" default_value="1.0"/>
         </fields>
     </structure>
 
@@ -936,15 +924,15 @@
             <version number="2" size="108"/>
         </versions>
         <fields>
-            <field name="name" type="Reference" refTo="CHAR"/>
-            <field name="unknown76ff2940" type="int32" expected-value="-1"/>
-            <field name="bone" type="int16" default-value="-1"/>
-            <field name="unknown294cc515" type="uint16" expected-value="0"/>
+            <field name="name" type="Reference" ref_to="CHAR"/>
+            <field name="unknown76ff2940" type="int32" expected_value="-1"/>
+            <field name="bone" type="int16" default_value="-1"/>
+            <field name="unknown294cc515" type="uint16" expected_value="0"/>
             <field name="matrix" type="Matrix44"/>
-            <field name="unknown7275bfa0" type="uint32" default-value="4"/> <!-- some kind of type (enum) ? -->
-            <field name="payload" type="Reference" refTo="CHAR"/>
-            <field name="unknown76cf1db0" type="uint32" expected-value="0" since-version="1"/>
-            <field name="unknowne5f1b2a7" type="uint32" expected-value="0" since-version="2"/>
+            <field name="unknown7275bfa0" type="uint32" default_value="4"/> <!-- some kind of type (enum) ? -->
+            <field name="payload" type="Reference" ref_to="CHAR"/>
+            <field name="unknown76cf1db0" type="uint32" expected_value="0" since_version="1"/>
+            <field name="unknowne5f1b2a7" type="uint32" expected_value="0" since_version="2"/>
         </fields>
     </structure>
 
@@ -954,10 +942,10 @@
             <version number="0" size="32"/>
         </versions>
         <fields>
-            <field name="frames" type="Reference" refTo="I32_"/>
+            <field name="frames" type="Reference" ref_to="I32_"/>
             <field name="flags" type="uint32"/>
             <field name="fend" type="uint32"/>
-            <field name="keys" type="Reference" refTo="EVNT"/>
+            <field name="keys" type="Reference" ref_to="EVNT"/>
         </fields>
     </structure>
 
@@ -967,10 +955,10 @@
             <version number="0" size="32"/>
         </versions>
         <fields>
-            <field name="frames" type="Reference" refTo="I32_"/>
+            <field name="frames" type="Reference" ref_to="I32_"/>
             <field name="flags" type="uint32"/>
             <field name="fend" type="uint32"/>
-            <field name="keys" type="Reference" refTo="VEC2"/>
+            <field name="keys" type="Reference" ref_to="VEC2"/>
         </fields>
     </structure>
 
@@ -980,10 +968,10 @@
             <version number="0" size="32"/>
         </versions>
         <fields>
-            <field name="frames" type="Reference" refTo="I32_"/>
+            <field name="frames" type="Reference" ref_to="I32_"/>
             <field name="flags" type="uint32"/>
             <field name="fend" type="uint32"/>
-            <field name="keys" type="Reference" refTo="VEC3"/>
+            <field name="keys" type="Reference" ref_to="VEC3"/>
         </fields>
     </structure>
 
@@ -993,10 +981,10 @@
             <version number="0" size="32"/>
         </versions>
         <fields>
-            <field name="frames" type="Reference" refTo="I32_"/>
+            <field name="frames" type="Reference" ref_to="I32_"/>
             <field name="flags" type="uint32"/>
             <field name="fend" type="uint32"/>
-            <field name="keys" type="Reference" refTo="REAL"/>
+            <field name="keys" type="Reference" ref_to="REAL"/>
         </fields>
     </structure>
 
@@ -1006,10 +994,10 @@
             <version number="0" size="32"/>
         </versions>
         <fields>
-            <field name="frames" type="Reference" refTo="I32_"/>
+            <field name="frames" type="Reference" ref_to="I32_"/>
             <field name="flags" type="uint32"/>
             <field name="fend" type="uint32"/>
-            <field name="keys" type="Reference" refTo="COL"/>
+            <field name="keys" type="Reference" ref_to="COL"/>
         </fields>
     </structure>
 
@@ -1019,10 +1007,10 @@
             <version number="0" size="32"/>
         </versions>
         <fields>
-            <field name="frames" type="Reference" refTo="I32_"/>
+            <field name="frames" type="Reference" ref_to="I32_"/>
             <field name="flags" type="uint32"/>
             <field name="fend" type="uint32"/>
-            <field name="keys" type="Reference" refTo="I16_"/>
+            <field name="keys" type="Reference" ref_to="I16_"/>
         </fields>
     </structure>
 
@@ -1032,10 +1020,10 @@
             <version number="0" size="32"/>
         </versions>
         <fields>
-            <field name="frames" type="Reference" refTo="I32_"/>
+            <field name="frames" type="Reference" ref_to="I32_"/>
             <field name="flags" type="uint32"/>
             <field name="fend" type="uint32"/>
-            <field name="keys" type="Reference" refTo="U16_"/>
+            <field name="keys" type="Reference" ref_to="U16_"/>
         </fields>
     </structure>
 
@@ -1046,10 +1034,10 @@
             <version number="0" size="32"/>
         </versions>
         <fields>
-            <field name="frames" type="Reference" refTo="I32_"/>
+            <field name="frames" type="Reference" ref_to="I32_"/>
             <field name="flags" type="uint32"/>
             <field name="fend" type="uint32"/>
-            <field name="keys" type="Reference" refTo="U32_"/>
+            <field name="keys" type="Reference" ref_to="U32_"/>
         </fields>
     </structure>
 
@@ -1059,10 +1047,10 @@
             <version number="0" size="32"/>
         </versions>
         <fields>
-            <field name="frames" type="Reference" refTo="I32_"/>
+            <field name="frames" type="Reference" ref_to="I32_"/>
             <field name="flags" type="uint32"/>
             <field name="fend" type="uint32"/>
-            <field name="keys" type="Reference" refTo="QUAT"/>
+            <field name="keys" type="Reference" ref_to="QUAT"/>
         </fields>
     </structure>
 
@@ -1072,10 +1060,10 @@
             <version number="0" size="32"/>
         </versions>
         <fields>
-            <field name="frames" type="Reference" refTo="I32_"/>
+            <field name="frames" type="Reference" ref_to="I32_"/>
             <field name="flags" type="uint32"/>
             <field name="fend" type="uint32"/>
-            <field name="keys" type="Reference" refTo="FLAG"/>
+            <field name="keys" type="Reference" ref_to="FLAG"/>
         </fields>
     </structure>
 
@@ -1085,10 +1073,10 @@
             <version number="0" size="32"/>
         </versions>
         <fields>
-            <field name="frames" type="Reference" refTo="I32_"/>
+            <field name="frames" type="Reference" ref_to="I32_"/>
             <field name="flags" type="uint32"/>
             <field name="fend" type="uint32"/>
-            <field name="keys" type="Reference" refTo="BNDS"/>
+            <field name="keys" type="Reference" ref_to="BNDS"/>
         </fields>
     </structure>
 
@@ -1100,9 +1088,9 @@
             <version number="1" size="160"/>
         </versions>
         <fields>
-            <field name="d1" type="int32" default-value="-1"/>
-            <field name="name" type="Reference" refTo="CHAR"/>
-            <field name="flags" type="uint32" default-value="0" >
+            <field name="d1" type="int32" default_value="-1"/>
+            <field name="name" type="Reference" ref_to="CHAR"/>
+            <field name="flags" type="uint32" default_value="0" >
                 <bits>
                     <bit mask="0x1" name="inheritTranslation"/>
                     <bit mask="0x2" name="inheritScale"/>
@@ -1116,8 +1104,8 @@
                     <bit mask="0x2000" name="real"/>
                 </bits>
             </field>
-            <field name="parent" type="int16" default-value="-1"/>
-            <field name="s1" type="uint16" expected-value="0"/>
+            <field name="parent" type="int16" default_value="-1"/>
+            <field name="s1" type="uint16" expected_value="0"/>
             <field name="location" type="Vector3AnimationReferenceV0"/>
             <field name="rotation" type="QuaternionAnimationReferenceV0"/>
             <field name="scale" type="Vector3AnimationReferenceV0"/>
@@ -1142,27 +1130,27 @@
             <version number="4" size="204"/>
         </versions>
         <fields>
-            <field name="name" type="Reference"  refTo="CHAR"/>
-            <field name="runs_concurrent" type="uint16" default-value="0"/>
-            <field name="priority" type="uint16" default-value="0"/>
+            <field name="name" type="Reference"  ref_to="CHAR"/>
+            <field name="runs_concurrent" type="uint16" default_value="0"/>
+            <field name="priority" type="uint16" default_value="0"/>
             <field name="sts_index" type="uint16"/> <!-- seems to not have any use -->
             <field name="sts_index_fb" type="uint16"/>
-            <field name="anim_ids" type="Reference" refTo="U32_"/>
-            <field name="anim_refs" type="Reference" refTo="U32_"/>
-            <field name="unknownAt44" type="uint32" expected-value="0"/>
-            <field name="sdev" type="Reference" refTo="SDEV"/>
-            <field name="sd2v" type="Reference" refTo="SD2V"/>
-            <field name="sd3v" type="Reference" refTo="SD3V"/>
-            <field name="sd4q" type="Reference" refTo="SD4Q"/>
-            <field name="sdcc" type="Reference" refTo="SDCC"/>
-            <field name="sdr3" type="Reference" refTo="SDR3"/>
+            <field name="anim_ids" type="Reference" ref_to="U32_"/>
+            <field name="anim_refs" type="Reference" ref_to="U32_"/>
+            <field name="unknownAt44" type="uint32" expected_value="0"/>
+            <field name="sdev" type="Reference" ref_to="SDEV"/>
+            <field name="sd2v" type="Reference" ref_to="SD2V"/>
+            <field name="sd3v" type="Reference" ref_to="SD3V"/>
+            <field name="sd4q" type="Reference" ref_to="SD4Q"/>
+            <field name="sdcc" type="Reference" ref_to="SDCC"/>
+            <field name="sdr3" type="Reference" ref_to="SDR3"/>
             <field name="sd08" type="Reference"/> <!-- unknown -->
-            <field name="sds6" type="Reference" refTo="SDS6"/>
-            <field name="sdu6" type="Reference" refTo="SDU6"/>
+            <field name="sds6" type="Reference" ref_to="SDS6"/>
+            <field name="sdu6" type="Reference" ref_to="SDU6"/>
             <field name="sd11" type="Reference"/> <!-- unknown -->
-            <field name="sdu3" type="Reference" refTo="SDU3"/>
-            <field name="sdfg" type="Reference" refTo="SDFG"/>
-            <field name="sdmb" type="Reference" refTo="SDMB"/>
+            <field name="sdu3" type="Reference" ref_to="SDU3"/>
+            <field name="sdfg" type="Reference" ref_to="SDFG"/>
+            <field name="sdmb" type="Reference" ref_to="SDMB"/>
         </fields>
     </structure>
 
@@ -1173,13 +1161,13 @@
             <version number="2" size="92"/>
         </versions>
         <fields>
-            <field name="unknown0" type="int32" default-value="-1"/>
-            <field name="unknown1" type="int32" default-value="-1"/>
-            <field name="name" type="Reference" refTo="CHAR"/>
+            <field name="unknown0" type="int32" default_value="-1"/>
+            <field name="unknown1" type="int32" default_value="-1"/>
+            <field name="name" type="Reference" ref_to="CHAR"/>
             <field name="anim_ms_start" type="uint32"/>
             <field name="anim_ms_end" type="uint32"/>
             <field name="movement_speed" type="float"/>
-            <field name="flags" type="uint32" default-value="0" >
+            <field name="flags" type="uint32" default_value="0" >
                 <bits>
                     <bit mask="0x1" name="not_looping"/>
                     <bit mask="0x2" name="always_global"/>
@@ -1187,10 +1175,10 @@
                 </bits>
             </field>
             <field name="frequency" type="uint32"/>
-            <field name="unknown2" type="uint32" expected-value="1"/>
-            <field name="unknown3" type="uint32" expected-value="1"/>
-            <field name="unknown4" type="uint32" expected-value="100"/>
-            <field till-version="1" name="unknown5" type="uint32" default-value="0"/>
+            <field name="unknown2" type="uint32" expected_value="1"/>
+            <field name="unknown3" type="uint32" expected_value="1"/>
+            <field name="unknown4" type="uint32" expected_value="100"/>
+            <field till_version="1" name="unknown5" type="uint32" default_value="0"/>
             <field name="bounding_sphere" type="BNDS"/>
             <field name="unknownRefSEQSBeta01" type="Reference"/>
         </fields>
@@ -1205,8 +1193,8 @@
             <version number="0" size="24"/>
         </versions>
         <fields>
-            <field name="name" type="Reference" refTo="CHAR"/>
-            <field name="stc_indices" type="Reference" refTo="U32_"/>
+            <field name="name" type="Reference" ref_to="CHAR"/>
+            <field name="stc_indices" type="Reference" ref_to="U32_"/>
         </fields>
     </structure>
 
@@ -1216,12 +1204,12 @@
             <version number="0" size="28"/>
         </versions>
         <fields>
-            <field name="animIds" type="Reference" refTo="U32_"/>
-            <field name="unknown0" type="int32" expected-value="-1"/>
-            <field name="unknown1" type="int32" expected-value="-1"/>
-            <field name="unknown2" type="int32" expected-value="-1"/>
-            <field name="s1" type="int16" expected-value="-1"/>
-            <field name="s2" type="uint16" expected-value="0"/>
+            <field name="animIds" type="Reference" ref_to="U32_"/>
+            <field name="unknown0" type="int32" expected_value="-1"/>
+            <field name="unknown1" type="int32" expected_value="-1"/>
+            <field name="unknown2" type="int32" expected_value="-1"/>
+            <field name="s1" type="int16" expected_value="-1"/>
+            <field name="s2" type="uint16" expected_value="0"/>
         </fields>
     </structure>
 
@@ -1244,22 +1232,22 @@
             <version number="5" size="48"/>
         </versions>
         <fields>
-            <field name="unknown0" type="uint32" expected-value="0"/>
-            <field name="unknown1" type="uint32" expected-value="0" since-version="3"/>
-            <field name="first_vertex_index" type="uint16" till-version="2"/>
-            <field name="vertex_count" type="uint16" till-version="2"/>
-            <field name="first_vertex_index" type="uint32" since-version="3"/>
-            <field name="vertex_count" type="uint32" since-version="3"/>
+            <field name="unknown0" type="uint32" expected_value="0"/>
+            <field name="unknown1" type="uint32" expected_value="0" since_version="3"/>
+            <field name="first_vertex_index" type="uint16" till_version="2"/>
+            <field name="vertex_count" type="uint16" till_version="2"/>
+            <field name="first_vertex_index" type="uint32" since_version="3"/>
+            <field name="vertex_count" type="uint32" since_version="3"/>
             <field name="first_face_index" type="uint32"/>
             <field name="face_count" type="uint32"/>
             <field name="bone_count" type="uint16"/>
             <field name="first_bone_lookup_index" type="uint16"/>
             <field name="bone_lookup_count" type="uint16"/>
-            <field name="unknown2" type="uint16" expected-value="0"/>
-            <field name="bone_weight_pairs_per_vertex" type="uint8"/>
-            <field name="unknown4" type="uint8" default-value="1"/>
+            <field name="unknown2" type="uint16" expected_value="0"/>
+            <field name="vertex_lookups_used" type="uint8"/>
+            <field name="unknown4" type="uint8" default_value="1"/>
             <field name="rootbone" type="uint16"/>
-            <field name="flags" type="uint32" since-version="4">
+            <field name="flags" type="uint32" since_version="4">
                 <bits>
                     <bit mask='0x1' name='hidden'/>
                     <bit mask='0x2' name='placeholder'/>
@@ -1267,8 +1255,8 @@
                     <bit mask='0x8' name='cloth_influenced'/>
                 </bits>
             </field>
-            <field name="uv_multiply" type="float" default-value="16.0" since-version="5"/>
-            <field name="uv_offset" type="float" default-value="0.0" since-version="5"/>
+            <field name="uv_multiply" type="float" default_value="16.0" since_version="5"/>
+            <field name="uv_offset" type="float" default_value="0.0" since_version="5"/>
         </fields>
     </structure>
 
@@ -1278,11 +1266,11 @@
             <version number="1" size="14"/>
         </versions>
         <fields>
-            <field name="unknown0" type="uint32" expected-value="0"/>
+            <field name="unknown0" type="uint32" expected_value="0"/>
             <field name="region_index" type="uint16"/>
-            <field name="unknown1" type="uint32" default-value="0"/>
+            <field name="unknown1" type="uint32" default_value="0"/>
             <field name="material_reference_index" type="uint16"/>
-            <field name="unknown2" type="int16" default-value="-1"/>
+            <field name="unknown2" type="int16" default_value="-1"/>
         </fields>
     </structure>
 
@@ -1292,7 +1280,7 @@
             <version number="1" size="72"/>
         </versions>
         <fields>
-            <field name="unknown0" type="uint32" default-value="0"/>
+            <field name="unknown0" type="uint32" default_value="0"/>
             <field name="boundingsAnimation" type="BNDSAnimationReferenceV0"/>
         </fields>
     </structure>
@@ -1303,12 +1291,12 @@
             <version number="2" size="52"/>
         </versions>
         <fields>
-            <field name="faces" type="Reference" refTo="U16_"/>
-            <field name="regions" type="Reference" refTo="REGN"/>
-            <field name="batches" type="Reference" refTo="BAT_"/>
-            <field name="msec" type="Reference" refTo="MSEC"/>
+            <field name="faces" type="Reference" ref_to="U16_"/>
+            <field name="regions" type="Reference" ref_to="REGN"/>
+            <field name="batches" type="Reference" ref_to="BAT_"/>
+            <field name="msec" type="Reference" ref_to="MSEC"/>
             <!-- m3: 1, m3a: 0 -->
-            <field name="unknown" type="uint32" default-value="1"/>
+            <field name="unknown" type="uint32" default_value="1"/>
         </fields>
     </structure>
 
@@ -1318,8 +1306,8 @@
             <version number="1" size="20"/>
         </versions>
         <fields>
-            <field name="unknown" type="int32" expected-value="-1"/>
-            <field name="name" type="Reference" refTo="CHAR"/>
+            <field name="unknown" type="int32" expected_value="-1"/>
+            <field name="name" type="Reference" ref_to="CHAR"/>
             <field name="bone" type="uint32"/>
         </fields>
     </structure>
@@ -1342,8 +1330,8 @@
                     <bit mask="0x20" name="team_color"/>
                 </bits>
             </field>
-            <field name="lod_cut" type="uint32" default-value="0"/>
-            <field name="shadow_lod_cut" type="uint32" default-value="0"/>
+            <field name="lod_cut" type="uint32" default_value="0"/>
+            <field name="shadow_lod_cut" type="uint32" default_value="0"/>
             <field name="color" type="Vector3AnimationReferenceV0"/>
             <field name="intensity" type="FloatAnimationReferenceV0"/>
             <field name="spec_color" type="Vector3AnimationReferenceV0"/>
@@ -1362,8 +1350,8 @@
             <version number="0" size="8"/>
         </versions>
         <fields>
-            <field name="type" type="uint32" default-value="1"/>
-            <field name="index" type="uint32"/>
+            <field name="type" type="uint32" default_value="1"/>
+            <field name="material_index" type="uint32"/>
         </fields>
     </structure>
 
@@ -1374,41 +1362,41 @@
             <version number="4" size="152"/>
         </versions>
         <fields>
-            <field name="matrix" type="Matrix44" till-version="1"/>
-            <field name="forward_x" type="VEC4V0" since-version="4"/>
-            <field name="forward_y" type="VEC4V0" since-version="4"/>
-            <field name="forward_z" type="VEC4V0" since-version="4"/>
-            <field name="up_x" type="VEC4V0" since-version="4"/>
-            <field name="up_y" type="VEC4V0" since-version="4"/>
-            <field name="up_z" type="VEC4V0" since-version="4"/>
+            <field name="matrix" type="Matrix44" till_version="1"/>
+            <field name="forward_x" type="VEC4V0" since_version="4"/>
+            <field name="forward_y" type="VEC4V0" since_version="4"/>
+            <field name="forward_z" type="VEC4V0" since_version="4"/>
+            <field name="up_x" type="VEC4V0" since_version="4"/>
+            <field name="up_y" type="VEC4V0" since_version="4"/>
+            <field name="up_z" type="VEC4V0" since_version="4"/>
             <field name="bone" type="uint16"/>
-            <field name="flags" type="uint8" default-value="0x0">
+            <field name="flags" type="uint8" default_value="0x0">
                 <bits>
                     <bit mask="0x1" name="main_part"/>
                 </bits>
             </field>
-            <field name="group_id" type="uint8" default-value="1"/>
-            <field name="yaw_flags" type="uint32" default-value="0x2">
+            <field name="group_id" type="uint8" default_value="1"/>
+            <field name="yaw_flags" type="uint32" default_value="0x2">
                 <bits>
                     <bit mask="0x2" name="yaw_limited"/>
                 </bits>
             </field>
-            <field name="yaw_min" type="float" default-value="0.0"/>
-            <field name="yaw_max" type="float" default-value="0.0"/>
-            <field name="yaw_weight" type="float" default-value="0.0" since-version="4"/>
-            <field name="pitch_flags" type="uint32" default-value="0x2">
+            <field name="yaw_min" type="float" default_value="0.0"/>
+            <field name="yaw_max" type="float" default_value="0.0"/>
+            <field name="yaw_weight" type="float" default_value="0.0" since_version="4"/>
+            <field name="pitch_flags" type="uint32" default_value="0x2">
                 <bits>
                     <bit mask="0x2" name="pitch_limited"/>
                 </bits>
             </field>
-            <field name="pitch_min" type="float" default-value="0.0"/>
-            <field name="pitch_max" type="float" default-value="0.0"/>
-            <field name="pitch_weight" type="float" default-value="0.0" since-version="4"/>
-            <field name="unknownAt132" type="float" default-value="0.0"/>
-            <field name="unknownAt136" type="float" default-value="0.0"/>
-            <field name="unknownAt140" type="float" default-value="0.0" since-version="4"/>
-            <field name="unknownAt144" type="float" default-value="0.0" since-version="4"/>
-            <field name="unknownAt148" type="float" default-value="0.0" since-version="4"/>
+            <field name="pitch_min" type="float" default_value="0.0"/>
+            <field name="pitch_max" type="float" default_value="0.0"/>
+            <field name="pitch_weight" type="float" default_value="0.0" since_version="4"/>
+            <field name="unknownAt132" type="float" default_value="0.0"/>
+            <field name="unknownAt136" type="float" default_value="0.0"/>
+            <field name="unknownAt140" type="float" default_value="0.0" since_version="4"/>
+            <field name="unknownAt144" type="float" default_value="0.0" since_version="4"/>
+            <field name="unknownAt148" type="float" default_value="0.0" since_version="4"/>
         </fields>
     </structure>
 
@@ -1419,8 +1407,8 @@
         </versions>
         <fields>
             <!-- List of indices for the PATU list defined in the model -->
-            <field name="parts" type="Reference" refTo="U32_"/>
-            <field name="name" type="Reference" refTo="CHAR"/>
+            <field name="parts" type="Reference" ref_to="U32_"/>
+            <field name="name" type="Reference" ref_to="CHAR"/>
         </fields>
     </structure>
 
@@ -1462,10 +1450,10 @@
             <version number="26" size="464"/>
         </versions>
         <fields>
-            <field name="unknown00" type="uint32" expected-value="0"/>
-            <field name="color_bitmap" type="Reference" refTo="CHAR"/>
+            <field name="unknown00" type="uint32" expected_value="0"/>
+            <field name="color_bitmap" type="Reference" ref_to="CHAR"/>
             <field name="color_value" type="ColorAnimationReferenceV0"/>
-            <field name="flags" type="uint32" default-value="0xec">
+            <field name="flags" type="uint32" default_value="0xec">
                 <bits>
                     <bit mask="0x4" name="uv_wrap_x"/>
                     <bit mask="0x8" name="uv_wrap_y"/>
@@ -1490,23 +1478,23 @@
                 4: Green Only
                 5: Blue Only
             -->
-            <field name="color_channels" type="uint32" default-value="0"/>
+            <field name="color_channels" type="uint32" default_value="0"/>
             <field name="color_multiply" type="FloatAnimationReferenceV0"/>
             <field name="color_add" type="FloatAnimationReferenceV0"/>
             <!-- unknown3b61017a needs to be 2 for volume noise materials -->
-            <field name="unknown3b61017a" type="uint32" default-value="0"/>
-            <field name="noise_amplitude" type="float" default-value="0.8" since-version="24"/>
-            <field name="noise_frequency" type="float" default-value="0.5" since-version="24"/>
-            <field name="video_channel" type="int32" default-value="-1"/>
+            <field name="unknown3b61017a" type="uint32" default_value="0"/>
+            <field name="noise_amplitude" type="float" default_value="0.8" since_version="24"/>
+            <field name="noise_frequency" type="float" default_value="0.5" since_version="24"/>
+            <field name="video_channel" type="int32" default_value="-1"/>
             <field name="video_frame_rate" type="uint32" default="0"/> <!-- if video is enabled default should be 24 -->
             <field name="video_frame_start" type="uint32" default="0"/>
-            <field name="video_frame_end" type="int32" default-value="0"/> <!-- -1 means till the end-->
-            <field name="video_mode" type="uint32" default-value="0"/><!-- 0 is loop, 1 is hold-->
-            <field name="video_sync_timing" type="uint32" default-value="0"/><!-- boolean -->
+            <field name="video_frame_end" type="int32" default_value="0"/> <!-- -1 means till the end-->
+            <field name="video_mode" type="uint32" default_value="0"/><!-- 0 is loop, 1 is hold-->
+            <field name="video_sync_timing" type="uint32" default_value="0"/><!-- boolean -->
             <field name="video_play" type="UInt32AnimationReferenceV0"/>  <!-- SDU3 is used for aniamtion-->
             <field name="video_restart" type="UInt32AnimationReferenceV0"/> <!-- SDFG is used for aniamtion-->
-            <field name="uv_flipbook_rows" type="uint32" default-value="0"/>
-            <field name="uv_flipbook_columns" type="uint32" default-value="0"/>
+            <field name="uv_flipbook_rows" type="uint32" default_value="0"/>
+            <field name="uv_flipbook_columns" type="uint32" default_value="0"/>
             <field name="uv_flipbook_frame" type="UInt16AnimationReferenceV0"/>
             <field name="uv_offset" type="Vector2AnimationReferenceV0"/>
             <field name="uv_angle" type="Vector3AnimationReferenceV0"/>
@@ -1514,22 +1502,22 @@
             <field name="unknowna4ec0796" type="UInt32AnimationReferenceV0"/>
             <field name="unknowna44bf452" type="FloatAnimationReferenceV0"/>
             <field name="color_brightness" type="FloatAnimationReferenceV0"/>
-            <field name="uv_triplanar_offset" type="Vector3AnimationReferenceV0" since-version="24"/>
-            <field name="uv_triplanar_scale" type="Vector3AnimationReferenceV0" since-version="24"/> <!-- default (1.0, 1.0, 1.0)-->
-            <field name="uv_source_related" type="int32" default-value="-1"/>
-            <field name="fresnel_type" type="uint32" default-value="0"/>
-            <field name="fresnel_exponent" type="float" default-value="4.0"/>
-            <field name="fresnel_min" type="float" default-value="0.0"/>
-            <field name="fresnel_max_offset" type="float" default-value="1.0"/><!-- fresnelMin + fresnelMaxOffset = fresnelMax-->
-            <field name="unknown15" type="float" default-value="1.0"/>
-            <field name="unknown16" type="uint32" default-value="0" since-version="25"/>
-            <field name="unknown17" type="uint32" default-value="0" since-version="25"/>
-            <field name="fresnel_inverted_mask_x" type="float" default-value="1.0" since-version="25"/> <!-- default=(1.0, 1.0, 1.0)-->
-            <field name="fresnel_inverted_mask_y" type="float" default-value="1.0" since-version="25"/>
-            <field name="fresnel_inverted_mask_z" type="float" default-value="1.0" since-version="25"/>
-            <field name="fresnel_yaw" type="float" default-value="0.0" since-version="25"/>
-            <field name="fresnel_pitch" type="float" default-value="0.0" since-version="25"/>
-            <field till-version="25" name="unknowned0e748d" type="uint32" default-value="0" since-version="25"/>
+            <field name="uv_triplanar_offset" type="Vector3AnimationReferenceV0" since_version="24"/>
+            <field name="uv_triplanar_scale" type="Vector3AnimationReferenceV0" since_version="24"/> <!-- default (1.0, 1.0, 1.0)-->
+            <field name="uv_source_related" type="int32" default_value="-1"/>
+            <field name="fresnel_type" type="uint32" default_value="0"/>
+            <field name="fresnel_exponent" type="float" default_value="4.0"/>
+            <field name="fresnel_min" type="float" default_value="0.0"/>
+            <field name="fresnel_max_offset" type="float" default_value="1.0"/><!-- fresnelMin + fresnelMaxOffset = fresnelMax-->
+            <field name="unknown15" type="float" default_value="1.0"/>
+            <field name="unknown16" type="uint32" default_value="0" since_version="25"/>
+            <field name="unknown17" type="uint32" default_value="0" since_version="25"/>
+            <field name="fresnel_inverted_mask_x" type="float" default_value="1.0" since_version="25"/> <!-- default=(1.0, 1.0, 1.0)-->
+            <field name="fresnel_inverted_mask_y" type="float" default_value="1.0" since_version="25"/>
+            <field name="fresnel_inverted_mask_z" type="float" default_value="1.0" since_version="25"/>
+            <field name="fresnel_yaw" type="float" default_value="0.0" since_version="25"/>
+            <field name="fresnel_pitch" type="float" default_value="0.0" since_version="25"/>
+            <field till_version="25" name="unknowned0e748d" type="uint32" default_value="0" since_version="25"/>
         </fields>
     </structure>
 
@@ -1544,8 +1532,8 @@
             <version number="20" size="352"/>
         </versions>
         <fields>
-            <field name="name" type="Reference" refTo="CHAR"/>
-            <field name="additional_flags" type="uint32" default-value="0">
+            <field name="name" type="Reference" ref_to="CHAR"/>
+            <field name="additional_flags" type="uint32" default_value="0">
                 <bits>
                     <bit mask="0x1" name="depth_blend_falloff"/> <!-- always set if depthBlendFalloff is != 0.0 -->
                     <bit mask="0x4" name="vertex_color"/> <!-- calculated value: based on the flag useVertexColor. It is always set if the material is used by a particle system. -->
@@ -1553,7 +1541,7 @@
                     <bit mask="0x200" name="unknown0x200"/>
                 </bits>
             </field>
-            <field name="flags" type="uint32" default-value="0" >
+            <field name="flags" type="uint32" default_value="0" >
                 <bits>
                     <!-- if useVertexColor is set, the following flags need also to be set:
                       * vertex_color of the additionaFlags field
@@ -1599,7 +1587,7 @@
             </field>
             <field name="blend_mode" type="uint32"/>
             <field name="priority" type="int32"/>
-            <field name="usedRTTChannels" type="uint32" default-value="0" >
+            <field name="usedRTTChannels" type="uint32" default_value="0" >
                  <bits>
                     <bit mask="0x1" name="channel0"/>
                     <bit mask="0x2" name="channel1"/>
@@ -1611,39 +1599,39 @@
                </bits>
             </field>
             <field name="specularity" type="float"/>
-            <field name="depth_blend_falloff" type="float" default-value="0.0"/> <!-- Only used if the bit useDepthBlendFalloff of additionalFlags is set, typically set for particle systems -->
-            <field name="cutout_threshold" type="uint32" default-value="0"/>
-            <field name="spec_multiply" type="float" default-value="1.0"/>
-            <field name="emis_multiply" type="float" default-value="1.0"/>
-            <field name="envi_const_multiply" type="float" since-version="20" default-value="1.0"/>
-            <field name="envi_diff_multiply" type="float" since-version="20" default-value="0.0"/>
-            <field name="envi_spec_multiply" type="float" since-version="20" default-value="0.0"/>
-            <field name="layer_diff" type="Reference" refTo="LAYR"/>
-            <field name="layer_decal" type="Reference" refTo="LAYR"/>
-            <field name="layer_spec" type="Reference" refTo="LAYR"/>
-            <field name="layer_gloss" type="Reference" refTo="LAYR" since-version="16"/>
-            <field name="layer_emis1" type="Reference" refTo="LAYR"/>
-            <field name="layer_emis2" type="Reference" refTo="LAYR"/>
-            <field name="layer_envi" type="Reference" refTo="LAYR"/>
-            <field name="layer_envi_mask" type="Reference" refTo="LAYR"/>
-            <field name="layer_alpha1" type="Reference" refTo="LAYR"/>
-            <field name="layer_alpha2" type="Reference" refTo="LAYR"/>
-            <field name="layer_norm" type="Reference" refTo="LAYR"/>
-            <field name="layer_height" type="Reference" refTo="LAYR"/>
-            <field name="layer_light" type="Reference" refTo="LAYR"/>
-            <field name="layer_ao" type="Reference" refTo="LAYR"/>
-            <field name="layer_norm_blend1_mask" type="Reference" refTo="LAYR" since-version="19"/>
-            <field name="layer_norm_blend2_mask" type="Reference" refTo="LAYR" since-version="19"/>
-            <field name="layer_norm_blend1" type="Reference" refTo="LAYR" since-version="19"/>
-            <field name="layer_norm_blend2" type="Reference" refTo="LAYR" since-version="19"/>
-            <field name="unknown2481ae8a" type="uint32" default-value="0"/>
+            <field name="depth_blend_falloff" type="float" default_value="0.0"/> <!-- Only used if the bit useDepthBlendFalloff of additionalFlags is set, typically set for particle systems -->
+            <field name="cutout_threshold" type="uint32" default_value="0"/>
+            <field name="spec_multiply" type="float" default_value="1.0"/>
+            <field name="emis_multiply" type="float" default_value="1.0"/>
+            <field name="envi_const_multiply" type="float" since_version="20" default_value="1.0"/>
+            <field name="envi_diff_multiply" type="float" since_version="20" default_value="0.0"/>
+            <field name="envi_spec_multiply" type="float" since_version="20" default_value="0.0"/>
+            <field name="layer_diff" type="Reference" ref_to="LAYR"/>
+            <field name="layer_decal" type="Reference" ref_to="LAYR"/>
+            <field name="layer_spec" type="Reference" ref_to="LAYR"/>
+            <field name="layer_gloss" type="Reference" ref_to="LAYR" since_version="16"/>
+            <field name="layer_emis1" type="Reference" ref_to="LAYR"/>
+            <field name="layer_emis2" type="Reference" ref_to="LAYR"/>
+            <field name="layer_envi" type="Reference" ref_to="LAYR"/>
+            <field name="layer_envi_mask" type="Reference" ref_to="LAYR"/>
+            <field name="layer_alpha1" type="Reference" ref_to="LAYR"/>
+            <field name="layer_alpha2" type="Reference" ref_to="LAYR"/>
+            <field name="layer_norm" type="Reference" ref_to="LAYR"/>
+            <field name="layer_height" type="Reference" ref_to="LAYR"/>
+            <field name="layer_light" type="Reference" ref_to="LAYR"/>
+            <field name="layer_ao" type="Reference" ref_to="LAYR"/>
+            <field name="layer_norm_blend1_mask" type="Reference" ref_to="LAYR" since_version="19"/>
+            <field name="layer_norm_blend2_mask" type="Reference" ref_to="LAYR" since_version="19"/>
+            <field name="layer_norm_blend1" type="Reference" ref_to="LAYR" since_version="19"/>
+            <field name="layer_norm_blend2" type="Reference" ref_to="LAYR" since_version="19"/>
+            <field name="unknown2481ae8a" type="uint32" default_value="0"/>
             <field name="layr_blend_mode" type="uint32"/>
             <field name="emis_blend_mode" type="uint32"/>
             <field name="emis_mode" type="uint32"/>
             <field name="spec_mode" type="uint32"/>
             <field name="parallax_height" type="FloatAnimationReferenceV0"/>
             <field name="unknown_animation_ref" type="UInt32AnimationReferenceV0"/>
-            <field name="normal_blend_mask_factor" type="Reference" refTo="SR32" since-version="19"/>
+            <field name="normal_blend_mask_factor" type="Reference" ref_to="SR32" since_version="19"/>
             <!-- ^ one element per each color channel of normalBlendMask1 and normalBlendMask2 - a maximum expected amount of elements is 8 (2 masks x RGBA) -->
         </fields>
     </structure>
@@ -1656,12 +1644,12 @@
             <version number="4" size="68"/>
         </versions>
         <fields>
-            <field name="name" type="Reference" refTo="CHAR"/>
-            <field name="unknown0" type="uint32" default-value="0"/>
+            <field name="name" type="Reference" ref_to="CHAR"/>
+            <field name="unknown0" type="uint32" default_value="0"/>
             <field name="strength_factor" type="FloatAnimationReferenceV0"/>
-            <field name="layer_norm" type="Reference" refTo="LAYR"/>
-            <field name="layer_strength" type="Reference" refTo="LAYR"/>
-            <field name="flags" type="uint32" default-value="0"/>
+            <field name="layer_norm" type="Reference" ref_to="LAYR"/>
+            <field name="layer_strength" type="Reference" ref_to="LAYR"/>
+            <field name="flags" type="uint32" default_value="0"/>
             <field name="priority" type="int32"/>
         </fields>
     </structure>
@@ -1683,9 +1671,9 @@
             <version number="2" size="28"/>
         </versions>
         <fields>
-            <field name="name" type="Reference" refTo="CHAR"/>
-            <field name="unknown" type="uint32" default-value="0"/> <!-- See: SM_MarSaraBar_00.m3 -->
-            <field name="sections" type="Reference" refTo="CMS_"/>
+            <field name="name" type="Reference" ref_to="CHAR"/>
+            <field name="unknown" type="uint32" default_value="0"/> <!-- See: SM_MarSaraBar_00.m3 -->
+            <field name="sections" type="Reference" ref_to="CMS_"/>
         </fields>
     </structure>
 
@@ -1696,9 +1684,9 @@
             <version number="1" size="28"/>
         </versions>
         <fields>
-            <field name="name" type="Reference" refTo="CHAR"/>
-            <field name="layer_terrain" type="Reference" refTo="LAYR"/>
-            <field name="unknown633fd422" type="uint32" expected-value="0" since-version="1"/>
+            <field name="name" type="Reference" ref_to="CHAR"/>
+            <field name="layer_terrain" type="Reference" ref_to="LAYR"/>
+            <field name="unknown633fd422" type="uint32" expected_value="0" since_version="1"/>
         </fields>
     </structure>
 
@@ -1708,15 +1696,15 @@
             <version number="0" size="84"/>
         </versions>
         <fields>
-            <field name="name" type="Reference" refTo="CHAR"/>
-            <field name="unknown0" type="uint32" default-value="0"/> <!--Mar Sara bar -->
-            <field name="unknown1" type="uint32" default-value="0"/> <!--Mar Sara bar -->
+            <field name="name" type="Reference" ref_to="CHAR"/>
+            <field name="unknown0" type="uint32" default_value="0"/> <!--Mar Sara bar -->
+            <field name="unknown1" type="uint32" default_value="0"/> <!--Mar Sara bar -->
             <field name="volume_density" type="FloatAnimationReferenceV0"/>
-            <field name="layer_color" type="Reference" refTo="LAYR"/>
-            <field name="layer_unknown1" type="Reference" refTo="LAYR"/>
-            <field name="layer_unknown2" type="Reference" refTo="LAYR"/>
-            <field name="unknown2" type="uint32" expected-value="0"/>
-            <field name="unknown3" type="uint32" expected-value="0x20"/>
+            <field name="layer_color" type="Reference" ref_to="LAYR"/>
+            <field name="layer_unknown1" type="Reference" ref_to="LAYR"/>
+            <field name="layer_unknown2" type="Reference" ref_to="LAYR"/>
+            <field name="unknown2" type="uint32" expected_value="0"/>
+            <field name="unknown3" type="uint32" expected_value="0x20"/>
         </fields>
     </structure>
 
@@ -1727,9 +1715,9 @@
             <version number="0" size="268"/>
         </versions>
         <fields>
-            <field name="name" type="Reference" refTo="CHAR"/>
-            <field name="unknown50762f82" type="uint32" default-value="0"/>
-            <field name="flags" type="uint32" default-value="0">
+            <field name="name" type="Reference" ref_to="CHAR"/>
+            <field name="unknown50762f82" type="uint32" default_value="0"/>
+            <field name="flags" type="uint32" default_value="0">
                 <bits>
                     <bit mask="0x1" name="draw_after_transparency"/>
                 </bits>
@@ -1737,15 +1725,15 @@
             <field name="volume_density" type="FloatAnimationReferenceV0"/> <!-- maybe -->
             <field name="near_plane" type="FloatAnimationReferenceV0"/>
             <field name="falloff" type="FloatAnimationReferenceV0"/>
-            <field name="layer_color" type="Reference" refTo="LAYR"/>
-            <field name="layer_noise1" type="Reference" refTo="LAYR"/>
-            <field name="layer_noise2" type="Reference" refTo="LAYR"/>
+            <field name="layer_color" type="Reference" ref_to="LAYR"/>
+            <field name="layer_noise1" type="Reference" ref_to="LAYR"/>
+            <field name="layer_noise2" type="Reference" ref_to="LAYR"/>
             <field name="scroll_rate" type="Vector3AnimationReferenceV0"/>
             <field name="translation" type="Vector3AnimationReferenceV0"/>
             <field name="scale" type="Vector3AnimationReferenceV0"/>
             <field name="rotation" type="Vector3AnimationReferenceV0"/>
             <field name="alpha_threshhold" type="uint32"/>
-            <field name="unknown1d13acfe" type="uint32" default-value="32"/>
+            <field name="unknown1d13acfe" type="uint32" default_value="32"/>
         </fields>
     </structure>
 
@@ -1756,9 +1744,9 @@
             <version number="1" size="28"/>
         </versions>
         <fields>
-            <field name="name" type="Reference" refTo="CHAR"/>
-            <field name="creepLayer" type="Reference" refTo="LAYR"/>
-            <field name="unknownda1b4eb3" type="uint32" expected-value="0" since-version="1"/>
+            <field name="name" type="Reference" ref_to="CHAR"/>
+            <field name="creepLayer" type="Reference" ref_to="LAYR"/>
+            <field name="unknownda1b4eb3" type="uint32" expected_value="0" since_version="1"/>
         </fields>
     </structure>
 
@@ -1768,7 +1756,7 @@
             <version number="0" size="12"/>
         </versions>
         <fields>
-            <field name="path" type="Reference" refTo="CHAR"/>
+            <field name="path" type="Reference" ref_to="CHAR"/>
         </fields>
     </structure>
 
@@ -1778,10 +1766,10 @@
             <version number="0" size="48"/>
         </versions>
         <fields>
-            <field name="name" type="Reference" refTo="CHAR"/>
-            <field name="layer_diff" type="Reference" refTo="LAYR"/>
-            <field name="layer_norm" type="Reference" refTo="LAYR"/>
-            <field name="layer_spec" type="Reference" refTo="LAYR"/>
+            <field name="name" type="Reference" ref_to="CHAR"/>
+            <field name="layer_diff" type="Reference" ref_to="LAYR"/>
+            <field name="layer_norm" type="Reference" ref_to="LAYR"/>
+            <field name="layer_spec" type="Reference" ref_to="LAYR"/>
         </fields>
     </structure>
 
@@ -1793,20 +1781,20 @@
             <version number="2" size="56"/>
         </versions>
         <fields>
-           <field name="uv_index" type="uint32" default-value="0"/>
-           <field name="distance_factor" type="float" default-value="1.0"/>
-           <field name="width" type="float" default-value="3200.0"/>
-           <field name="height" type="float" default-value="500.0"/>
-           <field name="width_falloff" type="float" default-value="1200.0"/>
-           <field name="height_falloff" type="float" default-value="150.0"/>
-           <field name="unk00" type="uint32" default-value="0"/> <!-- these unknown fields are possibly related to unknown layer, but more research will be needed -->
-           <field name="unk01" type="uint32" default-value="0"/>
-           <field name="falloff_threshold" type="float" default-value="0"/>
-           <field name="falloff_rate" type="float" default-value="1.0"/>
-           <field name="color" type="COL" default-value="0x80ffffff"/>
-           <field name="face_source" type="uint32" default-value="0"/>
-           <field name="unk02" type="float" default-value="0.0"/>
-           <field name="unk03" type="float" default-value="0.0"/>
+           <field name="uv_index" type="uint32" default_value="0"/>
+           <field name="distance_factor" type="float" default_value="1.0"/>
+           <field name="width" type="float" default_value="3200.0"/>
+           <field name="height" type="float" default_value="500.0"/>
+           <field name="width_falloff" type="float" default_value="1200.0"/>
+           <field name="height_falloff" type="float" default_value="150.0"/>
+           <field name="unk00" type="uint32" default_value="0"/> <!-- these unknown fields are possibly related to unknown layer, but more research will be needed -->
+           <field name="unk01" type="uint32" default_value="0"/>
+           <field name="falloff_threshold" type="float" default_value="0"/>
+           <field name="falloff_rate" type="float" default_value="1.0"/>
+           <field name="color" type="COL" default_value="0x80ffffff"/>
+           <field name="face_source" type="uint32" default_value="0"/>
+           <field name="unk02" type="float" default_value="0.0"/>
+           <field name="unk03" type="float" default_value="0.0"/>
         </fields>
     </structure>
 
@@ -1819,27 +1807,27 @@
             <version number="3" size="152"/>
         </versions>
         <fields>
-            <field name="name" type="Reference" refTo="CHAR"/>
-            <field name="layer_color" type="Reference" refTo="LAYR"/>
-            <field name="layer_unknown" type="Reference" refTo="LAYR"/>
-            <field name="starbursts" type="Reference" refTo="LFSB"/>
-            <field name="unknown7f492c0a" type="uint32" default-value="0x40000000" till-version="2"/>
-            <field name="unk00" type="uint32" till-version="2"/>
-            <field name="unk01" type="uint32" till-version="2"/>
-            <field name="unk02" type="uint32" till-version="2"/>
-            <field name="unk03" type="uint32" till-version="2"/>
-            <field name="unk04" type="uint32" till-version="2"/>
-            <field name="unk05" type="uint32" till-version="2"/>
-            <field name="unk06" type="uint32" till-version="2"/>
+            <field name="name" type="Reference" ref_to="CHAR"/>
+            <field name="layer_color" type="Reference" ref_to="LAYR"/>
+            <field name="layer_unknown" type="Reference" ref_to="LAYR"/>
+            <field name="starbursts" type="Reference" ref_to="LFSB"/>
+            <field name="unknown7f492c0a" type="uint32" default_value="0x40000000" till_version="2"/>
+            <field name="unk00" type="uint32" till_version="2"/>
+            <field name="unk01" type="uint32" till_version="2"/>
+            <field name="unk02" type="uint32" till_version="2"/>
+            <field name="unk03" type="uint32" till_version="2"/>
+            <field name="unk04" type="uint32" till_version="2"/>
+            <field name="unk05" type="uint32" till_version="2"/>
+            <field name="unk06" type="uint32" till_version="2"/>
             <!-- version 2 may have more fields with version 3 in common -->
-            <field name="uv_columns" type="uint32" default-value="0" since-version="3"/>
-            <field name="uv_rows" type="uint32" default-value="0" since-version="3"/>
-            <field name="render_distance" type="float" default-value="0.0" since-version="3"/>
-            <field name="unknown_ref_char" type="Reference" refTo="CHAR" since-version="3"/>
-            <field name="intensity" type="FloatAnimationReferenceV0" since-version="3"/>
-            <field name="color" type="ColorAnimationReferenceV0" since-version="3"/>
-            <field name="intensity2" type="FloatAnimationReferenceV0" since-version="3"/>
-            <field name="uniform_scale" type="FloatAnimationReferenceV0" since-version="3"/>
+            <field name="uv_columns" type="uint32" default_value="0" since_version="3"/>
+            <field name="uv_rows" type="uint32" default_value="0" since_version="3"/>
+            <field name="render_distance" type="float" default_value="0.0" since_version="3"/>
+            <field name="unknown_ref_char" type="Reference" ref_to="CHAR" since_version="3"/>
+            <field name="intensity" type="FloatAnimationReferenceV0" since_version="3"/>
+            <field name="color" type="ColorAnimationReferenceV0" since_version="3"/>
+            <field name="intensity2" type="FloatAnimationReferenceV0" since_version="3"/>
+            <field name="uniform_scale" type="FloatAnimationReferenceV0" since_version="3"/>
         </fields>
     </structure>
 
@@ -1851,16 +1839,16 @@
             <version number="3" size="160"/> <!-- probably Storm exclusive? -->
         </versions>
         <fields>
-            <field name="name" type="Reference" refTo="CHAR"/>
-            <field name="unknown8f5ea924" type="uint32" default-value="0"/>
-            <field name="reflection_strength" type="FloatAnimationReferenceV0"/> <!-- default-value="1.0" -->
-            <field name="displacement_strength" type="FloatAnimationReferenceV0"/> <!-- default-value="1.0" -->
-            <field name="reflection_offset" type="FloatAnimationReferenceV0" since-version="2"/> <!-- default-value="0.0" -->
-            <field name="blur_angle" type="FloatAnimationReferenceV0" since-version="2"/> <!-- default-value="0.0" -->
-            <field name="blur_distance" type="FloatAnimationReferenceV0" since-version="2"/> <!-- default-value="2.0" -->
-            <field name="layer_norm" type="Reference" refTo="LAYR"/>
-            <field name="layer_strength" type="Reference" refTo="LAYR"/>
-            <field name="layer_blur" type="Reference" refTo="LAYR" since-version="2"/>
+            <field name="name" type="Reference" ref_to="CHAR"/>
+            <field name="unknown8f5ea924" type="uint32" default_value="0"/>
+            <field name="reflection_strength" type="FloatAnimationReferenceV0"/> <!-- default_value="1.0" -->
+            <field name="displacement_strength" type="FloatAnimationReferenceV0"/> <!-- default_value="1.0" -->
+            <field name="reflection_offset" type="FloatAnimationReferenceV0" since_version="2"/> <!-- default_value="0.0" -->
+            <field name="blur_angle" type="FloatAnimationReferenceV0" since_version="2"/> <!-- default_value="0.0" -->
+            <field name="blur_distance" type="FloatAnimationReferenceV0" since_version="2"/> <!-- default_value="2.0" -->
+            <field name="layer_norm" type="Reference" ref_to="LAYR"/>
+            <field name="layer_strength" type="Reference" ref_to="LAYR"/>
+            <field name="layer_blur" type="Reference" ref_to="LAYR" since_version="2"/>
             <field name="flags" type="uint32">
                 <bits>
                     <bit mask="0x1" name="use_layer_norm"/>
@@ -1870,7 +1858,7 @@
                     <bit mask="0x16" name="use_layer_blur"/>
                 </bits>
             </field>
-            <field name="unknown49626d0e" type="uint32" since-version="3"/>
+            <field name="unknown49626d0e" type="uint32" since_version="3"/>
         </fields>
     </structure>
 
@@ -1891,7 +1879,7 @@
         <fields>
             <field name="bone" type="uint32"/>
             <field name="material_reference_index" type="uint32"/>
-            <field name="additional_flags" type="uint32" default-value="4" since-version="17" >
+            <field name="additional_flags" type="uint32" default_value="4" since_version="17" >
                 <bits>
                     <bit mask="0x1" name="emit_speed_randomize"/>
                     <bit mask="0x2" name="lifespan_randomize"/>
@@ -1901,53 +1889,53 @@
             </field>
             <field name="emit_speed" type="FloatAnimationReferenceV0"/>
             <field name="emit_speed_random" type="FloatAnimationReferenceV0"/>
-            <field till-version="12" name="emit_speed_randomize" type="uint32"/>
+            <field till_version="12" name="emit_speed_randomize" type="uint32"/>
             <field name="emit_angle_x" type="FloatAnimationReferenceV0"/>
             <field name="emit_angle_y" type="FloatAnimationReferenceV0"/>
             <field name="emit_spread_x" type="FloatAnimationReferenceV0"/>
             <field name="emit_spread_y" type="FloatAnimationReferenceV0"/>
             <field name="lifespan" type="FloatAnimationReferenceV0"/>
             <field name="lifespan_random" type="FloatAnimationReferenceV0"/>
-            <field till-version="12" name="lifespan_randomize" type="uint32"/>
-            <field name="distance_limit" type="float" default-value="0.0"/>
-            <field name="unknownf21cc980" type="uint32" expected-value="0x00000000"/>
-            <field name="unknown54b2bb52" type="uint32" expected-value="0x00000000"/>
+            <field till_version="12" name="lifespan_randomize" type="uint32"/>
+            <field name="distance_limit" type="float" default_value="0.0"/>
+            <field name="unknownf21cc980" type="uint32" expected_value="0x00000000"/>
+            <field name="unknown54b2bb52" type="uint32" expected_value="0x00000000"/>
             <field name="gravity" type="float"/>
-            <field name="size_anim_mid" type="float" default-value="0.5" since-version="12"/>
-            <field name="color_anim_mid" type="float" default-value="0.5" since-version="12"/>
-            <field name="alpha_anim_mid" type="float" default-value="0.5" since-version="12"/>
-            <field name="rotation_anim_mid" type="float" default-value="0.5" since-version="12"/>
-            <field name="size_hold_time" type="float" default-value="0.0" since-version="17"/>
-            <field name="color_hold_time" type="float" default-value="0.0" since-version="17"/>
-            <field name="alpha_hold_time" type="float" default-value="0.0" since-version="17"/>
-            <field name="rotation_hold_time" type="float" default-value="0.0" since-version="17"/>
-            <field name="unknown5289d695" size="80" since-version="10" till-version="11"/> <!-- 2 animated props ; similar to particleSizes1 and rotationValues1, but doesn't match in size -->
-            <field name="size" type="Vector3AnimationReferenceV0" since-version="12"/>
-            <field name="rotation" type="Vector3AnimationReferenceV0" since-version="12"/>
+            <field name="size_anim_mid" type="float" default_value="0.5" since_version="12"/>
+            <field name="color_anim_mid" type="float" default_value="0.5" since_version="12"/>
+            <field name="alpha_anim_mid" type="float" default_value="0.5" since_version="12"/>
+            <field name="rotation_anim_mid" type="float" default_value="0.5" since_version="12"/>
+            <field name="size_hold_time" type="float" default_value="0.0" since_version="17"/>
+            <field name="color_hold_time" type="float" default_value="0.0" since_version="17"/>
+            <field name="alpha_hold_time" type="float" default_value="0.0" since_version="17"/>
+            <field name="rotation_hold_time" type="float" default_value="0.0" since_version="17"/>
+            <field name="unknown5289d695" size="80" since_version="10" till_version="11"/> <!-- 2 animated props ; similar to particleSizes1 and rotationValues1, but doesn't match in size -->
+            <field name="size" type="Vector3AnimationReferenceV0" since_version="12"/>
+            <field name="rotation" type="Vector3AnimationReferenceV0" since_version="12"/>
             <!-- START - probably incorrect before v12 (although size of the block matches) -->
             <field name="color_init" type="ColorAnimationReferenceV0"/>
             <field name="color_mid" type="ColorAnimationReferenceV0"/>
             <field name="color_end" type="ColorAnimationReferenceV0"/>
             <!-- END - probably incorrect before v12 (although size of the block matches) -->
             <field name="drag" type="float"/>
-            <field name="mass_randomize" type="uint32" since-version="12" till-version="12"/>
-            <field name="mass" type="float" default-value="0.001"/>
-            <field name="mass2" type="float" default-value="1.0"/>
-            <field name="unknownFloat2c" type="float" default-value="1.0" since-version="12"/>
-            <field name="trailing" type="uint32" till-version="12"/>
-            <field name="local_forces" type="uint16" default-value="0" since-version="12"/>
-            <field name="world_forces" type="uint16" default-value="0" since-version="12"/>
-            <field name="local_forces_fb" type="uint16" default-value="0" since-version="12"/>
-            <field name="world_force_copy" type="uint16" default-value="0" since-version="12"/>
-            <field name="unknownb379688d" size="16" since-version="10" till-version="11"/>
-            <field name="unknownc851d80" type="float" default-value="1.0" since-version="24"/>
-            <field name="noise_amplitude" type="float" default-value="0.0"/>
-            <field name="noise_frequency" type="float" default-value="0.0"/>
-            <field name="noise_cohesion" type="float" default-value="0.0"/>
-            <field name="noise_edge" type="float" default-value="0.0"/>
-            <field name="indexPlusHighestIndex" type="uint32" since-version="11"/>
-            <field name="unknown406560aa" type="uint32" since-version="10" till-version="11"/>
-            <field name="unknown406560ab" type="uint32" since-version="10" till-version="11"/>
+            <field name="mass_randomize" type="uint32" since_version="12" till_version="12"/>
+            <field name="mass" type="float" default_value="0.001"/>
+            <field name="mass2" type="float" default_value="1.0"/>
+            <field name="unknownFloat2c" type="float" default_value="1.0" since_version="12"/>
+            <field name="trailing" type="uint32" till_version="12"/>
+            <field name="local_forces" type="uint16" default_value="0" since_version="12"/>
+            <field name="world_forces" type="uint16" default_value="0" since_version="12"/>
+            <field name="local_forces_fb" type="uint16" default_value="0" since_version="12"/>
+            <field name="world_force_copy" type="uint16" default_value="0" since_version="12"/>
+            <field name="unknownb379688d" size="16" since_version="10" till_version="11"/>
+            <field name="unknownc851d80" type="float" default_value="1.0" since_version="24"/>
+            <field name="noise_amplitude" type="float" default_value="0.0"/>
+            <field name="noise_frequency" type="float" default_value="0.0"/>
+            <field name="noise_cohesion" type="float" default_value="0.0"/>
+            <field name="noise_edge" type="float" default_value="0.0"/>
+            <field name="indexPlusHighestIndex" type="uint32" since_version="11"/>
+            <field name="unknown406560aa" type="uint32" since_version="10" till_version="11"/>
+            <field name="unknown406560ab" type="uint32" since_version="10" till_version="11"/>
             <field name="emit_max" type="uint32"/>
             <field name="emit_rate" type="FloatAnimationReferenceV0"/>
             <field name="emit_shape" type="uint32"/>
@@ -1955,31 +1943,31 @@
             <field name="emit_shape_size_cutout" type="Vector3AnimationReferenceV0"/>
             <field name="emit_shape_radius" type="FloatAnimationReferenceV0"/>
             <field name="emit_shape_radius_cutout" type="FloatAnimationReferenceV0"/>
-            <field name="emit_shape_regions" type="Reference" refTo="U32_" since-version="17"/>
+            <field name="emit_shape_regions" type="Reference" ref_to="U32_" since_version="17"/>
             <field name="emit_type" type="uint32"/>
             <field name="size_randomize" type="uint32"/>
             <field name="size2" type="Vector3AnimationReferenceV0"/>
-            <field name="unknown71001416" size="40" since-version="10" till-version="11"/>
-            <field name="rotation_randomize" type="uint32" since-version="12"/>
-            <field name="rotation2" type="Vector3AnimationReferenceV0" since-version="12"/>
+            <field name="unknown71001416" size="40" since_version="10" till_version="11"/>
+            <field name="rotation_randomize" type="uint32" since_version="12"/>
+            <field name="rotation2" type="Vector3AnimationReferenceV0" since_version="12"/>
             <field name="color_randomize" type="uint32"/>
             <field name="color2_init" type="ColorAnimationReferenceV0"/>
             <field name="color2_mid" type="ColorAnimationReferenceV0"/>
             <field name="color2_end" type="ColorAnimationReferenceV0"/>
-            <field name="unknown7" type="uint32" default-value="0"/>
+            <field name="unknown7" type="uint32" default_value="0"/>
             <field name="emit_count" type="Int16AnimationReferenceV0"/>
-            <field name="uv_start_init_index" type="uint8"  default-value="0"/>
-            <field name="uv_start_stop_index" type="uint8"  default-value="0"/>
-            <field name="uv_end_init_index" type="uint8" default-value="0"/>
-            <field name="uv_end_stop_index" type="uint8" expected-value="0"/>
+            <field name="uv_start_init_index" type="uint8"  default_value="0"/>
+            <field name="uv_start_stop_index" type="uint8"  default_value="0"/>
+            <field name="uv_end_init_index" type="uint8" default_value="0"/>
+            <field name="uv_end_stop_index" type="uint8" expected_value="0"/>
             <field name="uv_start_lifespan_factor" type="float"/>
             <field name="uv_columns" type="uint16"/>
             <field name="uv_rows" type="uint16"/>
-            <field name="uv_column_fraction" type="float" default-value="inf" since-version="12"/>
-            <field name="uv_height_fraction" type="float" default-value="inf" since-version="12"/>
-            <field name="bounce" type="float" default-value="0.0"/>
-            <field name="friction" type="float" default-value="1.0"/>
-            <field name="unknown9" type="int32" default-value="-1"/>
+            <field name="uv_column_fraction" type="float" default_value="inf" since_version="12"/>
+            <field name="uv_height_fraction" type="float" default_value="inf" since_version="12"/>
+            <field name="bounce" type="float" default_value="0.0"/>
+            <field name="friction" type="float" default_value="1.0"/>
+            <field name="unknown9" type="int32" default_value="-1"/>
             <field name="unknown10" type="uint32"/>
             <field name="unknown11" type="uint32"/>
             <field name="unknown12" type="uint32"/>
@@ -1993,47 +1981,47 @@
             9 = Quads that stretches between spawn point and current location
             -->
             <field name="particle_type" type="uint32"/>
-            <field name="length_width_ratio" type="float" default-value="1.0"/>
-            <field name="unknown15" type="uint32" default-value="0x00000000"/>
-            <field name="unknown16" type="uint32" default-value="0x00000000"/>
-            <field name="unknownFloat7" type="float" default-value="1.0"/>
-            <field name="unknown5Addedv2" type="float"  default-value="1.0" since-version="17"/>
-            <field name="unknown9ffad0f0" type="uint32" default-value="0"/>
+            <field name="length_width_ratio" type="float" default_value="1.0"/>
+            <field name="unknown15" type="uint32" default_value="0x00000000"/>
+            <field name="unknown16" type="uint32" default_value="0x00000000"/>
+            <field name="unknownFloat7" type="float" default_value="1.0"/>
+            <field name="unknown5Addedv2" type="float"  default_value="1.0" since_version="17"/>
+            <field name="unknown9ffad0f0" type="uint32" default_value="0"/>
             <field name="unknowne0bd54c8" type="FloatAnimationReferenceV0"/>
             <field name="unknowna2d44d80" type="FloatAnimationReferenceV0"/>
-            <field name="unknownb6d53a88" type="uint32" default-value="0"/>
+            <field name="unknownb6d53a88" type="uint32" default_value="0"/>
             <field name="unknownf8e2b3d0" type="FloatAnimationReferenceV0"/>
             <field name="unknown54f4ae30" type="FloatAnimationReferenceV0"/>
-            <field name="unknownf8b3d529" type="uint32" default-value="0"/>
+            <field name="unknownf8b3d529" type="uint32" default_value="0"/>
             <field name="unknown5f54fb02" type="FloatAnimationReferenceV0"/>
             <field name="unknown84d843d6" type="FloatAnimationReferenceV0"/>
-            <field name="unknown6b3b9f9" type="uint32" default-value="0x00000000"/> <!-- Spectre_Heavens_COOP_UltrasonicPulse.m3 -->
+            <field name="unknown6b3b9f9" type="uint32" default_value="0x00000000"/> <!-- Spectre_Heavens_COOP_UltrasonicPulse.m3 -->
             <field name="unknown9cb3dd18" type="FloatAnimationReferenceV0"/>
             <field name="unknown2e01be90" type="FloatAnimationReferenceV0"/>
-            <field name="unknowneff4c5be" type="uint32" default-value="0"/>
+            <field name="unknowneff4c5be" type="uint32" default_value="0"/>
             <field name="unknownf6193fc0" type="FloatAnimationReferenceV0"/>
             <field name="unknowna5e2260a" type="FloatAnimationReferenceV0"/>
-            <field name="unknown9aa3bbb9" type="uint32" expected-value="0x00000000"/>
+            <field name="unknown9aa3bbb9" type="uint32" expected_value="0x00000000"/>
             <field name="unknown485f7eea" type="AnimationReferenceHeader"/>
-            <field name="initOfUnknown485f7eea" type="uint32" expected-value="0x00000000"/>
-            <field name="nullOfUnknown485f7eea" type="uint32" expected-value="0x00000000"/>
-            <field name="endOfUnknown485f7eea" type="uint32" default-value="0xffffffff"/>
+            <field name="initOfUnknown485f7eea" type="uint32" expected_value="0x00000000"/>
+            <field name="nullOfUnknown485f7eea" type="uint32" expected_value="0x00000000"/>
+            <field name="endOfUnknown485f7eea" type="uint32" default_value="0xffffffff"/>
             <field name="unknown34b6f141" type="AnimationReferenceHeader"/>
-            <field name="initOfUnknown34b6f141" type="uint32" expected-value="0x00000000"/>
-            <field name="nullOfUnknown34b6f141" type="uint32" expected-value="0x00000000"/>
-            <field name="endOfUnknown34b6f141" type="uint32" default-value="0xffffffff"/>
-            <field name="unknownb69653a4" type="uint32" default-value="0"/>
+            <field name="initOfUnknown34b6f141" type="uint32" expected_value="0x00000000"/>
+            <field name="nullOfUnknown34b6f141" type="uint32" expected_value="0x00000000"/>
+            <field name="endOfUnknown34b6f141" type="uint32" default_value="0xffffffff"/>
+            <field name="unknownb69653a4" type="uint32" default_value="0"/>
             <field name="unknown89cdf966" type="FloatAnimationReferenceV0"/>
             <field name="unknown4eefdfc1" type="FloatAnimationReferenceV0"/>
-            <field name="unknownb47e5f82" type="uint32" default-value="0x00000000"/>
+            <field name="unknownb47e5f82" type="uint32" default_value="0x00000000"/>
             <field name="unknownab37a1d5" type="UInt32AnimationReferenceV0"/> <!-- Elsecaro_Colonist_Hut_Death_01.m3 Elsecaro_Colonist_Hut_Death_02.m3 -->
             <field name="unknownbef7f4d3" type="UInt32AnimationReferenceV0"/> <!-- Elsecaro_Colonist_Hut_Death_03.m3 -->
-            <field name="unknown8262f69c" type="uint32" default-value="0x00000000"/>
+            <field name="unknown8262f69c" type="uint32" default_value="0x00000000"/>
             <field name="unknownb2dbf2f3" type="UInt32AnimationReferenceV0"/> <!-- Elsecaro_Colonist_Hut_Death_00.m3 -->
             <field name="unknown3c76d64c" type="UInt32AnimationReferenceV0"/> <!-- Elsecaro_Colonist_Hut_Death_00.m3 -->
             <field name="unknownbc151e17" type="FloatAnimationReferenceV0"/>
-            <field name="unknown8f507b52" type="UInt32AnimationReferenceV0" since-version="22"/>
-            <field name="flags" type="uint32" default-value="0" >
+            <field name="unknown8f507b52" type="UInt32AnimationReferenceV0" since_version="22"/>
+            <field name="flags" type="uint32" default_value="0" >
                 <bits>
                     <bit mask="0x1" name="sort"/>
                     <bit mask="0x2" name="collide_terrain"/>
@@ -2065,7 +2053,7 @@
                     <bit mask="0x8000000" name="copy"/>
                 </bits>
             </field>
-            <field name="rotation_flags" type="uint32" default-value="4" since-version="18" >
+            <field name="rotation_flags" type="uint32" default_value="4" since_version="18" >
                 <bits>
                     <bit mask="0x2" name="relative"/>
                     <bit mask="0x4" name="always_set"/>
@@ -2078,31 +2066,31 @@
                 3: Linear Hold
                 4: Bezier Hold
             -->
-            <field name="color_smoothing" type="uint32" default-value="0" since-version="17"/>
-            <field name="size_smoothing" type="uint32" default-value="0" since-version="17"/>
-            <field name="rotation_smoothing" type="uint32"  default-value="0" since-version="17"/>
-            <field name="unknown22856fde" type="FloatAnimationReferenceV0" since-version="17"/>
-            <field name="unknownb35ad6e1" type="Vector2AnimationReferenceV0" since-version="17"/>
-            <field name="unknown686e5943" type="Vector3AnimationReferenceV0" since-version="17"/>
-            <field name="unknown18a90564" type="Vector2AnimationReferenceV0" since-version="17"/> <!-- with init=(1.0, 1.0) and null=(1.0, 1.0)-->
-            <field name="emit_shape_spline" type="Reference" refTo="SVC3"/>
-            <field name="wind_multiplier" type="float" default-value="0.0"/>
-            <field name="lod_reduce" type="uint32" default-value="2"/>
-            <field name="lod_cut" type="uint32" default-value="1"/>
+            <field name="color_smoothing" type="uint32" default_value="0" since_version="17"/>
+            <field name="size_smoothing" type="uint32" default_value="0" since_version="17"/>
+            <field name="rotation_smoothing" type="uint32"  default_value="0" since_version="17"/>
+            <field name="unknown22856fde" type="FloatAnimationReferenceV0" since_version="17"/>
+            <field name="unknownb35ad6e1" type="Vector2AnimationReferenceV0" since_version="17"/>
+            <field name="unknown686e5943" type="Vector3AnimationReferenceV0" since_version="17"/>
+            <field name="unknown18a90564" type="Vector2AnimationReferenceV0" since_version="17"/> <!-- with init=(1.0, 1.0) and null=(1.0, 1.0)-->
+            <field name="emit_shape_spline" type="Reference" ref_to="SVC3"/>
+            <field name="wind_multiplier" type="float" default_value="0.0"/>
+            <field name="lod_reduce" type="uint32" default_value="2"/>
+            <field name="lod_cut" type="uint32" default_value="1"/>
             <field name="unknown21ca0cea" type="AnimationReferenceHeader"/>
-            <field name="initOfUnknown21ca0cea" type="uint32" default-value="0x00000000"/> <!-- Void_Narud_Beam.m3 -->
-            <field name="nullOfUnknown21ca0cea" type="uint32" expected-value="0x00000000"/>
-            <field name="endOfUnknown21ca0cea" type="uint32" default-value="0xffffffff"/>
+            <field name="initOfUnknown21ca0cea" type="uint32" default_value="0x00000000"/> <!-- Void_Narud_Beam.m3 -->
+            <field name="nullOfUnknown21ca0cea" type="uint32" expected_value="0x00000000"/>
+            <field name="endOfUnknown21ca0cea" type="uint32" default_value="0xffffffff"/>
             <field name="unknown1e97145f" type="FloatAnimationReferenceV0"/> <!-- default 1.0 -->
-            <field name="trail_particle" type="int32" default-value="-1"/>
-            <field name="trail_chance" type="float" default-value="0.0"/>
+            <field name="trail_particle" type="int32" default_value="-1"/>
+            <field name="trail_chance" type="float" default_value="0.0"/>
             <field name="trail_rate" type="FloatAnimationReferenceV0"/>
-            <field name="unknownfdab7ff3" type="uint32" default-value="0xffffffff"/>
-            <field name="unknown7d4a9e6b" type="uint32" expected-value="0x00000000"/>
-            <field name="usedModel" type="Reference" refTo="SCHR"/>
-            <field name="copy_indices" type="Reference" refTo="U32_"/>
-            <field name="unknown9a7afdf2" type="uint32" since-version="23"/>
-            <field name="unknown87d57a7a" type="uint32" since-version="23"/>
+            <field name="unknownfdab7ff3" type="uint32" default_value="0xffffffff"/>
+            <field name="unknown7d4a9e6b" type="uint32" expected_value="0x00000000"/>
+            <field name="usedModel" type="Reference" ref_to="SCHR"/>
+            <field name="copy_indices" type="Reference" ref_to="U32_"/>
+            <field name="unknown9a7afdf2" type="uint32" since_version="23"/>
+            <field name="unknown87d57a7a" type="uint32" since_version="23"/>
         </fields>
     </structure>
 
@@ -2144,7 +2132,7 @@
             <field name="box_offset_x_right" type="FloatAnimationReferenceV0"/>
             <field name="box_offset_y_front" type="FloatAnimationReferenceV0"/>
             <field name="box_offset_y_back" type="FloatAnimationReferenceV0"/>
-            <field name="unknownca4e8e36" default-value="0" type="uint32"/>
+            <field name="unknownca4e8e36" default_value="0" type="uint32"/>
             <field name="alpha_over_time_init" type="float"/>
             <field name="alpha_over_time_mid" type="float"/>
             <field name="alpha_over_time_end" type="float"/>
@@ -2156,10 +2144,10 @@
             <field name="lifetime_decay_to" type="float"/>
             <field name="attenuation_plane_distance" type="float"/>
             <field name="active" type="UInt32AnimationReferenceV0"/>
-            <field name="layer" type="uint32" since-version="4"/>
-            <field name="lod_reduce" type="uint32" since-version="4"/>
-            <field name="lod_cut" type="uint32" since-version="4"/>
-            <field name="flags" type="uint32" default-value="0" since-version="4">
+            <field name="layer" type="uint32" since_version="4"/>
+            <field name="lod_reduce" type="uint32" since_version="4"/>
+            <field name="lod_cut" type="uint32" since_version="4"/>
+            <field name="flags" type="uint32" default_value="0" since_version="4">
                 <bits>
                     <bit mask="0x1" name="static"/>
                     <bit mask="0x2" name="unknown_flag0x2"/>
@@ -2167,7 +2155,7 @@
                     <bit mask="0x8" name="unknown_flag0x8"/>
                 </bits>
             </field>
-            <!-- <field name="unknowna0283820" size="18" till-version="4"/> -->
+            <!-- <field name="unknowna0283820" size="18" till_version="4"/> -->
         </fields>
     </structure>
 
@@ -2187,10 +2175,10 @@
             <field name="limit_max" type="float"/>
             <field name="limit_angle" type="float"/>
             <field name="friction_bool" type="uint32"/>
-            <field name="friction" type="float" default-value="0.2"/>
-            <field name="damping_ratio" type="float" default-value="0.7"/>
-            <field name="angular_frequency" type="float" default-value="5"/>
-            <field name="break_threshold" type="float" default-value="1"/> <!-- docs indicate this is unused in SC2 -->
+            <field name="friction" type="float" default_value="0.2"/>
+            <field name="damping_ratio" type="float" default_value="0.7"/>
+            <field name="angular_frequency" type="float" default_value="5"/>
+            <field name="break_threshold" type="float" default_value="1"/> <!-- docs indicate this is unused in SC2 -->
             <field name="shape_collision_value" type="int32"/> <!-- some magic value related to how shapes collide with each other ; it might be some kind of bitmask -->
         </fields>
     </structure>
@@ -2216,8 +2204,8 @@
         <fields>
             <field name="influenced_region_index" type="uint32"/>
             <field name="simulation_region_index" type="uint32"/>
-            <field name="simulation_vertices" type="Reference" refTo="U64_"/> <!-- i suspect this is intended to be read as 4 int16 values, possibly linking together vertices which influence one another -->
-            <field name="simulation_weights" type="Reference" refTo="U32_"/> <!-- assigns influence of simulation_region vertices on influenced_region vertices with 4 single byte values, one for each vertice index in simulation_vertices -->
+            <field name="simulation_vertices" type="Reference" ref_to="U64_"/> <!-- i suspect this is intended to be read as 4 int16 values, possibly linking together vertices which influence one another -->
+            <field name="simulation_weights" type="Reference" ref_to="U32_"/> <!-- assigns influence of simulation_region vertices on influenced_region vertices with 4 single byte values, one for each vertice index in simulation_vertices -->
         </fields>
     </structure>
 
@@ -2230,12 +2218,12 @@
         <fields>
             <field name="influenced_region_index" type="uint32"/>
             <field name="unknown0" type="uint32"/>
-            <field name="skin_bones" type="Reference" refTo="U16_"/> <!-- list of bone indices referenced by vertex_bones or by PHCC bone indices -->
-            <field name="vertex_simulated" type="Reference" refTo="U8__"/> <!-- 0x0 for static vertex, 0x1 for simulated vertex -->
-            <field name="vertex_bones" type="Reference" refTo="U32_"/> <!-- Each byte used to reference a bone index -->
-            <field name="vertex_weights" type="Reference" refTo="U32_"/> <!-- Each byte used to define a weight given to the bones referenced by vertex_bones -->
-            <field name="constraints" type="Reference" refTo="PHCC"/>
-            <field name="influence_map" type="Reference" refTo="PHAC"/>
+            <field name="skin_bones" type="Reference" ref_to="U16_"/> <!-- list of bone indices referenced by vertex_bones or by PHCC bone indices -->
+            <field name="vertex_simulated" type="Reference" ref_to="U8__"/> <!-- 0x0 for static vertex, 0x1 for simulated vertex -->
+            <field name="vertex_bones" type="Reference" ref_to="U32_"/> <!-- Each byte used to reference a bone index -->
+            <field name="vertex_weights" type="Reference" ref_to="U32_"/> <!-- Each byte used to define a weight given to the bones referenced by vertex_bones -->
+            <field name="constraints" type="Reference" ref_to="PHCC"/>
+            <field name="influence_map" type="Reference" ref_to="PHAC"/>
             <field name="density" type="float"/>
             <field name="tracking" type="float"/>
             <field name="stiffness_stretching" type="float"/>
@@ -2250,18 +2238,18 @@
             <field name="drag_factor" type="float"/>
             <field name="lift_factor" type="float"/>
             <field name="sphere_attachment_stiffness" type="float"/>
-            <field name="unknown1" type="uint32" since-version="4"/>
-            <field name="unknown2" type="uint32" since-version="4"/>
-            <field name="unknown3" type="uint32" since-version="4"/> <!-- weird number, could actually be single byte values -->
-            <field name="unknown4" type="uint32" since-version="4" default-value="1"/>
-            <field name="unknown5" type="uint32" since-version="4" default-value="1"/>
-            <field name="unknown6" type="int32" since-version="4" default-value="-1"/>
-            <field name="skin_collision" type="uint32" since-version="4"/>
-            <field name="skin_offset" type="float" since-version="4"/>
-            <field name="skin_exponent" type="float" since-version="4"/>
-            <field name="skin_stiffness" type="float" since-version="4"/>
-            <field name="unknown7" type="uint32" since-version="4"/>
-            <field name="local_wind" type="VEC3V0" since-version="4"/>
+            <field name="unknown1" type="uint32" since_version="4"/>
+            <field name="unknown2" type="uint32" since_version="4"/>
+            <field name="unknown3" type="uint32" since_version="4"/> <!-- weird number, could actually be single byte values -->
+            <field name="unknown4" type="uint32" since_version="4" default_value="1"/>
+            <field name="unknown5" type="uint32" since_version="4" default_value="1"/>
+            <field name="unknown6" type="int32" since_version="4" default_value="-1"/>
+            <field name="skin_collision" type="uint32" since_version="4"/>
+            <field name="skin_offset" type="float" since_version="4"/>
+            <field name="skin_exponent" type="float" since_version="4"/>
+            <field name="skin_stiffness" type="float" since_version="4"/>
+            <field name="unknown7" type="uint32" since_version="4"/>
+            <field name="local_wind" type="VEC3V0" since_version="4"/>
         </fields>
     </structure>
 
@@ -2275,10 +2263,10 @@
         </versions>
         <fields>
             <field name="type" type="uint32"/>
-            <field name="shape" type="uint32" default-value="0"/>
-            <field name="unknown1" type="uint32" default-value="0"/>
+            <field name="shape" type="uint32" default_value="0"/>
+            <field name="unknown1" type="uint32" default_value="0"/>
             <field name="bone" type="uint32"/>
-            <field name="flags" type="uint32" default-value="0">
+            <field name="flags" type="uint32" default_value="0">
                 <bits>
                     <bit mask="0x1" name="falloff"/>
                     <bit mask="0x2" name="height_gradient"/>
@@ -2315,7 +2303,7 @@
         </versions>
         <fields>
             <field name="matrix" type="Matrix44"/>
-            <field name="unknownAt64" type="uint32" default-value="0x3ca14285" till-version="1"/>
+            <field name="unknownAt64" type="uint32" default_value="0x3ca14285" till_version="1"/>
             <!-- Shape types:
                 0 = box
                 1 = sphere
@@ -2327,52 +2315,52 @@
             -->
             <field name="shape" type="uint8"/>
             <!-- Is not always 0 (in Version 1 and 3). It's propably the unintialized part of shape: -->
-            <field name="unknown1c286108" type="uint8" default-value="0"/>
-            <field name="unknown4ddf14b3" type="uint16" default-value="0"/>
-            <field name="vertices" type="Reference" refTo="VEC3" till-version="1"/>
-            <field name="unknownAt84" type="Reference" refTo="U8__" till-version="1"/>
-            <field name="face_data" type="Reference" refTo="U16_" till-version="1"/>
-            <field name="plane_equations" type="Reference" refTo="VEC4" till-version="1"/> <!-- Bounding planes used for convex hull shapes? (may include extra radius value?) -->
+            <field name="unknown1c286108" type="uint8" default_value="0"/>
+            <field name="unknown4ddf14b3" type="uint16" default_value="0"/>
+            <field name="vertices" type="Reference" ref_to="VEC3" till_version="1"/>
+            <field name="unknownAt84" type="Reference" ref_to="U8__" till_version="1"/>
+            <field name="face_data" type="Reference" ref_to="U16_" till_version="1"/>
+            <field name="plane_equations" type="Reference" ref_to="VEC4" till_version="1"/> <!-- Bounding planes used for convex hull shapes? (may include extra radius value?) -->
 
-            <field name="unknown66ce545e" size="20" expected-value="0x0000000000000000000000000000000000000000" since-version="2"/>
-            <field name="unknown66ce545e_b" type="uint32" default-value="0" since-version="2"/>
-            <field name="size0" type="float" default-value="1.0"/> <!-- box x-size / capsule radius (/ cylinder radius / sphere radius?) -->
-            <field name="size1" type="float" default-value="1.0"/> <!-- box y-size / capsule length (/ cylinder length?) -->
-            <field name="size2" type="float" default-value="1.0"/> <!-- box z-size -->
-            <field name="vertices" type="Reference" refTo="VEC3" since-version="2"/>
-            <field name="polygons_related" type="Reference" refTo="VEC4" since-version="2"/>
-            <field name="loops" type="Reference" refTo="DMSE" since-version="2"/>
-            <field name="polygons" type="Reference" refTo="U8__" since-version="2"/>
-            <field name="unknownbda8f787" size="12" default-value="0x000000000000000000000000" since-version="2"/>
+            <field name="unknown66ce545e" size="20" expected_value="0x0000000000000000000000000000000000000000" since_version="2"/>
+            <field name="unknown66ce545e_b" type="uint32" default_value="0" since_version="2"/>
+            <field name="size0" type="float" default_value="1.0"/> <!-- box x-size / capsule radius (/ cylinder radius / sphere radius?) -->
+            <field name="size1" type="float" default_value="1.0"/> <!-- box y-size / capsule length (/ cylinder length?) -->
+            <field name="size2" type="float" default_value="1.0"/> <!-- box z-size -->
+            <field name="vertices" type="Reference" ref_to="VEC3" since_version="2"/>
+            <field name="polygons_related" type="Reference" ref_to="VEC4" since_version="2"/>
+            <field name="loops" type="Reference" ref_to="DMSE" since_version="2"/>
+            <field name="polygons" type="Reference" ref_to="U8__" since_version="2"/>
+            <field name="unknownbda8f787" size="12" default_value="0x000000000000000000000000" since_version="2"/>
             <!-- unknown2e655ca4 can have the value 0x80000000 too -->
-            <field name="unknown2e655ca4" type="uint32" since-version="2"/>
+            <field name="unknown2e655ca4" type="uint32" since_version="2"/>
             <!-- unknown7df99f73 is not a float and has strange content -->
-            <field name="unknown7df99f73" type="uint32" since-version="2"/>
-            <field name="unknown5c04305e" type="uint32" default-value="0x00000000" since-version="2"/>
+            <field name="unknown7df99f73" type="uint32" since_version="2"/>
+            <field name="unknown5c04305e" type="uint32" default_value="0x00000000" since_version="2"/>
             <!-- unknown8d41b3f8 is not a float and has strange content -->
-            <field name="unknown8d41b3f8" type="uint32" since-version="2"/>
+            <field name="unknown8d41b3f8" type="uint32" since_version="2"/>
             <!-- unknown56fece2 is not a float and has strange content -->
-            <field name="unknown56fece2" type="uint32" since-version="2"/>
-            <field name="unknown6f23bce8" type="Reference" refTo="DMMN" since-version="2"/>
-            <field name="unknown9836ec85" type="Reference" refTo="VEC4" since-version="2"/>
-            <field name="unknownac0ac492" size="12" default-value="0x000000000000000000000000" since-version="2"/>
-            <field name="unknown90e72e22" type="Reference" refTo="MT32" since-version="2"/>
-            <field name="unknownd93ef965" size="12" default-value="0x000000000000000000000000" since-version="2"/>
-            <field name="unknown09823b6e" size="12" default-value="0x000000000000000000000000" since-version="2"/>
-            <field name="unknown2f8ad6d6" size="12" default-value="0x000000000000000000000000" since-version="2"/>
-            <field name="unknown9d115fa7" type="uint32" since-version="2"/>
+            <field name="unknown56fece2" type="uint32" since_version="2"/>
+            <field name="unknown6f23bce8" type="Reference" ref_to="DMMN" since_version="2"/>
+            <field name="unknown9836ec85" type="Reference" ref_to="VEC4" since_version="2"/>
+            <field name="unknownac0ac492" size="12" default_value="0x000000000000000000000000" since_version="2"/>
+            <field name="unknown90e72e22" type="Reference" ref_to="MT32" since_version="2"/>
+            <field name="unknownd93ef965" size="12" default_value="0x000000000000000000000000" since_version="2"/>
+            <field name="unknown09823b6e" size="12" default_value="0x000000000000000000000000" since_version="2"/>
+            <field name="unknown2f8ad6d6" size="12" default_value="0x000000000000000000000000" since_version="2"/>
+            <field name="unknown9d115fa7" type="uint32" since_version="2"/>
             <!-- unknown9aea956e is not a float and has strange content -->
-            <field name="unknown9aea956e" type="uint32" since-version="2"/>
-            <field name="unknown17c6f44e" type="uint32" expected-value="0x00000000" since-version="2"/>
-            <field name="unknowne444b392" type="uint32" since-version="2"/>
-            <field name="unknown32885641" type="uint32" default-value="0x00000000" since-version="2"/>
+            <field name="unknown9aea956e" type="uint32" since_version="2"/>
+            <field name="unknown17c6f44e" type="uint32" expected_value="0x00000000" since_version="2"/>
+            <field name="unknowne444b392" type="uint32" since_version="2"/>
+            <field name="unknown32885641" type="uint32" default_value="0x00000000" since_version="2"/>
             <!-- unknown721b9a99 is not a float and has strange content-->
-            <field name="unknown721b9a99" type="uint32" since-version="2"/>
+            <field name="unknown721b9a99" type="uint32" since_version="2"/>
 
             <!-- unknowna495c84b is not a float and has strange content-->
-            <field name="unknowna495c84b" type="uint32" since-version="3"/>
+            <field name="unknowna495c84b" type="uint32" since_version="3"/>
             <!-- unknown12e15bc4 is not a float and has strange content-->
-            <field name="unknown12e15bc4" type="uint32" since-version="3"/>
+            <field name="unknown12e15bc4" type="uint32" since_version="3"/>
         </fields>
     </structure>
 
@@ -2386,27 +2374,27 @@
         <fields>
             <!-- Version 2 specific part: (please try to minimize it if possible) -->
             <!-- Minimized: unknownAt0 fields seem to have no perceptible effect -->
-            <field till-version="2" name="unknownAt0" size="60"/>
-            <field till-version="2" name="bone" type="uint16"/>
-            <field till-version="2" name="bone_fb" type="uint16" default-value="0x0"/> <!-- Matches bone, but doesn't seem to be used? -->
-            <field till-version="2" name="unknownAt64" size="16" default-value="0x00000000000000000000000000000000"/>
+            <field till_version="2" name="unknownAt0" size="60"/>
+            <field till_version="2" name="bone" type="uint16"/>
+            <field till_version="2" name="bone_fb" type="uint16" default_value="0x0"/> <!-- Matches bone, but doesn't seem to be used? -->
+            <field till_version="2" name="unknownAt64" size="16" default_value="0x00000000000000000000000000000000"/>
 
-            <field name="simulation_type" type="uint16" default-value="1" since-version="3"/>
-            <field name="bone" type="uint16" since-version="3"/>
-            <field name="physical_material" type="uint32" default-value="0" since-version="3"/>
+            <field name="simulation_type" type="uint16" default_value="1" since_version="3"/>
+            <field name="bone" type="uint16" since_version="3"/>
+            <field name="physical_material" type="uint32" default_value="0" since_version="3"/>
 
-            <field name="mass" type="float" default-value="2400.0" since-version="3"/>
-            <field name="friction" type="float" default-value="0.7" since-version="3"/>
-            <field name="restitution" type="float" default-value="0.1"  since-version="3"/>
-            <field name="damping_linear" type="float" default-value="0.001"  since-version="3"/>
-            <field name="damping_angular" type="float" default-value="0.001" since-version="3"/>
-            <field name="gravity_factor" type="float" default-value="1.0"  since-version="3"/>
+            <field name="mass" type="float" default_value="2400.0" since_version="3"/>
+            <field name="friction" type="float" default_value="0.7" since_version="3"/>
+            <field name="restitution" type="float" default_value="0.1"  since_version="3"/>
+            <field name="damping_linear" type="float" default_value="0.001"  since_version="3"/>
+            <field name="damping_angular" type="float" default_value="0.001" since_version="3"/>
+            <field name="gravity_factor" type="float" default_value="1.0"  since_version="3"/>
 
-            <field name="unknown8de065e8" type="UInt32AnimationReferenceV0" since-version="4"/>
-            <field name="unknown57796a4d" type="float" default-value="1.0" since-version="4"/>
+            <field name="unknown8de065e8" type="UInt32AnimationReferenceV0" since_version="4"/>
+            <field name="unknown57796a4d" type="float" default_value="1.0" since_version="4"/>
 
-            <field name="physics_shape" type="Reference" refTo="PHSH"/>
-            <field name="flags" type="uint32" default-value="0x1">
+            <field name="physics_shape" type="Reference" ref_to="PHSH"/>
+            <field name="flags" type="uint32" default_value="0x1">
                 <bits>
                     <bit mask="0x1" name="collidable"/>
                     <bit mask="0x2" name="walkable"/>
@@ -2417,7 +2405,7 @@
                     <bit mask="0x80" name="no_simulation"/>
                 </bits>
             </field>
-            <field name="local_forces" type="uint16" default-value="0x0">
+            <field name="local_forces" type="uint16" default_value="0x0">
                 <bits>
                     <bit mask="0x1" name="1"/>
                     <bit mask="0x2" name="2"/>
@@ -2437,7 +2425,7 @@
                     <bit mask="0x8000" name="16"/>
                 </bits>
             </field>
-            <field name="world_forces" type="uint16" default-value="0x0">
+            <field name="world_forces" type="uint16" default_value="0x0">
                 <bits>
                     <bit mask="0x1" name="wind"/>
                     <bit mask="0x2" name="explosion"/>
@@ -2449,7 +2437,7 @@
                     <bit mask="0x80" name="trees"/>
                 </bits>
             </field>
-            <field name="priority" type="uint32" default-value="0"/>
+            <field name="priority" type="uint32" default_value="0"/>
         </fields>
     </structure>
 
@@ -2467,10 +2455,10 @@
         <fields>
             <field name="shape" type="uint32"/>
             <field name="bone" type="int16"/> <!-- can be -1 -->
-            <field name="bone_fb" type="uint16" expected-value="0"/>
+            <field name="bone_fb" type="uint16" expected_value="0"/>
             <field name="matrix" type="Matrix44"/>
-            <field name="vertices" type="Reference" refTo="VEC3"/> <!-- making a guess that these are for vertex/face data -->
-            <field name="face_data" type="Reference" refTo="U16_"/>
+            <field name="vertices" type="Reference" ref_to="VEC3"/> <!-- making a guess that these are for vertex/face data -->
+            <field name="face_data" type="Reference" ref_to="U16_"/>
             <field name="size0" type="float"/>
             <field name="size1" type="float"/>
             <field name="size2" type="float"/>
@@ -2493,14 +2481,14 @@
         <fields>
             <field name="bone0" type="uint32"/>
             <field name="bone1" type="uint32"/>
-            <field name="shape" type="uint32" default-value="1"/>
+            <field name="shape" type="uint32" default_value="1"/>
             <field name="bone2" type="uint32"/>
             <field name="matrix" type="Matrix44"/>
-            <field name="vertices" type="Reference" refTo="VEC3"/>
-            <field name="face_data" type="Reference" refTo="U16_"/>
+            <field name="vertices" type="Reference" ref_to="VEC3"/>
+            <field name="face_data" type="Reference" ref_to="U16_"/>
             <field name="size0" type="float"/>
-            <field name="size1" type="float" default-value="0.0"/>
-            <field name="size2" type="float" default-value="0.0"/>
+            <field name="size1" type="float" default_value="0.0"/>
+            <field name="size2" type="float" default_value="0.0"/>
         </fields>
     </structure>
 
@@ -2514,16 +2502,16 @@
         <fields>
             <field name="unknownac35793a" type="Reference"/>
             <field name="bone" type="uint16"/>
-            <field name="billboard_type" type="uint8" default-value="6"/>
-            <field name="camera_look_at" type="uint8" default-value="1"/>
-            <field name="unknown76974b30" type="float" default-value="0.0"/>
-            <field name="unknownb7903f37" type="float" default-value="0.0"/>
-            <field name="unknown15901615" type="float" default-value="0.0"/>
-            <field name="unknown8db56887" type="float" default-value="1.0"/>
-            <field name="unknown8a4fe2ab" type="float" default-value="0.0"/>
-            <field name="unknown51d106ab" type="float" default-value="0.0"/>
-            <field name="unknownb410610b" type="float" default-value="0.0"/>
-            <field name="unknown6a9fde72" type="float" default-value="1.0"/>
+            <field name="billboard_type" type="uint8" default_value="6"/>
+            <field name="camera_look_at" type="uint8" default_value="1"/>
+            <field name="unknown76974b30" type="float" default_value="0.0"/>
+            <field name="unknownb7903f37" type="float" default_value="0.0"/>
+            <field name="unknown15901615" type="float" default_value="0.0"/>
+            <field name="unknown8db56887" type="float" default_value="1.0"/>
+            <field name="unknown8a4fe2ab" type="float" default_value="0.0"/>
+            <field name="unknown51d106ab" type="float" default_value="0.0"/>
+            <field name="unknownb410610b" type="float" default_value="0.0"/>
+            <field name="unknown6a9fde72" type="float" default_value="1.0"/>
         </fields>
     </structure>
 
@@ -2535,14 +2523,14 @@
             <version number="1" size="72"/>
         </versions>
         <fields>
-            <field name="unknown68763a86" type="Reference" refTo="VEC3"/>
+            <field name="unknown68763a86" type="Reference" ref_to="VEC3"/>
             <field name="unknownd3f6c7b8" type="float"/>
             <field name="unknown74229b33" type="float"/>
             <field name="unknownd4f91286" type="FloatAnimationReferenceV0"/>
             <field name="unknown77f047c2" type="FloatAnimationReferenceV0"/>
-            <field name="unknownbc1e64c1" type="uint32" expected-value="1"/>
-            <field name="unknown6cd3476c" type="uint32" expected-value="0"/>
-            <field name="unknownccd5a5af" type="uint32" expected-value="0"/>
+            <field name="unknownbc1e64c1" type="uint32" expected_value="1"/>
+            <field name="unknown6cd3476c" type="uint32" expected_value="0"/>
+            <field name="unknownccd5a5af" type="uint32" expected_value="0"/>
         </fields>
     </structure>
 
@@ -2554,8 +2542,8 @@
             <version number="0" size="272"/>
         </versions>
         <fields>
-            <field name="unknown1" type="uint32" default-value="0"/>
-            <field name="unknown2" size="16" default-value="0x00000000000000000000000000000000"/> <!-- PsiStorm.m3 -->
+            <field name="unknown1" type="uint32" default_value="0"/>
+            <field name="unknown2" size="16" default_value="0x00000000000000000000000000000000"/> <!-- PsiStorm.m3 -->
             <field name="tan1" type="float"/>
             <field name="length" type="FloatAnimationReferenceV0"/>
             <field name="unknowneee1a711" type="uint32"/>
@@ -2595,79 +2583,79 @@
         </versions>
         <fields>
             <field name="bone" type="uint16"/>
-            <field name="bone_fb" type="uint16" expected-value="0"/>
+            <field name="bone_fb" type="uint16" expected_value="0"/>
             <field name="material_reference_index" type="uint32"/>
-            <field name="additional_flags" type="uint32" default-value="0x8" since-version="8">
+            <field name="additional_flags" type="uint32" default_value="0x8" since_version="8">
                 <bits>
                     <bit mask="0x8" name="world_space"/>
                 </bits>
             </field>
             <field name="speed" type="FloatAnimationReferenceV0"/>
             <field name="unknown75e0b576" type="FloatAnimationReferenceV0"/>
-            <field till-version="6" name="unknownd30655aa" type="uint32" expected-value="0"/> <!-- haven't seen a Blizzard model where this wouldn't be 0 -->
+            <field till_version="6" name="unknownd30655aa" type="uint32" expected_value="0"/> <!-- haven't seen a Blizzard model where this wouldn't be 0 -->
 
             <!-- till v6: pitch then yaw -->
-            <field name="pitch" type="FloatAnimationReferenceV0" till-version="6"/>
-            <field name="yaw" type="FloatAnimationReferenceV0" till-version="6"/>
+            <field name="pitch" type="FloatAnimationReferenceV0" till_version="6"/>
+            <field name="yaw" type="FloatAnimationReferenceV0" till_version="6"/>
 
             <!-- since v8: yaw then pitch -->
-            <field name="yaw" type="FloatAnimationReferenceV0" since-version="8"/>
-            <field name="pitch" type="FloatAnimationReferenceV0" since-version="8"/>
+            <field name="yaw" type="FloatAnimationReferenceV0" since_version="8"/>
+            <field name="pitch" type="FloatAnimationReferenceV0" since_version="8"/>
 
             <field name="unknownee00ae0a" type="FloatAnimationReferenceV0"/>
             <field name="unknown1686c0b7" type="FloatAnimationReferenceV0"/>
             <field name="lifespan" type="FloatAnimationReferenceV0"/>
             <field name="unknown9eba8df8" type="FloatAnimationReferenceV0"/>
-            <field name="unknown26271cbe" type="uint32" expected-value="0"/>
-            <field name="unknownda0542fa" type="uint32" expected-value="0"/>
-            <field name="unknown76f48851" type="uint32" expected-value="0"/>
-            <field name="unknown874bdc23" type="uint32" expected-value="0" till-version="6"/>
-            <field name="gravity" type="float" default-value="0"/>
-            <field name="scale_anim_mid" type="float" default-value="1.0"/>
-            <field name="color_anim_mid" type="float" default-value="1.0"/>
-            <field name="alpha_anim_mid" type="float" default-value="1.0"/>
-            <field name="twist_anim_mid" type="float" default-value="1.0"/>
-            <field name="scale_anim_mid_time" type="float" default-value="0.0" since-version="8"/>
-            <field name="color_anim_mid_time" type="float" default-value="0.0" since-version="8"/>
-            <field name="alpha_anim_mid_time" type="float" default-value="0.0" since-version="8"/>
-            <field name="twist_anim_mid_time" type="float" default-value="0.0" since-version="8"/>
+            <field name="unknown26271cbe" type="uint32" expected_value="0"/>
+            <field name="unknownda0542fa" type="uint32" expected_value="0"/>
+            <field name="unknown76f48851" type="uint32" expected_value="0"/>
+            <field name="unknown874bdc23" type="uint32" expected_value="0" till_version="6"/>
+            <field name="gravity" type="float" default_value="0"/>
+            <field name="scale_anim_mid" type="float" default_value="1.0"/>
+            <field name="color_anim_mid" type="float" default_value="1.0"/>
+            <field name="alpha_anim_mid" type="float" default_value="1.0"/>
+            <field name="twist_anim_mid" type="float" default_value="1.0"/>
+            <field name="scale_anim_mid_time" type="float" default_value="0.0" since_version="8"/>
+            <field name="color_anim_mid_time" type="float" default_value="0.0" since_version="8"/>
+            <field name="alpha_anim_mid_time" type="float" default_value="0.0" since_version="8"/>
+            <field name="twist_anim_mid_time" type="float" default_value="0.0" since_version="8"/>
             <field name="scale" type="Vector3AnimationReferenceV0"/>
             <field name="twist" type="Vector3AnimationReferenceV0"/>
             <field name="color_base" type="ColorAnimationReferenceV0"/>
             <field name="color_mid" type="ColorAnimationReferenceV0"/>
             <field name="color_tip" type="ColorAnimationReferenceV0"/>
-            <field name="drag" type="float" default-value="0.0"/>
+            <field name="drag" type="float" default_value="0.0"/>
 
-            <field name="mass" type="float" default-value="1.0" since-version="8"/>
-            <field name="mass2" type="float" default-value="0.0" since-version="8"/>
+            <field name="mass" type="float" default_value="1.0" since_version="8"/>
+            <field name="mass2" type="float" default_value="0.0" since_version="8"/>
 
-            <field name="mass2" type="float" default-value="0.0" till-version="6"/>
-            <field name="mass" type="float" default-value="1.0" till-version="6"/>
-            <field name="unknownc7004d01" type="float" default-value="0.0"/> <!-- almost always 0.0 on Blizzard models, few occurences where it's 10.0 ; could be some multiplier related to mass?? -->
+            <field name="mass2" type="float" default_value="0.0" till_version="6"/>
+            <field name="mass" type="float" default_value="1.0" till_version="6"/>
+            <field name="unknownc7004d01" type="float" default_value="0.0"/> <!-- almost always 0.0 on Blizzard models, few occurences where it's 10.0 ; could be some multiplier related to mass?? -->
 
-            <field name="unknown20683e1b" type="uint32" default-value="0" till-version="6"/> <!-- always 0 on Blizzard models expect 3 cases (LarvaPortrait.m3 OverlordPortrait.m3 HydraliskPortrait.m3) where it's 0x41200000 -->
-            <field name="world_space" type="uint32" default-value="0" till-version="6"/> <!-- 0x0 or 0x1 (off/on) -->
-            <field name="local_forces" type="uint16" default-value="0"/>
-            <field name="world_forces" type="uint16" default-value="0"/>
-            <field name="local_forces_fb" type="uint16" default-value="0"/>
-            <field name="world_forces_fb" type="uint16" default-value="0"/>
+            <field name="unknown20683e1b" type="uint32" default_value="0" till_version="6"/> <!-- always 0 on Blizzard models expect 3 cases (LarvaPortrait.m3 OverlordPortrait.m3 HydraliskPortrait.m3) where it's 0x41200000 -->
+            <field name="world_space" type="uint32" default_value="0" till_version="6"/> <!-- 0x0 or 0x1 (off/on) -->
+            <field name="local_forces" type="uint16" default_value="0"/>
+            <field name="world_forces" type="uint16" default_value="0"/>
+            <field name="local_forces_fb" type="uint16" default_value="0"/>
+            <field name="world_forces_fb" type="uint16" default_value="0"/>
 
-            <field name="unknownfb168d8c" type="uint32" expected-value="0" since-version="9"/> <!-- haven't seen a Blizzard model where this wouldn't be 0 -->
+            <field name="unknownfb168d8c" type="uint32" expected_value="0" since_version="9"/> <!-- haven't seen a Blizzard model where this wouldn't be 0 -->
             <field name="noise_amplitude" type="float"/>
             <field name="noise_waves" type="float"/>
             <field name="noise_frequency" type="float"/>
             <field name="noise_scale" type="float"/>
-            <field name="indexPlusHighestIndex" type="uint32" default-value="1" since-version="5"/> <!-- 1-255 value ; never seen to be 0 on Blizzard models ; shared with PAR_ ; probably determines the rendering priority of some sort ? -->
+            <field name="indexPlusHighestIndex" type="uint32" default_value="1" since_version="5"/> <!-- 1-255 value ; never seen to be 0 on Blizzard models ; shared with PAR_ ; probably determines the rendering priority of some sort ? -->
             <field name="ribbon_type" type="uint32"/>
-            <field name="cull_method" type="uint32" default-value="1"/>
+            <field name="cull_method" type="uint32" default_value="1"/>
             <field name="divisions" type="float"/>
             <field name="sides" type="uint32"/>
-            <field name="star_ratio" type="float" default-value="0.5"/>
+            <field name="star_ratio" type="float" default_value="0.5"/>
             <field name="length" type="FloatAnimationReferenceV0"/>
-            <field name="unknown3fbae7d6" type="int32" expected-value="0" till-version="6"/> <!-- haven't seen a Blizzard model where this wouldn't be 0 -->
-            <field name="spline" type="Reference" refTo="SRIB"/>
+            <field name="unknown3fbae7d6" type="int32" expected_value="0" till_version="6"/> <!-- haven't seen a Blizzard model where this wouldn't be 0 -->
+            <field name="spline" type="Reference" ref_to="SRIB"/>
             <field name="active" type="UInt32AnimationReferenceV0"/>
-            <field name="flags" type="uint32" default-value="0" >
+            <field name="flags" type="uint32" default_value="0" >
                 <bits>
                     <bit mask="0x2" name="collide_terrain"/>
                     <bit mask="0x4" name="collide_objects"/>
@@ -2684,28 +2672,28 @@
                     <bit mask="0x2000" name="accurate_gpu_tangents"/>
                 </bits>
             </field>
-            <field name="scale_smoothing" type="uint32" default-value="0"/>
-            <field name="color_smoothing" type="uint32" default-value="0"/>
-            <field name="friction" type="float" default-value="1.0" since-version="8"/>
-            <field name="bounce" type="float" default-value="0.0" since-version="8"/>
-            <field name="lod_reduce" type="uint32" default-value="2"/>
-            <field name="lod_cut" type="uint32" default-value="0"/>
+            <field name="scale_smoothing" type="uint32" default_value="0"/>
+            <field name="color_smoothing" type="uint32" default_value="0"/>
+            <field name="friction" type="float" default_value="1.0" since_version="8"/>
+            <field name="bounce" type="float" default_value="0.0" since_version="8"/>
+            <field name="lod_reduce" type="uint32" default_value="2"/>
+            <field name="lod_cut" type="uint32" default_value="0"/>
 
             <!-- till v6: pitch then yaw -->
-            <field name="pitch_var_shape" type="uint32" till-version="6"/>
-            <field name="pitch_var_amplitude" type="FloatAnimationReferenceV0" till-version="6"/>
-            <field name="pitch_var_frequency" type="FloatAnimationReferenceV0" till-version="6"/>
-            <field name="yaw_var_shape" type="uint32" till-version="6"/>
-            <field name="yaw_var_amplitude" type="FloatAnimationReferenceV0" till-version="6"/>
-            <field name="yaw_var_frequency" type="FloatAnimationReferenceV0" till-version="6"/>
+            <field name="pitch_var_shape" type="uint32" till_version="6"/>
+            <field name="pitch_var_amplitude" type="FloatAnimationReferenceV0" till_version="6"/>
+            <field name="pitch_var_frequency" type="FloatAnimationReferenceV0" till_version="6"/>
+            <field name="yaw_var_shape" type="uint32" till_version="6"/>
+            <field name="yaw_var_amplitude" type="FloatAnimationReferenceV0" till_version="6"/>
+            <field name="yaw_var_frequency" type="FloatAnimationReferenceV0" till_version="6"/>
 
             <!-- since v8: yaw then pitch -->
-            <field name="yaw_var_shape" type="uint32" since-version="8"/>
-            <field name="yaw_var_amplitude" type="FloatAnimationReferenceV0" since-version="8"/>
-            <field name="yaw_var_frequency" type="FloatAnimationReferenceV0" since-version="8"/>
-            <field name="pitch_var_shape" type="uint32" since-version="8"/>
-            <field name="pitch_var_amplitude" type="FloatAnimationReferenceV0" since-version="8"/>
-            <field name="pitch_var_frequency" type="FloatAnimationReferenceV0" since-version="8"/>
+            <field name="yaw_var_shape" type="uint32" since_version="8"/>
+            <field name="yaw_var_amplitude" type="FloatAnimationReferenceV0" since_version="8"/>
+            <field name="yaw_var_frequency" type="FloatAnimationReferenceV0" since_version="8"/>
+            <field name="pitch_var_shape" type="uint32" since_version="8"/>
+            <field name="pitch_var_amplitude" type="FloatAnimationReferenceV0" since_version="8"/>
+            <field name="pitch_var_frequency" type="FloatAnimationReferenceV0" since_version="8"/>
 
             <field name="length_var_shape" type="uint32"/>
             <field name="length_var_amplitude" type="FloatAnimationReferenceV0"/>
@@ -2768,22 +2756,22 @@
         </versions>
         <fields>
             <field name="bone" type="uint32"/>
-            <field name="name" type="Reference" refTo="CHAR"/>
-            <field name="field_of_view" type="FloatAnimationReferenceV0" since-version="3"/>
-            <field name="use_vertical_fov" type="uint32" default-value="1" since-version="3"/>
-            <field name="depth_of_field_type" type="uint32" default-value="3" since-version="5"/>
-            <field name="unknown0818df94" size="132" till-version="2"/>
-            <field name="far_clip" type="FloatAnimationReferenceV0" since-version="3"/>
-            <field name="near_clip" type="FloatAnimationReferenceV0" since-version="3"/>
-            <field name="clip2" type="FloatAnimationReferenceV0" since-version="3"/>
-            <field name="focal_depth" type="FloatAnimationReferenceV0" since-version="3"/>
-            <field name="falloff_start" type="FloatAnimationReferenceV0" since-version="3"/>
-            <field name="falloff_end" type="FloatAnimationReferenceV0" since-version="3"/>
-            <field name="unknown587dc7fb" type="FloatAnimationReferenceV0" since-version="5"/>
-            <field name="unknownfff8cb33" type="FloatAnimationReferenceV0" since-version="5"/>
-            <field name="depth_of_field" type="FloatAnimationReferenceV0" since-version="3"/>
-            <field name="unknownf726f834" type="FloatAnimationReferenceV0" since-version="5"/>
-            <field name="unknownd506807d" type="FloatAnimationReferenceV0" since-version="5"/>
+            <field name="name" type="Reference" ref_to="CHAR"/>
+            <field name="field_of_view" type="FloatAnimationReferenceV0" since_version="3"/>
+            <field name="use_vertical_fov" type="uint32" default_value="1" since_version="3"/>
+            <field name="depth_of_field_type" type="uint32" default_value="3" since_version="5"/>
+            <field name="unknown0818df94" size="132" till_version="2"/>
+            <field name="far_clip" type="FloatAnimationReferenceV0" since_version="3"/>
+            <field name="near_clip" type="FloatAnimationReferenceV0" since_version="3"/>
+            <field name="clip2" type="FloatAnimationReferenceV0" since_version="3"/>
+            <field name="focal_depth" type="FloatAnimationReferenceV0" since_version="3"/>
+            <field name="falloff_start" type="FloatAnimationReferenceV0" since_version="3"/>
+            <field name="falloff_end" type="FloatAnimationReferenceV0" since_version="3"/>
+            <field name="unknown587dc7fb" type="FloatAnimationReferenceV0" since_version="5"/>
+            <field name="unknownfff8cb33" type="FloatAnimationReferenceV0" since_version="5"/>
+            <field name="depth_of_field" type="FloatAnimationReferenceV0" since_version="3"/>
+            <field name="unknownf726f834" type="FloatAnimationReferenceV0" since_version="5"/>
+            <field name="unknownd506807d" type="FloatAnimationReferenceV0" since_version="5"/>
         </fields>
     </structure>
 
@@ -2795,9 +2783,9 @@
             <version number="1" size="132"/>
         </versions>
         <fields>
-            <field name="unknown861f507b" size="4" expected-value="0x00000000"/>
+            <field name="unknown861f507b" size="4" expected_value="0x00000000"/>
             <field name="bone" type="uint32"/>
-            <field name="unknowncf03b856" size="4" expected-value="0x00000000"/>
+            <field name="unknowncf03b856" size="4" expected_value="0x00000000"/>
             <field name="radius" type="FloatAnimationReferenceV0"/>
             <field name="unknown9306aac0" type="FloatAnimationReferenceV0"/>
             <field name="compression_strength" type="FloatAnimationReferenceV0"/>
@@ -2815,13 +2803,13 @@
             <version number="3" size="160"/>
         </versions>
         <fields>
-            <field name="name" type="Reference" refTo="CHAR"/>
-            <field name="unknown2" type="Reference" refTo="U32_"/>
-            <field name="unknown3" type="Reference" refTo="U32_" since-version="2"/>
-            <field name="unknown4" type="Reference" refTo="CHAR"/> <!-- some arbitrary binary data -->
-            <field name="unknown5" type="Reference" refTo="SCHR"/>
+            <field name="name" type="Reference" ref_to="CHAR"/>
+            <field name="unknown2" type="Reference" ref_to="U32_"/>
+            <field name="unknown3" type="Reference" ref_to="U32_" since_version="2"/>
+            <field name="unknown4" type="Reference" ref_to="CHAR"/> <!-- some arbitrary binary data -->
+            <field name="unknown5" type="Reference" ref_to="SCHR"/>
             <field name="unknown20b7712d" size="92"/>
-            <field name="unknownb9c70ff0" size="8" since-version="3"/>
+            <field name="unknownb9c70ff0" size="8" since_version="3"/>
         </fields>
     </structure>
 
@@ -2841,29 +2829,29 @@
             <version number="30" size="868"/>
         </versions>
         <fields>
-            <field name="model_name" type="Reference" refTo="CHAR"/>
-            <field name="flags" type="uint32" default-value="0x80d53">
+            <field name="model_name" type="Reference" ref_to="CHAR"/>
+            <field name="flags" type="uint32" default_value="0x80d53">
                 <bits>
                     <bit mask="0x100000" name="has_mesh"/>
                 </bits>
             </field>
-            <field name="sequences" type="Reference" refTo="SEQS" />
-            <field name="sequence_transformation_collections" type="Reference" refTo="STC_"/>
-            <field name="sequence_transformation_groups" type="Reference" refTo="STG_"/>
+            <field name="sequences" type="Reference" ref_to="SEQS" />
+            <field name="sequence_transformation_collections" type="Reference" ref_to="STC_"/>
+            <field name="sequence_transformation_groups" type="Reference" ref_to="STG_"/>
             <field name="unknown_ref_beta0" type="Reference"/>
-            <field name="unknown03" type="uint32" expected-value="0"/>
-            <field name="sts" type="Reference" refTo="STS_"/>
-            <field name="bones" type="Reference" refTo="BONE"/>
+            <field name="unknown03" type="uint32" expected_value="0"/>
+            <field name="sts" type="Reference" ref_to="STS_"/>
+            <field name="bones" type="Reference" ref_to="BONE"/>
             <field name="skin_bone_count" type="uint32"/>
-            <field name="vertex_flags" type="uint32" default-value="0x180007d" >
+            <field name="vertex_flags" type="uint32" default_value="0x180007d" >
                 <bits>
                     <bit mask="0x200" name="has_vertex_colors"/>
                     <bit mask="0x20000" name="has_vertices"/>
-                    <bit mask="0x40000" name="use_uv_channel0"/> <!-- 1st UV coordinate -->
-                    <bit mask="0x80000" name="use_uv_channel1"/> <!-- 2nd UV coordinate -->
-                    <bit mask="0x100000" name="use_uv_channel2"/> <!-- 3th UV coordinate -->
-                    <bit mask="0x100000" name="use_uv_channel3"/> <!-- 4th UV coordinate -->
-                    <bit mask="0x40000000" name="use_uv_channel4"/> <!-- 5th UV coordinate -->
+                    <bit mask="0x40000" name="use_uv0"/> <!-- 1st UV coordinate -->
+                    <bit mask="0x80000" name="use_uv1"/> <!-- 2nd UV coordinate -->
+                    <bit mask="0x100000" name="use_uv2"/> <!-- 3th UV coordinate -->
+                    <bit mask="0x100000" name="use_uv3"/> <!-- 4th UV coordinate -->
+                    <bit mask="0x40000000" name="use_uv4"/> <!-- 5th UV coordinate -->
                     <!--
                          UV flags aren't always set in order, for instance 0x41820261 has two UVs
                          - does it affect the model in some way?
@@ -2871,66 +2859,66 @@
                     -->
                 </bits>
             </field>
-            <field name="vertices" type="Reference" refTo="U8__"/>
-            <field name="divisions" type="Reference" refTo="DIV_"/>
-            <field name="bone_lookup" type="Reference" refTo="U16_"/>
+            <field name="vertices" type="Reference" ref_to="U8__"/>
+            <field name="divisions" type="Reference" ref_to="DIV_"/>
+            <field name="bone_lookup" type="Reference" ref_to="U16_"/>
             <field name="boundings" type="BNDSV0"/>
-            <field name="maybe_boundings_flags" type="uint32" expected-value="0"/>
+            <field name="maybe_boundings_flags" type="uint32" expected_value="0"/>
             <field name="unknown_ref_beta1" type="Reference"/>
             <field name="unknown_ref_beta2" type="Reference"/>
             <field name="unknown_ref_beta3" type="Reference"/>
-            <field name="unknown14" type="uint32" expected-value="0"/>
-            <field name="unknown15" type="uint32" expected-value="0"/>
-            <field name="unknown16" type="uint32" default-value="0"/>
-            <field name="unknown17" type="uint32" expected-value="0"/>
-            <field name="unknown18" type="uint32" expected-value="0"/>
-            <field name="unknown19" type="uint32" default-value="0"/>
-            <field name="attachment_points" type="Reference" refTo="ATT_"/>
-            <field name="attachment_point_addons" type="Reference" refTo="U16_"/>
-            <field name="lights" type="Reference" refTo="LITE"/>
-            <field name="shadow_boxes" type="Reference" refTo="SHBX" since-version="21"/>
-            <field name="cameras" type="Reference" refTo="CAM_"/>
-            <field name="d" type="Reference" refTo="U16_"/>
-            <field name="material_references" type="Reference" refTo="MATM"/>
-            <field name="materials_standard" type="Reference" refTo="MAT_"/>
-            <field name="materials_displacement" type="Reference" refTo="DIS_"/>
-            <field name="materials_composite" type="Reference" refTo="CMP_"/>
-            <field name="materials_terrain" type="Reference" refTo="TER_"/>
-            <field name="materials_volume" type="Reference" refTo="VOL_"/>
+            <field name="unknown14" type="uint32" expected_value="0"/>
+            <field name="unknown15" type="uint32" expected_value="0"/>
+            <field name="unknown16" type="uint32" default_value="0"/>
+            <field name="unknown17" type="uint32" expected_value="0"/>
+            <field name="unknown18" type="uint32" expected_value="0"/>
+            <field name="unknown19" type="uint32" default_value="0"/>
+            <field name="attachment_points" type="Reference" ref_to="ATT_"/>
+            <field name="attachment_point_addons" type="Reference" ref_to="U16_"/>
+            <field name="lights" type="Reference" ref_to="LITE"/>
+            <field name="shadow_boxes" type="Reference" ref_to="SHBX" since_version="21"/>
+            <field name="cameras" type="Reference" ref_to="CAM_"/>
+            <field name="d" type="Reference" ref_to="U16_"/>
+            <field name="material_references" type="Reference" ref_to="MATM"/>
+            <field name="materials_standard" type="Reference" ref_to="MAT_"/>
+            <field name="materials_displacement" type="Reference" ref_to="DIS_"/>
+            <field name="materials_composite" type="Reference" ref_to="CMP_"/>
+            <field name="materials_terrain" type="Reference" ref_to="TER_"/>
+            <field name="materials_volume" type="Reference" ref_to="VOL_"/>
             <field name="unknown_maybe_ref0" type="Reference"/>
-            <field name="materials_creep" type="Reference" refTo="CREP"/>
-            <field name="materials_volumenoise" type="Reference" refTo="VON_" since-version="25"/>
-            <field name="materials_splatterrainbake" type="Reference" refTo="STBM" since-version="26"/>
-            <field name="materials_reflection" type="Reference" refTo="REF_" since-version="28"/>
-            <field name="materials_lensflare" type="Reference" refTo="LFLR" since-version="29"/>
-            <field name="materials_buffer" type="Reference" refTo="MADD" since-version="30"/>
-            <field name="particle_systems" type="Reference" refTo="PAR_"/>
-            <field name="particle_copies" type="Reference" refTo="PARC"/>
-            <field name="ribbons" type="Reference" refTo="RIB_"/>
-            <field name="projections" type="Reference" refTo="PROJ"/>
-            <field name="forces" type="Reference" refTo="FOR_"/>
-            <field name="warps" type="Reference" refTo ="WRP_"/>
+            <field name="materials_creep" type="Reference" ref_to="CREP"/>
+            <field name="materials_volumenoise" type="Reference" ref_to="VON_" since_version="25"/>
+            <field name="materials_splatterrainbake" type="Reference" ref_to="STBM" since_version="26"/>
+            <field name="materials_reflection" type="Reference" ref_to="REF_" since_version="28"/>
+            <field name="materials_lensflare" type="Reference" ref_to="LFLR" since_version="29"/>
+            <field name="materials_buffer" type="Reference" ref_to="MADD" since_version="30"/>
+            <field name="particle_systems" type="Reference" ref_to="PAR_"/>
+            <field name="particle_copies" type="Reference" ref_to="PARC"/>
+            <field name="ribbons" type="Reference" ref_to="RIB_"/>
+            <field name="projections" type="Reference" ref_to="PROJ"/>
+            <field name="forces" type="Reference" ref_to="FOR_"/>
+            <field name="warps" type="Reference" ref_to ="WRP_"/>
             <field name="unknown_maybe_ref1" type="Reference"/>
-            <field name="physics_rigidbodies" type="Reference" refTo="PHRB"/>
+            <field name="physics_rigidbodies" type="Reference" ref_to="PHRB"/>
             <field name="unknown_maybe_ref2" type="Reference"/>
-            <field name="physics_joints" type="Reference" refTo="PHYJ"/>
-            <field name="physics_cloths" type="Reference" refTo="PHCL" since-version="28"/>
+            <field name="physics_joints" type="Reference" ref_to="PHYJ"/>
+            <field name="physics_cloths" type="Reference" ref_to="PHCL" since_version="28"/>
             <field name="unknown_maybe_ref3" type="Reference"/>
-            <field name="unknownbd5657bd" type="Reference" since-version="25"/>
-            <field name="ik_joints" type="Reference" refTo="IKJT"/>
+            <field name="unknownbd5657bd" type="Reference" since_version="25"/>
+            <field name="ik_joints" type="Reference" ref_to="IKJT"/>
             <field name="unknown_maybe_ref4" type="Reference"/>
-            <field name="turret_parts" type="Reference" refTo="PATU"/>
-            <field name="turrets" type="Reference" refTo="TRGD"/>
-            <field name="bone_rests" type="Reference" refTo="IREF"/>
+            <field name="turret_parts" type="Reference" ref_to="PATU"/>
+            <field name="turrets" type="Reference" ref_to="TRGD"/>
+            <field name="bone_rests" type="Reference" ref_to="IREF"/>
             <field name="hittest_tight" type="SSGSV1"/>
-            <field name="hittests" type="Reference" refTo="SSGS"/>
-            <field name="attachment_volumes" type="Reference" refTo="ATVL"/>
-            <field name="attachment_volumes_addon0" type="Reference" refTo="U16_" since-version="23"/>
-            <field name="attachment_volumes_addon1" type="Reference" refTo="U16_" since-version="23"/>
-            <field name="billboards" type="Reference" refTo="BBSC"/>
-            <field name="tmd_data" type="Reference" refTo="TMD_"/>
+            <field name="hittests" type="Reference" ref_to="SSGS"/>
+            <field name="attachment_volumes" type="Reference" ref_to="ATVL"/>
+            <field name="attachment_volumes_addon0" type="Reference" ref_to="U16_" since_version="23"/>
+            <field name="attachment_volumes_addon1" type="Reference" ref_to="U16_" since_version="23"/>
+            <field name="billboards" type="Reference" ref_to="BBSC"/>
+            <field name="tmd_data" type="Reference" ref_to="TMD_"/>
             <field name="unique_unknown_number" type="uint32"/>
-            <field name="unknown45" type="Reference" refTo="U32_"/>
+            <field name="unknown45" type="Reference" ref_to="U32_"/>
         </fields>
     </structure>
 
@@ -2941,9 +2929,9 @@
         </versions>
         <fields>
             <field name="tag" type="tag"/>
-            <field name="indexOffset" type="uint32"/>
-            <field name="indexSize" type="uint32"/>
-            <field name="model" type="Reference" refTo="MODL"/>
+            <field name="index_offset" type="uint32"/>
+            <field name="index_size" type="uint32"/>
+            <field name="model" type="Reference" ref_to="MODL"/>
         </fields>
     </structure>
 
@@ -2956,8 +2944,22 @@
             <field name="tag" type="tag"/>
             <field name="indexOffset" type="uint32"/>
             <field name="indexSize" type="uint32"/>
-            <field name="model" type="SmallReference" refTo="MODL"/>
+            <field name="model" type="SmallReference" ref_to="MODL"/>
             <!-- SmallReference (8 bytes) instead of Reference (12 bytes) is used across all structures in MD33 -->
+        </fields>
+    </structure>
+
+    <structure name="MDIndexEntry">
+        <description>Entry of the tag index. Position and size of the tag index gets described by MD34 or MD33</description>
+        <versions>
+            <version number="33" size="16"/>
+            <version number="34" size="16"/>
+        </versions>
+        <fields>
+            <field name="tag" type="tag"/>
+            <field name="offset" type="uint32"/>
+            <field name="repetitions" type="uint32"/>
+            <field name="version" type="uint32"/>
         </fields>
     </structure>
 </structures>
