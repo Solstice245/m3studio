@@ -78,7 +78,7 @@ class M3InputProcessor:
         self.importer = importer
         self.bl = bl
         self.m3 = m3
-        self.version = m3.struct_desc.structureVersion
+        self.version = m3.struct_desc.struct_version
 
     def boolean(self, field, till_version=None):
         if (till_version is not None) and (self.version > till_version):
@@ -88,12 +88,12 @@ class M3InputProcessor:
     def bit(self, field, name, since_version=None):
         if (since_version is not None) and (self.version < since_version):
             return
-        setattr(self.bl, name, self.m3.getNamedBit(field, name))
+        setattr(self.bl, name, self.m3.bit_get(field, name))
 
     def bit_enum(self, field, name, since_version=None):
         if (since_version is not None) and (self.version < since_version):
             return
-        val = self.m3.getNamedBit(field, name)
+        val = self.m3.bit_get(field, name)
         val = '0' if val is False else '1'
         setattr(self.bl, name, val)
 
@@ -354,10 +354,9 @@ class Importer:
         # TODO make fps an import option
         bpy.context.scene.render.fps = FRAME_RATE
 
-        self.m3 = io_m3.load_sections(filename)
+        self.m3 = io_m3.section_list_load(filename)
 
         self.m3_bl_ref = {}
-        # 0 is used as index for null reference
         self.bl_ref_objects = []
 
         self.m3_model = self.m3[self.m3[0][0].model][0]
@@ -390,7 +389,7 @@ class Importer:
         self.create_turrets()
         self.create_billboards()
 
-        self.ob.m3_model_version = str(self.m3_model.struct_desc.structureVersion)
+        self.ob.m3_model_version = str(self.m3_model.struct_desc.struct_version)
 
         bpy.context.view_layer.objects.active = self.ob
         self.ob.select_set(True)
@@ -758,11 +757,11 @@ class Importer:
         ob = self.ob
 
         if self.m3_model.materials_standard.index:
-            ob.m3_materials_standard_version = str(self.m3[self.m3_model.materials_standard.index].struct_desc.structureVersion)
+            ob.m3_materials_standard_version = str(self.m3[self.m3_model.materials_standard.index].struct_desc.struct_version)
 
         if hasattr(self.m3_model, 'materials_reflection'):
             if self.m3_model.materials_reflection.index:
-                ob.m3_materials_reflection_version = str(self.m3[self.m3_model.materials_reflection].struct_desc.structureVersion)
+                ob.m3_materials_reflection_version = str(self.m3[self.m3_model.materials_reflection].struct_desc.struct_version)
 
         layer_section_to_index = {}
         for m3_matref in self.m3[self.m3_model.material_references]:
@@ -805,20 +804,20 @@ class Importer:
 
                 m3_layer = self.m3[m3_layer_field][0]
                 m3_layer_bitmap_str = self.m3[m3_layer.color_bitmap.index].content if m3_layer.color_bitmap.index else ''
-                if not m3_layer_bitmap_str and not m3_layer.getNamedBit('flags', 'color'):
+                if not m3_layer_bitmap_str and not m3_layer.bit_get('flags', 'color'):
                     continue
 
-                ob.m3_materiallayers_version = str(self.m3[m3_layer_field].struct_desc.structureVersion)
+                ob.m3_materiallayers_version = str(self.m3[m3_layer_field].struct_desc.struct_version)
 
                 layer = shared.m3_item_add(ob.m3_materiallayers, item_name=mat.name + '_' + layer_name)
                 layer.color_bitmap = m3_layer_bitmap_str
                 processor = M3InputProcessor(self, layer, m3_layer)
                 io_shared.io_material_layer(processor)
 
-                layer.color_type = 'COLOR' if m3_layer.getNamedBit('flags', 'color') else 'BITMAP'
+                layer.color_type = 'COLOR' if m3_layer.bit_get('flags', 'color') else 'BITMAP'
                 layer.fresnel_max = m3_layer.fresnel_min + m3_layer.fresnel_max_offset
 
-                if m3_layer.struct_desc.structureVersion >= 25:
+                if m3_layer.struct_desc.struct_version >= 25:
                     layer.fresnel_mask[0] = 1.0 - m3_layer.fresnel_inverted_mask_x
                     layer.fresnel_mask[1] = 1.0 - m3_layer.fresnel_inverted_mask_y
                     layer.fresnel_mask[2] = 1.0 - m3_layer.fresnel_inverted_mask_z
@@ -828,10 +827,10 @@ class Importer:
 
     def create_mesh(self):
         ob = self.ob
-        ob.m3_mesh_version = str(self.m3[self.m3_division.regions].struct_desc.structureVersion)
+        ob.m3_mesh_version = str(self.m3[self.m3_division.regions].struct_desc.struct_version)
         m3_vertices = self.m3[self.m3_model.vertices]
 
-        if not self.m3_model.getNamedBit('vertex_flags', 'has_vertices'):
+        if not self.m3_model.bit_get('vertex_flags', 'has_vertices'):
             if len(self.m3_model.vertices):
                 raise Exception('Mesh claims to not have any vertices - expected buffer to be empty, but it isn\'t. size=%d' % len(m3_vertices))
             return
@@ -877,7 +876,7 @@ class Importer:
             faces_old = []
             vertex_index = region.first_face_index
             # some weirdness in REGNV2 from SC2 Beta
-            if region.struct_desc.structureVersion <= 2:
+            if region.struct_desc.struct_version <= 2:
                 while vertex_index + 2 <= region.first_face_index + region.face_count:
                     i0 = m3_faces[vertex_index]
                     i1 = m3_faces[vertex_index + 1]
@@ -960,7 +959,7 @@ class Importer:
 
             bm = bmesh.from_edit_mesh(mesh)
 
-            has_vertex_colors = self.m3_model.getNamedBit('vertex_flags', 'has_vertex_colors')
+            has_vertex_colors = self.m3_model.bit_get('vertex_flags', 'has_vertex_colors')
             color_layer = bm.loops.layers.color.new('m3color') if has_vertex_colors else None
             alpha_layer = bm.loops.layers.color.new('m3alpha') if has_vertex_colors else None
             deform_layer = bm.verts.layers.deform.new('m3lookup')
@@ -968,7 +967,7 @@ class Importer:
             uv_maps = []
             uv_layers = {}
             for uv_map in ['uv0', 'uv1', 'uv2', 'uv3', 'uv4']:
-                if v_class_desc.hasField(uv_map):
+                if uv_map in v_class_desc.fields.keys():
                     uv_layers[uv_map] = bm.loops.layers.uv.new(uv_map)
                     uv_maps.append(uv_map)
 
@@ -1067,7 +1066,7 @@ class Importer:
         ob = self.ob
 
         if self.m3_model.cameras.index:
-            ob.m3_cameras_version = str(self.m3[self.m3_model.cameras].struct_desc.structureVersion)
+            ob.m3_cameras_version = str(self.m3[self.m3_model.cameras].struct_desc.struct_version)
 
         for m3_camera in self.m3[self.m3_model.cameras]:
             bone_name = self.m3_get_bone_name(m3_camera.bone)
@@ -1081,7 +1080,7 @@ class Importer:
         ob = self.ob
 
         if self.m3_model.particle_systems.index:
-            ob.m3_particle_systems_version = str(self.m3[self.m3_model.particle_systems].struct_desc.structureVersion)
+            ob.m3_particle_systems_version = str(self.m3[self.m3_model.particle_systems].struct_desc.struct_version)
 
         m3_systems = self.m3[self.m3_model.particle_systems]
         m3_copies = self.m3[self.m3_model.particle_copies]
@@ -1112,7 +1111,7 @@ class Importer:
         ob = self.ob
 
         if self.m3_model.ribbons.index:
-            ob.m3_ribbons_version = str(self.m3[self.m3_model.ribbons].struct_desc.structureVersion)
+            ob.m3_ribbons_version = str(self.m3[self.m3_model.ribbons].struct_desc.struct_version)
 
         for m3_ribbon in self.m3[self.m3_model.ribbons]:
             bone_name = self.m3_get_bone_name(m3_ribbon.bone)
@@ -1201,7 +1200,7 @@ class Importer:
         ob = self.ob
 
         if self.m3_model.physics_rigidbodies.index:
-            ob.m3_rigidbodies_version = str(self.m3[m3_model.physics_rigidbodies].struct_desc.structureVersion)
+            ob.m3_rigidbodies_version = str(self.m3[m3_model.physics_rigidbodies].struct_desc.struct_version)
 
         for m3_rigidbody in self.m3[self.m3_model.physics_rigidbodies]:
             bone_name = self.m3_get_bone_name(m3_rigidbody.bone)
@@ -1227,7 +1226,7 @@ class Importer:
                     volume.rotation = md[1].to_euler('XYZ')
                     volume.scale = md[2]
 
-                    if m3_volume.struct_desc.structureVersion == 1:
+                    if m3_volume.struct_desc.struct_version == 1:
                         volume.mesh_object = self.generate_basic_volume_object(physics_shape.name, m3_volume.vertices, m3_volume.face_data)
                     else:
                         args = (physics_shape.name, m3_volume.vertices, m3_volume.polygons_related, m3_volume.loops, m3_volume.polygons)
@@ -1269,7 +1268,7 @@ class Importer:
         ob = self.ob
 
         if self.m3_model.physics_cloths.index:
-            ob.m3_cloths_version = str(self.m3[self.m3_model.physics_cloths].struct_desc.structureVersion)
+            ob.m3_cloths_version = str(self.m3[self.m3_model.physics_cloths].struct_desc.struct_version)
 
         for m3_cloth in self.m3[self.m3_model.physics_cloths]:
             cloth = shared.m3_item_add(ob.m3_cloths, item_name='Cloth')
@@ -1345,7 +1344,7 @@ class Importer:
         ob = self.ob
 
         if self.m3_model.turret_parts.index:
-            ob.m3_turrets_part_version = str(self.m3[self.m3_model.turret_parts].struct_desc.structureVersion)
+            ob.m3_turrets_part_version = str(self.m3[self.m3_model.turret_parts].struct_desc.struct_version)
 
         for m3_turret in self.m3[self.m3_model.turrets]:
             turret = shared.m3_item_add(ob.m3_turrets, item_name=self.m3[m3_turret.name].content)
@@ -1358,7 +1357,7 @@ class Importer:
                 processor = M3InputProcessor(self, part, m3_part)
                 io_shared.io_turret_part(processor)
 
-                if self.m3[self.m3_model.turret_parts].struct_desc.structureVersion < 4:
+                if self.m3[self.m3_model.turret_parts].struct_desc.struct_version < 4:
                     part.matrix = to_bl_matrix(m3_part.matrix)
 
     def create_billboards(self):

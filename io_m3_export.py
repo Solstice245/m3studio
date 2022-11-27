@@ -20,6 +20,7 @@ import bpy
 import bmesh
 import mathutils
 import os
+from timeit import timeit
 from . import io_m3
 from . import io_shared
 from . import shared
@@ -84,7 +85,7 @@ class M3OutputProcessor:
         self.exporter = exporter
         self.bl = bl
         self.m3 = m3
-        self.version = m3.structureDescription.structureVersion
+        self.version = m3.struct_desc.struct_version
 
     def boolean(self, field, since_version=None, till_version=None):
         if (since_version is not None) and (self.version < since_version):
@@ -98,7 +99,7 @@ class M3OutputProcessor:
             return
         if (till_version is not None) and (self.version > till_version):
             return
-        self.m3.setNamedBit(field, name, getattr(self.bl, field))
+        self.m3.bit_set(field, name, getattr(self.bl, field))
 
     def bits_16(self, field, since_version=None, till_version=None):
         if (since_version is not None) and (self.version < since_version):
@@ -160,7 +161,7 @@ class Exporter:
 
         self.ob = ob
         self.offset = 0
-        self.m3 = io_m3.SectionList()
+        self.m3 = io_m3.SectionList(init_header=True)
 
         self.mesh_objects = []
         self.vertex_groups = set()
@@ -181,38 +182,35 @@ class Exporter:
             elif not bone.m3_export_cull:
                 self.bones.append(bone)
 
+        # TODO warning if meshes and particles have materials or layers in common
+
         self.bones_from_name = {bone.name: bone for bone in self.bones}
         self.bone_indices_from_name = {bone.name: ii for ii, bone in enumerate(self.bones)}
 
-        md34_section = io_m3.Section()
-        md34_section.struct_desc = io_m3.structures['MD34'].get_version(11)
-        self.m3.append(md34_section)
-        md34 = md34_section.content_add()
-
-        model_section = io_m3.Section.for_reference(self.m3, md34, 'model', version=self.ob.m3_model_version)
+        model_section = self.m3.section_for_reference(self.m3[0][0], 'model', version=self.ob.m3_model_version)
         model = model_section.content_add()
 
-        model_name_section = io_m3.Section.for_reference(self.m3, model, 'model_name')
+        model_name_section = self.m3.section_for_reference(model, 'model_name')
         model_name_section.content_iter_add(os.path.basename(filename))
 
         self.create_division(model)
 
-        # after converting sections to bytes
-        md34.index_offset = self.offset
-        md34.index_size = len(self.m3)
+        self.m3.resolve_section_references()
+        self.m3.validate_sections()
+        # self.m3.to_index()
 
         return self.m3
 
     def create_division(self, model):
 
-        model.setNamedBit('flags', 'has_mesh', len(self.mesh_objects) > 0)
+        model.bit_set('flags', 'has_mesh', len(self.mesh_objects) > 0)
 
         if not len(self.mesh_objects):
             model.skin_bone_count = 0
-            div_section = io_m3.Section.for_reference(self.m3, model, 'divisions', version=2)
+            div_section = self.m3.section_for_reference(model, 'divisions', version=2)
             div = div_section.content_add()
 
-            msec_section = io_m3.Section.for_reference(self.m3, div, 'msec', version=1)
+            msec_section = self.m3.section_for_reference(div, 'msec', version=1)
             msec = msec_section.content_add()
             msec.header.id = BOUNDING_ANIM_ID
 
@@ -220,11 +218,11 @@ class Exporter:
 
         model.vertex_flags = 0x182007d
 
-        model.setNamedBit('vertex_flags', 'use_uv0', self.uv_count > 0)
-        model.setNamedBit('vertex_flags', 'use_uv1', self.uv_count > 1)
-        model.setNamedBit('vertex_flags', 'use_uv2', self.uv_count > 2)
-        model.setNamedBit('vertex_flags', 'use_uv3', self.uv_count > 3)
-        model.setNamedBit('vertex_flags', 'use_uv4', self.uv_count > 4)
+        model.bit_set('vertex_flags', 'use_uv0', self.uv_count > 0)
+        model.bit_set('vertex_flags', 'use_uv1', self.uv_count > 1)
+        model.bit_set('vertex_flags', 'use_uv2', self.uv_count > 2)
+        model.bit_set('vertex_flags', 'use_uv3', self.uv_count > 3)
+        model.bit_set('vertex_flags', 'use_uv4', self.uv_count > 4)
 
         rgb_col = 'm3color'
         alpha_col = 'm3alpha'
@@ -237,20 +235,20 @@ class Exporter:
                 if vertex_col.name == rgb_col or vertex_col.name == alpha_col:
                     vertex_rgba = True
 
-        model.setNamedBit('vertex_flags', 'has_vertex_colors', vertex_rgba)
+        model.bit_set('vertex_flags', 'has_vertex_colors', vertex_rgba)
 
         m3_vertex_struct = io_m3.structures['VertexFormat' + hex(model.vertex_flags)].get_version(0)
 
-        vertices_section = io_m3.Section.for_reference(self.m3, model, 'vertices')
+        vertices_section = self.m3.section_for_reference(model, 'vertices')
 
-        div_section = io_m3.Section.for_reference(self.m3, model, 'divisions', version=2)
+        div_section = self.m3.section_for_reference(model, 'divisions', version=2)
         div = div_section.content_add()
 
-        faces_section = io_m3.Section.for_reference(self.m3, div, 'faces')
-        regions_section = io_m3.Section.for_reference(self.m3, div, 'regions', version=self.ob.m3_mesh_version)
-        batches_section = io_m3.Section.for_reference(self.m3, div, 'batches', version=1)
+        faces_section = self.m3.section_for_reference(div, 'faces')
+        regions_section = self.m3.section_for_reference(div, 'regions', version=self.ob.m3_mesh_version)
+        batches_section = self.m3.section_for_reference(div, 'batches', version=1)
 
-        bone_lookup_section = io_m3.Section.for_reference(self.m3, model, 'bone_lookup')
+        bone_lookup_section = self.m3.section_for_reference(model, 'bone_lookup')
 
         m3_vertices = []
         m3_faces = []
@@ -275,21 +273,21 @@ class Exporter:
 
             region_vertices = []
             region_faces = []
-            region_lookup = set()
+            region_lookup = []
 
-            loop_indices_used = set()
+            vert_indices_used = set()
 
             for face in bm.faces:
                 assert len(face.loops) == 3
 
                 for loop in face.loops:
 
-                    region_faces.append(loop.index)
+                    region_faces.append(loop.vert.index)
 
-                    if loop.index in loop_indices_used:
+                    if loop.vert.index in vert_indices_used:
                         continue
                     else:
-                        loop_indices_used.add(loop.index)
+                        vert_indices_used.add(loop.vert.index)
 
                     vert = loop.vert
                     m3_vert = m3_vertex_struct.instance()
@@ -309,7 +307,7 @@ class Exporter:
                         weighted = 0
                         if weight:
                             weight += 1
-                            region_lookup.add(index)
+                            region_lookup.append(index)
                             correct_sum_weight += weight / sum_weight
                             new_round_weight = round(correct_sum_weight * 255)
                             round_weight_lookup_pairs.append((index, new_round_weight - round_sum_weight))
@@ -362,12 +360,16 @@ class Exporter:
             region.first_bone_lookup_index = first_lookup_index
             region.bone_lookup_count = len(region_lookup)
             region.vertex_lookups_used = vertex_lookups_used
-            region.root_bone = 0  # TODO
+            region.root_bone = region_lookup[0]
 
-            for matref in ob.m3_mesh_material_refs:
-                batch = batches_section.content_add()
-                batch.region_index = len(regions_section) - 1
-                batch.material_reference_index = 0  # TODO get actual material reference index
+            matref_handles = []
+            ob_matref_handles = set([matref.bl_handle for matref in ob.m3_mesh_material_refs])
+            for ii, matref in enumerate(self.ob.m3_materialrefs):
+                if matref.bl_handle in ob_matref_handles and matref.mat_handle not in matref_handles:
+                    matref_handles.append(matref_handles)
+                    batch = batches_section.content_add()
+                    batch.region_index = len(regions_section) - 1
+                    batch.material_reference_index = ii
 
         vertices_section.content_iter_add(m3_vertices)
         faces_section.content_iter_add(m3_faces)
@@ -377,4 +379,8 @@ class Exporter:
 def m3_export(ob, filename):
     exporter = Exporter()
     sections = exporter.m3_export(ob, filename)
+
+    # for section in sections:
+    #     print(section.index_entry.tag, section.index_entry.offset, section.index_entry.repetitions, section.index_entry.version)
+
     print(sections)

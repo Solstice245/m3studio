@@ -2942,8 +2942,8 @@
         </versions>
         <fields>
             <field name="tag" type="tag"/>
-            <field name="indexOffset" type="uint32"/>
-            <field name="indexSize" type="uint32"/>
+            <field name="index_offset" type="uint32"/>
+            <field name="index_size" type="uint32"/>
             <field name="model" type="SmallReference" ref_to="MODL"/>
             <!-- SmallReference (8 bytes) instead of Reference (12 bytes) is used across all structures in MD33 -->
         </fields>

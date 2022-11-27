@@ -139,11 +139,15 @@ class ClothPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
 
     def draw(self, context):
         model_version = int(context.object.m3_model_version)
+        mesh_version = int(context.object.m3_mesh_version)
 
-        if model_version >= 28:
+        if model_version >= 28 and mesh_version >= 4:
             shared.draw_collection_list(self.layout, context.object.m3_cloths, draw_cloth_props)
         else:
-            self.layout.label(icon='ERROR', text='M3 model version must be at least 28')
+            if model_version < 28:
+                self.layout.label(icon='ERROR', text='M3 model version must be at least 28.')
+            if mesh_version < 4:
+                self.layout.label(icon='ERROR', text='M3 mesh version must be at least 4.')
 
 
 class ClothConstraintsPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
@@ -152,11 +156,15 @@ class ClothConstraintsPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
 
     def draw(self, context):
         model_version = int(context.object.m3_model_version)
+        mesh_version = int(context.object.m3_mesh_version)
 
-        if model_version >= 28:
+        if model_version >= 28 and mesh_version >= 4:
             shared.draw_collection_list(self.layout, context.object.m3_clothconstraintsets, draw_constraint_set_props)
         else:
-            self.layout.label(icon='ERROR', text='M3 model version must be at least 28')
+            if model_version < 28:
+                self.layout.label(icon='ERROR', text='M3 model version must be at least 28.')
+            if mesh_version < 4:
+                self.layout.label(icon='ERROR', text='M3 mesh version must be at least 4.')
 
 
 classes = (

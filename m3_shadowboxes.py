@@ -56,7 +56,7 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
         if model_version >= 21:
             shared.draw_collection_list(self.layout, context.object.m3_shadowboxes, draw_props)
         else:
-            self.layout.label(icon='ERROR', text='M3 model version must be at least 21')
+            self.layout.label(icon='ERROR', text='M3 model version must be at least 21.')
 
 
 classes = (
