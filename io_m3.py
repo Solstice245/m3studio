@@ -22,6 +22,7 @@
 # * source of file - https://github.com/SC2Mapster/m3addon
 
 import struct
+import copy
 from sys import stderr
 from xml.etree import ElementTree as ET
 
@@ -60,13 +61,15 @@ class M3StructureHistory:
             final_fields = {}
             if md_version == 33:
                 for field in used_fields.values():
-                    if type(field) == EmbeddedStructureField:
-                        if field.struct_desc.struct_name == 'Reference':
-                            field.struct_desc.struct_name = 'SmallReference'
-                        new_desc = structures[field.struct_desc.struct_name].get_version(field.struct_desc.struct_version, md_version)
-                        field.struct_desc = new_desc
-                        field.size = new_desc.size
-                    final_fields[field.name] = field
+                    new_field = copy.copy(field)
+                    if type(new_field) == EmbeddedStructureField:
+                        new_desc_name = field.struct_desc.struct_name
+                        if new_desc_name == 'Reference':
+                            new_desc_name = 'SmallReference'
+                        new_desc = structures[new_desc_name].get_version(field.struct_desc.struct_version, md_version)
+                        new_field.struct_desc = new_desc
+                        new_field.size = new_desc.size
+                    final_fields[new_field.name] = new_field
             else:
                 final_fields = used_fields
 
@@ -91,7 +94,8 @@ class M3StructureDescription:
         # Validate the specified size:
         if validate_size and self.size != specific_size:
             self.dump_offsets()
-            raise Exception('Size mismatch: %s in version %d has been specified to have size %d, but the calculated size was %d' % (struct_name, struct_version, specific_size, calc_size))
+            args = struct_name, struct_version, specific_size, calc_size
+            raise Exception('Size mismatch: {} in version {} has been specified to have size {}, but the calculated size was {}'.format(*args))
 
     def dump_offsets(self):
         offset = 0
@@ -106,15 +110,18 @@ class M3StructureDescription:
     def instances(self, buffer, count, checks=True):
         if self.primitive:
             if self.struct_name == 'CHAR':
-                return buffer[:count - 1].decode('ASCII', 'replace')
+                if type(buffer) == str:
+                    return buffer
+                else:
+                    return buffer[:count - 1].decode('ASCII', 'replace')
             elif self.struct_name == 'U8__':
                 return bytearray(buffer[:count])
             else:
                 struct_format = list(self.fields.values())[0].struct_format
                 vals = []
                 for offset in range(0, count * self.size, self.size):
-                    bytesOfOneEntry = buffer[offset:(offset + self.size)]
-                    int_val = struct_format.unpack(bytesOfOneEntry)[0]
+                    entry_bytes = buffer[offset:(offset + self.size)]
+                    int_val = struct_format.unpack(entry_bytes)[0]
                     vals.append(int_val)
                 return vals
         else:
@@ -165,7 +172,7 @@ class M3StructureDescription:
             offset = 0
 
             if self.primitive:
-                struct_format = self.fields[0].struct_format
+                struct_format = list(self.fields.values())[0].struct_format
                 for value in instances:
                     struct_format.pack_into(raw_bytes, offset, value)
                     offset += self.size
@@ -178,7 +185,10 @@ class M3StructureDescription:
     def count_bytes_required_for_instances(self, instances):
         if self.struct_name == 'CHAR':
             return len(instances) + 1  # +1 for terminating character
-        return self.size * self.instances_count(instances)
+        elif self.struct_name == 'U8__':
+            return len(instances)
+        else:
+            return self.size * self.instances_count(instances)
 
 
 class M3Structure:
@@ -253,7 +263,7 @@ class TagField(Field):
         return self.struct_format.pack_into(buffer, offset, b[0], b[1], b[2], b[3])
 
     def default_set(self, owner):
-        pass
+        setattr(owner, self.name, '')
 
     def content_validate(self, field_content, field_path):
         if (type(field_content) != str) or (len(field_content) != 4):
@@ -268,17 +278,16 @@ class EmbeddedStructureField(Field):
         self.size = struct_desc.size
         self.ref_to = ref_to
 
-    def to_bytes(self, owner):
-        embedded_struct = getattr(owner, self.name)
-        return embedded_struct.to_bytes()
-
     def from_buffer(self, owner, buffer, offset, checks):
         instance = self.struct_desc.instance(buffer, offset, checks)
         setattr(owner, self.name, instance)
 
     def to_buffer(self, owner, buffer, offset):
-        embedded_struct = getattr(owner, self.name)
-        embedded_struct.to_buffer(buffer, offset)
+        instance = getattr(owner, self.name)
+        instance_offset = offset
+        for field in instance.struct_desc.fields.values():
+            field.to_buffer(instance, buffer, instance_offset)
+            instance_offset += field.size
 
     def default_set(self, owner):
         instance = self.struct_desc.instance()
@@ -309,7 +318,7 @@ class PrimitiveField(Field):
 
     def to_buffer(self, owner, buffer, offset):
         value = getattr(owner, self.name)
-        return self.struct_format.pack_into(buffer, offset, value)
+        self.struct_format.pack_into(buffer, offset, value)
 
     def default_set(self, owner):
         setattr(owner, self.name, self.default_value)
@@ -462,17 +471,18 @@ class SectionList(list):
 
         return section
 
-    def resolve_section_references(self):
+    def resolve(self):
         aggregate_references = set()
         for ii, section in enumerate(self):
             for reference in section.references:
                 assert reference not in aggregate_references  # reference must be unique to section
                 aggregate_references.add(reference)
                 reference.index = ii
+                reference.entries = section.struct_desc.instances_count(section.content)
 
-    def validate_sections(self):
+    def validate(self):
         for ii, section in enumerate(self):
-            for instance in section.content:
+            for instance in section:
                 section.struct_desc.instance_validate(instance, section.struct_desc.struct_name)
 
     def to_index(self):
@@ -480,19 +490,25 @@ class SectionList(list):
         header_desc = header_section.struct_desc
         header = header_section[0]
 
-        buffer_offset = header_desc.size
+        buffer_offset = header_desc.size + 16
         for section in self[1:]:
-            section.bytes_from_content()
-            index_entry = structures['MDIndexEntry'].get_version(34)
-            index_entry.tag = section.struct_desc.struct_name
-            index_entry.offset = buffer_offset
-            index_entry.repetitions = len(section)
-            index_entry.version = section.struct_desc.struct_version
+            section.content_to_bytes()
+            section.index_entry = structures['MDIndexEntry'].get_version(34).instance()
+            section.index_entry.tag = section.struct_desc.struct_name
+            section.index_entry.offset = buffer_offset
+            section.index_entry.repetitions = section.struct_desc.instances_count(section)
+            section.index_entry.version = section.struct_desc.struct_version
             buffer_offset += len(section.raw_bytes)
 
         header.index_offset = buffer_offset
         header.index_size = len(self)
-        header_section.bytes_from_content()
+        header_section.content_to_bytes()
+
+        header_section.index_entry = structures['MDIndexEntry'].get_version(34).instance()
+        header_section.index_entry.tag = header_desc.struct_name
+        header_section.index_entry.offset = 0
+        header_section.index_entry.repetitions = 1
+        header_section.index_entry.version = header_desc.struct_version
 
 
 class Section:
@@ -521,15 +537,27 @@ class Section:
     def __getitem__(self, item):
         return self.content[item]
 
-    def bytes_from_buffer(self, buffer):
-        self.raw_bytes = buffer
+    def content_from_bytes(self, buffer, count=None, checks=True):
+        assert type(self.struct_desc) == M3StructureDescription
+        count = count if count is not None else len(buffer)
+        self.content = self.struct_desc.instances(buffer=buffer, count=count, checks=checks)
 
-    def bytes_from_content(self):
-        # TODO need to rewrite to_buffer functions
+    def content_add(self, instance=None):
+        if instance is not None:
+            if type(instance) in [str, bytes]:
+                raise Exception('Type of instance is {}. Use content_from_bytes instead'.format(type(instance)))
+        instance = instance if instance is not None else self.struct_desc.instance()
+        self.content.append(instance)
+        return instance
+
+    def content_iter_add(self, instances=[]):
+        return [self.content_add(instance) for instance in instances]
+
+    def content_to_bytes(self):
         min_raw_bytes = self.struct_desc.instances_to_bytes(self.content)
 
         section_size = len(min_raw_bytes)
-        incomplete_block_bytes = size % 16
+        incomplete_block_bytes = section_size % 16
         section_size += 16 - (section_size % incomplete_block_bytes) if incomplete_block_bytes != 0 else 0
 
         if len(min_raw_bytes) == section_size:
@@ -540,20 +568,6 @@ class Section:
             for ii in range(len(min_raw_bytes), section_size):
                 raw_bytes[ii] = 0xaa
             self.raw_bytes = raw_bytes
-
-    def content_from_bytes(self, checks):
-        assert self.struct_desc
-        self.content = self.struct_desc.instances(buffer=self.raw_bytes, count=self.index_entry.repetitions, checks=checks)
-
-    def content_add(self, instance=None):
-        instance = instance if instance else self.struct_desc.instance()
-        self.content.append(instance)
-        return instance
-
-    def content_iter_add(self, instances=[]):
-        if len(instances):
-            self.content.extend(instances)
-        return instances
 
 
 def section_list_load(filename, checks=True):
@@ -570,8 +584,8 @@ def section_list_load(filename, checks=True):
 
         for section in sections:
             source.seek(section.index_entry.offset)
-            section.bytes_from_buffer(source.read(section.index_entry.repetitions * section.struct_desc.size))
-            section.content_from_bytes(checks=checks)
+            buffer = source.read(section.index_entry.repetitions * section.struct_desc.size)
+            section.content_from_bytes(buffer=buffer, count=section.index_entry.repetitions, checks=checks)
 
     return sections
 
@@ -581,7 +595,8 @@ def section_list_save(sections: SectionList, filename):
         previous_section = None
         for section in sections:
             if section.index_entry.offset != file_object.tell():
-                raise Exception('Section length problem: Section with index entry %(previousIndexEntry)s has length %(previousLength)s and gets followed by section with index entry %(currentIndexEntry)s' % {'previousIndexEntry': previous_section.index_entry, 'previousLength': len(previous_section.raw_bytes), 'currentIndexEntry': section.index_entry})
+                args = previous_section.index_entry, len(previous_section.raw_bytes), section.index_entry
+                raise Exception('Section length problem: Section with index entry {} has length {} and gets followed by section with index entry {}'.format(*args))
             file_object.write(section.raw_bytes)
             previous_section = section
 

@@ -32,46 +32,46 @@ INT16_MAX = ((1 << 15) - 1)
 
 
 def to_m3_uv(bl_uv):
-    m3_uv = io_m3.structures['Vector2As2int16'].get_version(0)
-    m3_uv.x = sorted((INT16_MIN, bl_uv[0], INT16_MAX))
-    m3_uv.y = sorted((INT16_MIN, bl_uv[1], INT16_MAX))
+    m3_uv = io_m3.structures['Vector2As2int16'].get_version(0).instance()
+    m3_uv.x = sorted((INT16_MIN, round(bl_uv[0] * 255), INT16_MAX))[1]
+    m3_uv.y = sorted((INT16_MIN, round(bl_uv[1] * 255), INT16_MAX))[1]
     return m3_uv
 
 
 def to_m3_vec2(bl_vec):
-    m3_vec = io_m3.structures['VEC2'].get_version(0)
+    m3_vec = io_m3.structures['VEC2'].get_version(0).instance()
     m3_vec.x, m3_vec.y = bl_vec
     return m3_vec
 
 
 def to_m3_vec3(bl_vec):
-    m3_vec = io_m3.structures['VEC3'].get_version(0)
+    m3_vec = io_m3.structures['VEC3'].get_version(0).instance()
     m3_vec.x, m3_vec.y, m3_vec.z = bl_vec
     return m3_vec
 
 
 def to_m3_vec3_f8(bl_vec):
-    m3_vec = io_m3.structures['Vector3As3Fixed8']
-    m3_vec.x = round(bl_vec[0] * 255)
-    m3_vec.y = round(bl_vec[0] * 255)
-    m3_vec.z = round(bl_vec[0] * 255)
+    m3_vec = io_m3.structures['Vector3As3Fixed8'].get_version(0).instance()
+    m3_vec.x = bl_vec[0]
+    m3_vec.y = bl_vec[0]
+    m3_vec.z = bl_vec[0]
     return m3_vec
 
 
 def to_m3_vec4(bl_vec):
-    m3_vec = io_m3.structures['VEC4'].get_version(0)
+    m3_vec = io_m3.structures['VEC4'].get_version(0).instance()
     m3_vec.w, m3_vec.x, m3_vec.y, m3_vec.z = bl_vec
     return m3_vec
 
 
 def to_m3_quat(bl_quat):
-    m3_quat = io_m3.structures['QUAT'].get_version(0)
+    m3_quat = io_m3.structures['QUAT'].get_version(0).instance()
     m3_quat.w, m3_quat.x, m3_quat.y, m3_quat.z = bl_quat
     return m3_quat
 
 
 def to_m3_color(bl_col):
-    m3_color = io_m3.structures['COL'].get_version(0)
+    m3_color = io_m3.structures['COL'].get_version(0).instance()
     m3_color.r = round(bl_col[0] * 255)
     m3_color.g = round(bl_col[1] * 255)
     m3_color.b = round(bl_col[2] * 255)
@@ -191,13 +191,13 @@ class Exporter:
         model = model_section.content_add()
 
         model_name_section = self.m3.section_for_reference(model, 'model_name')
-        model_name_section.content_iter_add(os.path.basename(filename))
+        model_name_section.content_from_bytes(os.path.basename(filename))
 
         self.create_division(model)
 
-        self.m3.resolve_section_references()
-        self.m3.validate_sections()
-        # self.m3.to_index()
+        self.m3.resolve()
+        self.m3.validate()
+        self.m3.to_index()
 
         return self.m3
 
@@ -307,7 +307,8 @@ class Exporter:
                         weighted = 0
                         if weight:
                             weight += 1
-                            region_lookup.append(index)
+                            if index not in region_lookup:
+                                region_lookup.append(index)
                             correct_sum_weight += weight / sum_weight
                             new_round_weight = round(correct_sum_weight * 255)
                             round_weight_lookup_pairs.append((index, new_round_weight - round_sum_weight))
@@ -317,7 +318,7 @@ class Exporter:
 
                     for ii in range(0, min(4, len(weight_lookup_pairs))):
                         setattr(m3_vert, 'lookup' + str(ii), weight_lookup_pairs[ii][0])
-                        setattr(m3_vert, 'weight' + str(ii), weight_lookup_pairs[ii][1])
+                        setattr(m3_vert, 'weight' + str(ii), round(weight_lookup_pairs[ii][1] * 255))
 
                     # TODO handle static vertex here
 
@@ -350,6 +351,7 @@ class Exporter:
 
             m3_vertices.extend(region_vertices)
             m3_faces.extend(region_faces)
+            m3_lookup.extend(region_lookup)
 
             region = regions_section.content_add()
             region.first_vertex_index = first_vertex_index
@@ -371,7 +373,7 @@ class Exporter:
                     batch.region_index = len(regions_section) - 1
                     batch.material_reference_index = ii
 
-        vertices_section.content_iter_add(m3_vertices)
+        vertices_section.content_from_bytes(m3_vertex_struct.instances_to_bytes(m3_vertices))
         faces_section.content_iter_add(m3_faces)
         bone_lookup_section.content_iter_add(m3_lookup)
 
@@ -379,8 +381,4 @@ class Exporter:
 def m3_export(ob, filename):
     exporter = Exporter()
     sections = exporter.m3_export(ob, filename)
-
-    # for section in sections:
-    #     print(section.index_entry.tag, section.index_entry.offset, section.index_entry.repetitions, section.index_entry.version)
-
-    print(sections)
+    io_m3.section_list_save(sections, filename)
