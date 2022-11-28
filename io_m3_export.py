@@ -38,36 +38,43 @@ def to_m3_uv(bl_uv):
     return m3_uv
 
 
-def to_m3_vec2(bl_vec):
+def to_m3_vec2(bl_vec=None):
     m3_vec = io_m3.structures['VEC2'].get_version(0).instance()
-    m3_vec.x, m3_vec.y = bl_vec
+    m3_vec.x, m3_vec.y = bl_vec or (0.0, 0.0)
     return m3_vec
 
 
-def to_m3_vec3(bl_vec):
+def to_m3_vec3(bl_vec=None):
     m3_vec = io_m3.structures['VEC3'].get_version(0).instance()
-    m3_vec.x, m3_vec.y, m3_vec.z = bl_vec
+    m3_vec.x, m3_vec.y, m3_vec.z = bl_vec or (0.0, 0.0, 0.0)
     return m3_vec
 
 
-def to_m3_vec3_f8(bl_vec):
+def to_m3_vec3_f8(bl_vec=None):
     m3_vec = io_m3.structures['Vector3As3Fixed8'].get_version(0).instance()
-    m3_vec.x = bl_vec[0]
-    m3_vec.y = bl_vec[0]
-    m3_vec.z = bl_vec[0]
+    m3_vec.x, m3_vec.y, m3_vec.z = bl_vec or (0, 0, 0)
     return m3_vec
 
 
-def to_m3_vec4(bl_vec):
+def to_m3_vec4(bl_vec=None):
     m3_vec = io_m3.structures['VEC4'].get_version(0).instance()
-    m3_vec.w, m3_vec.x, m3_vec.y, m3_vec.z = bl_vec
+    m3_vec.w, m3_vec.x, m3_vec.y, m3_vec.z = bl_vec or (0.0, 0.0, 0.0, 0.0)
     return m3_vec
 
 
-def to_m3_quat(bl_quat):
+def to_m3_quat(bl_quat=None):
     m3_quat = io_m3.structures['QUAT'].get_version(0).instance()
-    m3_quat.w, m3_quat.x, m3_quat.y, m3_quat.z = bl_quat
+    m3_quat.w, m3_quat.x, m3_quat.y, m3_quat.z = bl_quat or (0.0, 0.0, 0.0, 0.0)
     return m3_quat
+
+
+def to_m3_matrix(bl_matrix):
+    m3_matrix = io_m3.structures['Matrix44'].get_version(0).instance()
+    m3_matrix.x = to_m3_vec4(bl_matrix.col[0])
+    m3_matrix.y = to_m3_vec4(bl_matrix.col[1])
+    m3_matrix.z = to_m3_vec4(bl_matrix.col[2])
+    m3_matrix.w = to_m3_vec4(bl_matrix.col[3])
+    return m3_matrix
 
 
 def to_m3_color(bl_col):
@@ -125,9 +132,6 @@ class M3OutputProcessor:
                 val |= 1 << ii
         setattr(self.m3, field, val)
 
-    def string(self, field):
-        setattr(self.m3, field, getattr(self.bl, field))
-
     def integer(self, field, since_version=None, till_version=None):
         if (since_version is not None) and (self.version < since_version):
             return
@@ -142,6 +146,27 @@ class M3OutputProcessor:
             return
         setattr(self.m3, field, getattr(self.bl, field))
 
+    def vec3(self, field, since_version=None, till_version=None):
+        if (since_version is not None) and (self.version < since_version):
+            return
+        if (till_version is not None) and (self.version > till_version):
+            return
+        setattr(self.m3, field, to_m3_vec3(getattr(self.bl), field))
+
+    def vec4(self, field, since_version=None, till_version=None):
+        if (since_version is not None) and (self.version < since_version):
+            return
+        if (till_version is not None) and (self.version > till_version):
+            return
+        setattr(self.m3, field, to_m3_vec4(getattr(self.bl), field))
+
+    def color(self, field, since_version=None, till_version=None):
+        if (since_version is not None) and (self.version < since_version):
+            return
+        if (till_version is not None) and (self.version > till_version):
+            return
+        setattr(self.m3, field, to_m3_color(getattr(self.bl, field)))
+
     def enum(self, field, since_version=None, till_version=None):
         if (since_version is not None) and (self.version < since_version):
             return
@@ -153,6 +178,48 @@ class M3OutputProcessor:
                 setattr(self.m3, field, ii)
                 break
 
+    def anim_single(self, field, ref_class, ref_flags, data_class, convert_method):
+        setattr(self.m3, field, getattr(self.bl, field))
+
+    def anim_boolean_based_on_SDU3(self, field):
+        setattr(self.m3, field, getattr(self.bl, field))
+
+    def anim_boolean_based_on_SDFG(self, field):
+        setattr(self.m3, field, getattr(self.bl, field))
+
+    def anim_int16(self, field):
+        setattr(self.m3, field, getattr(self.bl, field))
+
+    def anim_uint16(self, field):
+        setattr(self.m3, field, getattr(self.bl, field))
+
+    def anim_uint32(self, field):
+        setattr(self.m3, field, getattr(self.bl, field))
+
+    def anim_float(self, field, since_version=None, till_version=None):
+        if (since_version is not None) and (self.version < since_version):
+            return
+        if (till_version is not None) and (self.version > till_version):
+            return
+        setattr(self.m3, field, getattr(self.bl, field))
+
+    def anim_vec2(self, field):
+        setattr(self.m3, field, to_m3_vec2(getattr(self.bl, field)))
+
+    def anim_vec3(self, field, since_version=None, till_version=None):
+        if (since_version is not None) and (self.version < since_version):
+            return
+        if (till_version is not None) and (self.version > till_version):
+            return
+        setattr(self.m3, field, to_m3_vec2(getattr(self.bl, field)))
+
+    def anim_color(self, field, since_version=None, till_version=None):
+        if (since_version is not None) and (self.version < since_version):
+            return
+        if (till_version is not None) and (self.version > till_version):
+            return
+        setattr(self.m3, field, to_m3_color(getattr(self.bl, field)))
+
 
 class Exporter:
 
@@ -163,6 +230,7 @@ class Exporter:
         self.offset = 0
         self.m3 = io_m3.SectionList(init_header=True)
 
+        self.anim_id_count = 0
         self.mesh_objects = []
         self.vertex_groups = set()
         self.uv_count = 0
@@ -170,22 +238,34 @@ class Exporter:
             if child.type == 'MESH' and child.m3_mesh_export:
                 me = child.data
                 me.calc_loop_triangles()
+
                 if len(me.loop_triangles) > 0:
                     self.mesh_objects.append(child)
-                self.vertex_groups.union(ob.vertex_groups)
-                self.uv_count = max(self.uv_count, len(me.uv_layers))
+
+                    for vertex_group in child.vertex_groups:
+                        self.vertex_groups.add(vertex_group)
+
+                    self.uv_count = max(self.uv_count, len(me.uv_layers))
 
         self.bones = []
-        for bone in ob.data.bones:
-            if bone.name in [group.name for group in self.vertex_groups]:
+        # TODO check if bone is used by attachments, particles, etc.
+        # TODO see if this can be optimized, all these loops will be expensive for large armatures
+        for ii, bone in enumerate(ob.data.bones):
+            if bone.name in [group.name for group in self.vertex_groups] or not bone.m3_export_cull:
+                assert bone.use_inherit_rotation and bone.use_inherit_scale
                 self.bones.append(bone)
-            elif not bone.m3_export_cull:
-                self.bones.append(bone)
+                break
+
+            for child_bone in bone.children_recursive:
+                if child_bone.name in [group.name for group in self.vertex_groups] or not child_bone.m3_export_cull:
+                    self.bones.append(bone)
+                    break
 
         # TODO warning if meshes and particles have materials or layers in common
 
-        self.bones_from_name = {bone.name: bone for bone in self.bones}
-        self.bone_indices_from_name = {bone.name: ii for ii, bone in enumerate(self.bones)}
+        self.bone_name_bones = {bone.name: bone for bone in self.bones}
+        self.bone_name_indices = {bone.name: ii for ii, bone in enumerate(self.bones)}
+        self.bone_name_correction_matrices = {}
 
         model_section = self.m3.section_for_reference(self.m3[0][0], 'model', version=self.ob.m3_model_version)
         model = model_section.content_add()
@@ -193,13 +273,39 @@ class Exporter:
         model_name_section = self.m3.section_for_reference(model, 'model_name')
         model_name_section.content_from_bytes(os.path.basename(filename))
 
+        self.create_bones(model)  # TODO needs correct matrices
         self.create_division(model)
+        self.create_irefs(model)  # TODO work on this, results are currently very incorrect
 
         self.m3.resolve()
         self.m3.validate()
         self.m3.to_index()
 
         return self.m3
+
+    def create_bones(self, model):
+        if not self.bones:
+            return
+
+        bone_section = self.m3.section_for_reference(model, 'bones', version=1)
+
+        for bone in self.bones:
+            m3_bone = bone_section.content_add()
+            m3_bone_name_section = self.m3.section_for_reference(m3_bone, 'name')
+            m3_bone_name_section.content_from_bytes(bone.name)
+            m3_bone.flags = 0
+            m3_bone.bit_set('flags', 'real', True)
+            m3_bone.location = self.init_anim_ref_vec3()
+            m3_bone.rotation = self.init_anim_ref_quat()
+            m3_bone.scale = self.init_anim_ref_vec3()
+            m3_bone.ar1 = self.init_anim_ref_uint32(1)
+
+            if bone.parent is not None:
+                m3_bone.parent = self.bone_name_indices[bone.parent.name]
+                # rel_rest_pose_matrix = bone.parent.matrix_local @ bone.matrix_local
+            else:
+                m3_bone.parent = -1
+                # rel_rest_pose_matrix = bone.matrix_local
 
     def create_division(self, model):
 
@@ -239,14 +345,14 @@ class Exporter:
 
         m3_vertex_struct = io_m3.structures['VertexFormat' + hex(model.vertex_flags)].get_version(0)
 
-        vertices_section = self.m3.section_for_reference(model, 'vertices')
+        vertex_section = self.m3.section_for_reference(model, 'vertices')
 
         div_section = self.m3.section_for_reference(model, 'divisions', version=2)
         div = div_section.content_add()
 
-        faces_section = self.m3.section_for_reference(div, 'faces')
-        regions_section = self.m3.section_for_reference(div, 'regions', version=self.ob.m3_mesh_version)
-        batches_section = self.m3.section_for_reference(div, 'batches', version=1)
+        face_section = self.m3.section_for_reference(div, 'faces')
+        region_section = self.m3.section_for_reference(div, 'regions', version=self.ob.m3_mesh_version)
+        batch_section = self.m3.section_for_reference(div, 'batches', version=1)
 
         bone_lookup_section = self.m3.section_for_reference(model, 'bone_lookup')
 
@@ -353,7 +459,7 @@ class Exporter:
             m3_faces.extend(region_faces)
             m3_lookup.extend(region_lookup)
 
-            region = regions_section.content_add()
+            region = region_section.content_add()
             region.first_vertex_index = first_vertex_index
             region.vertex_count = len(region_vertices)
             region.first_face_index = first_face_index
@@ -369,13 +475,97 @@ class Exporter:
             for ii, matref in enumerate(self.ob.m3_materialrefs):
                 if matref.bl_handle in ob_matref_handles and matref.mat_handle not in matref_handles:
                     matref_handles.append(matref_handles)
-                    batch = batches_section.content_add()
-                    batch.region_index = len(regions_section) - 1
+                    batch = batch_section.content_add()
+                    batch.region_index = len(region_section) - 1
                     batch.material_reference_index = ii
 
-        vertices_section.content_from_bytes(m3_vertex_struct.instances_to_bytes(m3_vertices))
-        faces_section.content_iter_add(m3_faces)
+        vertex_section.content_from_bytes(m3_vertex_struct.instances_to_bytes(m3_vertices))
+        face_section.content_iter_add(m3_faces)
         bone_lookup_section.content_iter_add(m3_lookup)
+
+    def create_irefs(self, model):
+        if not self.bones:
+            return
+
+        iref_section = self.m3.section_for_reference(model, 'bone_rests')
+
+        for bone in self.bones:
+            iref = iref_section.content_add()
+
+            if bone.parent is not None:
+                rel_rest_matrix = bone.parent.matrix_local @ bone.matrix_local
+            else:
+                rel_rest_matrix = bone.matrix_local
+
+            bind_scale_matrix = mathutils.Matrix.LocRotScale(None, None, bone.m3_bind_scale)
+            iref.matrix = to_m3_matrix(bind_scale_matrix @ rel_rest_matrix.inverted())
+
+    def new_anim_id(self):
+        self.anim_id_count += 1  # increase first since we don't want to use 0
+        return self.anim_id_count
+
+    def init_anim_header(self, interpolation, anim_id=None):
+        anim_ref_header = io_m3.structures['AnimationReferenceHeader'].get_version(0).instance()
+        anim_ref_header.interpolation = interpolation
+        anim_ref_header.flags = 0  # TODO make flags into param
+        anim_ref_header.id = anim_id if anim_id is not None else self.new_anim_id()
+        return anim_ref_header
+
+    def init_anim_ref_int16(self, val=0, interpolation=1):
+        anim_ref = io_m3.structures['Int16AnimationReference'].get_version(0).instance()
+        anim_ref.header = self.init_anim_header(interpolation=interpolation)
+        anim_ref.init_value = val
+        anim_ref.null_value = 0
+        return anim_ref
+
+    def init_anim_ref_uint16(self, val=0, interpolation=0):
+        anim_ref = io_m3.structures['UInt16AnimationReference'].get_version(0).instance()
+        anim_ref.header = self.init_anim_header(interpolation=interpolation)
+        anim_ref.init_value = val
+        anim_ref.null_value = 0
+        return anim_ref
+
+    def init_anim_ref_uint32(self, val=0, interpolation=0):
+        anim_ref = io_m3.structures['UInt32AnimationReference'].get_version(0).instance()
+        anim_ref.header = self.init_anim_header(interpolation=interpolation)
+        anim_ref.init_value = val
+        anim_ref.null_value = 0
+        return anim_ref
+
+    def init_anim_ref_flag(self, val=0, interpolation=1):
+        anim_ref = io_m3.structures['FlagAnimationReference'].get_version(0).instance()
+        anim_ref.header = self.init_anim_header(interpolation=interpolation)
+        anim_ref.init_value = val
+        anim_ref.null_value = 0
+        return anim_ref
+
+    def init_anim_ref_float(self, val=0.0, null_is_init=False, interpolation=1):
+        anim_ref = io_m3.structures['FloatAnimationReference'].get_version(0).instance()
+        anim_ref.header = self.init_anim_header(interpolation=interpolation)
+        anim_ref.init_value = val
+        anim_ref.null_value = 0.0
+        return anim_ref
+
+    def init_anim_ref_vec2(self, val=None, interpolation=1):
+        anim_ref = io_m3.structures['Vector2AnimationReference'].get_version(0).instance()
+        anim_ref.header = self.init_anim_header(interpolation=interpolation)
+        anim_ref.init_value = to_m3_vec2(val)
+        anim_ref.null_value = to_m3_vec2()
+        return anim_ref
+
+    def init_anim_ref_vec3(self, val=None, interpolation=1):
+        anim_ref = io_m3.structures['Vector3AnimationReference'].get_version(0).instance()
+        anim_ref.header = self.init_anim_header(interpolation=interpolation)
+        anim_ref.init_value = to_m3_vec3(val)
+        anim_ref.null_value = to_m3_vec3()
+        return anim_ref
+
+    def init_anim_ref_quat(self, val=None, interpolation=1):
+        anim_ref = io_m3.structures['QuaternionAnimationReference'].get_version(0).instance()
+        anim_ref.header = self.init_anim_header(interpolation=interpolation)
+        anim_ref.init_value = to_m3_quat(val)
+        anim_ref.null_value = to_m3_quat()
+        return anim_ref
 
 
 def m3_export(ob, filename):

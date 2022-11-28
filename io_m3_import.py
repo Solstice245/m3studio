@@ -90,13 +90,6 @@ class M3InputProcessor:
             return
         setattr(self.bl, name, self.m3.bit_get(field, name))
 
-    def bit_enum(self, field, name, since_version=None):
-        if (since_version is not None) and (self.version < since_version):
-            return
-        val = self.m3.bit_get(field, name)
-        val = '0' if val is False else '1'
-        setattr(self.bl, name, val)
-
     def bits_16(self, field):
         val = getattr(self.m3, field)
         vector = getattr(self.bl, field)
@@ -110,11 +103,6 @@ class M3InputProcessor:
         for ii in range(0, 32):
             mask = 1 << ii
             vector[ii] = (mask & val) > 0
-
-    # with resolved references no longer used, this is only used by "tag" field
-    def string(self, field):
-        val = getattr(self.m3, field)
-        setattr(self.bl, field, val if val else '')
 
     def integer(self, field, since_version=None, till_version=None):
         if (till_version is not None) and (self.version > till_version):
@@ -170,9 +158,6 @@ class M3InputProcessor:
     def anim_uint16(self, field):
         self.anim_integer(field)
 
-    def anim_uint8(self, field):
-        self.anim_integer(field)
-
     def anim_uint32(self, field):
         self.anim_integer(field)
 
@@ -211,19 +196,6 @@ class M3InputProcessor:
         #     setattr(self.bl, field, default)
 
         self.importer.key_vec(self.bl, field, anim_ref, default)
-
-    def anim_boundings(self):
-        anim_ref = self.m3
-        anim_header = anim_ref.header
-        anim_id = anim_header.id
-        animPathMinBorder = self.anim_path + 'minBorder'
-        animPathMaxBorder = self.anim_path + 'maxBorder'
-        animPathRadius = self.anim_path + 'radius'
-        default = anim_ref.default
-        self.bl.minBorder = to_bl_vec3(default.minBorder)
-        self.bl.maxBorder = to_bl_vec3(default.maxBorder)
-        self.bl.radius = default.radius
-        # self.importer.animate_boundings(self.bl, animPathMinBorder, animPathMaxBorder, animPathRadius, anim_id, self.bl.minBorder, self.bl.maxBorder, self.bl.radius)
 
 
 def m3_key_collect_evnt(key_frames, key_values):

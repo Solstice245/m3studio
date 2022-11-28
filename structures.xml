@@ -268,18 +268,6 @@
             <field name="unknown" type="int32" default_value="0" />
         </fields>
     </structure>
-    <structure name="UInt8AnimationReference">
-        <description>Animatable uint8</description>
-        <versions>
-            <version number="0" size="14"/>
-        </versions>
-        <fields>
-            <field name="header" type="AnimationReferenceHeader"/>
-            <field name="default" type="uint8"/>
-            <field name="null" type="uint8"/>
-            <field name="unknown" type="int32" default_value="0" />
-        </fields>
-    </structure>
     <structure name="FloatAnimationReference">
         <description>Animatable float</description>
         <versions>
@@ -289,18 +277,6 @@
             <field name="header" type="AnimationReferenceHeader"/>
             <field name="default" type="float"/>
             <field name="null" type="float"/>
-            <field name="unknown" type="int32" default_value="0" />
-        </fields>
-    </structure>
-    <structure name="Unknown4ByteAnimationReference">
-        <description>Animatable of unknown type with 4 bytes (e.g. could be a float or color animation reference)</description>
-        <versions>
-            <version number="0" size="20"/>
-        </versions>
-        <fields>
-            <field name="header" type="AnimationReferenceHeader"/>
-            <field name="default" size="4" default_value="0x00000000"/>
-            <field name="null" size="4" default_value="0x00000000"/>
             <field name="unknown" type="int32" default_value="0" />
         </fields>
     </structure>
