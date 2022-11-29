@@ -254,8 +254,8 @@ class Exporter:
         self.uv_count = 0
         self.skinned_bones = []
 
-        export_required_material_references = []
-        export_required_bones = []
+        self.export_required_material_references = set()
+        self.export_required_bones = set()
 
         export_regions = []
         for child in ob.children:
@@ -270,7 +270,7 @@ class Exporter:
                     for mesh_matref in child.m3_mesh_material_refs:
                         matref = shared.m3_pointer_get(ob.m3_materialrefs, mesh_matref.bl_handle)
                         if matref:
-                            export_required_material_references.append(matref)
+                            self.export_required_material_references.add(matref)
                             valid_mesh_material_refs += 1
 
                     assert valid_mesh_material_refs != 0
@@ -280,7 +280,7 @@ class Exporter:
                     for vertex_group in child.vertex_groups:
                         group_bone = ob.data.bones.get(vertex_group.name)
                         if group_bone:
-                            export_required_bones.append(group_bone)
+                            self.export_required_bones.add(group_bone)
                             self.skinned_bones.append(group_bone)
 
                     self.uv_count = max(self.uv_count, len(me.uv_layers))
@@ -289,42 +289,64 @@ class Exporter:
             # TODO have second unexposed export custom prop for auto-culling such as invalid attachment point name
             export_items = []
             for item in collection:
+                item_bones = set()
                 if not item.m3_export:
                     continue
-                item_bones = []
                 if hasattr(item, 'bone'):
-                    item_bones.append(shared.m3_pointer_get(ob.data.bones, item.bone))
+                    item_bones.add(shared.m3_pointer_get(ob.data.bones, item.bone))
                 if hasattr(item, 'bone0'):
-                    item_bones.append(shared.m3_pointer_get(ob.data.bones, item.bone0))
+                    item_bones.add(shared.m3_pointer_get(ob.data.bones, item.bone0))
                 if hasattr(item, 'bone1'):
-                    item_bones.append(shared.m3_pointer_get(ob.data.bones, item.bone1))
+                    item_bones.add(shared.m3_pointer_get(ob.data.bones, item.bone1))
                 if hasattr(item, 'bone2'):
-                    item_bones.append(shared.m3_pointer_get(ob.data.bones, item.bone2))
+                    item_bones.add(shared.m3_pointer_get(ob.data.bones, item.bone2))
                 if hasattr(item, 'material'):
                     matref = shared.m3_pointer_get(ob.m3_materialrefs, item.material)
                     if matref:
-                        export_required_material_references.append(matref)
+                        self.export_required_material_references.add(matref)
                     # TODO items without valid material reference that need one should be invalidated
-                export_required_bones.extend(item_bones)
+                self.export_required_bones = self.export_required_bones.union(item_bones)
                 export_items.append(item)
             return export_items
 
         export_attachments = valid_collections_and_requirements(ob.m3_attachmentpoints)
         export_material_references = valid_collections_and_requirements(ob.m3_materialrefs)
         export_particle_systems = valid_collections_and_requirements(ob.m3_particle_systems)
+        export_particle_copies = []  # handled specially
         export_ribbons = valid_collections_and_requirements(ob.m3_ribbons)
+        export_ribbon_splines = []  # handled specially
         export_hittests = valid_collections_and_requirements(ob.m3_hittests)
+
+        for copy in ob.m3_particle_copies:
+            copy_bone = shared.m3_pointer_get(ob.data.bones, copy.bone)
+            if len(copy.systems) and copy_bone and copy.m3_export:
+                self.export_required_bones.add(copy_bone)
+                export_particle_copies.append(copy)
+
+        for spline in ob.m3_ribbonsplines:
+            export_spline_points = []
+            for point in spline.points:
+                point_bone = shared.m3_pointer_get(ob.data.bones, point.bone)
+                if point_bone:
+                    self.export_required_bones.add(point_bone)
+                    export_spline_points.append(point)
+                else:
+                    pass  # TODO warning that spline point has no valid bone
+            if len(export_spline_points):
+                export_ribbon_splines.append(spline)
 
         # TODO warning if hittest bone is none
         hittest_bone = shared.m3_pointer_get(ob.data.bones, ob.m3_hittest_tight.bone)
         if hittest_bone:
-            export_required_bones.append(hittest_bone)
+            self.export_required_bones.add(hittest_bone)
+
+        print(self.export_required_bones)
 
         def export_bone_bool(bone):
             result = False
             if not bone.m3_export_cull:
                 result = True
-            elif bone in export_required_bones:
+            elif bone in self.export_required_bones:
                 result = True
 
             if result is True:
@@ -365,6 +387,8 @@ class Exporter:
         self.bone_name_indices = {bone.name: ii for ii, bone in enumerate(self.bones)}
         self.bone_name_correction_matrices = {}
 
+        self.matref_handle_indices = {matref.bl_handle: ii for ii, matref in enumerate(list(self.export_required_material_references))}
+
         model_section = self.m3.section_for_reference(self.m3[0][0], 'model', version=ob.m3_model_version)
         model = model_section.content_add()
 
@@ -375,8 +399,8 @@ class Exporter:
         self.create_division(model, export_regions, regn_version=ob.m3_mesh_version)
         self.create_attachments(model, export_attachments)
         self.create_materials(model, export_material_references, material_versions)
-        self.create_particle_systems(model, export_particle_systems, version=ob.m3_particle_systems_version)
-        self.create_ribbons(model, export_ribbons, version=ob.m3_ribbons_version)
+        self.create_particle_systems(model, export_particle_systems, export_particle_copies, version=ob.m3_particle_systems_version)
+        self.create_ribbons(model, export_ribbons, export_ribbon_splines, version=ob.m3_ribbons_version)
         self.create_hittests(model, export_hittests)
         self.create_irefs(model)  # TODO work on this, results are currently very incorrect
 
@@ -577,12 +601,12 @@ class Exporter:
 
             matref_handles = []
             ob_matref_handles = set([matref.bl_handle for matref in ob.m3_mesh_material_refs])
-            for ii, matref in enumerate(self.ob.m3_materialrefs):
+            for matref in self.ob.m3_materialrefs:
                 if matref.bl_handle in ob_matref_handles and matref.mat_handle not in matref_handles:
                     matref_handles.append(matref_handles)
                     batch = batch_section.content_add()
                     batch.region_index = len(region_section) - 1
-                    batch.material_reference_index = ii
+                    batch.material_reference_index = self.matref_handle_indices[matref.bl_handle]
 
         vertex_section.content_from_bytes(m3_vertex_desc.instances_to_bytes(m3_vertices))
         face_section.content_iter_add(m3_faces)
@@ -692,7 +716,7 @@ class Exporter:
         if len(null_layer_section.references):
             self.m3.append(null_layer_section)
 
-    def create_particle_systems(self, model, systems, version):
+    def create_particle_systems(self, model, systems, copies, version):
         if not systems:
             return
 
@@ -703,12 +727,15 @@ class Exporter:
 
             m3_system = particle_system_section.content_add()
             m3_system.bone = self.bone_name_indices[system_bone.name]
+            m3_system.material_reference_index = self.matref_handle_indices[system.material]
+
             processor = M3OutputProcessor(self, system, m3_system)
             io_shared.io_particle_system(processor)
 
-            # TODO material ref index
-            # TODO copy indices
-            # TODO trail particle index
+            trail_particle = shared.m3_pointer_get(systems, system.trail_particle)
+            if trail_particle:
+                m3_system.trail_particle = systems.index(trail_particle)
+
             # TODO emission points
             # TODO emission regions
 
@@ -743,27 +770,67 @@ class Exporter:
             if int(version) >= 22:
                 m3_system.unknown8f507b52 = self.init_anim_ref_uint32()
 
-    def create_ribbons(self, model, ribbons, version):
+            copy_indices = []
+            for ii, copy in enumerate(copies):
+                for system_handle in copy.systems:
+                    if system_handle == system.bl_handle:
+                        copy_indices.append(ii)
+
+            if len(copy_indices):
+                copy_indices_section = self.m3.section_for_reference(system, 'copy_indices')
+                copy_indices_section.content_iter_add(copy_indices)
+
+        if len(copies):
+            particle_copy_section = self.m3.section_for_reference(model, 'particle_copies', version=0)
+        for copy in copies:
+            copy_bone = shared.m3_pointer_get(self.ob.data.bones, copy.bone)
+            m3_copy = particle_copy_section.content_add()
+            m3_copy.bone = self.bone_name_indices[copy_bone.name]
+            processor = M3OutputProcessor(self, copy, m3_copy)
+            io_shared.io_particle_copy(processor)
+
+    def create_ribbons(self, model, ribbons, splines, version):
         if not ribbons:
             return
 
         ribbon_section = self.m3.section_for_reference(model, 'ribbons', version=version)
 
+        handle_to_spline_sections = {}
         for ribbon in ribbons:
             ribbon_bone = shared.m3_pointer_get(self.ob.data.bones, ribbon.bone)
 
             m3_ribbon = ribbon_section.content_add()
             m3_ribbon.bone = self.bone_name_indices[ribbon_bone.name]
+            m3_ribbon.material_reference_index = self.matref_handle_indices[ribbon.material]
             processor = M3OutputProcessor(self, ribbon, m3_ribbon)
             io_shared.io_ribbon(processor)
-
-            # TODO material ref index
-            # TODO ribbon spline section
 
             m3_ribbon.unknown75e0b576 = self.init_anim_ref_float()
             m3_ribbon.unknownee00ae0a = self.init_anim_ref_float()
             m3_ribbon.unknown1686c0b7 = self.init_anim_ref_float()
             m3_ribbon.unknown9eba8df8 = self.init_anim_ref_float()
+
+            if ribbon.spline not in handle_to_spline_sections.keys():
+                spline = shared.m3_pointer_get(self.ob.m3_ribbonsplines, ribbon.spline)
+                if spline in splines:
+                    spline_section = self.m3.section_for_reference(m3_ribbon, 'spline', version=0)
+                    handle_to_spline_sections[ribbon.spline] = spline_section
+
+                    for point in splines[splines.index(spline)].points:
+                        point_bone = shared.m3_pointer_get(self.ob.data.bones, point.bone)
+
+                        if not point_bone:
+                            continue
+
+                        m3_point = spline_section.content_add()
+                        m3_point.bone = self.bone_name_indices[point_bone.name]
+                        processor = M3OutputProcessor(self, point, m3_point)
+                        io_shared.io_ribbon_spline(processor)
+
+                        m3_point.unknown3 = self.init_anim_ref_float(1.0)
+                        m3_point.unknown4 = self.init_anim_ref_float(1.0)
+            else:
+                handle_to_spline_sections[ribbon.spline].references.append(m3_ribbon.spline)
 
     def create_hittests(self, model, hittests):
         if not hittests:

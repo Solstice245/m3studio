@@ -189,6 +189,9 @@ def draw_ribbon_props(ribbon, layout):
 
 
 class PointProperties(shared.M3BoneUserPropertyGroup):
+    tan1: bpy.props.FloatProperty(options=set())  # TODO draw
+    tan2: bpy.props.FloatProperty(options=set())  # TODO draw
+    tan3: bpy.props.FloatProperty(options=set())  # TODO draw
     yaw: bpy.props.FloatProperty(name='Spline Yaw')
     yaw_var_shape: bpy.props.EnumProperty(options=set(), items=bl_enum.ribbon_variation_shape)
     yaw_var_amplitude: bpy.props.FloatProperty(name='Spline Yaw Variation Amount')

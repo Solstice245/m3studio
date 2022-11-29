@@ -93,7 +93,7 @@ def io_material_standard(processor):
 
 
 def io_material_displacement(processor):
-    processor.integer('unknown0')
+    # processor.integer('unknown0') # ! unknown
     processor.anim_float('strength_factor')
     processor.integer('priority')
 
@@ -550,10 +550,10 @@ def io_ribbon_spline(processor):
     processor.enum('pitch_var_shape')
     processor.anim_float('pitch_var_amplitude')
     processor.anim_float('pitch_var_frequency')
-    processor.integer('unknown1')
-    processor.integer('unknowneee1a711')
-    processor.anim_float('unknown3')
-    processor.anim_float('unknown4')
+    # processor.integer('unknown1')  # ! unknown
+    # processor.integer('unknowneee1a711')  # ! unknown
+    # processor.anim_float('unknown3')  # ! unknown
+    # processor.anim_float('unknown4')  # ! unknown
 
 
 def io_rigid_body(processor):
@@ -680,7 +680,7 @@ material_type_io_method = {
 material_type_to_layers = {
     1: ['diff', 'decal', 'spec', 'gloss', 'emis1', 'emis2', 'envi', 'envi_mask', 'alpha1', 'alpha2', 'norm',
         'height', 'light', 'ao', 'norm_blend1_mask', 'norm_blend2_mask', 'norm_blend1', 'norm_blend2'],
-    2: ['normal', 'strength'],
+    2: ['norm', 'strength'],
     3: [],
     4: ['terrain'],
     5: ['color', 'unknown1', 'unknown2'],
