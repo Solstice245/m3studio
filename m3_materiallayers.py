@@ -58,8 +58,8 @@ def draw_props(layer, layout):
     layout.prop(layer, 'uv_source', text='UV Source')
     layout.prop(layer, 'uv_source_related', text='Unknown Related')
     row = layout.row(heading='Wrap')
-    row.prop(layer, 'uv_wrap', index=0, text='X')
-    row.prop(layer, 'uv_wrap', index=1, text='Y')
+    row.prop(layer, 'uv_wrap_x', text='X')
+    row.prop(layer, 'uv_wrap_y', text='Y')
     layout.prop(layer, 'uv_offset', text='Offset')
     layout.prop(layer, 'uv_angle', text='Angle')
     layout.prop(layer, 'uv_tiling', text='Tiling')
@@ -121,7 +121,8 @@ class Properties(shared.M3PropertyGroup):
     color_multiply: bpy.props.FloatProperty(name='Color Multiplier', options={'ANIMATABLE'}, default=1.0)
     color_brightness: bpy.props.FloatProperty(name='Brightness', options={'ANIMATABLE'}, default=1.0)
     uv_source: bpy.props.EnumProperty(items=bl_enum.uv_source, options=set())
-    uv_wrap: bpy.props.BoolVectorProperty(options=set(), size=2, default=(True, True))
+    uv_wrap_x: bpy.props.BoolProperty(options=set(), default=True)
+    uv_wrap_y: bpy.props.BoolProperty(options=set(), default=True)
     uv_offset: bpy.props.FloatVectorProperty(name='UV Offset', default=(0.0, 0.0), size=2, subtype='XYZ', options={'ANIMATABLE'})
     uv_angle: bpy.props.FloatVectorProperty(name='UV Angle', default=(0.0, 0.0, 0.0), size=3, subtype='XYZ', options={'ANIMATABLE'})
     uv_tiling: bpy.props.FloatVectorProperty(name='UV Tiling', default=(1.0, 1.0), size=2, subtype='XYZ', options={'ANIMATABLE'})
@@ -150,7 +151,9 @@ class Properties(shared.M3PropertyGroup):
     video_restart: bpy.props.BoolProperty(name='Video Restart', options={'ANIMATABLE'}, default=True)
     noise_amplitude: bpy.props.FloatProperty(options=set(), default=0.8)
     noise_frequency: bpy.props.FloatProperty(options=set(), default=0.5)
-    unknowna44bf452: bpy.props.FloatProperty()  # no UI
+    # unknowna44bf452: bpy.props.FloatProperty()
+    ignored_fresnel_flag1: bpy.props.BoolProperty(options=set())  # no UI
+    ignored_fresnel_flag2: bpy.props.BoolProperty(options=set())  # no UI
 
 
 class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):

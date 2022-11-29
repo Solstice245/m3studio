@@ -287,35 +287,6 @@ m3_key_type_collection_method = [
     m3_key_collect_real, m3_key_collect_real, m3_key_collect_sd11, m3_key_collect_real, m3_key_collect_real, m3_key_collect_bnds,
 ]
 
-matref_to_mattype = {
-    1: ['materials_standard', io_shared.io_material_standard],
-    2: ['materials_displacement', io_shared.io_material_displacement],
-    3: ['materials_composite', io_shared.io_material_composite],
-    4: ['materials_terrain', io_shared.io_material_terrain],
-    5: ['materials_volume', io_shared.io_material_volume],
-    7: ['materials_creep', io_shared.io_material_creep],
-    8: ['materials_volumenoise', io_shared.io_material_volume_noise],
-    9: ['materials_stb', io_shared.io_material_stb],
-    10: ['materials_reflection', io_shared.io_material_reflection],
-    11: ['materials_lensflare', io_shared.io_material_lens_flare],
-    12: ['materials_buffer', io_shared.io_material_buffer],
-}
-
-mattype_layers = {
-    1: ['diff', 'decal', 'spec', 'gloss', 'emis1', 'emis2', 'envi', 'envi_mask', 'alpha1', 'alpha2', 'norm',
-        'height', 'light', 'ao', 'norm_blend1_mask', 'norm_blend2_mask', 'norm_blend1', 'norm_blend2'],
-    2: ['normal', 'strength'],
-    3: [],
-    4: ['terrain'],
-    5: ['color', 'unknown1', 'unknown2'],
-    7: ['creep'],
-    8: ['color', 'noise1', 'noise2'],
-    9: ['diff', 'spec', 'normal'],
-    10: ['norm', 'strength', 'blur'],
-    11: ['color', 'unknown'],
-    12: []
-}
-
 
 class Importer:
 
@@ -737,17 +708,16 @@ class Importer:
 
         layer_section_to_index = {}
         for m3_matref in self.m3[self.m3_model.material_references]:
-            mattype_list = matref_to_mattype[m3_matref.type]
-            m3_mat = self.m3[getattr(self.m3_model, mattype_list[0])][m3_matref.material_index]
+            m3_mat = self.m3[getattr(self.m3_model, io_shared.material_type_to_model_reference[m3_matref.type])][m3_matref.material_index]
 
             matref = shared.m3_item_add(ob.m3_materialrefs, item_name=self.m3[m3_mat.name].content)
-            mat_col = getattr(ob, 'm3_' + mattype_list[0])
+            mat_col = getattr(ob, 'm3_' + io_shared.material_type_to_model_reference[m3_matref.type])
             mat = shared.m3_item_add(mat_col, item_name=matref.name)
 
             processor = M3InputProcessor(self, mat, m3_mat)
-            mattype_list[1](processor)
+            io_shared.material_type_io_method[m3_matref.type](processor)
 
-            matref.mat_type = 'm3_' + matref_to_mattype[m3_matref.type][0]
+            matref.mat_type = 'm3_' + io_shared.material_type_to_model_reference[m3_matref.type]
             matref.mat_handle = mat.bl_handle
 
             shared.m3_msgbus_sub(mat, matref, 'name', 'name')
@@ -764,7 +734,7 @@ class Importer:
                     processor = M3InputProcessor(self, starburst, m3_starburst)
                     io_shared.io_starburst(processor)
 
-            for layer_name in mattype_layers[m3_matref.type]:
+            for layer_name in io_shared.material_type_to_layers[m3_matref.type]:
                 m3_layer_field = getattr(m3_mat, 'layer_' + layer_name, None)
                 if not m3_layer_field:
                     continue

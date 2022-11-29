@@ -41,7 +41,7 @@ def io_material_standard(processor):
     processor.bit('additional_flags', 'depth_blend_falloff')
     processor.bit('additional_flags', 'vertex_color')
     processor.bit('additional_flags', 'vertex_alpha')
-    processor.bit('additional_flags', 'unknown0x200')
+    # processor.bit('additional_flags', 'unknown0x200')
     processor.bit('flags', 'vertex_alpha')
     processor.bit('flags', 'unfogged')
     processor.bit('flags', 'two_sided')
@@ -51,7 +51,7 @@ def io_material_standard(processor):
     processor.bit('flags', 'no_shadows_receive')
     processor.bit('flags', 'depth_prepass')
     processor.bit('flags', 'terrain_hdr')
-    processor.bit('flags', 'unknown0x400')
+    # processor.bit('flags', 'unknown0x400')
     processor.bit('flags', 'simulate_roughness')
     processor.bit('flags', 'pixel_forward_lighting')
     processor.bit('flags', 'depth_fog')
@@ -64,11 +64,11 @@ def io_material_standard(processor):
     processor.bit('flags', 'hair_layer_sorting')
     processor.bit('flags', 'accept_splats')
     processor.bit('flags', 'decal_low_required')
-    processor.bit('flags', 'emissive_low_required')
-    processor.bit('flags', 'specular_low_required')
+    processor.bit('flags', 'emis_low_required')
+    processor.bit('flags', 'spec_low_required')
     processor.bit('flags', 'accept_splats_only')
     processor.bit('flags', 'background_object')
-    processor.bit('flags', 'unknown0x8000000')
+    # processor.bit('flags', 'unknown0x8000000')
     processor.bit('flags', 'depth_prepass_low_required')
     processor.bit('flags', 'no_highlighting')
     processor.bit('flags', 'clamp_output')
@@ -83,7 +83,7 @@ def io_material_standard(processor):
     processor.float('envi_const_multiply', since_version=20)
     processor.float('envi_diff_multiply', since_version=20)
     processor.float('envi_spec_multiply', since_version=20)
-    processor.integer('unknown2481ae8a')
+    # processor.integer('unknown2481ae8a')
     processor.enum('layr_blend_mode')
     processor.enum('emis_blend_mode')
     processor.enum('emis_mode')
@@ -186,24 +186,24 @@ def io_material_buffer(processor):
 
 
 def io_material_layer(processor):
-    processor.integer('unknown00')
+    # processor.integer('unknown00')  # ! unknown
     processor.anim_color('color_value')
     processor.bit('flags', 'uv_wrap_x')
     processor.bit('flags', 'uv_wrap_y')
-    processor.bit('flags', 'invert')
-    processor.bit('flags', 'clamp_output')
+    processor.bit('flags', 'color_invert')
+    processor.bit('flags', 'color_clamp')
     # processor.bit('flags', 'particle_uv_flipbook') # ! handle manually
-    processor.bit('flags', 'video')
+    # processor.bit('flags', 'video') # ! handled manually
     # processor.bit('flags', 'color') # ! handled manually
     processor.bit('flags', 'ignored_fresnel_flag1')
     processor.bit('flags', 'ignored_fresnel_flag2')
     processor.bit('flags', 'fresnel_local_transform')
-    processor.bit('flags', 'fresnel_no_mirror')
+    processor.bit('flags', 'fresnel_do_not_mirror')
     processor.enum('uv_source')
     processor.enum('color_channels')
     processor.anim_float('color_multiply')
     processor.anim_float('color_add')
-    processor.integer('unknown3b61017a')
+    # processor.integer('unknown3b61017a')  # ! unknown
     processor.float('noise_amplitude', since_version=24)
     processor.float('noise_frequency', since_version=24)
     processor.enum('video_channel')
@@ -211,7 +211,7 @@ def io_material_layer(processor):
     processor.integer('video_frame_start')
     processor.integer('video_frame_end')
     processor.enum('video_mode')
-    processor.integer('video_sync_timing')
+    processor.boolean('video_sync_timing')
     processor.anim_boolean_based_on_SDU3('video_play')
     processor.anim_boolean_based_on_SDFG('video_restart')
     processor.integer('uv_flipbook_rows')
@@ -230,15 +230,15 @@ def io_material_layer(processor):
     processor.float('fresnel_exponent')
     processor.float('fresnel_min')
     # processor.float('fresnel_max_offset') # ! handled manually
-    processor.float('unknown15')
-    processor.integer('unknown16', since_version=25)
-    processor.integer('unknown17', since_version=25)
+    # processor.float('unknown15') # ! unknown
+    # processor.integer('unknown16', since_version=25) # ! unknown
+    # processor.integer('unknown17', since_version=25) # ! unknown
     # processor.float('fresnel_inverted_mask_x', since_version=25) # ! handled manually
     # processor.float('fresnel_inverted_mask_y', since_version=25) # ! handled manually
     # processor.float('fresnel_inverted_mask_z', since_version=25) # ! handled manually
     processor.float('fresnel_yaw', since_version=25)
     processor.float('fresnel_pitch', since_version=25)
-    processor.integer('unknowned0e748d', since_version=25, till_version=25)
+    # processor.integer('unknowned0e748d', since_version=25, till_version=25) # ! unknown
 
 
 def io_light(processor):
@@ -647,3 +647,52 @@ def io_turret_part(processor):
 def io_billboard(processor):
     processor.enum('billboard_type')
     processor.integer('camera_look_at')
+
+
+material_type_to_model_reference = {
+    1: 'materials_standard',
+    2: 'materials_displacement',
+    3: 'materials_composite',
+    4: 'materials_terrain',
+    5: 'materials_volume',
+    7: 'materials_creep',
+    8: 'materials_volumenoise',
+    9: 'materials_stb',
+    10: 'materials_reflection',
+    11: 'materials_lensflare',
+    12: 'materials_buffer',
+}
+
+material_type_io_method = {
+    1: io_material_standard,
+    2: io_material_displacement,
+    3: io_material_composite,
+    4: io_material_terrain,
+    5: io_material_volume,
+    7: io_material_creep,
+    8: io_material_volume_noise,
+    9: io_material_stb,
+    10: io_material_reflection,
+    11: io_material_lens_flare,
+    12: io_material_buffer,
+}
+
+material_type_to_layers = {
+    1: ['diff', 'decal', 'spec', 'gloss', 'emis1', 'emis2', 'envi', 'envi_mask', 'alpha1', 'alpha2', 'norm',
+        'height', 'light', 'ao', 'norm_blend1_mask', 'norm_blend2_mask', 'norm_blend1', 'norm_blend2'],
+    2: ['normal', 'strength'],
+    3: [],
+    4: ['terrain'],
+    5: ['color', 'unknown1', 'unknown2'],
+    7: ['creep'],
+    8: ['color', 'noise1', 'noise2'],
+    9: ['diff', 'spec', 'normal'],
+    10: ['norm', 'strength', 'blur'],
+    11: ['color', 'unknown'],
+    12: []
+}
+
+material_collections = [
+    'None', 'm3_materials_standard', 'm3_materials_displacement', 'm3_materials_composite', 'm3_materials_terrain', 'm3_materials_volume', 'None',
+    'm3_materials_creep', 'm3_materials_volume_noise', 'm3_materials_stb', 'm3_materials_reflection', 'm3_materials_lens_flare', 'm3_materials_buffer',
+]

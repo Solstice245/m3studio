@@ -252,7 +252,10 @@ class Exporter:
 
         self.anim_id_count = 0
         self.uv_count = 0
-        self.vertex_group_names = set()
+        self.skinned_bones = []
+
+        export_required_material_references = []
+        export_required_bones = []
 
         export_regions = []
         for child in ob.children:
@@ -263,14 +266,26 @@ class Exporter:
                 if len(me.loop_triangles) > 0:
                     export_regions.append(child)
 
+                    valid_mesh_material_refs = 0
+                    for mesh_matref in child.m3_mesh_material_refs:
+                        matref = shared.m3_pointer_get(ob.m3_materialrefs, mesh_matref.bl_handle)
+                        if matref:
+                            export_required_material_references.append(matref)
+                            valid_mesh_material_refs += 1
+
+                    assert valid_mesh_material_refs != 0
+                    # TODO improve invalidation so that a list of all
+                    # TODO warnings and exceptions can be made
+
                     for vertex_group in child.vertex_groups:
-                        self.vertex_group_names.add(vertex_group.name)
+                        group_bone = ob.data.bones.get(vertex_group.name)
+                        if group_bone:
+                            export_required_bones.append(group_bone)
+                            self.skinned_bones.append(group_bone)
 
                     self.uv_count = max(self.uv_count, len(me.uv_layers))
 
-        export_required_bones = []
-
-        def get_valid_collection_items_and_bones(collection):
+        def valid_collections_and_requirements(collection):
             # TODO have second unexposed export custom prop for auto-culling such as invalid attachment point name
             export_items = []
             for item in collection:
@@ -285,14 +300,20 @@ class Exporter:
                     item_bones.append(shared.m3_pointer_get(ob.data.bones, item.bone1))
                 if hasattr(item, 'bone2'):
                     item_bones.append(shared.m3_pointer_get(ob.data.bones, item.bone2))
+                if hasattr(item, 'material'):
+                    matref = shared.m3_pointer_get(ob.m3_materialrefs, item.material)
+                    if matref:
+                        export_required_material_references.append(matref)
+                    # TODO items without valid material reference that need one should be invalidated
                 export_required_bones.extend(item_bones)
                 export_items.append(item)
             return export_items
 
-        export_attachments = get_valid_collection_items_and_bones(ob.m3_attachmentpoints)
-        export_particle_systems = get_valid_collection_items_and_bones(ob.m3_particle_systems)
-        export_ribbons = get_valid_collection_items_and_bones(ob.m3_ribbons)
-        export_hittests = get_valid_collection_items_and_bones(ob.m3_hittests)
+        export_attachments = valid_collections_and_requirements(ob.m3_attachmentpoints)
+        export_material_references = valid_collections_and_requirements(ob.m3_materialrefs)
+        export_particle_systems = valid_collections_and_requirements(ob.m3_particle_systems)
+        export_ribbons = valid_collections_and_requirements(ob.m3_ribbons)
+        export_hittests = valid_collections_and_requirements(ob.m3_hittests)
 
         # TODO warning if hittest bone is none
         hittest_bone = shared.m3_pointer_get(ob.data.bones, ob.m3_hittest_tight.bone)
@@ -302,8 +323,6 @@ class Exporter:
         def export_bone_bool(bone):
             result = False
             if not bone.m3_export_cull:
-                result = True
-            elif bone.name in self.vertex_group_names:
                 result = True
             elif bone in export_required_bones:
                 result = True
@@ -325,7 +344,22 @@ class Exporter:
                     self.bones.append(bone)
                 break
 
+        material_versions = {
+            1: ob.m3_materials_standard_version,
+            2: 4,
+            3: 2,
+            4: 0,
+            5: 0,
+            7: 0,
+            8: 0,
+            9: 0,
+            10: ob.m3_materials_reflection_version,
+            11: 3,
+            12: 1,
+        }
+
         # TODO warning if meshes and particles have materials or layers in common
+        # TODO warning if layers have rtt channel collision, also only to be used in standard material
 
         self.bone_name_bones = {bone.name: bone for bone in self.bones}
         self.bone_name_indices = {bone.name: ii for ii, bone in enumerate(self.bones)}
@@ -340,6 +374,7 @@ class Exporter:
         self.create_bones(model)  # TODO needs correction matrices
         self.create_division(model, export_regions, regn_version=ob.m3_mesh_version)
         self.create_attachments(model, export_attachments)
+        self.create_materials(model, export_material_references, material_versions)
         self.create_particle_systems(model, export_particle_systems, version=ob.m3_particle_systems_version)
         self.create_ribbons(model, export_ribbons, version=ob.m3_ribbons_version)
         self.create_hittests(model, export_hittests)
@@ -363,7 +398,7 @@ class Exporter:
             m3_bone_name_section.content_from_bytes(bone.name)
             m3_bone.flags = 0
             m3_bone.bit_set('flags', 'real', True)
-            m3_bone.bit_set('flags', 'skinned', bone.name in self.vertex_group_names)
+            m3_bone.bit_set('flags', 'skinned', bone in self.skinned_bones)
             m3_bone.location = self.init_anim_ref_vec3()
             m3_bone.rotation = self.init_anim_ref_quat()
             m3_bone.scale = self.init_anim_ref_vec3()
@@ -570,6 +605,93 @@ class Exporter:
             attachment_point_addon_section.content_add(0xffff)
         # add volumes later so that sections are in order of the modl data
 
+    def create_materials(self, model, matrefs, versions):
+        if not matrefs:
+            return
+
+        matref_section = self.m3.section_for_reference(model, 'material_references')
+
+        layer_desc = io_m3.structures['LAYR'].get_version(self.ob.m3_materiallayers_version)
+        # manually add into section list if referenced
+        null_layer_section = io_m3.Section(index_entry=None, struct_desc=layer_desc, references=[], content=[])
+        null_layer_section.content_add()
+
+        matrefs_typed = {ii: [] for ii in range(0, 13)}
+        for matref in matrefs:
+            m3_matref = matref_section.content_add()
+            m3_matref.type = io_shared.material_collections.index(matref.mat_type)
+            m3_matref.material_index = len(matrefs_typed[m3_matref.type])
+            matrefs_typed[m3_matref.type].append(matref)
+
+        handle_to_layer_section = {}
+        for type_ii, matrefs in matrefs_typed.items():
+            if not matrefs:
+                continue
+            mat_section = self.m3.section_for_reference(model, io_shared.material_type_to_model_reference[type_ii], version=versions[type_ii])
+            mat_collection = getattr(self.ob, 'm3_' + io_shared.material_type_to_model_reference[type_ii])
+            for matref in matrefs:
+                mat = shared.m3_pointer_get(mat_collection, matref.mat_handle)
+                m3_mat = mat_section.content_add()
+                m3_mat_name_section = self.m3.section_for_reference(m3_mat, 'name')
+                m3_mat_name_section.content_from_bytes(matref.name)
+                processor = M3OutputProcessor(self, mat, m3_mat)
+                io_shared.material_type_io_method[type_ii](processor)
+
+                for layer_name in io_shared.material_type_to_layers[type_ii]:
+                    layer_name_full = 'layer_' + layer_name
+                    mat_layer_handle = getattr(mat, layer_name_full)
+
+                    if not hasattr(m3_mat, layer_name_full):
+                        continue
+
+                    m3_layer_ref = getattr(m3_mat, layer_name_full)
+
+                    layer = shared.m3_pointer_get(self.ob.m3_materiallayers, getattr(mat, layer_name_full))
+
+                    if not layer or (layer.color_type == 'BITMAP' and not layer.color_bitmap):
+                        null_layer_section.references.append(m3_layer_ref)
+                    else:
+
+                        if layer.video_channel != 'NONE':
+                            # TODO warn if rtt channel collision (assigning to true while already true)
+                            m3_mat.bit_set('rtt_channels_used', 'channel' + layer.video_channel, True)
+
+                        if mat_layer_handle in handle_to_layer_section.keys():
+                            handle_to_layer_section[mat_layer_handle].references.append(m3_layer_ref)
+                        else:
+                            layer_section = self.m3.section_for_reference(m3_mat, layer_name_full, version=self.ob.m3_materiallayers_version)
+                            m3_layer = layer_section.content_add()
+                            processor = M3OutputProcessor(self, layer, m3_layer)
+                            io_shared.io_material_layer(processor)
+
+                            m3_layer.fresnel_max_offset = layer.fresnel_max - layer.fresnel_min
+
+                            if int(self.ob.m3_materiallayers_version) >= 25:
+                                m3_layer.fresnel_inverted_mask_x = 1 - layer.fresnel_mask[0]
+                                m3_layer.fresnel_inverted_mask_y = 1 - layer.fresnel_mask[1]
+                                m3_layer.fresnel_inverted_mask_z = 1 - layer.fresnel_mask[2]
+
+                            m3_layer.bit_set('flags', 'particle_uv_flipbook', m3_layer.uv_source == 6)
+
+                            if layer.color_bitmap.endswith('.ogg'):
+                                m3_layer.bit_set('flags', 'video')
+                            else:
+                                m3_layer.video_frame_rate = 0
+                                m3_layer.video_frame_start = 0
+                                m3_layer.video_frame_end = 0
+                                m3_layer.video_mode = 0
+
+                            m3_layer.unknownbc0c14e5 = self.init_anim_ref_uint32(0)
+                            m3_layer.unknowne740df12 = self.init_anim_ref_float(0.0)
+                            m3_layer.unknown39ade219 = self.init_anim_ref_uint16(0)
+                            m3_layer.unknowna4ec0796 = self.init_anim_ref_uint32(0, interpolation=1)
+                            m3_layer.unknowna44bf452 = self.init_anim_ref_float(1.0)
+
+            # TODO manage flags of standard material, composite material sections and lens flare starbursts.
+
+        if len(null_layer_section.references):
+            self.m3.append(null_layer_section)
+
     def create_particle_systems(self, model, systems, version):
         if not systems:
             return
@@ -678,7 +800,6 @@ class Exporter:
 
             m3_hittest.size0, m3_hittest.size1, m3_hittest.size2 = hittest.size
             m3_hittest.matrix = to_m3_matrix(mathutils.Matrix.LocRotScale(hittest.location, hittest.rotation, hittest.scale))
-
 
     def create_irefs(self, model):
         if not self.bones:

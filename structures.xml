@@ -1433,15 +1433,15 @@
                 <bits>
                     <bit mask="0x4" name="uv_wrap_x"/>
                     <bit mask="0x8" name="uv_wrap_y"/>
-                    <bit mask="0x10" name="invert"/>
-                    <bit mask="0x20" name="clamp_output"/>
+                    <bit mask="0x10" name="color_invert"/>
+                    <bit mask="0x20" name="color_clamp"/>
                     <bit mask="0x100" name="particle_uv_flipbook"/>
                     <bit mask="0x200" name="video"/> <!-- if texture is ogg video -->
                     <bit mask="0x400" name="color"/>
                     <bit mask="0x4000" name="ignored_fresnel_flag1"/>
                     <bit mask="0x8000" name="ignored_fresnel_flag2"/>
                     <bit mask="0x10000" name="fresnel_local_transform"/>
-                    <bit mask="0x20000" name="fresnel_no_mirror"/>
+                    <bit mask="0x20000" name="fresnel_do_not_mirror"/>
                 </bits>
             </field>
             <field name="uv_source" type="uint32"/>
@@ -1550,8 +1550,8 @@
                     <bit mask="0x100000" name="hair_layer_sorting"/>
                     <bit mask="0x200000" name="accept_splats"/>
                     <bit mask="0x400000" name="decal_low_required"/>
-                    <bit mask="0x800000" name="emissive_low_required"/>
-                    <bit mask="0x1000000" name="specular_low_required"/>
+                    <bit mask="0x800000" name="emis_low_required"/>
+                    <bit mask="0x1000000" name="spec_low_required"/>
                     <bit mask="0x2000000" name="accept_splats_only"/>
                     <bit mask="0x4000000" name="background_object"/>
                     <bit mask="0x8000000" name="unknown0x8000000"/>
@@ -1563,7 +1563,7 @@
             </field>
             <field name="blend_mode" type="uint32"/>
             <field name="priority" type="int32"/>
-            <field name="usedRTTChannels" type="uint32" default_value="0" >
+            <field name="rtt_channels_used" type="uint32" default_value="0" >
                  <bits>
                     <bit mask="0x1" name="channel0"/>
                     <bit mask="0x2" name="channel1"/>
