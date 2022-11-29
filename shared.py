@@ -211,6 +211,7 @@ class ArmatureObjectPanel(bpy.types.Panel):
 
 class M3PropertyGroup(bpy.types.PropertyGroup):
     bl_handle: bpy.props.StringProperty(options=set())
+    m3_export: bpy.props.BoolProperty(options=set(), default=True)
     name: bpy.props.StringProperty(options=set())
 
 

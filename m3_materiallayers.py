@@ -66,7 +66,7 @@ def draw_props(layer, layout):
     col = layout.column()
     sub = col.column(align=True)
     sub.prop(layer, 'uv_flipbook_rows', text='Flipbook Rows')
-    sub.prop(layer, 'uv_flipbook_columns', text='Columns')
+    sub.prop(layer, 'uv_flipbook_cols', text='Columns')
     col.prop(layer, 'uv_flipbook_frame', text='Frame')
 
     if version >= 24 and 'TRIPLANAR' in layer.uv_source:
@@ -126,7 +126,7 @@ class Properties(shared.M3PropertyGroup):
     uv_angle: bpy.props.FloatVectorProperty(name='UV Angle', default=(0.0, 0.0, 0.0), size=3, subtype='XYZ', options={'ANIMATABLE'})
     uv_tiling: bpy.props.FloatVectorProperty(name='UV Tiling', default=(1.0, 1.0), size=2, subtype='XYZ', options={'ANIMATABLE'})
     uv_flipbook_rows: bpy.props.IntProperty(name='Flipbook Rows', default=0, options=set())
-    uv_flipbook_columns: bpy.props.IntProperty(name='Flipbook Columns', default=0, options=set())
+    uv_flipbook_cols: bpy.props.IntProperty(name='Flipbook Columns', default=0, options=set())
     uv_flipbook_frame: bpy.props.IntProperty(name='Flipbook Frame', default=0, options={'ANIMATABLE'})
     uv_triplanar_offset: bpy.props.FloatVectorProperty(name='Tri Planer Offset', default=(0.0, 0.0, 0.0), size=3, subtype='XYZ', options={'ANIMATABLE'})
     uv_triplanar_scale: bpy.props.FloatVectorProperty(name='Tri Planer Scale', default=(1.0, 1.0, 1.0), size=3, subtype='XYZ', options={'ANIMATABLE'})
