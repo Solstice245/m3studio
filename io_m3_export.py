@@ -292,6 +292,12 @@ class Exporter:
         export_attachments = get_valid_collection_items_and_bones(ob.m3_attachmentpoints)
         export_particle_systems = get_valid_collection_items_and_bones(ob.m3_particle_systems)
         export_ribbons = get_valid_collection_items_and_bones(ob.m3_ribbons)
+        export_hittests = get_valid_collection_items_and_bones(ob.m3_hittests)
+
+        # TODO warning if hittest bone is none
+        hittest_bone = shared.m3_pointer_get(ob.data.bones, ob.m3_hittest_tight.bone)
+        if hittest_bone:
+            export_required_bones.append(hittest_bone)
 
         def export_bone_bool(bone):
             result = False
@@ -336,6 +342,7 @@ class Exporter:
         self.create_attachments(model, export_attachments)
         self.create_particle_systems(model, export_particle_systems, version=ob.m3_particle_systems_version)
         self.create_ribbons(model, export_ribbons, version=ob.m3_ribbons_version)
+        self.create_hittests(model, export_hittests)
         self.create_irefs(model)  # TODO work on this, results are currently very incorrect
 
         self.m3.resolve()
@@ -635,6 +642,43 @@ class Exporter:
             m3_ribbon.unknownee00ae0a = self.init_anim_ref_float()
             m3_ribbon.unknown1686c0b7 = self.init_anim_ref_float()
             m3_ribbon.unknown9eba8df8 = self.init_anim_ref_float()
+
+    def create_hittests(self, model, hittests):
+        if not hittests:
+            return
+
+        # TODO export vertex/face data of mesh shapes
+
+        hittests_section = self.m3.section_for_reference(model, 'hittests', version=1)
+
+        ht_tight = self.ob.m3_hittest_tight
+        ht_tight_bone = shared.m3_pointer_get(self.ob.data.bones, ht_tight.bone)
+
+        m3_ht_tight = model.hittest_tight
+        m3_ht_tight.bone = self.bone_name_indices[ht_tight_bone.name]
+
+        for ii, item in enumerate(ht_tight.bl_rna.properties['shape'].enum_items):
+            if item.identifier == ht_tight.shape:
+                m3_ht_tight.shape = ii
+                break
+
+        m3_ht_tight.size0, m3_ht_tight.size1, m3_ht_tight.size2 = ht_tight.size
+        m3_ht_tight.matrix = to_m3_matrix(mathutils.Matrix.LocRotScale(ht_tight.location, ht_tight.rotation, ht_tight.scale))
+
+        for hittest in hittests:
+            hittest_bone = shared.m3_pointer_get(self.ob.data.bones, hittest.bone)
+
+            m3_hittest = hittests_section.content_add()
+            m3_hittest.bone = self.bone_name_indices[hittest_bone.name]
+
+            for ii, item in enumerate(hittest.bl_rna.properties['shape'].enum_items):
+                if item.identifier == hittest.shape:
+                    m3_hittest.shape = ii
+                    break
+
+            m3_hittest.size0, m3_hittest.size1, m3_hittest.size2 = hittest.size
+            m3_hittest.matrix = to_m3_matrix(mathutils.Matrix.LocRotScale(hittest.location, hittest.rotation, hittest.scale))
+
 
     def create_irefs(self, model):
         if not self.bones:
