@@ -186,12 +186,12 @@ class M3OutputProcessor:
 
     def anim_boolean_based_on_SDU3(self, field):
         anim_ref = self.exporter.init_anim_ref_uint32()
-        anim_ref.default = getattr(self.bl, field)
+        anim_ref.default = int(getattr(self.bl, field))
         setattr(self.m3, field, anim_ref)
 
     def anim_boolean_based_on_SDFG(self, field):
         anim_ref = self.exporter.init_anim_ref_uint32()
-        anim_ref.default = getattr(self.bl, field)
+        anim_ref.default = int(getattr(self.bl, field))
         setattr(self.m3, field, anim_ref)
 
     def anim_int16(self, field):
@@ -206,7 +206,7 @@ class M3OutputProcessor:
 
     def anim_uint32(self, field):
         anim_ref = self.exporter.init_anim_ref_uint32()
-        anim_ref.default = getattr(self.bl, field)
+        anim_ref.default = int(getattr(self.bl, field))  # converting to int because sometimes bools use this
         setattr(self.m3, field, anim_ref)
 
     def anim_float(self, field, since_version=None, till_version=None):
@@ -291,6 +291,7 @@ class Exporter:
 
         export_attachments = get_valid_collection_items_and_bones(ob.m3_attachmentpoints)
         export_particle_systems = get_valid_collection_items_and_bones(ob.m3_particle_systems)
+        export_ribbons = get_valid_collection_items_and_bones(ob.m3_ribbons)
 
         def export_bone_bool(bone):
             result = False
@@ -334,6 +335,7 @@ class Exporter:
         self.create_division(model, export_regions, regn_version=ob.m3_mesh_version)
         self.create_attachments(model, export_attachments)
         self.create_particle_systems(model, export_particle_systems, version=ob.m3_particle_systems_version)
+        self.create_ribbons(model, export_ribbons, version=ob.m3_ribbons_version)
         self.create_irefs(model)  # TODO work on this, results are currently very incorrect
 
         self.m3.resolve()
@@ -519,6 +521,7 @@ class Exporter:
             m3_faces.extend(region_faces)
             m3_lookup.extend(region_lookup)
 
+            # TODO mesh flags for versions 4+
             region = region_section.content_add()
             region.first_vertex_index = first_vertex_index
             region.vertex_count = len(region_vertices)
@@ -610,6 +613,28 @@ class Exporter:
 
             if int(version) >= 22:
                 m3_system.unknown8f507b52 = self.init_anim_ref_uint32()
+
+    def create_ribbons(self, model, ribbons, version):
+        if not ribbons:
+            return
+
+        ribbon_section = self.m3.section_for_reference(model, 'ribbons', version=version)
+
+        for ribbon in ribbons:
+            ribbon_bone = shared.m3_pointer_get(self.ob.data.bones, ribbon.bone)
+
+            m3_ribbon = ribbon_section.content_add()
+            m3_ribbon.bone = self.bone_name_indices[ribbon_bone.name]
+            processor = M3OutputProcessor(self, ribbon, m3_ribbon)
+            io_shared.io_ribbon(processor)
+
+            # TODO material ref index
+            # TODO ribbon spline section
+
+            m3_ribbon.unknown75e0b576 = self.init_anim_ref_float()
+            m3_ribbon.unknownee00ae0a = self.init_anim_ref_float()
+            m3_ribbon.unknown1686c0b7 = self.init_anim_ref_float()
+            m3_ribbon.unknown9eba8df8 = self.init_anim_ref_float()
 
     def create_irefs(self, model):
         if not self.bones:

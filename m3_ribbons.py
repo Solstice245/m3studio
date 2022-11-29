@@ -84,10 +84,10 @@ def draw_ribbon_props(ribbon, layout):
     col.prop(ribbon, 'ribbon_type', text='Ribbon Type')
 
     if ribbon.ribbon_type == 'CYLINDER':
-        col.prop(ribbon, 'edges', text='Edges')
+        col.prop(ribbon, 'sides', text='Edges')
 
     if ribbon.ribbon_type == 'STAR':
-        col.prop(ribbon, 'edges', text='Edges')
+        col.prop(ribbon, 'sides', text='Edges')
         col.prop(ribbon, 'star_ratio', text='Cylinder/Planar Ratio')
 
     col = layout.column(align=True)
@@ -219,7 +219,7 @@ class RibbonProperties(shared.M3BoneUserPropertyGroup):
     lifespan: bpy.props.FloatProperty(name='Lifespan', min=0, default=5)
     length: bpy.props.FloatProperty(name='Length', min=0)
     divisions: bpy.props.FloatProperty(options=set(), min=0, default=20)
-    edges: bpy.props.IntProperty(options=set(), min=3, default=5)
+    sides: bpy.props.IntProperty(options=set(), min=3, default=5)
     star_ratio: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0, max=1, default=0.5)
     length: bpy.props.FloatProperty(name='Length')
     yaw: bpy.props.FloatProperty(name='Yaw')
@@ -246,9 +246,11 @@ class RibbonProperties(shared.M3BoneUserPropertyGroup):
     noise_waves: bpy.props.FloatProperty(options=set())
     noise_frequency: bpy.props.FloatProperty(options=set())
     noise_scale: bpy.props.FloatProperty(options=set())
+    bounce: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0, max=1)  # TODO
     friction: bpy.props.FloatProperty(options=set(), min=0, max=1)  # TODO
     drag: bpy.props.FloatProperty(options=set())  # TODO
     mass: bpy.props.FloatProperty(options=set())  # TODO
+    mass2: bpy.props.FloatProperty(options=set())  # TODO
     local_forces: bpy.props.BoolVectorProperty(options=set(), subtype='LAYER', size=16)  # TODO
     world_forces: bpy.props.BoolVectorProperty(options=set(), subtype='LAYER', size=16)  # TODO
     world_space: bpy.props.BoolProperty(options=set())
