@@ -1047,7 +1047,7 @@ class Importer:
             for m3_copy_index in self.m3[m3_system.copy_indices]:
                 copy = ob.m3_particle_copies[-len(m3_copies) + m3_copy_index]
                 system_user = copy.systems.add()
-                system_user.handle = system.bl_handle
+                system_user.bl_handle = system.bl_handle
 
     def create_ribbons(self):
         ob = self.ob

@@ -393,7 +393,7 @@ def io_particle_system(processor):
 
 def io_particle_copy(processor):
     processor.anim_float('emit_rate')
-    processor.anim_float('emit_amount')
+    processor.anim_int16('emit_count')
 
 
 def io_ribbon(processor):

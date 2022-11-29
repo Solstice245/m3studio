@@ -2072,7 +2072,7 @@
         </versions>
         <fields>
             <field name="emit_rate" type="FloatAnimationReferenceV0"/>
-            <field name="emit_amount" type="Int16AnimationReferenceV0"/>
+            <field name="emit_count" type="Int16AnimationReferenceV0"/>
             <field name="bone" type="uint32"/>
         </fields>
     </structure>

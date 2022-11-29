@@ -340,8 +340,6 @@ class Exporter:
         if hittest_bone:
             self.export_required_bones.add(hittest_bone)
 
-        print(self.export_required_bones)
-
         def export_bone_bool(bone):
             result = False
             if not bone.m3_export_cull:
@@ -773,11 +771,11 @@ class Exporter:
             copy_indices = []
             for ii, copy in enumerate(copies):
                 for system_handle in copy.systems:
-                    if system_handle == system.bl_handle:
+                    if system_handle.bl_handle == system.bl_handle:
                         copy_indices.append(ii)
 
             if len(copy_indices):
-                copy_indices_section = self.m3.section_for_reference(system, 'copy_indices')
+                copy_indices_section = self.m3.section_for_reference(m3_system, 'copy_indices')
                 copy_indices_section.content_iter_add(copy_indices)
 
         if len(copies):
