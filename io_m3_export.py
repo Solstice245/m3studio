@@ -327,6 +327,18 @@ class Exporter:
         export_attachment_volumes = []  # handled specially
         export_billboards = []  # handled specially
 
+        def recurse_composite_materials(matref):
+            if matref.mat_type == 'm3_materials_composite':
+                mat = shared.m3_pointer_get(getattr(self.ob, matref.mat_type), matref.mat_handle)
+                for section in mat.sections:
+                    section_matref = shared.m3_pointer_get(ob.m3_materialrefs, section.matref)
+                    if section_matref:
+                        self.export_required_material_references.add(section_matref)
+                        recurse_composite_materials(section_matref)
+
+        for matref in self.export_required_material_references.copy():
+            recurse_composite_materials(matref)
+
         for copy in ob.m3_particle_copies:
             copy_bone = shared.m3_pointer_get(ob.data.bones, copy.bone)
             if len(copy.systems) and copy_bone and copy.m3_export:
@@ -444,7 +456,10 @@ class Exporter:
         self.bone_name_indices = {bone.name: ii for ii, bone in enumerate(self.bones)}
         self.bone_name_correction_matrices = {}
 
-        self.matref_handle_indices = {matref.bl_handle: ii for ii, matref in enumerate(list(self.export_required_material_references))}
+        self.matref_handle_indices = {}
+        for matref in ob.m3_materialrefs:
+            if matref in self.export_required_material_references:
+                self.matref_handle_indices[matref.bl_handle] = len(self.matref_handle_indices.keys())
 
         model_section = self.m3.section_for_reference(self.m3[0][0], 'model', version=ob.m3_model_version)
         model = model_section.content_add()
@@ -468,7 +483,7 @@ class Exporter:
         self.create_lights(model, export_lights)
         self.create_shadow_boxes(model, export_shadow_boxes)
         self.create_cameras(model, export_cameras)
-        self.create_materials(model, export_material_references, material_versions)  # TODO standard flags, composites and starbursts
+        self.create_materials(model, export_material_references, material_versions)  # TODO standard flags, and starbursts
         self.create_particle_systems(model, export_particle_systems, export_particle_copies, version=ob.m3_particle_systems_version)
         self.create_ribbons(model, export_ribbons, export_ribbon_splines, version=ob.m3_ribbons_version)
         self.create_projections(model, export_projections)
@@ -856,7 +871,27 @@ class Exporter:
                             m3_layer.unknowna4ec0796 = self.init_anim_ref_uint32(0, interpolation=1)
                             m3_layer.unknowna44bf452 = self.init_anim_ref_float(1.0)
 
-            # TODO manage flags of standard material, composite material sections and lens flare starbursts.
+                # TODO manage flags of standard material, and lens flare starbursts.
+                if type_ii == 3:  # composite material
+                    valid_sections = []
+                    for section in mat.sections:
+                        matref = shared.m3_pointer_get(self.ob.m3_materialrefs, section.matref)
+                        if matref:
+                            valid_sections.append(section)
+                    if len(valid_sections):
+                        section_section = self.m3.section_for_reference(m3_mat, 'sections')
+                        for section in valid_sections:
+                            m3_section = section_section.content_add()
+                            m3_section.material_reference_index = self.matref_handle_indices[section.matref]
+                            processor = M3OutputProcessor(self, section, m3_section)
+                            processor.anim_float('alpha_factor')
+                elif type_ii == 11:  # lens flare material
+                    if len(mat.starbursts):
+                        starburst_section = self.m3.section_for_reference(m3_mat, 'starbursts', version=2)
+                        for starburst in mat.starbursts:
+                            m3_starburst = starburst_section.content_add()
+                            processor = M3OutputProcessor(self, starburst, m3_starburst)
+                            io_shared.io_starburst(processor)
 
         if len(null_layer_section.references):
             self.m3.append(null_layer_section)

@@ -165,7 +165,7 @@ def io_starburst(processor):
     processor.float('falloff_threshold')
     processor.float('falloff_rate')
     processor.color('color')
-    processor.integer('face_source')
+    processor.boolean('face_source')
     # processor.float('unk02')  # ! ignored
     # processor.float('unk03')  # ! ignored
 
@@ -699,5 +699,5 @@ material_type_to_layers = {
 
 material_collections = [
     'None', 'm3_materials_standard', 'm3_materials_displacement', 'm3_materials_composite', 'm3_materials_terrain', 'm3_materials_volume', 'None',
-    'm3_materials_creep', 'm3_materials_volume_noise', 'm3_materials_stb', 'm3_materials_reflection', 'm3_materials_lens_flare', 'm3_materials_buffer',
+    'm3_materials_creep', 'm3_materials_volumenoise', 'm3_materials_stb', 'm3_materials_reflection', 'm3_materials_lensflare', 'm3_materials_buffer',
 ]
