@@ -187,8 +187,8 @@ particle_shape = (
     ('CUBE', 'Cube', 'Particles spawn within the area of the defined cube'),
     ('CYLINDER', 'Cylinder', 'Particles spawn within the area of the defined cylinder'),
     ('DISC', 'Disc', 'Particles spawn within the area of the defined disc'),
-    ('SPLINE', 'Spline', 'Particles spawn on the vertices of a mesh'),
-    ('MESH', 'Mesh', 'Particles spawn on faces of a mesh. A mesh using vertex colors can control the probability of emission using the red channel'),
+    ('SPLINE', 'Spline', 'Particles spawn on defined points'),
+    ('MESH', 'Mesh (V17+)', 'Particles spawn on faces of a mesh. A mesh using vertex colors can control the probability of emission using the red channel'),
 )
 
 particle_emit_type = (

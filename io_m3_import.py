@@ -317,6 +317,7 @@ class Importer:
         self.create_bones()
         self.create_materials()
         self.create_mesh()  # TODO mesh import options
+        self.create_bounding()
         self.create_attachments()
         self.create_lights()
         self.create_shadow_boxes()
@@ -961,6 +962,14 @@ class Importer:
 
             self.m3_bl_ref[self.m3_division.regions.index][region_ii] = mesh_ob
 
+    def create_bounding(self):
+        ob = self.ob
+        bounds = ob.m3_bounds
+        bounds.left, bounds.back, bounds.bottom = to_bl_vec3(self.m3_model.boundings.min)
+        bounds.right, bounds.front, bounds.top = to_bl_vec3(self.m3_model.boundings.max)
+        bounds.radius = self.m3_model.boundings.radius
+        # TODO animate boundings?
+
     def create_attachments(self):
         ob = self.ob
 
@@ -1049,6 +1058,16 @@ class Importer:
             system.material = ob.m3_materialrefs[m3_system.material_reference_index].bl_handle
             processor = M3InputProcessor(self, system, m3_system)
             io_shared.io_particle_system(processor)
+
+            if hasattr(m3_system, 'emit_shape_regions'):
+                for region_indice in self.m3[m3_system.emit_shape_regions]:
+                    mesh_object_pointer = system.emit_shape_meshes.add()
+                    mesh_object_pointer.bl_object = self.m3_bl_ref.get(self.m3_division.regions.index)[region_indice]
+
+            for m3_point in self.m3[m3_system.emit_shape_spline]:
+                point = system.emit_shape_spline.add()
+                processor = M3InputProcessor(self, point, m3_point)
+                processor.anim_vec3('location')
 
             for m3_copy_index in self.m3[m3_system.copy_indices]:
                 copy = ob.m3_particle_copies[-len(m3_copies) + m3_copy_index]

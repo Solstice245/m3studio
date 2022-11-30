@@ -58,13 +58,13 @@ def to_m3_vec3_f8(bl_vec=None):
 
 def to_m3_vec4(bl_vec=None):
     m3_vec = io_m3.structures['VEC4'].get_version(0).instance()
-    m3_vec.w, m3_vec.x, m3_vec.y, m3_vec.z = bl_vec or (0.0, 0.0, 0.0, 0.0)
+    m3_vec.x, m3_vec.y, m3_vec.z, m3_vec.w = bl_vec or (0.0, 0.0, 0.0, 0.0)
     return m3_vec
 
 
 def to_m3_quat(bl_quat=None):
     m3_quat = io_m3.structures['QUAT'].get_version(0).instance()
-    m3_quat.w, m3_quat.x, m3_quat.y, m3_quat.z = bl_quat or (0.0, 0.0, 0.0, 0.0)
+    m3_quat.x, m3_quat.y, m3_quat.z, m3_quat.w = bl_quat or (0.0, 0.0, 0.0, 0.0)
     return m3_quat
 
 
@@ -80,7 +80,7 @@ def to_m3_color(bl_col=None):
     return m3_color
 
 
-def to_m3_matrix(bl_matrix):  # TODO needs adjustment
+def to_m3_matrix(bl_matrix):
     m3_matrix = io_m3.structures['Matrix44'].get_version(0).instance()
     m3_matrix.x = to_m3_vec4(bl_matrix.col[0])
     m3_matrix.y = to_m3_vec4(bl_matrix.col[1])
@@ -258,14 +258,14 @@ class Exporter:
         self.export_required_material_references = set()
         self.export_required_bones = set()
 
-        export_regions = []
+        self.export_regions = []
         for child in ob.children:
             if child.type == 'MESH' and child.m3_mesh_export:
                 me = child.data
                 me.calc_loop_triangles()
 
                 if len(me.loop_triangles) > 0:
-                    export_regions.append(child)
+                    self.export_regions.append(child)
 
                     valid_mesh_material_refs = 0
                     for mesh_matref in child.m3_mesh_material_refs:
@@ -452,15 +452,24 @@ class Exporter:
         model_name_section = self.m3.section_for_reference(model, 'model_name')
         model_name_section.content_from_bytes(os.path.basename(filename))
 
+        self.bounds_min = to_m3_vec3((self.ob.m3_bounds.left, self.ob.m3_bounds.back, self.ob.m3_bounds.bottom))
+        self.bounds_max = to_m3_vec3((self.ob.m3_bounds.right, self.ob.m3_bounds.front, self.ob.m3_bounds.top))
+        self.bounds_radius = self.ob.m3_bounds.radius
+
+        model.boundings = io_m3.structures['BNDS'].get_version(0).instance()
+        model.boundings.min = self.bounds_min
+        model.boundings.max = self.bounds_max
+        model.boundings.radius = self.bounds_radius
+
         # TODO self.create_sequences(model)
         self.create_bones(model)  # TODO needs correction matrices
-        self.create_division(model, export_regions, regn_version=ob.m3_mesh_version)  # TODO lookups are incorrect
+        self.create_division(model, self.export_regions, regn_version=ob.m3_mesh_version)  # TODO lookups are incorrect
         self.create_attachment_points(model, export_attachment_points)  # TODO should exclude attachments with same bone as other attachments
         self.create_lights(model, export_lights)
         self.create_shadow_boxes(model, export_shadow_boxes)
         self.create_cameras(model, export_cameras)
         self.create_materials(model, export_material_references, material_versions)  # TODO standard flags, composites and starbursts
-        self.create_particle_systems(model, export_particle_systems, export_particle_copies, version=ob.m3_particle_systems_version)  # TODO emit points/regions
+        self.create_particle_systems(model, export_particle_systems, export_particle_copies, version=ob.m3_particle_systems_version)
         self.create_ribbons(model, export_ribbons, export_ribbon_splines, version=ob.m3_ribbons_version)
         self.create_projections(model, export_projections)
         self.create_forces(model, export_forces)
@@ -470,7 +479,7 @@ class Exporter:
         # TODO self.create_physics_cloths(model, export_physics_cloths, version=ob.m3_physics_cloths_version)
         self.create_ik_joints(model, export_ik_joints)
         self.create_turrets(model, export_turrets, part_version=ob.m3_turrets_part_version)
-        self.create_irefs(model)  # TODO work on this, results are currently very incorrect
+        self.create_irefs(model)
         self.create_hittests(model, export_hittests)
         self.create_attachment_volumes(model, export_attachment_volumes)
         self.create_billboards(model, export_billboards)
@@ -516,10 +525,16 @@ class Exporter:
             div_section = self.m3.section_for_reference(model, 'divisions', version=2)
             div = div_section.content_add()
 
-            # TODO
-            # msec_section = self.m3.section_for_reference(div, 'msec', version=1)
-            # msec = msec_section.content_add()
-            # msec.header.id = BOUNDING_ANIM_ID
+            msec_section = self.m3.section_for_reference(div, 'msec', version=1)
+            msec = msec_section.content_add()
+            msec.header = io_m3.structures['BNDSAnimationReference'].get_version(0).instance()
+            msec.header.interpolation = 1
+            msec.header.flags = 0x0006
+            msec.header.id = BOUNDING_ANIM_ID
+            msec.default = io_m3.structures['BNDS'].get_version(0).instance()
+            msec.default.min = self.bounds_min
+            msec.default.max = self.bounds_max
+            msec.default.max = self.bounds_radius
 
             return
 
@@ -552,6 +567,18 @@ class Exporter:
         div = div_section.content_add()
 
         face_section = self.m3.section_for_reference(div, 'faces')
+
+        msec_section = self.m3.section_for_reference(div, 'msec', version=1)
+        msec = msec_section.content_add()
+        msec.header = io_m3.structures['BNDSAnimationReference'].get_version(0).instance()
+        msec.header.interpolation = 1
+        msec.header.flags = 0x0006
+        msec.header.id = BOUNDING_ANIM_ID
+        msec.default = io_m3.structures['BNDS'].get_version(0).instance()
+        msec.default.min = self.bounds_min
+        msec.default.max = self.bounds_max
+        msec.default.max = self.bounds_radius
+
         region_section = self.m3.section_for_reference(div, 'regions', version=regn_version)
         batch_section = self.m3.section_for_reference(div, 'batches', version=1)
 
@@ -854,9 +881,6 @@ class Exporter:
             if trail_particle:
                 m3_system.trail_particle = systems.index(trail_particle)
 
-            # TODO emission points
-            # TODO emission regions
-
             m3_system.unknowne0bd54c8 = self.init_anim_ref_float()
             m3_system.unknowna2d44d80 = self.init_anim_ref_float()
             m3_system.unknownf8e2b3d0 = self.init_anim_ref_float()
@@ -885,8 +909,28 @@ class Exporter:
                 m3_system.unknown686e5943 = self.init_anim_ref_vec3()
                 m3_system.unknown18a90564 = self.init_anim_ref_vec2((1.0, 1.0))
 
+                if m3_system.emit_shape == 7:
+                    region_indices = set()
+                    for mesh_pointer in system.emit_shape_meshes:
+                        if mesh_pointer.bl_object in self.export_regions:
+                            region_indices.add(self.export_regions.index(mesh_pointer.bl_object))
+                    if len(region_indices):
+                        region_indices_section = self.m3.section_for_reference(m3_system, 'emit_shape_regions')
+                        region_indices_section.content_iter_add(region_indices)
+            else:
+                if m3_system.emit_shape >= 7:
+                    m3_system.shape = 0  # region emission invalid if version is below 17
+
             if int(version) >= 22:
                 m3_system.unknown8f507b52 = self.init_anim_ref_uint32()
+
+            if m3_system.emit_shape == 6:
+                if len(system.emit_shape_spline):
+                    system_spline_section = self.m3.section_for_reference(m3_system, 'emit_shape_spline')
+                    for point in system.emit_shape_spline:
+                        m3_point = system_spline_section.content_add()
+                        processor = M3OutputProcessor(self, point, m3_point)
+                        processor.anim_vec3('location')
 
             copy_indices = []
             for ii, copy in enumerate(copies):

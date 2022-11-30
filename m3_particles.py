@@ -126,12 +126,12 @@ def draw_props(particle, layout):
             box = col.box()
             box.use_property_split = False
             op = box.operator('m3.collection_add', text='Add Mesh Object')
-            op.collection = particle.emit_shape_mesh.path_from_id()
-            for ii, item in enumerate(particle.emit_shape_mesh):
+            op.collection = particle.emit_shape_meshes.path_from_id()
+            for ii, item in enumerate(particle.emit_shape_meshes):
                 row = box.row()
                 row.prop(item, 'bl_object', text='')
                 op = row.operator('m3.collection_remove', icon='X', text='')
-                op.collection, op.index = (particle.emit_shape_mesh.path_from_id(), ii)
+                op.collection, op.index = (particle.emit_shape_meshes.path_from_id(), ii)
 
     col = layout.column(align=True)
     col.prop(particle, 'emit_speed', text='Emission Speed')
@@ -316,7 +316,7 @@ class SystemProperties(shared.M3BoneUserPropertyGroup):
     emit_shape_size_cutout: bpy.props.FloatVectorProperty(name='Emission Area Size Cutout', subtype='XYZ', size=3, update=bone_shape_update_event)
     emit_shape_radius: bpy.props.FloatProperty(name='Emission Radius', default=1, update=bone_shape_update_event)
     emit_shape_radius_cutout: bpy.props.FloatProperty(name='Emission Radius Cutout', update=bone_shape_update_event)
-    emit_shape_mesh: bpy.props.CollectionProperty(type=shared.M3ObjectPropertyGroup)
+    emit_shape_meshes: bpy.props.CollectionProperty(type=shared.M3ObjectPropertyGroup)
     emit_shape_spline: bpy.props.CollectionProperty(type=SplinePointProperties)
     emit_max: bpy.props.IntProperty(options=set(), min=0)
     emit_rate: bpy.props.FloatProperty(name='Emission Rate', min=0)

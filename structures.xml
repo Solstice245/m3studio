@@ -162,8 +162,8 @@
             <version number="0" size="28"/>
         </versions>
         <fields>
-            <field name="minBorder" type="VEC3V0"/>
-            <field name="maxBorder" type="VEC3V0"/>
+            <field name="min" type="VEC3V0"/>
+            <field name="max" type="VEC3V0"/>
             <!-- bounding_sphere_center = (extend0 + extend1)/2-->
             <field name="radius" type="float"/>
         </fields>
@@ -2056,7 +2056,7 @@
             <field name="trail_rate" type="FloatAnimationReferenceV0"/>
             <field name="unknownfdab7ff3" type="uint32" default_value="0xffffffff"/>
             <field name="unknown7d4a9e6b" type="uint32" expected_value="0x00000000"/>
-            <field name="usedModel" type="Reference" ref_to="SCHR"/>
+            <field name="used_model" type="Reference" ref_to="SCHR"/>
             <field name="copy_indices" type="Reference" ref_to="U32_"/>
             <field name="unknown9a7afdf2" type="uint32" since_version="23"/>
             <field name="unknown87d57a7a" type="uint32" since_version="23"/>

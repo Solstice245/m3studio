@@ -22,9 +22,10 @@ from . import bl_enum
 
 
 def register_props():
-    bpy.types.Object.m3_options = bpy.props.PointerProperty(type=Properties)
+    bpy.types.Object.m3_options = bpy.props.PointerProperty(type=OptionProperties)
     bpy.types.Object.m3_model_version = bpy.props.EnumProperty(options=set(), items=model_versions, default='29')
     bpy.types.Object.m3_mesh_version = bpy.props.EnumProperty(options=set(), items=mesh_versions, default='5')
+    bpy.types.Object.m3_bounds = bpy.props.PointerProperty(type=BoundingProperties)
 
 
 model_versions = (
@@ -57,12 +58,23 @@ desc_auto_update_timeline = 'Clicking on an m3 animation group sets the end poin
 desc_auto_update_action = 'Clicking on an m3 animation sets the action of the object'
 
 
-class Properties(bpy.types.PropertyGroup):
+class OptionProperties(bpy.types.PropertyGroup):
     bone_display_mode: bpy.props.EnumProperty(options=set(), items=bl_enum.options_bone_display, update=update_bone_display_mode)
     auto_update_bone_display_mode: bpy.props.BoolProperty(options=set(), default=True, description=desc_auto_bone_display_mode)
     auto_update_bone_selection: bpy.props.BoolProperty(options=set(), default=True, description=desc_auto_update_bone_selection)
     auto_update_timeline: bpy.props.BoolProperty(options=set(), default=True, description=desc_auto_update_timeline)
     auto_update_action: bpy.props.BoolProperty(options=set(), default=True, description=desc_auto_update_action)
+
+
+# TODO bounding preview
+class BoundingProperties(bpy.types.PropertyGroup):
+    bottom: bpy.props.FloatProperty(name='M3 Bounding Bottom', default=0.25)
+    top: bpy.props.FloatProperty(name='M3 Bounding Top', default=0.25)
+    left: bpy.props.FloatProperty(name='M3 Bounding Left', default=2.5)
+    right: bpy.props.FloatProperty(name='M3 Bounding Right', default=2.5)
+    front: bpy.props.FloatProperty(name='M3 Bounding Front', default=2.5)
+    back: bpy.props.FloatProperty(name='M3 Bounding Back', default=2.5)
+    radius: bpy.props.FloatProperty(name='M3 Bounding Radius', default=5)
 
 
 class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
@@ -74,8 +86,17 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
         layout = self.layout
         layout.use_property_split = True
         options = ob.m3_options
+        bounds = ob.m3_bounds
 
         col = layout.column(align=True)
+        col.prop(bounds, 'bottom', text='Bounding Bottom')
+        col.prop(bounds, 'top', text='Top')
+        col.prop(bounds, 'left', text='Left')
+        col.prop(bounds, 'right', text='Right')
+        col.prop(bounds, 'front', text='Front')
+        col.prop(bounds, 'back', text='Back')
+        col.prop(bounds, 'radius', text='Radius')
+        col.separator()
         col.prop(options, 'bone_display_mode', text='Bone Display')
         col.prop(options, 'auto_update_bone_display_mode', text='Auto Update Bone Display')
         col.prop(options, 'auto_update_bone_selection', text='Auto Update Bone Selection')
@@ -98,6 +119,7 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
 
 
 classes = (
-    Properties,
+    OptionProperties,
+    BoundingProperties,
     Panel,
 )
