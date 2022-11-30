@@ -80,8 +80,10 @@ class M3InputProcessor:
         self.m3 = m3
         self.version = m3.struct_desc.struct_version
 
-    def boolean(self, field, till_version=None):
+    def boolean(self, field, since_version=None, till_version=None):
         if (till_version is not None) and (self.version > till_version):
+            return
+        if (since_version is not None) and (self.version < since_version):
             return
         setattr(self.bl, field, False if getattr(self.m3, field) == 0 else True)
 
@@ -769,6 +771,10 @@ class Importer:
 
     def create_mesh(self):
         ob = self.ob
+
+        if not self.m3_division.regions.index:
+            return
+
         ob.m3_mesh_version = str(self.m3[self.m3_division.regions].struct_desc.struct_version)
         m3_vertices = self.m3[self.m3_model.vertices]
 

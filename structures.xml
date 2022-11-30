@@ -1368,11 +1368,11 @@
             <field name="pitch_min" type="float" default_value="0.0"/>
             <field name="pitch_max" type="float" default_value="0.0"/>
             <field name="pitch_weight" type="float" default_value="0.0" since_version="4"/>
-            <field name="unknownAt132" type="float" default_value="0.0"/>
-            <field name="unknownAt136" type="float" default_value="0.0"/>
-            <field name="unknownAt140" type="float" default_value="0.0" since_version="4"/>
-            <field name="unknownAt144" type="float" default_value="0.0" since_version="4"/>
-            <field name="unknownAt148" type="float" default_value="0.0" since_version="4"/>
+            <field name="unknown132" type="float" default_value="0.0"/>
+            <field name="unknown136" type="float" default_value="0.0"/>
+            <field name="unknown140" type="float" default_value="0.0" since_version="4"/>
+            <field name="unknown144" type="float" default_value="0.0" since_version="4"/>
+            <field name="unknown148" type="float" default_value="0.0" since_version="4"/>
         </fields>
     </structure>
 
@@ -2102,9 +2102,9 @@
             <field name="box_offset_y_front" type="FloatAnimationReferenceV0"/>
             <field name="box_offset_y_back" type="FloatAnimationReferenceV0"/>
             <field name="unknownca4e8e36" default_value="0" type="uint32"/>
-            <field name="alpha_over_time_init" type="float"/>
-            <field name="alpha_over_time_mid" type="float"/>
-            <field name="alpha_over_time_end" type="float"/>
+            <field name="alpha_init" type="float"/>
+            <field name="alpha_mid" type="float"/>
+            <field name="alpha_end" type="float"/>
             <field name="lifetime_attack" type="float"/>
             <field name="lifetime_attack_to" type="float"/>
             <field name="lifetime_hold" type="float"/>
@@ -2231,9 +2231,9 @@
             <version number="2" size="104"/>
         </versions>
         <fields>
-            <field name="type" type="uint32"/>
+            <field name="force_type" type="uint32"/>
             <field name="shape" type="uint32" default_value="0"/>
-            <field name="unknown1" type="uint32" default_value="0"/>
+            <field name="unknown_for0" type="uint32" default_value="0"/>
             <field name="bone" type="uint32"/>
             <field name="flags" type="uint32" default_value="0">
                 <bits>
@@ -2819,7 +2819,7 @@
                     <bit mask="0x40000" name="use_uv0"/> <!-- 1st UV coordinate -->
                     <bit mask="0x80000" name="use_uv1"/> <!-- 2nd UV coordinate -->
                     <bit mask="0x100000" name="use_uv2"/> <!-- 3th UV coordinate -->
-                    <bit mask="0x100000" name="use_uv3"/> <!-- 4th UV coordinate -->
+                    <bit mask="0x100000" name="use_uv3"/> <!-- 4th UV coordinate --> <!-- why is the mask the same as uv2? -->
                     <bit mask="0x40000000" name="use_uv4"/> <!-- 5th UV coordinate -->
                     <!--
                          UV flags aren't always set in order, for instance 0x41820261 has two UVs
@@ -2847,14 +2847,14 @@
             <field name="lights" type="Reference" ref_to="LITE"/>
             <field name="shadow_boxes" type="Reference" ref_to="SHBX" since_version="21"/>
             <field name="cameras" type="Reference" ref_to="CAM_"/>
-            <field name="d" type="Reference" ref_to="U16_"/>
+            <field name="camera_addon" type="Reference" ref_to="U16_"/> <!-- count seems to match camera count -->
             <field name="material_references" type="Reference" ref_to="MATM"/>
             <field name="materials_standard" type="Reference" ref_to="MAT_"/>
             <field name="materials_displacement" type="Reference" ref_to="DIS_"/>
             <field name="materials_composite" type="Reference" ref_to="CMP_"/>
             <field name="materials_terrain" type="Reference" ref_to="TER_"/>
             <field name="materials_volume" type="Reference" ref_to="VOL_"/>
-            <field name="unknown_maybe_ref0" type="Reference"/>
+            <field name="materials_unknown06" type="Reference"/>
             <field name="materials_creep" type="Reference" ref_to="CREP"/>
             <field name="materials_volumenoise" type="Reference" ref_to="VON_" since_version="25"/>
             <field name="materials_splatterrainbake" type="Reference" ref_to="STBM" since_version="26"/>

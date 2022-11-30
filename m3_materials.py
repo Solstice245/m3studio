@@ -390,7 +390,7 @@ def draw_composite_props(context, material, layout):
     op.collection = material.sections.path_from_id()
     for ii, item in enumerate(material.sections):
         row = box.row()
-        shared.draw_pointer_prop(row, section.id_data.m3_materialrefs, section, 'matref', icon='MATERIAL')
+        shared.draw_pointer_prop(row, item.id_data.m3_materialrefs, item, 'matref', icon='MATERIAL')
         row.prop(item, 'alpha_factor', text='Alpha Factor')
         op = row.operator('m3.collection_remove', icon='X', text='')
         op.collection, op.index = (material.sections.path_from_id(), ii)

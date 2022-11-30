@@ -651,15 +651,15 @@ def set_bone_shape(ob, bone):
     elif ob.m3_options.bone_display_mode == 'FOR_':
         for force in ob.m3_forces:
             if force.shape == 'CUBE':
-                add_mesh_data(force.bone, bl_mesh_gen.cube(force.size))
+                add_mesh_data(force.bone, bl_mesh_gen.cube((force.width, force.length, force.height)))
             elif force.shape == 'CYLINDER':
-                add_mesh_data(force.bone, bl_mesh_gen.cylinder(force.size, force.size[0]))
+                add_mesh_data(force.bone, bl_mesh_gen.cylinder((force.width, force.length, force.height), force.width))
             elif force.shape == 'SPHERE':
-                add_mesh_data(force.bone, bl_mesh_gen.sphere(force.size[0]))
+                add_mesh_data(force.bone, bl_mesh_gen.sphere(force.width))
             elif force.shape == 'HEMISPHERE':
-                add_mesh_data(force.bone, bl_mesh_gen.hemisphere(force.size[0]))
+                add_mesh_data(force.bone, bl_mesh_gen.hemisphere(force.width))
             elif force.shape == 'CONEDOME':
-                add_mesh_data(force.bone, bl_mesh_gen.cone_dome(force.size[1], force.size[0]))
+                add_mesh_data(force.bone, bl_mesh_gen.cone_dome(force.height, force.width))
 
     elif ob.m3_options.bone_display_mode == 'PAR_':
         for particle in ob.m3_particle_systems:

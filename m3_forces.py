@@ -39,7 +39,9 @@ def draw_props(force, layout):
     col.prop(force, 'force_type', text='Type')
     col = layout.column(align=True)
     col.prop(force, 'shape', text='Shape')
-    col.prop(force, 'size', text='Size')
+    col.prop(force, 'width', text='Width')
+    col.prop(force, 'height', text='Height')
+    col.prop(force, 'length', text='Length')
     col = layout.column()
     col.use_property_split = False
     col.prop(force, 'channels', text='Force Channels')
@@ -48,18 +50,21 @@ def draw_props(force, layout):
     col = layout.column_flow(align=True)
     col.prop(force, 'falloff', text='Falloff')
     col.prop(force, 'height_gradient', text='Height Gradient')
-    col.prop(force, 'unbounced', text='Unbounced')
+    col.prop(force, 'unbounded', text='Unbounded')
 
 
 class Properties(shared.M3BoneUserPropertyGroup):
     force_type: bpy.props.EnumProperty(options=set(), items=bl_enum.force_type, update=shared.bone_shape_update_event)
     shape: bpy.props.EnumProperty(options=set(), items=bl_enum.force_shape, update=shared.bone_shape_update_event)
     size: bpy.props.FloatVectorProperty(name='M3 Force Size', subtype='XYZ', size=3, min=0.001, default=tuple(3 * [1]), update=shared.bone_shape_update_event)
+    width: bpy.props.FloatProperty(name='M3 Force Width', min=0.001, default=1.0, update=shared.bone_shape_update_event)
+    height: bpy.props.FloatProperty(name='M3 Force Height', min=0.001, default=1.0, update=shared.bone_shape_update_event)
+    length: bpy.props.FloatProperty(name='M3 Force Length', min=0.001, default=1.0, update=shared.bone_shape_update_event)
     channels: bpy.props.BoolVectorProperty(options=set(), subtype='LAYER', size=32)
     strength: bpy.props.FloatProperty(name='M3 Force Strength', default=1)
     falloff: bpy.props.BoolProperty(options=set())
     height_gradient: bpy.props.BoolProperty(options=set())
-    unbounced: bpy.props.BoolProperty(options=set())
+    unbounded: bpy.props.BoolProperty(options=set())
 
 
 class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):

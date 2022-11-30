@@ -80,7 +80,7 @@ def to_m3_color(bl_col=None):
     return m3_color
 
 
-def to_m3_matrix(bl_matrix):
+def to_m3_matrix(bl_matrix):  # TODO needs adjustment
     m3_matrix = io_m3.structures['Matrix44'].get_version(0).instance()
     m3_matrix.x = to_m3_vec4(bl_matrix.col[0])
     m3_matrix.y = to_m3_vec4(bl_matrix.col[1])
@@ -161,7 +161,7 @@ class M3OutputProcessor:
             return
         if (till_version is not None) and (self.version > till_version):
             return
-        setattr(self.m3, field, to_m3_vec4(getattr(self.bl), field))
+        setattr(self.m3, field, to_m3_vec4(getattr(self.bl, field)))
 
     def color(self, field, since_version=None, till_version=None):
         if (since_version is not None) and (self.version < since_version):
@@ -293,29 +293,38 @@ class Exporter:
                 if not item.m3_export:
                     continue
                 if hasattr(item, 'bone'):
-                    item_bones.add(shared.m3_pointer_get(ob.data.bones, item.bone))
-                if hasattr(item, 'bone0'):
-                    item_bones.add(shared.m3_pointer_get(ob.data.bones, item.bone0))
-                if hasattr(item, 'bone1'):
-                    item_bones.add(shared.m3_pointer_get(ob.data.bones, item.bone1))
-                if hasattr(item, 'bone2'):
-                    item_bones.add(shared.m3_pointer_get(ob.data.bones, item.bone2))
+                    bone = shared.m3_pointer_get(ob.data.bones, item.bone)
+                    if bone:
+                        item_bones.add(bone)
+                    else:
+                        continue  # TODO warn items without valid bone that need one
                 if hasattr(item, 'material'):
                     matref = shared.m3_pointer_get(ob.m3_materialrefs, item.material)
                     if matref:
                         self.export_required_material_references.add(matref)
-                    # TODO items without valid material reference that need one should be invalidated
+                    else:
+                        continue  # TODO warn items without valid material reference that need one
                 self.export_required_bones = self.export_required_bones.union(item_bones)
                 export_items.append(item)
             return export_items
 
-        export_attachments = valid_collections_and_requirements(ob.m3_attachmentpoints)
+        export_attachment_points = valid_collections_and_requirements(ob.m3_attachmentpoints)
+        export_lights = valid_collections_and_requirements(ob.m3_lights)
+        export_shadow_boxes = valid_collections_and_requirements(ob.m3_shadowboxes)
+        export_cameras = valid_collections_and_requirements(ob.m3_cameras)
         export_material_references = valid_collections_and_requirements(ob.m3_materialrefs)
         export_particle_systems = valid_collections_and_requirements(ob.m3_particle_systems)
         export_particle_copies = []  # handled specially
         export_ribbons = valid_collections_and_requirements(ob.m3_ribbons)
         export_ribbon_splines = []  # handled specially
+        export_projections = valid_collections_and_requirements(ob.m3_projections)
+        export_forces = valid_collections_and_requirements(ob.m3_forces)
+        export_warps = valid_collections_and_requirements(ob.m3_warps)
+        export_ik_joints = []  # handled specially
+        export_turrets = []  # handled specially
         export_hittests = valid_collections_and_requirements(ob.m3_hittests)
+        export_attachment_volumes = []  # handled specially
+        export_billboards = []  # handled specially
 
         for copy in ob.m3_particle_copies:
             copy_bone = shared.m3_pointer_get(ob.data.bones, copy.bone)
@@ -335,10 +344,49 @@ class Exporter:
             if len(export_spline_points):
                 export_ribbon_splines.append(spline)
 
+        self.export_ik_joint_bones = []
+        for ik_joint in ob.m3_ikjoints:
+            bone = shared.m3_pointer_get(ob.data.bones, ik_joint.bone)
+            if bone:
+                bone_parent = bone
+                for ii in range(0, ik_joint.joint_length):
+                    if bone_parent.parent:
+                        bone_parent = bone_parent.parent if bone_parent else bone_parent
+                    else:
+                        pass  # TODO warning that joint length is invalid
+                        # ???? warn if ik joints have any collisions?
+                if bone_parent != bone:
+                    export_ik_joints.append(ik_joint)
+                    self.export_ik_joint_bones.append([bone, bone_parent])
+                    self.export_required_bones.add(bone)
+                    self.export_required_bones.add(bone_parent)
+
+        self.export_turret_data = []
+        # TODO assert that for each group ID, only one main bone exists
+        for turret in ob.m3_turrets:
+            turret_parts = []
+            for part in turret.parts:
+                part_bone = shared.m3_pointer_get(ob.data.bones, part.bone)
+                if part_bone:  # TODO warning if parts have invalid bones
+                    self.export_required_bones.add(part_bone)
+                    turret_parts.append([part, part_bone])
+            export_turrets.append(turret)
+            self.export_turret_data.append(turret_parts)
+
         # TODO warning if hittest bone is none
         hittest_bone = shared.m3_pointer_get(ob.data.bones, ob.m3_hittest_tight.bone)
         if hittest_bone:
             self.export_required_bones.add(hittest_bone)
+
+        self.attachment_bones = []
+        for attachment in export_attachment_points:
+            attachment_point_bone = shared.m3_pointer_get(ob.data.bones, attachment.bone)
+            for volume in attachment.volumes:
+                volume_bone = shared.m3_pointer_get(ob.data.bones, volume.bone)
+                if volume_bone:
+                    self.export_required_bones.add(volume_bone)
+                    export_attachment_volumes.append(volume)
+                    self.attachment_bones.append([attachment_point_bone, volume_bone])
 
         def export_bone_bool(bone):
             result = False
@@ -362,7 +410,15 @@ class Exporter:
             for child_bone in bone.children_recursive:
                 if export_bone_bool(child_bone):
                     self.bones.append(bone)
-                break
+                    break
+
+        self.billboard_bones = []
+        # billboards will not require bones, instead the billboard will be culled if the bone is not required
+        for billboard in ob.m3_billboards:
+            billboard_bone = shared.m3_pointer_get(ob.data.bones, billboard.bone)
+            if billboard.m3_export and billboard_bone and billboard_bone in self.bones and billboard_bone not in billboard_bones:
+                self.billboard_bones.append(billboard_bone)
+                export_billboards.append[billboard]
 
         material_versions = {
             1: ob.m3_materials_standard_version,
@@ -393,14 +449,29 @@ class Exporter:
         model_name_section = self.m3.section_for_reference(model, 'model_name')
         model_name_section.content_from_bytes(os.path.basename(filename))
 
+        # TODO self.create_sequences(model)
         self.create_bones(model)  # TODO needs correction matrices
-        self.create_division(model, export_regions, regn_version=ob.m3_mesh_version)
-        self.create_attachments(model, export_attachments)
-        self.create_materials(model, export_material_references, material_versions)
-        self.create_particle_systems(model, export_particle_systems, export_particle_copies, version=ob.m3_particle_systems_version)
+        self.create_division(model, export_regions, regn_version=ob.m3_mesh_version)  # TODO lookups are incorrect
+        self.create_attachment_points(model, export_attachment_points)  # TODO should exclude attachments with same bone as other attachments
+        self.create_lights(model, export_lights)
+        self.create_shadow_boxes(model, export_shadow_boxes)
+        self.create_cameras(model, export_cameras)
+        self.create_materials(model, export_material_references, material_versions)  # TODO standard flags, composites and starbursts
+        self.create_particle_systems(model, export_particle_systems, export_particle_copies, version=ob.m3_particle_systems_version)  # TODO emit points/regions
         self.create_ribbons(model, export_ribbons, export_ribbon_splines, version=ob.m3_ribbons_version)
-        self.create_hittests(model, export_hittests)
+        self.create_projections(model, export_projections)
+        self.create_forces(model, export_forces)
+        self.create_warps(model, export_warps)
+        # TODO self.create_physics_bodies(model, export_physics_bodies, version=ob.m3_rigid_bodies_version)  # TODO physics bodies bone should be exclusive
+        # TODO self.create_physics_joints(model, export_physics_joints)
+        # TODO self.create_physics_cloths(model, export_physics_cloths, version=ob.m3_physics_cloths_version)
+        self.create_ik_joints(model, export_ik_joints)
+        self.create_turrets(model, export_turrets, part_version=ob.m3_turrets_part_version)
         self.create_irefs(model)  # TODO work on this, results are currently very incorrect
+        self.create_hittests(model, export_hittests)
+        self.create_attachment_volumes(model, export_attachment_volumes)
+        self.create_billboards(model, export_billboards)
+        # ???? self.create_tmd_data(model, export_tmd_data)
 
         self.m3.resolve()
         self.m3.validate()
@@ -442,9 +513,10 @@ class Exporter:
             div_section = self.m3.section_for_reference(model, 'divisions', version=2)
             div = div_section.content_add()
 
-            msec_section = self.m3.section_for_reference(div, 'msec', version=1)
-            msec = msec_section.content_add()
-            msec.header.id = BOUNDING_ANIM_ID
+            # TODO
+            # msec_section = self.m3.section_for_reference(div, 'msec', version=1)
+            # msec = msec_section.content_add()
+            # msec.header.id = BOUNDING_ANIM_ID
 
             return
 
@@ -583,7 +655,7 @@ class Exporter:
 
             m3_vertices.extend(region_vertices)
             m3_faces.extend(region_faces)
-            m3_lookup.extend(region_lookup)
+            m3_lookup.extend(region_lookup)  # TODO lookup values are wrong
 
             # TODO mesh flags for versions 4+
             region = region_section.content_add()
@@ -610,7 +682,7 @@ class Exporter:
         face_section.content_iter_add(m3_faces)
         bone_lookup_section.content_iter_add(m3_lookup)
 
-    def create_attachments(self, model, attachments):
+    def create_attachment_points(self, model, attachments):
         if not attachments:
             return
 
@@ -626,6 +698,51 @@ class Exporter:
             m3_attachment.bone = self.bone_name_indices[attachment_bone.name]
             attachment_point_addon_section.content_add(0xffff)
         # add volumes later so that sections are in order of the modl data
+
+    def create_lights(self, model, lights):
+        if not lights:
+            return
+
+        light_section = self.m3.section_for_reference(model, 'lights', version=7)
+
+        for light in lights:
+            light_bone = shared.m3_pointer_get(self.ob.data.bones, light.bone)
+
+            m3_light = light_section.content_add()
+            m3_light.bone = self.bone_name_indices[light_bone.name]
+            processor = M3OutputProcessor(self, light, m3_light)
+            io_shared.io_light(processor)
+
+    def create_shadow_boxes(self, model, shadow_boxes):
+        if not shadow_boxes and int(self.ob.m3_model_version) >= 21:
+            return
+
+        shadow_box_section = self.m3.section_for_reference(model, 'shadow_boxes', version=3)
+
+        for shadow_box in shadow_boxes:
+            shadow_box_bone = shared.m3_pointer_get(self.ob.data.bones, shadow_box.bone)
+            m3_shadow_box = shadow_box_section.content_add()
+            m3_shadow_box.bone = self.bone_name_indices[shadow_box_bone.name]
+            processor = M3OutputProcessor(self, shadow_box, m3_shadow_box)
+            io_shared.io_shadow_box(processor)
+
+    def create_cameras(self, model, cameras):
+        if not cameras:
+            return
+
+        camera_section = self.m3.section_for_reference(model, 'cameras', version=3)
+
+        for camera in cameras:
+            camera_bone = shared.m3_pointer_get(self.ob.data.bones, camera.bone)
+            m3_camera = camera_section.content_add()
+            m3_camera_name_section = self.m3.section_for_reference(m3_camera, 'name')
+            m3_camera_name_section.content_from_bytes(camera.name)
+            m3_camera.bone = self.bone_name_indices[camera_bone.name]
+            processor = M3OutputProcessor(self, camera, m3_camera)
+            io_shared.io_camera(processor)
+
+        camera_addon_section = self.m3.section_for_reference(model, 'camera_addon')
+        camera_addon_section.content_iter_add([0xffff for camera in cameras])
 
     def create_materials(self, model, matrefs, versions):
         if not matrefs:
@@ -683,6 +800,8 @@ class Exporter:
                         else:
                             layer_section = self.m3.section_for_reference(m3_mat, layer_name_full, version=self.ob.m3_materiallayers_version)
                             m3_layer = layer_section.content_add()
+                            m3_layer_bitmap_section = self.m3.section_for_reference(m3_layer, 'color_bitmap')
+                            m3_layer_bitmap_section.content_from_bytes(layer.color_bitmap)
                             processor = M3OutputProcessor(self, layer, m3_layer)
                             io_shared.io_material_layer(processor)
 
@@ -830,41 +949,87 @@ class Exporter:
             else:
                 handle_to_spline_sections[ribbon.spline].references.append(m3_ribbon.spline)
 
-    def create_hittests(self, model, hittests):
-        if not hittests:
+    def create_projections(self, model, projections):
+        if not projections:
             return
 
-        # TODO export vertex/face data of mesh shapes
+        projection_section = self.m3.section_for_reference(model, 'projections', version=5)
 
-        hittests_section = self.m3.section_for_reference(model, 'hittests', version=1)
+        for projection in projections:
+            projection_bone = shared.m3_pointer_get(self.ob.data.bones, projection.bone)
+            m3_projection = projection_section.content_add()
+            m3_projection.bone = self.bone_name_indices[projection_bone.name]
+            m3_projection.material_reference_index = self.matref_handle_indices[projection.material]
+            processor = M3OutputProcessor(self, projection, m3_projection)
+            io_shared.io_projection(processor)
 
-        ht_tight = self.ob.m3_hittest_tight
-        ht_tight_bone = shared.m3_pointer_get(self.ob.data.bones, ht_tight.bone)
+            m3_projection.unknown58ae2b94 = self.init_anim_ref_vec3()
+            m3_projection.unknownf1f7110b = self.init_anim_ref_float()
+            m3_projection.unknown2035f500 = self.init_anim_ref_float()
+            m3_projection.unknown80d8189b = self.init_anim_ref_float()
 
-        m3_ht_tight = model.hittest_tight
-        m3_ht_tight.bone = self.bone_name_indices[ht_tight_bone.name]
+    def create_forces(self, model, forces):
+        if not forces:
+            return
 
-        for ii, item in enumerate(ht_tight.bl_rna.properties['shape'].enum_items):
-            if item.identifier == ht_tight.shape:
-                m3_ht_tight.shape = ii
-                break
+        force_section = self.m3.section_for_reference(model, 'forces', version=2)
 
-        m3_ht_tight.size0, m3_ht_tight.size1, m3_ht_tight.size2 = ht_tight.size
-        m3_ht_tight.matrix = to_m3_matrix(mathutils.Matrix.LocRotScale(ht_tight.location, ht_tight.rotation, ht_tight.scale))
+        for force in forces:
+            force_bone = shared.m3_pointer_get(self.ob.data.bones, force.bone)
+            m3_force = force_section.content_add()
+            m3_force.bone = self.bone_name_indices[force_bone.name]
+            processor = M3OutputProcessor(self, force, m3_force)
+            io_shared.io_force(processor)
 
-        for hittest in hittests:
-            hittest_bone = shared.m3_pointer_get(self.ob.data.bones, hittest.bone)
+    def create_warps(self, model, warps):
+        if not warps:
+            return
 
-            m3_hittest = hittests_section.content_add()
-            m3_hittest.bone = self.bone_name_indices[hittest_bone.name]
+        warp_section = self.m3.section_for_reference(model, 'warps', version=1)
 
-            for ii, item in enumerate(hittest.bl_rna.properties['shape'].enum_items):
-                if item.identifier == hittest.shape:
-                    m3_hittest.shape = ii
-                    break
+        for warp in warps:
+            warp_bone = shared.m3_pointer_get(self.ob.data.bones, warp.bone)
+            m3_warp = warp_section.content_add()
+            m3_warp.bone = self.bone_name_indices[warp_bone.name]
+            processor = M3OutputProcessor(self, warp, m3_warp)
+            io_shared.io_warp(processor)
 
-            m3_hittest.size0, m3_hittest.size1, m3_hittest.size2 = hittest.size
-            m3_hittest.matrix = to_m3_matrix(mathutils.Matrix.LocRotScale(hittest.location, hittest.rotation, hittest.scale))
+    def create_ik_joints(self, model, ik_joints):
+        if not ik_joints:
+            return
+
+        ik_joint_section = self.m3.section_for_reference(model, 'ik_joints', version=0)
+
+        for ik_joint, bones in zip(ik_joints, self.export_ik_joint_bones):
+            m3_ik_joint = ik_joint_section.content_add()
+            m3_ik_joint.bone_target = self.bone_name_indices[bones[0].name]
+            m3_ik_joint.bone_base = self.bone_name_indices[bones[1].name]
+            processor = M3OutputProcessor(self, ik_joint, m3_ik_joint)
+            io_shared.io_ik(processor)
+
+    def create_turrets(self, model, turrets, part_version):
+        if not turrets:
+            return
+
+        turret_part_section = self.m3.section_for_reference(model, 'turret_parts', version=part_version)
+        turret_section = self.m3.section_for_reference(model, 'turrets', version=0)
+
+        part_index = 0
+        for turret, turret_data in zip(turrets, self.export_turret_data):
+            m3_turret = turret_section.content_add()
+            m3_turret_part_index_section = self.m3.section_for_reference(m3_turret, 'parts')
+            m3_turret_name_section = self.m3.section_for_reference(m3_turret, 'name')
+            m3_turret_name_section.content_from_bytes(turret.name)
+
+            # TODO transfer matrix if part_version == 1
+            for part, bone in turret_data:
+                m3_part = turret_part_section.content_add()
+                m3_part.bone = self.bone_name_indices[bone.name]
+                processor = M3OutputProcessor(self, part, m3_part)
+                io_shared.io_turret_part(processor)
+
+                m3_turret_part_index_section.content_add(part_index)
+                part_index += 1
 
     def create_irefs(self, model):
         if not self.bones:
@@ -883,8 +1048,84 @@ class Exporter:
             bind_scale_matrix = mathutils.Matrix.LocRotScale(None, None, bone.m3_bind_scale)
             iref.matrix = to_m3_matrix(bind_scale_matrix @ rel_rest_matrix.inverted())
 
+    def create_hittests(self, model, hittests):
+        if not hittests:
+            return
+
+        hittests_section = self.m3.section_for_reference(model, 'hittests', version=1)
+
+        ht_tight = self.ob.m3_hittest_tight
+        ht_tight_bone = shared.m3_pointer_get(self.ob.data.bones, ht_tight.bone)
+
+        m3_ht_tight = model.hittest_tight
+        m3_ht_tight.bone = self.bone_name_indices[ht_tight_bone.name]
+
+        for ii, item in enumerate(ht_tight.bl_rna.properties['shape'].enum_items):
+            if item.identifier == ht_tight.shape:
+                m3_ht_tight.shape = ii
+                break
+
+        m3_ht_tight.size0, m3_ht_tight.size1, m3_ht_tight.size2 = ht_tight.size
+        m3_ht_tight.matrix = to_m3_matrix(mathutils.Matrix.LocRotScale(ht_tight.location, ht_tight.rotation, ht_tight.scale))
+
+        # TODO mesh volume
+
+        for hittest in hittests:
+            hittest_bone = shared.m3_pointer_get(self.ob.data.bones, hittest.bone)
+
+            m3_hittest = hittests_section.content_add()
+            m3_hittest.bone = self.bone_name_indices[hittest_bone.name]
+            m3_hittest.shape = hittest.bl_rna.properties['shape'].enum_items.find(hittest.shape)
+
+            # for ii, item in enumerate(hittest.bl_rna.properties['shape'].enum_items):
+            #     if item.identifier == hittest.shape:
+            #         m3_hittest.shape = ii
+            #         break
+
+            m3_hittest.size0, m3_hittest.size1, m3_hittest.size2 = hittest.size
+            m3_hittest.matrix = to_m3_matrix(mathutils.Matrix.LocRotScale(hittest.location, hittest.rotation, hittest.scale))
+
+            # TODO mesh volume
+
+    def create_attachment_volumes(self, model, volumes):
+        if not volumes:
+            return
+
+        attachment_volume_section = self.m3.section_for_reference(model, 'attachment_volumes', version=0)
+
+        if int(self.ob.m3_model_version) >= 23:
+            attachment_volume_addon0_section = self.m3.section_for_reference(model, 'attachment_volumes_addon0')
+            attachment_volume_addon0_section.content_iter_add([0 for volume in volumes])
+            attachment_volume_addon1_section = self.m3.section_for_reference(model, 'attachment_volumes_addon1')
+            attachment_volume_addon1_section.content_iter_add([0 for volume in volumes])
+
+        for volume, bones in zip(volumes, self.attachment_bones):
+            m3_volume = attachment_volume_section.content_add()
+            m3_volume.bone0 = self.bone_name_indices[bones[0].name]
+            m3_volume.bone1 = self.bone_name_indices[bones[1].name]
+            m3_volume.bone2 = self.bone_name_indices[bones[0].name]
+            m3_volume.shape = volume.bl_rna.properties['shape'].enum_items.find(volume.shape)
+            m3_volume.size0, m3_volume.size1, m3_volume.size2 = volume.size
+            m3_volume.matrix = to_m3_matrix(mathutils.Matrix.LocRotScale(volume.location, volume.rotation, volume.scale))
+
+            # TODO mesh volume
+
+    def create_billboards(self, model, billboards):
+        if not billboards:
+            return
+
+        billboard_section = self.m3.section_for_reference(model, 'billboards')
+
+        for billboard, bone in zip(billboards, self.billboard_bones):
+            m3_billboard = billboard_section.content_add()
+            m3_billboard.bone = self.bone_name_indices[bone.name]
+            processor = M3OutputProcessor(self, billboard, m3_billboard)
+            io_shared.io_billboard(processor)
+
     def new_anim_id(self):
         self.anim_id_count += 1  # increase first since we don't want to use 0
+        if self.anim_id_count == BOUNDING_ANIM_ID:
+            self.anim_id_count += 1
         return self.anim_id_count
 
     def init_anim_header(self, interpolation, anim_id=None):

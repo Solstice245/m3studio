@@ -47,7 +47,7 @@ def camera(field_of_view, focal_depth):
     x = field_of_view
     y = field_of_view / 1.5
     z = focal_depth / 2
-    vertices = [(0, 0, 0), (-x, -y, z), (-x, y, z), (x, -y, z), (x, y, z)]
+    vertices = [(0, 0, 0), (-x, -y, -z), (-x, y, -z), (x, -y, -z), (x, y, -z)]
     faces = [(0, 1, 2), (0, 1, 3), (0, 2, 4), (0, 3, 4)]
     return (vertices, [], faces)
 
@@ -142,7 +142,7 @@ def sphere(radius, sides=10, circles=10):
     for index in range(circles):
         angle = pi * (index) / (circles - 1)
         index_radius = radius * sin(angle)
-        height = -radius * cos(angle)
+        height = radius * cos(angle)
 
         mesh_data = get_circular_mesh_data(index, index_radius, height, sides, circles)
         vertices += mesh_data[0]
@@ -155,9 +155,9 @@ def hemisphere(radius, sides=10, circles=5):
     vertices = []
     faces = []
     for index in range(circles):
-        angle = pi * (index) / (circles - 1 * 2)
+        angle = pi * (index) / ((circles - 1) * 2)
         index_radius = radius * sin(angle)
-        height = -radius * cos(angle)
+        height = radius * cos(angle)
 
         mesh_data = get_circular_mesh_data(index, index_radius, height, sides, circles)
         vertices += mesh_data[0]

@@ -268,7 +268,7 @@ def io_shadow_box(processor):
 
 def io_camera(processor):
     processor.anim_float('field_of_view')
-    processor.integer('use_vertical_fov', since_version=3)
+    processor.boolean('use_vertical_fov', since_version=3)
     processor.enum('depth_of_field_type', since_version=5)
     processor.anim_float('far_clip', since_version=3)
     processor.anim_float('near_clip', since_version=3)
@@ -398,6 +398,7 @@ def io_particle_copy(processor):
 
 def io_ribbon(processor):
     processor.bit('additional_flags', 'world_space', since_version=8)
+    processor.boolean('world_space', till_version=6)
     processor.anim_float('length')
     # processor.anim_float('unknown75e0b576')
     # processor.integer('unknownd30655aa', till_version=6)
@@ -430,7 +431,6 @@ def io_ribbon(processor):
     processor.float('mass2')
     # processor.float('unknownc7004d01')
     # processor.integer('unknown20683e1b', till_version=6)
-    processor.integer('world_space', till_version=6)
     processor.bits_16('local_forces')
     processor.bits_16('world_forces')
     # processor.integer('unknownfb168d8c', since_version=9)
@@ -496,9 +496,9 @@ def io_projection(processor):
     processor.anim_float('box_offset_x_right')
     processor.anim_float('box_offset_y_front')
     processor.anim_float('box_offset_y_back')
-    processor.float('alpha_over_time_init')
-    processor.float('alpha_over_time_mid')
-    processor.float('alpha_over_time_end')
+    processor.float('alpha_init')
+    processor.float('alpha_mid')
+    processor.float('alpha_end')
     processor.float('lifetime_attack')
     processor.float('lifetime_attack_to')
     processor.float('lifetime_hold')
@@ -517,8 +517,9 @@ def io_projection(processor):
 
 
 def io_force(processor):
-    processor.enum('type')
+    processor.enum('force_type')
     processor.enum('shape')
+    # processor.integer('unknown_for0)  # ! uknown
     processor.bit('flags', 'falloff')
     processor.bit('flags', 'height_gradient')
     processor.bit('flags', 'unbounded')
@@ -532,6 +533,10 @@ def io_force(processor):
 def io_warp(processor):
     processor.anim_float('radius')
     processor.anim_float('compression_strength')
+    # processor.anim_float('unknown9306aac0')
+    # processor.anim_float('unknown50c7f2b4')
+    # processor.anim_float('unknown8d9c977c')
+    # processor.anim_float('unknownca6025a2')
 
 
 def io_ribbon_spline(processor):
@@ -637,11 +642,11 @@ def io_turret_part(processor):
     processor.float('pitch_min')
     processor.float('pitch_max')
     processor.float('pitch_weight', since_version=4)
-    processor.integer('unknownAt132')
-    processor.integer('unknownAt136')
-    processor.integer('unknownAt140', since_version=4)
-    processor.integer('unknownAt144', since_version=4)
-    processor.integer('unknownAt148', since_version=4)
+    processor.integer('unknown132')
+    processor.integer('unknown136')
+    processor.integer('unknown140', since_version=4)
+    processor.integer('unknown144', since_version=4)
+    processor.integer('unknown148', since_version=4)
 
 
 def io_billboard(processor):
