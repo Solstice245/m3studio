@@ -2847,7 +2847,7 @@
             <field name="lights" type="Reference" ref_to="LITE"/>
             <field name="shadow_boxes" type="Reference" ref_to="SHBX" since_version="21"/>
             <field name="cameras" type="Reference" ref_to="CAM_"/>
-            <field name="camera_addon" type="Reference" ref_to="U16_"/> <!-- count seems to match camera count -->
+            <field name="cameras_addon" type="Reference" ref_to="U16_"/> <!-- count seems to match camera count -->
             <field name="material_references" type="Reference" ref_to="MATM"/>
             <field name="materials_standard" type="Reference" ref_to="MAT_"/>
             <field name="materials_displacement" type="Reference" ref_to="DIS_"/>

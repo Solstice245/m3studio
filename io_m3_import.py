@@ -1333,6 +1333,7 @@ class Importer:
         me_ob.parent = self.ob
         me_ob.hide_viewport = True
         me_ob.hide_render = True
+        me_ob.m3_mesh_export = False
         bpy.context.scene.collection.objects.link(me_ob)
 
         bl_vert_data = []
@@ -1374,6 +1375,7 @@ class Importer:
         me_ob.parent = self.ob
         me_ob.hide_viewport = True
         me_ob.hide_render = True
+        me_ob.m3_mesh_export = False
         bpy.context.scene.collection.objects.link(me_ob)
 
         bl_vert_data = []

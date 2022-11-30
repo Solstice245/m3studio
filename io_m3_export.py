@@ -253,6 +253,7 @@ class Exporter:
         self.anim_id_count = 0
         self.uv_count = 0
         self.skinned_bones = []
+        self.mesh_to_basic_volume_sections = {}
 
         self.export_required_material_references = set()
         self.export_required_bones = set()
@@ -434,6 +435,8 @@ class Exporter:
             12: 1,
         }
 
+        self.depsgraph = bpy.context.evaluated_depsgraph_get()
+
         # TODO warning if meshes and particles have materials or layers in common
         # TODO warning if layers have rtt channel collision, also only to be used in standard material
 
@@ -558,11 +561,9 @@ class Exporter:
         m3_faces = []
         m3_lookup = []
 
-        depsgraph = bpy.context.evaluated_depsgraph_get()
-
         for ob in mesh_objects:
             bm = bmesh.new(use_operators=True)
-            bm.from_object(ob, depsgraph)
+            bm.from_object(ob, self.depsgraph)
             bmesh.ops.triangulate(bm, faces=bm.faces)
 
             sign_layer = bm.faces.layers.int.get('m3sign') or bm.faces.layers.int.new('m3sign')
@@ -741,8 +742,8 @@ class Exporter:
             processor = M3OutputProcessor(self, camera, m3_camera)
             io_shared.io_camera(processor)
 
-        camera_addon_section = self.m3.section_for_reference(model, 'camera_addon')
-        camera_addon_section.content_iter_add([0xffff for camera in cameras])
+        cameras_addon_section = self.m3.section_for_reference(model, 'camera_addons')
+        cameras_addon_section.content_iter_add([0xffff for camera in cameras])
 
     def create_materials(self, model, matrefs, versions):
         if not matrefs:
@@ -1068,7 +1069,8 @@ class Exporter:
         m3_ht_tight.size0, m3_ht_tight.size1, m3_ht_tight.size2 = ht_tight.size
         m3_ht_tight.matrix = to_m3_matrix(mathutils.Matrix.LocRotScale(ht_tight.location, ht_tight.rotation, ht_tight.scale))
 
-        # TODO mesh volume
+        if m3_ht_tight.shape == 4:
+            self.get_basic_volume_object(ht_tight.mesh_object, m3_ht_tight)
 
         for hittest in hittests:
             hittest_bone = shared.m3_pointer_get(self.ob.data.bones, hittest.bone)
@@ -1077,15 +1079,11 @@ class Exporter:
             m3_hittest.bone = self.bone_name_indices[hittest_bone.name]
             m3_hittest.shape = hittest.bl_rna.properties['shape'].enum_items.find(hittest.shape)
 
-            # for ii, item in enumerate(hittest.bl_rna.properties['shape'].enum_items):
-            #     if item.identifier == hittest.shape:
-            #         m3_hittest.shape = ii
-            #         break
-
             m3_hittest.size0, m3_hittest.size1, m3_hittest.size2 = hittest.size
             m3_hittest.matrix = to_m3_matrix(mathutils.Matrix.LocRotScale(hittest.location, hittest.rotation, hittest.scale))
 
-            # TODO mesh volume
+            if m3_hittest.shape == 4:
+                self.get_basic_volume_object(hittest.mesh_object, m3_hittest)
 
     def create_attachment_volumes(self, model, volumes):
         if not volumes:
@@ -1108,7 +1106,8 @@ class Exporter:
             m3_volume.size0, m3_volume.size1, m3_volume.size2 = volume.size
             m3_volume.matrix = to_m3_matrix(mathutils.Matrix.LocRotScale(volume.location, volume.rotation, volume.scale))
 
-            # TODO mesh volume
+            if m3_volume.shape == 4:
+                self.get_basic_volume_object(volume.mesh_object, m3_volume)
 
     def create_billboards(self, model, billboards):
         if not billboards:
@@ -1121,6 +1120,29 @@ class Exporter:
             m3_billboard.bone = self.bone_name_indices[bone.name]
             processor = M3OutputProcessor(self, billboard, m3_billboard)
             io_shared.io_billboard(processor)
+
+    def get_basic_volume_object(self, mesh_ob, m3):
+        if mesh_ob.name not in self.mesh_to_basic_volume_sections.keys():
+            bm = bmesh.new(use_operators=True)
+            bm.from_object(mesh_ob, self.depsgraph)
+            bmesh.ops.triangulate(bm, faces=bm.faces)
+
+            vert_data = [to_m3_vec3(vert.co) for vert in bm.verts]
+            face_data = []
+
+            for face in bm.faces:
+                for vert in face.verts:
+                    face_data.append(vert.index)
+
+            vert_section = self.m3.section_for_reference(m3, 'vertices')
+            vert_section.content_iter_add(vert_data)
+            face_section = self.m3.section_for_reference(m3, 'face_data')
+            face_section.content_iter_add(face_data)
+            self.mesh_to_basic_volume_sections[mesh_ob.name] = [vert_data, face_data]
+        else:
+            vert_section, face_section = self.mesh_to_basic_volume_sections[mesh_ob.name]
+            vert_section.references.append(m3.vertices)
+            face_section.references.append(m3.face_data)
 
     def new_anim_id(self):
         self.anim_id_count += 1  # increase first since we don't want to use 0

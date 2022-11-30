@@ -21,7 +21,7 @@ import bmesh
 from . import shared
 
 
-desc_mesh_export = 'The mesh will be exported to m3'
+desc_mesh_export = 'The mesh will be exported to m3. If disabled, this object may still be used as a volume'
 
 
 def register_props():
@@ -216,6 +216,8 @@ class Panel(bpy.types.Panel):
         layout.use_property_split = True
         ob = context.object
         parent = ob.parent if ob.parent.type == 'ARMATURE' else None
+
+        layout.prop(ob, 'm3_mesh_export', text='Export To M3')
 
         if parent:
             box = layout.box()
