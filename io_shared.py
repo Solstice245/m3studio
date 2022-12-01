@@ -573,7 +573,7 @@ def io_rigid_body(processor):
     processor.bit('flags', 'collidable')
     processor.bit('flags', 'walkable')
     processor.bit('flags', 'stackable')
-    processor.bit('flags', 'simulate_on_collision')
+    processor.bit('flags', 'simulate_collision')
     processor.bit('flags', 'ignore_local_bodies')
     processor.bit('flags', 'always_exists')
     processor.bit('flags', 'no_simulation')

@@ -26,7 +26,7 @@ from . import io_shared
 from . import shared
 
 
-BOUNDING_ANIM_ID = 0x1f9bd2
+BOUNDING_ANIM_ID = 0x001f9bd2
 INT16_MIN = (-(1 << 15))
 INT16_MAX = ((1 << 15) - 1)
 
@@ -254,37 +254,11 @@ class Exporter:
         self.uv_count = 0
         self.skinned_bones = []
         self.mesh_to_basic_volume_sections = {}
+        self.mesh_to_physics_volume_sections = {}
 
+        self.export_required_regions = set()
         self.export_required_material_references = set()
         self.export_required_bones = set()
-
-        self.export_regions = []
-        for child in ob.children:
-            if child.type == 'MESH' and child.m3_mesh_export:
-                me = child.data
-                me.calc_loop_triangles()
-
-                if len(me.loop_triangles) > 0:
-                    self.export_regions.append(child)
-
-                    valid_mesh_material_refs = 0
-                    for mesh_matref in child.m3_mesh_material_refs:
-                        matref = shared.m3_pointer_get(ob.m3_materialrefs, mesh_matref.bl_handle)
-                        if matref:
-                            self.export_required_material_references.add(matref)
-                            valid_mesh_material_refs += 1
-
-                    assert valid_mesh_material_refs != 0
-                    # TODO improve invalidation so that a list of all
-                    # TODO warnings and exceptions can be made
-
-                    for vertex_group in child.vertex_groups:
-                        group_bone = ob.data.bones.get(vertex_group.name)
-                        if group_bone:
-                            self.export_required_bones.add(group_bone)
-                            self.skinned_bones.append(group_bone)
-
-                    self.uv_count = max(self.uv_count, len(me.uv_layers))
 
         def valid_collections_and_requirements(collection):
             # TODO have second unexposed export custom prop for auto-culling such as invalid attachment point name
@@ -309,6 +283,7 @@ class Exporter:
                 export_items.append(item)
             return export_items
 
+        export_sequences = []  # handled specially
         export_attachment_points = valid_collections_and_requirements(ob.m3_attachmentpoints)
         export_lights = valid_collections_and_requirements(ob.m3_lights)
         export_shadow_boxes = valid_collections_and_requirements(ob.m3_shadowboxes)
@@ -321,6 +296,9 @@ class Exporter:
         export_projections = valid_collections_and_requirements(ob.m3_projections)
         export_forces = valid_collections_and_requirements(ob.m3_forces)
         export_warps = valid_collections_and_requirements(ob.m3_warps)
+        export_physics_bodies = []  # handled specially
+        export_physics_joints = []  # handled specially
+        export_physics_cloths = []  # handled specially
         export_ik_joints = []  # handled specially
         export_turrets = []  # handled specially
         export_hittests = valid_collections_and_requirements(ob.m3_hittests)
@@ -339,7 +317,11 @@ class Exporter:
         for matref in self.export_required_material_references.copy():
             recurse_composite_materials(matref)
 
+        # TODO exclude materials if their type cannot be exported in model version
+
         for copy in ob.m3_particle_copies:
+            if not copy.m3_export:
+                continue
             copy_bone = shared.m3_pointer_get(ob.data.bones, copy.bone)
             if len(copy.systems) and copy_bone and copy.m3_export:
                 self.export_required_bones.add(copy_bone)
@@ -357,8 +339,68 @@ class Exporter:
             if len(export_spline_points):
                 export_ribbon_splines.append(spline)
 
+        self.physics_shapes_handle_to_shape = {}
+        self.physics_shape_handle_to_volumes = {}
+        physics_shape_used_bones = []
+        for physics_body in ob.m3_rigidbodies:
+            if not physics_body.m3_export:
+                continue
+            bone = shared.m3_pointer_get(ob.data.bones, physics_body.bone)
+            if bone and bone not in physics_shape_used_bones:
+                physics_shape_used_bones.append(bone)
+                physics_shape = shared.m3_pointer_get(ob.m3_physicsshapes, physics_body.physics_shape)
+                if physics_shape:
+                    if physics_shape.bl_handle not in self.physics_shape_handle_to_volumes.keys():
+                        valid_volumes = []
+                        for volume in physics_shape.volumes:
+                            if volume.shape == 'MESH' or volume.shape == 'CONVEXHULL':
+                                if volume.mesh_object:
+                                    valid_volumes.append(volume)
+                                    # TODO warning if mesh type volume has no mesh object
+                            else:
+                                valid_volumes.append(volume)
+                        if len(valid_volumes):
+                            self.physics_shape_handle_to_volumes[physics_shape.bl_handle] = valid_volumes
+                            export_physics_bodies.append(physics_body)
+                        else:
+                            pass  # TODO warning that physics body shape has no valid volumes
+                else:
+                    pass  # TODO warning that physics body has no shape
+            else:
+                pass  # TODO warning that physics body has no valid bone or bone is already used
+
+        for physics_joint in ob.m3_physicsjoints:
+            if not physics_joint.m3_export:
+                continue
+            body1 = shared.m3_pointer_get(export_physics_bodies, physics_joint.rigidbody1)
+            body2 = shared.m3_pointer_get(export_physics_bodies, physics_joint.rigidbody2)
+            if body1 and body2:
+                export_physics_joints.append(physics_joint)
+
+        self.physics_cloth_constraint_handle_to_volumes = {}
+        # TODO assert that any given object is only used once in physics cloths.
+        # TODO assert that the objects vertex group name sets match.
+        for physics_cloth in ob.m3_cloths:
+            if physics_cloth.m3_export:
+                if physics_cloth.mesh_object and physics_cloth.simulator_object:
+                    self.export_required_regions.add(physics_cloth.mesh_object)
+                    self.export_required_regions.add(physics_cloth.simulator_object)
+                    export_physics_cloths.append(physics_cloth)
+
+                    constraint_set = shared.m3_pointer_get(ob.m3_clothconstraintsets, physics_cloth.constraint_set)
+                    valid_volumes = []
+                    for constraint in constraint_set.constraints:
+                        bone = shared.m3_pointer_get(ob.data.bones, constraint.bone)
+                        if constraint.m3_export and bone:
+                            self.export_required_bones.add(bone)
+                            valid_volumes.append(constraint)
+                    if len(valid_volumes):
+                        self.physics_cloth_constraint_handle_to_volumes[constraint_set.bl_handle] = valid_volumes
+
         self.export_ik_joint_bones = []
         for ik_joint in ob.m3_ikjoints:
+            if not ik_joint.m3_export:
+                continue
             bone = shared.m3_pointer_get(ob.data.bones, ik_joint.bone)
             if bone:
                 bone_parent = bone
@@ -377,6 +419,8 @@ class Exporter:
         self.export_turret_data = []
         # TODO assert that for each group ID, only one main bone exists
         for turret in ob.m3_turrets:
+            if not turret.m3_export:
+                continue
             turret_parts = []
             for part in turret.parts:
                 part_bone = shared.m3_pointer_get(ob.data.bones, part.bone)
@@ -400,6 +444,33 @@ class Exporter:
                     self.export_required_bones.add(volume_bone)
                     export_attachment_volumes.append(volume)
                     self.attachment_bones.append([attachment_point_bone, volume_bone])
+
+        self.export_regions = []
+        for child in ob.children:
+            if child.type == 'MESH' and (child.m3_mesh_export or child in self.export_required_regions):
+                me = child.data
+                me.calc_loop_triangles()
+
+                if len(me.loop_triangles) > 0:
+                    self.export_regions.append(child)
+
+                    valid_mesh_material_refs = 0
+                    for mesh_matref in child.m3_mesh_material_refs:
+                        matref = shared.m3_pointer_get(ob.m3_materialrefs, mesh_matref.bl_handle)
+                        if matref:
+                            self.export_required_material_references.add(matref)
+                            valid_mesh_material_refs += 1
+
+                    assert valid_mesh_material_refs != 0
+                    # TODO improve invalidation so that a list of all warnings and exceptions can be made
+
+                    for vertex_group in child.vertex_groups:
+                        group_bone = ob.data.bones.get(vertex_group.name)
+                        if group_bone:
+                            self.export_required_bones.add(group_bone)
+                            self.skinned_bones.append(group_bone)
+
+                    self.uv_count = max(self.uv_count, len(me.uv_layers))
 
         def export_bone_bool(bone):
             result = False
@@ -447,8 +518,6 @@ class Exporter:
             12: 1,
         }
 
-        self.depsgraph = bpy.context.evaluated_depsgraph_get()
-
         # TODO warning if meshes and particles have materials or layers in common
         # TODO warning if layers have rtt channel collision, also only to be used in standard material
 
@@ -460,6 +529,8 @@ class Exporter:
         for matref in ob.m3_materialrefs:
             if matref in self.export_required_material_references:
                 self.matref_handle_indices[matref.bl_handle] = len(self.matref_handle_indices.keys())
+
+        self.depsgraph = bpy.context.evaluated_depsgraph_get()
 
         model_section = self.m3.section_for_reference(self.m3[0][0], 'model', version=ob.m3_model_version)
         model = model_section.content_add()
@@ -483,15 +554,15 @@ class Exporter:
         self.create_lights(model, export_lights)
         self.create_shadow_boxes(model, export_shadow_boxes)
         self.create_cameras(model, export_cameras)
-        self.create_materials(model, export_material_references, material_versions)  # TODO standard flags, and starbursts
+        self.create_materials(model, export_material_references, material_versions)  # TODO standard flags and test volume, volume noise, stb
         self.create_particle_systems(model, export_particle_systems, export_particle_copies, version=ob.m3_particle_systems_version)
         self.create_ribbons(model, export_ribbons, export_ribbon_splines, version=ob.m3_ribbons_version)
         self.create_projections(model, export_projections)
         self.create_forces(model, export_forces)
         self.create_warps(model, export_warps)
-        # TODO self.create_physics_bodies(model, export_physics_bodies, version=ob.m3_rigid_bodies_version)  # TODO physics bodies bone should be exclusive
-        # TODO self.create_physics_joints(model, export_physics_joints)
-        # TODO self.create_physics_cloths(model, export_physics_cloths, version=ob.m3_physics_cloths_version)
+        self.create_physics_bodies(model, export_physics_bodies, body_version=ob.m3_rigidbodies_version, shape_version=ob.m3_physicsshapes_version)
+        self.create_physics_joints(model, export_physics_joints)
+        self.create_physics_cloths(model, export_physics_cloths, version=ob.m3_cloths_version)  # TODO simulation rigging
         self.create_ik_joints(model, export_ik_joints)
         self.create_turrets(model, export_turrets, part_version=ob.m3_turrets_part_version)
         self.create_irefs(model)
@@ -555,11 +626,10 @@ class Exporter:
 
         model.vertex_flags = 0x182007d
 
-        model.bit_set('vertex_flags', 'use_uv0', self.uv_count > 0)
-        model.bit_set('vertex_flags', 'use_uv1', self.uv_count > 1)
-        model.bit_set('vertex_flags', 'use_uv2', self.uv_count > 2)
-        model.bit_set('vertex_flags', 'use_uv3', self.uv_count > 3)
-        model.bit_set('vertex_flags', 'use_uv4', self.uv_count > 4)
+        model.bit_set('vertex_flags', 'use_uv0', self.uv_count > 1)
+        model.bit_set('vertex_flags', 'use_uv1', self.uv_count > 2)
+        model.bit_set('vertex_flags', 'use_uv2', self.uv_count > 3)
+        model.bit_set('vertex_flags', 'use_uv3', self.uv_count > 4)
 
         rgb_col = 'm3color'
         alpha_col = 'm3alpha'
@@ -653,7 +723,7 @@ class Exporter:
                     for index, weight in weight_lookup_pairs:
                         weighted = 0
                         if weight:
-                            weight += 1
+                            weighted += 1
                             if index not in region_lookup:
                                 region_lookup.append(index)
                             correct_sum_weight += weight / sum_weight
@@ -871,7 +941,7 @@ class Exporter:
                             m3_layer.unknowna4ec0796 = self.init_anim_ref_uint32(0, interpolation=1)
                             m3_layer.unknowna44bf452 = self.init_anim_ref_float(1.0)
 
-                # TODO manage flags of standard material, and lens flare starbursts.
+                # TODO manage flags of standard material
                 if type_ii == 3:  # composite material
                     valid_sections = []
                     for section in mat.sections:
@@ -1074,6 +1144,172 @@ class Exporter:
             processor = M3OutputProcessor(self, warp, m3_warp)
             io_shared.io_warp(processor)
 
+    def create_physics_bodies(self, model, physics_bodies, body_version, shape_version):
+        if not physics_bodies:
+            return
+
+        physics_body_section = self.m3.section_for_reference(model, 'physics_rigidbodies', version=body_version)
+
+        shape_to_section = {}
+        for physics_body in physics_bodies:
+            physics_body_bone = shared.m3_pointer_get(self.ob.data.bones, physics_body.bone)
+
+            m3_physics_body = physics_body_section.content_add()
+            m3_physics_body.bone = self.bone_name_indices[physics_body_bone.name]
+            processor = M3OutputProcessor(self, physics_body, m3_physics_body)
+            io_shared.io_rigid_body(processor)
+
+            if physics_body.physics_shape in self.physics_shape_handle_to_volumes.keys():
+                if not shape_to_section.get(physics_body.physics_shape):
+                    shape_section = self.m3.section_for_reference(m3_physics_body, 'physics_shape', version=shape_version)
+
+                    for volume in self.physics_shape_handle_to_volumes[physics_body.physics_shape]:
+                        m3_volume = shape_section.content_add()
+                        m3_volume.shape = volume.bl_rna.properties['shape'].enum_items.find(volume.shape)
+                        m3_volume.size0, m3_volume.size1, m3_volume.size2 = volume.size
+                        m3_volume.matrix = to_m3_matrix(mathutils.Matrix.LocRotScale(volume.location, volume.rotation, volume.scale))
+
+                        if m3_volume.shape >= 4:
+                            if int(shape_version) == 1:
+                                if m3_volume.shape == 4:
+                                    m3_volume.shape = 5  # TODO temporary solution while convex hull research is still needed
+                                self.get_basic_volume_object(volume.mesh_object, m3_volume)
+                            else:
+                                self.get_physics_volume_object(volume.mesh_object, m3_volume)
+                else:
+                    shape_section = self.shape_to_section[physics_body.physics_shape]
+                    shape_section.references.append(m3_physics_body.physics_shape)
+
+    def create_physics_joints(self, model, physics_joints):
+        if not physics_joints:
+            return
+
+        physics_joint_section = self.m3.section_for_reference(model, 'physics_joints', version=0)
+
+        for physics_joint in physics_joints:
+            body1 = shared.m3_pointer_get(export_physics_bodies, physics_joint.rigidbody1)
+            body2 = shared.m3_pointer_get(export_physics_bodies, physics_joint.rigidbody2)
+            bone1 = shared.m3_pointer_get(self.ob.data.bones, body1.bone)
+            bone2 = shared.m3_pointer_get(self.ob.data.bones, body2.bone)
+            m3_physics_joint = physics_joint_section.content_add()
+            m3_physics_joint.bone1 = self.bone_name_indices[bone1.name]
+            m3_physics_joint.bone2 = self.bone_name_indices[bone2.name]
+            # TODO make algorithm which calculates the appropriate matrices rather than exposing to the UI.
+            # TODO they seem to have a specific relation to how the bone rest matrices differ.
+            m3_physics_joint.matrix1 = to_m3_matrix(mathutils.Matrix.LocRotScale(physics_joint.location1, physics_joint.rotation1, (1.0, 1.0, 1.0)))
+            m3_physics_joint.matrix2 = to_m3_matrix(mathutils.Matrix.LocRotScale(physics_joint.location2, physics_joint.rotation2, (1.0, 1.0, 1.0)))
+            processor = M3OutputProcessor(self, physics_joint, m3_physics_joint)
+            io_shared.io_rigid_body_joint(processor)
+
+    def create_physics_cloths(self, model, physics_cloths, version):
+        if not physics_cloths or int(self.ob.m3_model_version) < 28:
+            return
+
+        physics_cloth_section = self.m3.section_for_reference(model, 'physics_cloths', version=version)
+
+        constraints_sections = {}
+        for physics_cloth in physics_cloths:
+            mesh_ob = physics_cloth.mesh_object
+            sim_ob = physics_cloth.simulator_object
+
+            m3_physics_cloth = physics_cloth_section.content_add()
+            m3_physics_cloth.influenced_region_index = self.export_regions.index(mesh_ob)
+
+            skin_bones_section = self.m3.section_for_reference(m3_physics_cloth, 'skin_bones')
+            skin_bones = set()
+            vertex_simulated_section = self.m3.section_for_reference(m3_physics_cloth, 'vertex_simulated')
+            vertex_simulated_list = []
+            vertex_bones_section = self.m3.section_for_reference(m3_physics_cloth, 'vertex_bones')
+            vertex_weights_section = self.m3.section_for_reference(m3_physics_cloth, 'vertex_weights')
+
+            if physics_cloth.constraint_set not in constraints_sections.keys():
+                constraints_section = self.m3.section_for_reference(m3_physics_cloth, 'constraints', version=0)
+                constraints_sections[physics_cloth.constraint_set] = constraints_section
+                for volume in self.physics_cloth_constraint_handle_to_volumes[physics_cloth.constraint_set]:
+                    volume_bone = shared.m3_pointer_get(self.ob.data.bones, volume.bone)
+                    skin_bones.add(self.bone_name_indices[volume_bone.name])
+                    m3_volume = constraints_section.content_add()
+                    m3_volume.bone = self.bone_name_indices[volume_bone.name]
+                    m3_volume.matrix = to_m3_matrix(mathutils.Matrix.LocRotScale(volume.location, volume.rotation, volume.scale))
+                    m3_volume.height = volume.height
+                    m3_volume.radius = volume.radius
+            else:
+                constraints_section = constraints_sections[physics_cloth.constraint_set]
+                constraints_section.references.append(m3_physics_cloth.constraints)
+
+            influence_map_section = self.m3.section_for_reference(m3_physics_cloth, 'influence_map', version=0)
+            m3_influence_map = influence_map_section.content_add()
+            m3_influence_map.influenced_region_index = self.export_regions.index(mesh_ob)
+            m3_influence_map.simulation_region_index = self.export_regions.index(sim_ob)
+
+            sim_group_names = [group.name for group in sim_ob.vertex_groups]
+            sim_group_verts = {group.name: [] for group in sim_ob.vertex_groups}
+
+            sim_bm = bmesh.new()
+            sim_bm.from_object(sim_ob, self.depsgraph)
+
+            layer_deform = sim_bm.verts.layers.deform.get('m3lookup')
+            layer_clothsim = sim_bm.verts.layers.int.get('m3clothsim') or sim_bm.verts.layers.int.new('m3clothsim')
+
+            for vert in sim_bm.verts:
+                bone_weight_pairs = vert[layer_deform].items()
+                vertex_bones = 0
+                vertex_weights = 0
+                # assume that weights are already normalized
+                for index, weight in bone_weight_pairs:
+                    weighted = 0
+                    if weight:
+                        bone_index = self.bone_name_indices[sim_group_names[index]]
+                        vertex_bones |= bone_index << (weighted * 8)
+                        vertex_weights |= round(weight * 255) << (weighted * 8)
+                        skin_bones.add(bone_index)
+                        sim_group_verts[sim_group_names[index]].append(vert)
+                        weighted += 1
+                    if weighted >= 4:
+                        break
+
+                vertex_simulated_list.append(vert[layer_clothsim])
+                vertex_bones_section.content_add(vertex_bones)
+                vertex_weights_section.content_add(vertex_weights)
+
+            skin_bones_section.content_iter_add(list(skin_bones))
+            vertex_simulated_section.content_from_bytes(vertex_simulated_list)
+
+            simulation_vertex_lookups_section = self.m3.section_for_reference(m3_influence_map, 'simulation_vert_lookups')
+            simulation_vertex_weights_section = self.m3.section_for_reference(m3_influence_map, 'simulation_vert_weights')
+
+            mesh_bm = bmesh.new()
+            mesh_bm.from_object(mesh_ob, self.depsgraph)
+
+            mesh_group_names = [group.name for group in mesh_ob.vertex_groups]
+            mesh_group_to_sim_group_verts = {ii: sim_group_verts[mesh_group_names[ii]] for ii in range(len(mesh_ob.vertex_groups))}
+
+            for vert in mesh_bm.verts:
+                layer_deform = mesh_bm.verts.layers.deform.get('m3lookup')
+                group_weight_pairs = vert[layer_deform].items()
+
+                sim_verts = 0
+                sim_weights = 0
+                weighted = 0
+                used_sim_verts = []
+                for index, weight in group_weight_pairs:
+                    #  there should be always be sim verts. if not, some user error likely has occurred
+                    if weight:
+                        distance_sim_verts = []
+                        for sim_vert in mesh_group_to_sim_group_verts[index]:
+                            if sim_vert not in used_sim_verts:
+                                distance_sim_verts.append([(vert.co - sim_vert.co).length, sim_vert])
+                                used_sim_verts.append(sim_vert)
+                        distance_sim_verts.sort()
+                        sim_verts |= distance_sim_verts[0][1].index << (weighted * 16)
+                        sim_weights |= round(weight * 255) << (weighted * 8)
+                        weighted += 1
+                    if weighted >= 4:
+                        break
+
+                simulation_vertex_lookups_section.content_add(sim_verts)
+                simulation_vertex_weights_section.content_add(sim_weights)
+
     def create_ik_joints(self, model, ik_joints):
         if not ik_joints:
             return
@@ -1217,11 +1453,53 @@ class Exporter:
             vert_section.content_iter_add(vert_data)
             face_section = self.m3.section_for_reference(m3, 'face_data')
             face_section.content_iter_add(face_data)
-            self.mesh_to_basic_volume_sections[mesh_ob.name] = [vert_data, face_data]
+            self.mesh_to_basic_volume_sections[mesh_ob.name] = [vert_section, face_section]
         else:
             vert_section, face_section = self.mesh_to_basic_volume_sections[mesh_ob.name]
             vert_section.references.append(m3.vertices)
             face_section.references.append(m3.face_data)
+
+    def get_physics_volume_object(self, mesh_ob, m3):
+        if mesh_ob.name not in self.mesh_to_physics_volume_sections.keys():
+            bm = bmesh.new()
+            bm.from_object(mesh_ob, self.depsgraph)
+
+            vert_data = [to_m3_vec3(vert.co) for vert in bm.verts]
+            polygon_related_data = []
+            loop_data = []
+            polygon_data = []
+
+            loop_desc = io_m3.structures['DMSE'].get_version(0)
+
+            for face in bm.faces:
+                polygon_data.append(face.loops[0].index)
+                loop_count = len(face.loops)
+                for ii, loop in enumerate(face.loops):
+                    next_loop = (ii + 1) if ii < loop_count - 1 else 0
+                    m3_loop = loop_desc.instance()
+                    m3_loop.vertex = loop.vert.index
+                    m3_loop.polygon = face.index
+                    m3_loop.loop = face.loops[next_loop].index
+                    loop_data.append(m3_loop)
+
+                # TODO try to figure out what data is actually appropriate here
+                polygon_related_data.append(to_m3_vec4((0.0, 0.0, 0.0, 1.0)))
+
+            vert_section = self.m3.section_for_reference(m3, 'vertices')
+            vert_section.content_iter_add(vert_data)
+            polygon_related_section = self.m3.section_for_reference(m3, 'polygons_related')
+            polygon_related_section.content_iter_add(polygon_related_data)
+            loop_section = self.m3.section_for_reference(m3, 'loops')
+            loop_section.content_iter_add(loop_data)
+            polygon_section = self.m3.section_for_reference(m3, 'polygons')
+            polygon_section.content_from_bytes(polygon_data)
+            self.mesh_to_physics_volume_sections[mesh_ob.name] = [vert_section, polygon_related_section, loop_section, polygon_section]
+        else:
+            vert_section, polygon_related_section, loop_section, polygon_section = self.mesh_to_physics_volume_sections[mesh_ob.name]
+            vert_section.references.append(m3.vertices)
+            # polygon_related_section.references.append(m3.polygons_related)
+            loop_section.references.append(m3.loops)
+            polygon_section.references.append(m3.polygons)
 
     def new_anim_id(self):
         self.anim_id_count += 1  # increase first since we don't want to use 0

@@ -394,14 +394,15 @@
             <version number="0" size="8"/>
         </versions>
         <fields>
-            <field name="value0" type="uint8"/>
-            <field name="value1" type="uint8"/>
-            <field name="value2" type="uint8"/>
-            <field name="value3" type="uint8"/>
-            <field name="value4" type="uint8"/>
-            <field name="value5" type="uint8"/>
-            <field name="value6" type="uint8"/>
-            <field name="value7" type="uint8"/>
+            <field name="value" type="uint64"/>
+            <!--<field name="val0" type="uint8"/>
+            <field name="val1" type="uint8"/>
+            <field name="val2" type="uint8"/>
+            <field name="val3" type="uint8"/>
+            <field name="val4" type="uint8"/>
+            <field name="val5" type="uint8"/>
+            <field name="val6" type="uint8"/>
+            <field name="val7" type="uint8"/>-->
         </fields>
     </structure>
     <structure name="VertexFormat0x182027d">
@@ -2173,8 +2174,8 @@
         <fields>
             <field name="influenced_region_index" type="uint32"/>
             <field name="simulation_region_index" type="uint32"/>
-            <field name="simulation_vertices" type="Reference" ref_to="U64_"/> <!-- i suspect this is intended to be read as 4 int16 values, possibly linking together vertices which influence one another -->
-            <field name="simulation_weights" type="Reference" ref_to="U32_"/> <!-- assigns influence of simulation_region vertices on influenced_region vertices with 4 single byte values, one for each vertice index in simulation_vertices -->
+            <field name="simulation_vert_lookups" type="Reference" ref_to="U64_"/> <!-- i suspect this is intended to be read as 4 int16 values, possibly linking together vertices which influence one another -->
+            <field name="simulation_vert_weights" type="Reference" ref_to="U32_"/> <!-- assigns influence of simulation_region vertices on influenced_region vertices with 4 single byte values, one for each vertice index in simulation_vertices -->
         </fields>
     </structure>
 
@@ -2251,7 +2252,7 @@
     </structure>
 
     <structure name="DMSE">
-        <description>Unknown structure</description>
+        <description>Mesh loop structure</description>
         <versions>
             <version number="0" size="4"/>
         </versions>
@@ -2284,8 +2285,8 @@
             -->
             <field name="shape" type="uint8"/>
             <!-- Is not always 0 (in Version 1 and 3). It's propably the unintialized part of shape: -->
-            <field name="unknown1c286108" type="uint8" default_value="0"/>
-            <field name="unknown4ddf14b3" type="uint16" default_value="0"/>
+            <field name="shape_fb8" type="uint8" default_value="0"/>
+            <field name="shape_fb16" type="uint16" default_value="0"/>
             <field name="vertices" type="Reference" ref_to="VEC3" till_version="1"/>
             <field name="unknownAt84" type="Reference" ref_to="U8__" till_version="1"/>
             <field name="face_data" type="Reference" ref_to="U16_" till_version="1"/>
@@ -2368,7 +2369,7 @@
                     <bit mask="0x1" name="collidable"/>
                     <bit mask="0x2" name="walkable"/>
                     <bit mask="0x4" name="stackable"/>
-                    <bit mask="0x8" name="simulate_on_collision"/>
+                    <bit mask="0x8" name="simulate_collision"/>
                     <bit mask="0x10" name="ignore_local_bodies"/>
                     <bit mask="0x20" name="always_exists"/>
                     <bit mask="0x80" name="no_simulation"/>
@@ -2816,11 +2817,10 @@
                 <bits>
                     <bit mask="0x200" name="has_vertex_colors"/>
                     <bit mask="0x20000" name="has_vertices"/>
-                    <bit mask="0x40000" name="use_uv0"/> <!-- 1st UV coordinate -->
-                    <bit mask="0x80000" name="use_uv1"/> <!-- 2nd UV coordinate -->
-                    <bit mask="0x100000" name="use_uv2"/> <!-- 3th UV coordinate -->
-                    <bit mask="0x100000" name="use_uv3"/> <!-- 4th UV coordinate --> <!-- why is the mask the same as uv2? -->
-                    <bit mask="0x40000000" name="use_uv4"/> <!-- 5th UV coordinate -->
+                    <bit mask="0x40000" name="use_uv0"/> <!-- 2nd UV coordinate -->
+                    <bit mask="0x80000" name="use_uv1"/> <!-- 3rd UV coordinate -->
+                    <bit mask="0x100000" name="use_uv2"/> <!-- 4th UV coordinate -->
+                    <bit mask="0x40000000" name="use_uv3"/> <!-- 5th UV coordinate -->
                     <!--
                          UV flags aren't always set in order, for instance 0x41820261 has two UVs
                          - does it affect the model in some way?

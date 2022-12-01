@@ -27,12 +27,12 @@ from sys import stderr
 from xml.etree import ElementTree as ET
 
 
-primitive_struct_names = {'CHAR', 'U8__', 'REAL', 'I16_', 'U16_', 'I32_', 'U32_', 'FLAG'}
-primitive_field_size = {'uint32': 4, 'int32': 4, 'uint16': 2, 'int16': 2, 'uint8': 1, 'int8': 1, 'float': 4, 'tag': 4, 'fixed8': 1}
-primitive_field_format = {'uint32': 'I', 'int32': 'i', 'uint16': 'H', 'int16': 'h', 'uint8': 'B', 'int8': 'b', 'float': 'f', 'tag': '4s', 'fixed8': 'B'}
-int_types = {'uint32', 'int32', 'uint16', 'int16', 'uint8', 'int8'}
-int_types_min = {'int16': (-(1 << 15)), 'uint16': 0, 'int32': (-(1 << 31)), 'uint32': 0, 'int8': -(1 << 7), 'uint8': 0}
-int_types_max = {'int16': ((1 << 15) - 1), 'uint16': ((1 << 16) - 1), 'int32': ((1 << 31) - 1), 'uint32': ((1 << 32) - 1), 'int8': ((1 << 7) - 1), 'uint8': ((1 << 8) - 1)}
+primitive_struct_names = {'CHAR', 'U8__', 'REAL', 'I16_', 'U16_', 'I32_', 'U32_', 'FLAG', 'U64_'}
+primitive_field_size = {'uint32': 4, 'int32': 4, 'uint16': 2, 'int16': 2, 'uint8': 1, 'int8': 1, 'float': 4, 'tag': 4, 'fixed8': 1, 'uint64': 8}
+primitive_field_format = {'uint32': 'I', 'int32': 'i', 'uint16': 'H', 'int16': 'h', 'uint8': 'B', 'int8': 'b', 'float': 'f', 'tag': '4s', 'fixed8': 'B', 'uint64': 'Q'}
+int_types = {'uint32', 'int32', 'uint16', 'int16', 'uint8', 'int8', 'uint64'}
+int_types_min = {'int16': (-(1 << 15)), 'uint16': 0, 'int32': (-(1 << 31)), 'uint32': 0, 'int8': -(1 << 7), 'uint8': 0, 'uint64': 0}
+int_types_max = {'int16': ((1 << 15) - 1), 'uint16': ((1 << 16) - 1), 'int32': ((1 << 31) - 1), 'uint32': ((1 << 32) - 1), 'int8': ((1 << 7) - 1), 'uint8': ((1 << 8) - 1), 'uint64': ((1 << 64) - 1)}
 
 
 class M3StructureHistory:
@@ -53,7 +53,7 @@ class M3StructureHistory:
         structure = self.version_to_description.get(struct_name)
         if structure is None:
             used_fields = {}
-            for field_versions in self.field_versions.values():
+            for field_versions in self.field_versions:
                 field = field_versions.get(version)
                 if field:
                     used_fields[field.name] = field
@@ -165,7 +165,7 @@ class M3StructureDescription:
             return instances.encode('ASCII') + b'\x00'
         elif self.struct_name == 'U8__':
             if type(instances) != bytes and type(instances) != bytearray:
-                raise Exception('Expected a byte array but it was a %s' % type(instances))
+                raise Exception('{}: Expected a byte array but it was a {}'.format(self.struct_name, type(instances)))
             return instances
         else:
             raw_bytes = bytearray(self.size * len(instances))
@@ -459,7 +459,7 @@ class SectionList(list):
     def section_for_reference(self, structure, field, version=0, pos=None):
         desc = structure.struct_desc
         ref = getattr(structure, field)
-        ref_struct_name = desc.history.field_versions[field][desc.struct_version].ref_to
+        ref_struct_name = desc.fields[field].ref_to
         ref_struct_desc = structures[ref_struct_name].get_version(version)
 
         section = Section(index_entry=None, struct_desc=ref_struct_desc, references=[ref], content=[])
@@ -638,7 +638,7 @@ def structures_from_tree():
             if num not in version_to_size.keys():
                 version_to_size[num] = int(xml_version.get('size'))
 
-        field_versions = {xml_field.get('name'): {} for xml_field in xml_fields}
+        all_field_versions = []
         for xml_field in xml_fields:
             str_name = xml_field.get('name')
             str_type = xml_field.get('type')
@@ -702,10 +702,13 @@ def structures_from_tree():
                 field_struct_desc = field_struct_history.get_version(field_struct_version)
                 field = EmbeddedStructureField(str_name, field_struct_desc, since_version, till_version, str_ref_to)
 
+            field_versions = {}
             for ii in range(since_version or 0, (till_version or sorted(version_nums)[-1]) + 1):
-                field_versions[str_name][ii] = field
+                field_versions[ii] = field
 
-        histories[xml_structure_name] = M3StructureHistory(xml_structure_name, version_to_size, field_versions)
+            all_field_versions.append(field_versions)
+
+        histories[xml_structure_name] = M3StructureHistory(xml_structure_name, version_to_size, all_field_versions)
 
     return histories
 

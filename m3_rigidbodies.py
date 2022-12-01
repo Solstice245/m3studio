@@ -24,10 +24,17 @@ from . import bl_enum
 def register_props():
     bpy.types.Object.m3_physicsshapes = bpy.props.CollectionProperty(type=ShapeProperties)
     bpy.types.Object.m3_physicsshapes_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
+    bpy.types.Object.m3_physicsshapes_version = bpy.props.EnumProperty(options=set(), items=physics_shape_versions, default='3')
     bpy.types.Object.m3_rigidbodies = bpy.props.CollectionProperty(type=BodyProperties)
     bpy.types.Object.m3_rigidbodies_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
     bpy.types.Object.m3_rigidbodies_version = bpy.props.EnumProperty(options=set(), items=rigid_body_versions, default='4')
 
+
+physics_shape_versions = (
+    ('1', '1', 'Version 1'),
+    ('2', '2', 'Version 2'),
+    ('3', '3', 'Version 3'),
+)
 
 # need better documentation of non version 3 version
 rigid_body_versions = (
@@ -86,7 +93,7 @@ def draw_body_props(rigidbody, layout):
     col.prop(rigidbody, 'restitution', text='Restitution')
     col.prop(rigidbody, 'damping_linear', text='Linear Damping')
     col.prop(rigidbody, 'damping_angular', text='Angular Damping')
-    col.prop(rigidbody, 'gravity_scale', text='Gravity Scale')
+    col.prop(rigidbody, 'gravity_factor', text='Gravity Factor')
     col.prop(rigidbody, 'priority', text='Priority')
     col = layout.column()
     col.use_property_split = False
@@ -102,19 +109,19 @@ def draw_body_props(rigidbody, layout):
     col.prop(rigidbody, 'simulate_collision', text='Simulate On Collision')
     col.prop(rigidbody, 'ignore_local_bodies', text='Ignore Local Bodies')
     col.prop(rigidbody, 'always_exists', text='Always Exists')
-    col.prop(rigidbody, 'do_not_simulate', text='Do Not Simulate')
+    col.prop(rigidbody, 'no_simulation', text='Do Not Simulate')
     col.prop(rigidbody, 'collidable', text='Collidable')
     col.prop(rigidbody, 'stackable', text='Stackable')
     col.prop(rigidbody, 'walkable', text='Walkable')
 
 
 class VolumeProperties(shared.M3PropertyGroup):
-    shape: bpy.props.EnumProperty(options=set(), items=bl_enum.physics_shape, update=shared.bone_shape_update_event)
-    size: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0, default=(1, 1, 1), update=shared.bone_shape_update_event)
-    location: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, update=shared.bone_shape_update_event)
-    rotation: bpy.props.FloatVectorProperty(options=set(), subtype='EULER', unit='ROTATION', size=3, default=(0, 0, 0), update=shared.bone_shape_update_event)
-    scale: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0, default=(1, 1, 1), update=shared.bone_shape_update_event)
-    mesh_object: bpy.props.PointerProperty(type=bpy.types.Object, update=shared.bone_shape_update_event)
+    shape: bpy.props.EnumProperty(options=set(), items=bl_enum.physics_shape)
+    size: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0, default=(1, 1, 1))
+    location: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3)
+    rotation: bpy.props.FloatVectorProperty(options=set(), subtype='EULER', unit='ROTATION', size=3, default=(0, 0, 0))
+    scale: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0, default=(1, 1, 1))
+    mesh_object: bpy.props.PointerProperty(type=bpy.types.Object)
 
 
 class ShapeProperties(shared.M3PropertyGroup):
@@ -131,7 +138,7 @@ class BodyProperties(shared.M3BoneUserPropertyGroup):
     restitution: bpy.props.FloatProperty(options=set(), default=0.1)
     damping_linear: bpy.props.FloatProperty(options=set(), default=0.001)
     damping_angular: bpy.props.FloatProperty(options=set(), default=0.001)
-    gravity_scale: bpy.props.FloatProperty(options=set(), default=1)
+    gravity_factor: bpy.props.FloatProperty(options=set(), default=1)
     local_forces: bpy.props.BoolVectorProperty(options=set(), subtype='LAYER', size=16)
     world_forces: bpy.props.BoolVectorProperty(options=set(), size=16)
     priority: bpy.props.IntProperty(options=set(), min=0)
@@ -141,7 +148,7 @@ class BodyProperties(shared.M3BoneUserPropertyGroup):
     simulate_collision: bpy.props.BoolProperty(options=set())
     ignore_local_bodies: bpy.props.BoolProperty(options=set())
     always_exists: bpy.props.BoolProperty(options=set())
-    do_not_simulate: bpy.props.BoolProperty(options=set())
+    no_simulation: bpy.props.BoolProperty(options=set())
 
 
 class ShapePanel(shared.ArmatureObjectPanel, bpy.types.Panel):

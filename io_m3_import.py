@@ -1167,7 +1167,7 @@ class Importer:
         ob = self.ob
 
         if self.m3_model.physics_rigidbodies.index:
-            ob.m3_rigidbodies_version = str(self.m3[m3_model.physics_rigidbodies].struct_desc.struct_version)
+            ob.m3_rigidbodies_version = str(self.m3[self.m3_model.physics_rigidbodies].struct_desc.struct_version)
 
         for m3_rigidbody in self.m3[self.m3_model.physics_rigidbodies]:
             bone_name = self.m3_get_bone_name(m3_rigidbody.bone)
@@ -1182,22 +1182,23 @@ class Importer:
                 rigidbody.physics_shape = physics_shape.bl_handle
             else:
                 m3_physics_shape = self.m3[m3_rigidbody.physics_shape]
+
                 physics_shape = shared.m3_item_add(ob.m3_physicsshapes, item_name=rigidbody.name + '_shape')
                 rigidbody.physics_shape = physics_shape.bl_handle
                 for m3_volume in m3_physics_shape:
                     volume = shared.m3_item_add(physics_shape.volumes)
+                    md = to_bl_matrix(m3_volume.matrix).decompose()
+                    volume['location'] = md[0]
+                    volume['rotation'] = md[1].to_euler('XYZ')
+                    volume['scale'] = md[2]
                     volume.shape = volume.bl_rna.properties['shape'].enum_items[getattr(m3_volume, 'shape')].identifier
                     volume.size = (m3_volume.size0, m3_volume.size1, m3_volume.size2)
-                    md = to_bl_matrix(m3_volume.matrix).decompose()
-                    volume.location = md[0]
-                    volume.rotation = md[1].to_euler('XYZ')
-                    volume.scale = md[2]
 
                     if m3_volume.struct_desc.struct_version == 1:
-                        volume.mesh_object = self.generate_basic_volume_object(physics_shape.name, m3_volume.vertices, m3_volume.face_data)
+                        volume['mesh_object'] = self.generate_basic_volume_object(physics_shape.name, m3_volume.vertices, m3_volume.face_data)
                     else:
                         args = (physics_shape.name, m3_volume.vertices, m3_volume.polygons_related, m3_volume.loops, m3_volume.polygons)
-                        volume.mesh_object = self.generate_rigidbody_volume_object(*args)
+                        volume['mesh_object'] = self.generate_rigidbody_volume_object(*args)
 
                 self.m3_bl_ref[m3_rigidbody.physics_shape.index] = physics_shape
 
