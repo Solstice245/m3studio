@@ -33,8 +33,8 @@ INT16_MAX = ((1 << 15) - 1)
 
 def to_m3_uv(bl_uv):
     m3_uv = io_m3.structures['Vector2As2int16'].get_version(0).instance()
-    m3_uv.x = sorted((INT16_MIN, round(bl_uv[0] * 255), INT16_MAX))[1]
-    m3_uv.y = sorted((INT16_MIN, round(bl_uv[1] * 255), INT16_MAX))[1]
+    m3_uv.x = sorted((INT16_MIN, round(bl_uv[0] * 2040), INT16_MAX))[1]
+    m3_uv.y = (sorted((INT16_MIN, round((-bl_uv[1] + 1.0) * 2040), INT16_MAX))[1])
     return m3_uv
 
 
@@ -521,9 +521,9 @@ class Exporter:
         # TODO warning if meshes and particles have materials or layers in common
         # TODO warning if layers have rtt channel collision, also only to be used in standard material
 
-        self.bone_name_bones = {bone.name: bone for bone in self.bones}
         self.bone_name_indices = {bone.name: ii for ii, bone in enumerate(self.bones)}
         self.bone_name_correction_matrices = {}
+        self.bone_name_irefs = {}
 
         self.matref_handle_indices = {}
         for matref in ob.m3_materialrefs:
@@ -591,16 +591,54 @@ class Exporter:
             m3_bone.bit_set('flags', 'real', True)
             m3_bone.bit_set('flags', 'skinned', bone in self.skinned_bones)
             m3_bone.location = self.init_anim_ref_vec3()
+            m3_bone.location.header.flags = 0x6
             m3_bone.rotation = self.init_anim_ref_quat()
+            m3_bone.rotation.header.flags = 0x6
+            m3_bone.rotation.null.w = 1.0
             m3_bone.scale = self.init_anim_ref_vec3()
+            m3_bone.scale.null = to_m3_vec3((1.0, 1.0, 1.0))
             m3_bone.ar1 = self.init_anim_ref_uint32(1)
+            m3_bone.ar1.null = 1
 
             if bone.parent is not None:
                 m3_bone.parent = self.bone_name_indices[bone.parent.name]
-                # rel_rest_pose_matrix = bone.parent.matrix_local @ bone.matrix_local
+                parent_iref = self.bone_name_irefs[bone.parent.name]
+                rel_rest_pose_matrix = parent_iref @ bone.matrix_local
             else:
                 m3_bone.parent = -1
-                # rel_rest_pose_matrix = bone.matrix_local
+                rel_rest_pose_matrix = bone.matrix_local
+
+            pose_bone = self.ob.pose.bones[bone.name]
+            pose_bone_mat = self.ob.convert_space(pose_bone=pose_bone, matrix=pose_bone.matrix, from_space='POSE', to_space='LOCAL')
+
+            bind_scale_inverted = mathutils.Vector((1.0 / bone.m3_bind_scale[ii] for ii in range(3)))
+            bind_scale_matrix = mathutils.Matrix.LocRotScale(None, None, bind_scale_inverted)
+
+            if bone.parent is not None:
+                parent_bind_scale_matrix = mathutils.Matrix.LocRotScale(None, None, bone.parent.m3_bind_scale)
+                left_correction_matrix = parent_bind_scale_matrix @ io_shared.rot_fix_matrix @ rel_rest_pose_matrix
+            else:
+                left_correction_matrix = rel_rest_pose_matrix
+
+            right_correction_matrix = io_shared.rot_fix_matrix_transpose @ bind_scale_matrix
+            m3_pose_matrix = left_correction_matrix @ pose_bone_mat @ right_correction_matrix
+
+            if bone.name == 'Box01':
+                print(left_correction_matrix)
+                print(pose_bone_mat)
+                print(right_correction_matrix)
+
+            self.bone_name_correction_matrices = [left_correction_matrix, right_correction_matrix]
+
+            m3_bone_loc, m3_bone_rot, m3_bone_scale = m3_pose_matrix.decompose()
+            m3_bone.scale.default = to_m3_vec3(m3_bone_scale)
+            m3_bone.rotation.default = to_m3_quat(m3_bone_rot)
+            m3_bone.location.default = to_m3_vec3(m3_bone_loc)
+
+            abs_rest_pose_matrix_fixed = rel_rest_pose_matrix @ io_shared.rot_fix_matrix_transpose
+            abs_inv_rest_pose_matrix_fixed = abs_rest_pose_matrix_fixed.inverted()
+            abs_inv_rest_pose_matrix_fixed = bind_scale_matrix @ abs_inv_rest_pose_matrix_fixed
+            self.bone_name_irefs[bone.name] = abs_inv_rest_pose_matrix_fixed
 
     def create_division(self, model, mesh_objects, regn_version):
 
@@ -613,14 +651,16 @@ class Exporter:
 
             msec_section = self.m3.section_for_reference(div, 'msec', version=1)
             msec = msec_section.content_add()
-            msec.header = io_m3.structures['BNDSAnimationReference'].get_version(0).instance()
-            msec.header.interpolation = 1
-            msec.header.flags = 0x0006
-            msec.header.id = BOUNDING_ANIM_ID
-            msec.default = io_m3.structures['BNDS'].get_version(0).instance()
-            msec.default.min = self.bounds_min
-            msec.default.max = self.bounds_max
-            msec.default.max = self.bounds_radius
+            msec.bounding = io_m3.structures['BNDSAnimationReference'].get_version(0).instance()
+            msec.bounding.header = io_m3.structures['AnimationReferenceHeader'].get_version(0).instance()
+            msec.bounding.header.interpolation = 1
+            msec.bounding.header.flags = 0x0006
+            msec.bounding.header.id = BOUNDING_ANIM_ID
+            msec.bounding.default = io_m3.structures['BNDS'].get_version(0).instance()
+            msec.bounding.default.min = self.bounds_min
+            msec.bounding.default.max = self.bounds_max
+            msec.bounding.default.radius = self.bounds_radius
+            msec.bounding.null = io_m3.structures['BNDS'].get_version(0).instance()
 
             return
 
@@ -653,19 +693,21 @@ class Exporter:
 
         face_section = self.m3.section_for_reference(div, 'faces')
 
-        msec_section = self.m3.section_for_reference(div, 'msec', version=1)
-        msec = msec_section.content_add()
-        msec.header = io_m3.structures['BNDSAnimationReference'].get_version(0).instance()
-        msec.header.interpolation = 1
-        msec.header.flags = 0x0006
-        msec.header.id = BOUNDING_ANIM_ID
-        msec.default = io_m3.structures['BNDS'].get_version(0).instance()
-        msec.default.min = self.bounds_min
-        msec.default.max = self.bounds_max
-        msec.default.max = self.bounds_radius
-
         region_section = self.m3.section_for_reference(div, 'regions', version=regn_version)
         batch_section = self.m3.section_for_reference(div, 'batches', version=1)
+
+        msec_section = self.m3.section_for_reference(div, 'msec', version=1)
+        msec = msec_section.content_add()
+        msec.bounding = io_m3.structures['BNDSAnimationReference'].get_version(0).instance()
+        msec.bounding.header = io_m3.structures['AnimationReferenceHeader'].get_version(0).instance()
+        msec.bounding.header.interpolation = 1
+        msec.bounding.header.flags = 0x0006
+        msec.bounding.header.id = BOUNDING_ANIM_ID
+        msec.bounding.default = io_m3.structures['BNDS'].get_version(0).instance()
+        msec.bounding.default.min = self.bounds_min
+        msec.bounding.default.max = self.bounds_max
+        msec.bounding.default.radius = self.bounds_radius
+        msec.bounding.null = io_m3.structures['BNDS'].get_version(0).instance()
 
         bone_lookup_section = self.m3.section_for_reference(model, 'bone_lookup')
 
@@ -690,25 +732,25 @@ class Exporter:
 
             region_vertices = []
             region_faces = []
-            region_lookup = []
+            region_lookup = [self.bone_name_indices[group.name] for group in ob.vertex_groups]
 
-            vert_indices_used = set()
+            m3_verts_to_verts = []
 
             for face in bm.faces:
                 assert len(face.loops) == 3
 
                 for loop in face.loops:
-
-                    region_faces.append(loop.vert.index)
-
-                    if loop.vert.index in vert_indices_used:
-                        continue
-                    else:
-                        vert_indices_used.add(loop.vert.index)
-
                     vert = loop.vert
-                    m3_vert = m3_vertex_desc.instance()
 
+                    # TODO new vert anyway if loop UV is unique
+                    if vert.index not in m3_verts_to_verts:
+                        m3_verts_to_verts.append(loop.vert.index)
+                        region_faces.append(m3_verts_to_verts.index(vert.index))
+                    else:
+                        region_faces.append(m3_verts_to_verts.index(vert.index))
+                        continue
+
+                    m3_vert = m3_vertex_desc.instance()
                     m3_vert.pos = to_m3_vec3(ob.matrix_local @ vert.co)
 
                     weight_lookup_pairs = vert[deform_layer].items()
@@ -724,8 +766,6 @@ class Exporter:
                         weighted = 0
                         if weight:
                             weighted += 1
-                            if index not in region_lookup:
-                                region_lookup.append(index)
                             correct_sum_weight += weight / sum_weight
                             new_round_weight = round(correct_sum_weight * 255)
                             round_weight_lookup_pairs.append((index, new_round_weight - round_sum_weight))
@@ -744,7 +784,7 @@ class Exporter:
                     uv_layers = bm.loops.layers.uv.values()
                     for ii in range(0, 4):
                         uv_layer = uv_layers[ii] if ii < len(uv_layers) else None
-                        setattr(m3_vert, 'uv' + str(ii), to_m3_uv(loop[uv_layer].uv if uv_layer else (0, 0)))
+                        setattr(m3_vert, 'uv' + str(ii), to_m3_uv(loop[uv_layer].uv) if uv_layer else (0, 0))
 
                     m3_vert.normal = to_m3_vec3_f8(vert.normal)
 
@@ -768,7 +808,7 @@ class Exporter:
 
             m3_vertices.extend(region_vertices)
             m3_faces.extend(region_faces)
-            m3_lookup.extend(region_lookup)  # TODO lookup values are wrong
+            m3_lookup.extend(region_lookup)
 
             # TODO mesh flags for versions 4+
             region = region_section.content_add()
@@ -935,11 +975,21 @@ class Exporter:
                                 m3_layer.video_frame_end = 0
                                 m3_layer.video_mode = 0
 
+                            m3_layer.color_brightness.null = 1.0
+                            m3_layer.color_multiply.null = 1.0
+                            m3_layer.color_value.null.a = 0
+                            m3_layer.uv_tiling.null.x = 1.0
+                            m3_layer.uv_tiling.null.y = 1.0
+
+                            if m3_layer.video_channel == 7:  # 7 is the enum value for none
+                                m3_layer.video_channel = -1
+
                             m3_layer.unknownbc0c14e5 = self.init_anim_ref_uint32(0)
                             m3_layer.unknowne740df12 = self.init_anim_ref_float(0.0)
                             m3_layer.unknown39ade219 = self.init_anim_ref_uint16(0)
                             m3_layer.unknowna4ec0796 = self.init_anim_ref_uint32(0, interpolation=1)
                             m3_layer.unknowna44bf452 = self.init_anim_ref_float(1.0)
+                            m3_layer.unknowna44bf452.null = 1.0
 
                 # TODO manage flags of standard material
                 if type_ii == 3:  # composite material
@@ -1355,14 +1405,7 @@ class Exporter:
 
         for bone in self.bones:
             iref = iref_section.content_add()
-
-            if bone.parent is not None:
-                rel_rest_matrix = bone.parent.matrix_local @ bone.matrix_local
-            else:
-                rel_rest_matrix = bone.matrix_local
-
-            bind_scale_matrix = mathutils.Matrix.LocRotScale(None, None, bone.m3_bind_scale)
-            iref.matrix = to_m3_matrix(bind_scale_matrix @ rel_rest_matrix.inverted())
+            iref.matrix = to_m3_matrix(self.bone_name_irefs[bone.name])
 
     def create_hittests(self, model, hittests):
         if not hittests:

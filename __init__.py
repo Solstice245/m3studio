@@ -68,8 +68,12 @@ class M3ScenePanel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
 
-        layout.operator('m3.import')
-        layout.operator('m3.export')
+        op = layout.operator('m3.import')
+        op.filepath = 'C:\\Users\\John Wharton\\Documents\\M3Test.m3'
+        op = layout.operator('m3.import', text='Import Result')
+        op.filepath = 'C:\\Users\\John Wharton\\Documents\\M3Test_export.m3'
+        op = layout.operator('m3.export')
+        op.filepath = 'C:\\Users\\John Wharton\\Documents\\M3Test_export.m3'
 
 
 class M3ImportOperator(bpy.types.Operator):
@@ -81,21 +85,13 @@ class M3ImportOperator(bpy.types.Operator):
     filter_glob: bpy.props.StringProperty(options={'HIDDEN'}, default='*.m3;*.m3a')
     filepath: bpy.props.StringProperty(name='File Path', description='File path for import operation', maxlen=1023, default='')
 
-    test_missile = 'C:\\Users\\John Wharton\\Documents\\_Base Assets\\Effects\\Protoss\\Phalanx Missle\\PhalanxMissile.m3'
-    test_goliath = 'C:\\Users\\John Wharton\\Documents\\_Base Assets\\Terran\\Units\\Goliath\\Goliath.m3'
-    test_compound = 'C:\\Users\\John Wharton\\Documents\\_Base Assets\\Terran\\Buildings\\MercCompound\\MercCompound.m3'
-    test_vertexalpha = 'C:\\Users\\John Wharton\\Documents\\_Base Assets\\Protoss\\Effects\\Mothership_Taldarim_Shield.m3'
-    test_doc = 'C:\\Users\\John Wharton\\Documents\\M3Test.m3'
-
-    test = 'C:\\Users\\John Wharton\\Documents\\_Base Assets\\Protoss\\Units\\Colossus\\Colossus.m3'
-
     def invoke(self, context, event):
-        # io_m3_import.m3_import(self.test_goliath)
-        print(timeit(lambda: io_m3_import.m3_import(self.test_doc), number=1))
+        # io_m3_import.m3_import(self.filepath)
+        print(timeit(lambda: io_m3_import.m3_import(self.filepath), number=1))
         return {'RUNNING_MODAL'}
 
     def execute(self, context):
-        # print(timeit(lambda: m3_import.M3Import(self.test_goliath), number=1))
+        # print(timeit(lambda: m3_import.M3Import(self.filepath), number=1))
         return {'FINISHED'}
 
 
@@ -107,15 +103,13 @@ class M3ExportOperator(bpy.types.Operator):
     filter_glob: bpy.props.StringProperty(options={'HIDDEN'}, default='*.m3;*.m3a')
     filepath: bpy.props.StringProperty(name='File Path', description='File path for import operation', maxlen=1023, default='')
 
-    test_doc = 'C:\\Users\\John Wharton\\Documents\\M3Test_export.m3'
-
     def invoke(self, context, event):
-        # io_m3_import.m3_import(self.test_goliath)
-        print(timeit(lambda: io_m3_export.m3_export(context.active_object, self.test_doc), number=1))
+        # io_m3_import.m3_import(self.filepath)
+        print(timeit(lambda: io_m3_export.m3_export(context.active_object, self.filepath), number=1))
         return {'RUNNING_MODAL'}
 
     def execute(self, context):
-        # print(timeit(lambda: m3_import.M3Import(self.test_goliath), number=1))
+        # print(timeit(lambda: m3_import.M3Import(self.filepath), number=1))
         return {'FINISHED'}
 
 

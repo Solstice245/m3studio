@@ -1223,7 +1223,7 @@
             <field name="unknown2" type="uint16" expected_value="0"/>
             <field name="vertex_lookups_used" type="uint8"/>
             <field name="unknown4" type="uint8" default_value="1"/>
-            <field name="rootbone" type="uint16"/>
+            <field name="root_bone" type="uint16"/>
             <field name="flags" type="uint32" since_version="4">
                 <bits>
                     <bit mask='0x1' name='hidden'/>
@@ -1258,7 +1258,7 @@
         </versions>
         <fields>
             <field name="unknown0" type="uint32" default_value="0"/>
-            <field name="boundingsAnimation" type="BNDSAnimationReferenceV0"/>
+            <field name="bounding" type="BNDSAnimationReferenceV0"/>
         </fields>
     </structure>
 

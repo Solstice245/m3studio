@@ -121,11 +121,12 @@ def m3_item_find_bones(item):
     if hasattr(item, 'bone2'):
         bone_list.append(getattr(item, 'bone2'))
 
-    for key in type(item).__annotations__.keys():
-        prop = getattr(item, key)
-        if str(type(prop)) == '<class \'bpy_prop_collection_idprop\'>':
-            for sub_item in prop:
-                bone_list += m3_item_find_bones(sub_item)
+    if hasattr(type(item), '__annotations__'):
+        for key in type(item).__annotations__.keys():
+            prop = getattr(item, key)
+            if str(type(prop)) == '<class \'bpy_prop_collection_idprop\'>':
+                for sub_item in prop:
+                    bone_list += m3_item_find_bones(sub_item)
 
     return bone_list
 
