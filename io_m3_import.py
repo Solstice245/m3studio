@@ -38,8 +38,8 @@ def to_bl_frame(m3_ms):
 
 def to_bl_uv(m3_uv, uv_multiply, uv_offset):
     return (
-        (m3_uv.x * (uv_multiply / 16.0) / 2048.0) + uv_offset,
-        1 - ((m3_uv.y * (uv_multiply / 16.0) / 2048.0) + uv_offset)
+        m3_uv.x * uv_multiply / 32768 + uv_offset,
+        -m3_uv.y * uv_multiply / 32768 - uv_offset + 1
     )
 
 
@@ -311,7 +311,6 @@ class Importer:
         self.stc_id_data = {}
         self.final_bone_names = {}
 
-        # TODO model boundings
         self.ob = self.armature_object_new()
         self.create_animations()
         self.create_bones()
@@ -793,22 +792,33 @@ class Importer:
         m3_vertices = v_class_desc.instances(buffer=m3_vertices.content, count=v_count)
         bone_lookup_full = self.m3[self.m3_model.bone_lookup]
 
+        uv_props = []
+        for uv_prop in ['uv0', 'uv1', 'uv2', 'uv3', 'uv4']:
+            if v_class_desc.fields.get(uv_prop):
+                uv_props.append(uv_prop)
+
         m3_faces = self.m3[self.m3_division.faces]
         m3_batches = self.m3[self.m3_division.batches]
         self.m3_bl_ref[self.m3_division.regions.index] = {}
+
         for region_ii, region in enumerate(self.m3[self.m3_division.regions]):
             region_matref_indices = [batch.material_reference_index for batch in m3_batches if batch.region_index == region_ii]
 
             if not region_matref_indices:
                 continue
 
+            regn_m3_verts = m3_vertices[region.first_vertex_index:region.first_vertex_index + region.vertex_count]
+            regn_m3_faces = m3_faces[region.first_face_index:region.first_face_index + region.face_count]
+            regn_uv_multiply = getattr(region, 'uv_multiply', 16)
+            regn_uv_offset = getattr(region, 'uv_offset', 0)
+
+            if region.struct_desc.struct_version <= 2:
+                for ii in range(len(regn_m3_faces)):
+                    regn_m3_faces[ii] -= region.first_vertex_index
+
             mesh = bpy.data.meshes.new('Mesh')
             mesh_ob = bpy.data.objects.new('Mesh', mesh)
             mesh_ob.parent = ob
-
-            for matref_ii in region_matref_indices:
-                mesh_mat = shared.m3_item_add(mesh_ob.m3_mesh_material_refs)
-                mesh_mat.bl_handle = ob.m3_materialrefs[matref_ii].bl_handle
 
             bpy.context.scene.collection.objects.link(mesh_ob)
 
@@ -818,143 +828,65 @@ class Importer:
             modifier = mesh_ob.modifiers.new('Armature', 'ARMATURE')
             modifier.object = ob
 
-            region_uv_multiply = getattr(region, 'uv_multiply', 16)
-            region_uv_offset = getattr(region, 'uv_multiply', 0)
-            region_vertex_range = range(region.first_vertex_index, region.first_vertex_index + region.vertex_count)
-
-            faces_old = []
-            vertex_index = region.first_face_index
-            # some weirdness in REGNV2 from SC2 Beta
-            if region.struct_desc.struct_version <= 2:
-                while vertex_index + 2 <= region.first_face_index + region.face_count:
-                    i0 = m3_faces[vertex_index]
-                    i1 = m3_faces[vertex_index + 1]
-                    i2 = m3_faces[vertex_index + 2]
-                    faces_old.append((i0, i1, i2))
-                    vertex_index += 3
-            else:
-                while vertex_index + 2 <= region.first_face_index + region.face_count:
-                    i0 = region.first_vertex_index + m3_faces[vertex_index]
-                    i1 = region.first_vertex_index + m3_faces[vertex_index + 1]
-                    i2 = region.first_vertex_index + m3_faces[vertex_index + 2]
-                    faces_old.append((i0, i1, i2))
-                    vertex_index += 3
-
-            old_vertex_to_id_map = {}
-            for ii in region_vertex_range:
-                v = m3_vertices[ii]
-                id_tuple = (v.pos.x, v.pos.y, v.pos.z, v.weight0, v.weight1, v.weight2, v.weight3,
-                            v.lookup0, v.lookup1, v.lookup2, v.lookup3, v.normal.x, v.normal.y, v.normal.z)
-                old_vertex_to_id_map[ii] = id_tuple
-
-            tris_old = []
-            for face in faces_old:
-                if len(set([old_vertex_to_id_map[face[ii]] for ii in range(3)])) == 3:
-                    tris_old.append(face)
-
-            next_new_vertex = 0
-            old_vertex_to_new_vertex_map = {}
-            new_vertex_to_old_vertex_map = {}
-            vertex_id_new_map = {}
-
-            region_vert_data = []
-
-            for ii in region_vertex_range:
-                id_tuple = old_vertex_to_id_map[ii]
-                new_index = vertex_id_new_map.get(id_tuple)
-                if new_index is None:
-                    new_index = next_new_vertex
-                    next_new_vertex += 1
-                    pos = m3_vertices[ii].pos
-                    region_vert_data.extend([pos.x, pos.y, pos.z])
-                    vertex_id_new_map[id_tuple] = new_index
-                old_vertex_to_new_vertex_map[ii] = new_index
-                # store which old vertex indices were merged to a new one
-                old_vertex_indices = new_vertex_to_old_vertex_map.get(new_index)
-                if old_vertex_indices is None:
-                    old_vertex_indices = set()
-                    new_vertex_to_old_vertex_map[new_index] = old_vertex_indices
-                old_vertex_indices.add(ii)
-
-            # since vertices got merged, the indices of the faces aren't correct anymore.
-            # the old face indices however are still later required to figure out what UV coordinates a face has.
-            region_face_data = []
-            for face_old in tris_old:
-                old_new_vertices = [old_vertex_to_new_vertex_map[face_old[ii]] for ii in range(3)]
-                if len(set(old_new_vertices)) == 3:
-                    region_face_data.extend(old_new_vertices)
-
-            region_tri_range = range(0, len(region_face_data), 3)
-
-            mesh.vertices.add(len(region_vert_data) / 3)
-            mesh.vertices.foreach_set('co', region_vert_data)
-            mesh.loops.add(len(region_face_data))
-            mesh.loops.foreach_set('vertex_index', region_face_data)
-            mesh.polygons.add(len(region_tri_range))
-            mesh.polygons.foreach_set('loop_start', [ii for ii in region_tri_range])
-            mesh.polygons.foreach_set('loop_total', [3 for ii in region_tri_range])
-
-            mesh.validate()
-            mesh.update(calc_edges=True)
-
             bone_lookup = bone_lookup_full[region.first_bone_lookup_index:region.first_bone_lookup_index + region.bone_lookup_count]
             for lookup in bone_lookup:
                 mesh_ob.vertex_groups.new(name=self.m3_get_bone_name(lookup))
 
             vertex_groups_used = [False for g in mesh_ob.vertex_groups]
 
-            bpy.context.view_layer.objects.active = mesh_ob
-            bpy.ops.object.mode_set(mode='EDIT')
+            bm = bmesh.new(use_operators=True)
 
-            bm = bmesh.from_edit_mesh(mesh)
+            layer_sign = bm.verts.layers.int.new('m3sign')
+            layer_deform = bm.verts.layers.deform.new('m3lookup')
 
-            has_vertex_colors = self.m3_model.bit_get('vertex_flags', 'has_vertex_colors')
-            color_layer = bm.loops.layers.color.new('m3color') if has_vertex_colors else None
-            alpha_layer = bm.loops.layers.color.new('m3alpha') if has_vertex_colors else None
-            deform_layer = bm.verts.layers.deform.new('m3lookup')
-            sign_layer = bm.faces.layers.int.new('m3sign')
-            uv_maps = []
-            uv_layers = {}
-            for uv_map in ['uv0', 'uv1', 'uv2', 'uv3', 'uv4']:
-                if uv_map in v_class_desc.fields.keys():
-                    uv_layers[uv_map] = bm.loops.layers.uv.new(uv_map)
-                    uv_maps.append(uv_map)
+            for uv_prop in uv_props:
+                bm.loops.layers.uv.new(uv_prop)
 
-            for face in bm.faces:
-                old_indices = tris_old[face.index]
+            for m3_vert in regn_m3_verts:
+                vert = bm.verts.new((m3_vert.pos.x, m3_vert.pos.y, m3_vert.pos.z))
+                vert[layer_sign] = 1 if round(m3_vert.sign) > 0 else 0
+
+                for ii in range(0, region.vertex_lookups_used):
+                    weight = getattr(m3_vert, 'weight' + str(ii))
+                    if weight:
+                        lookup_index = getattr(m3_vert, 'lookup' + str(ii))
+                        vertex_groups_used[lookup_index] = True
+                        vert[layer_deform][lookup_index] = weight / 255
+
+            bm.verts.ensure_lookup_table()
+
+            for ii in range(0, len(regn_m3_faces), 3):
+                face = bm.faces.new((bm.verts[regn_m3_faces[ii]], bm.verts[regn_m3_faces[ii + 1]], bm.verts[regn_m3_faces[ii + 2]]))
                 face.smooth = True
 
-                for loop_index, loop in enumerate(face.loops):
-                    m3_vert = m3_vertices[old_indices[loop_index]]
-                    for uv_map in uv_maps:
-                        loop[uv_layers[uv_map]].uv = to_bl_uv(getattr(m3_vert, uv_map), region_uv_multiply, region_uv_offset)
+                for jj in range(3):
+                    m3v = regn_m3_verts[regn_m3_faces[ii + jj]]
+                    loop = face.loops[jj]
+                    for uv_prop in uv_props:
+                        layer_uv = bm.loops.layers.uv.get(uv_prop)
+                        loop[layer_uv].uv = to_bl_uv(getattr(m3v, uv_prop), regn_uv_multiply, regn_uv_offset)
 
-                    if color_layer:
-                        loop[color_layer] = (m3_vert.col.r / 255, m3_vert.col.g / 255, m3_vert.col.b / 255, 1)
-                        loop[alpha_layer] = (m3_vert.col.a / 255, m3_vert.col.a / 255, m3_vert.col.a / 255, 1)
+            bm.faces.ensure_lookup_table()
 
-                for vert_index, vert in enumerate(face.verts):
-                    m3_vert = m3_vertices[old_indices[vert_index]]
+            doubles = bmesh.ops.find_doubles(bm, verts=bm.verts, dist=0.00001)['targetmap']
+            for origin in list(doubles.keys()):
+                target = doubles[origin]
 
-                    for ii in range(0, region.vertex_lookups_used):
-                        weight = getattr(m3_vert, 'weight' + str(ii))
-                        if weight:
-                            lookup_index = getattr(m3_vert, 'lookup' + str(ii))
-                            vertex_groups_used[lookup_index] = True
-                            vert[deform_layer][lookup_index] = weight / 255
+                m3v0 = regn_m3_verts[origin.index]
+                m3v1 = regn_m3_verts[target.index]
 
-                    face[sign_layer] = 1 if round(m3_vert.sign) > 0 else 0
+                m3v0_lookup_id = (m3v0.lookup0, m3v0.lookup1, m3v0.lookup2, m3v0.lookup3, m3v0.weight0, m3v0.weight1, m3v0.weight2, m3v0.weight3)
+                m3v1_lookup_id = (m3v1.lookup0, m3v1.lookup1, m3v1.lookup2, m3v1.lookup3, m3v1.weight0, m3v1.weight1, m3v1.weight2, m3v1.weight3)
 
-            for edge in bm.edges:
-                edge.smooth = len(edge.link_faces) > 1
-            # perform destructive operations only after all uses of m3 vertex data
-            bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=0.00001)
-            bmesh.ops.join_triangles(bm, faces=bm.faces, cmp_uvs=True, angle_face_threshold=1, angle_shape_threshold=1)
+                for edge in [*origin.link_edges, *target.link_edges]:
+                    if len(edge.link_faces) == 1:
+                        edge.smooth = to_bl_vec3(m3v0.normal) == to_bl_vec3(m3v1.normal)
 
-            bmesh.update_edit_mesh(mesh)
-            bm.free()
+                if m3v0_lookup_id != m3v1_lookup_id:
+                    del doubles[origin]
+            bmesh.ops.weld_verts(bm, targetmap=doubles)
 
-            bpy.ops.object.mode_set(mode='OBJECT')
+            bm.to_mesh(mesh)
 
             for g, used in zip(mesh_ob.vertex_groups, vertex_groups_used):
                 if not used:

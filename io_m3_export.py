@@ -968,7 +968,7 @@ class Exporter:
                             m3_layer.bit_set('flags', 'particle_uv_flipbook', m3_layer.uv_source == 6)
 
                             if layer.color_bitmap.endswith('.ogg'):
-                                m3_layer.bit_set('flags', 'video')
+                                m3_layer.bit_set('flags', 'video', True)
                             else:
                                 m3_layer.video_frame_rate = 0
                                 m3_layer.video_frame_start = 0
@@ -981,7 +981,7 @@ class Exporter:
                             m3_layer.uv_tiling.null.x = 1.0
                             m3_layer.uv_tiling.null.y = 1.0
 
-                            if m3_layer.video_channel == 7:  # 7 is the enum value for none
+                            if m3_layer.video_channel == 7:  # 7 is the bl enum index for none
                                 m3_layer.video_channel = -1
 
                             m3_layer.unknownbc0c14e5 = self.init_anim_ref_uint32(0)
@@ -990,6 +990,14 @@ class Exporter:
                             m3_layer.unknowna4ec0796 = self.init_anim_ref_uint32(0, interpolation=1)
                             m3_layer.unknowna44bf452 = self.init_anim_ref_float(1.0)
                             m3_layer.unknowna44bf452.null = 1.0
+
+                    if type_ii == 1:
+                        pass
+                        # TODO layer and material vertex color/alpha set if used by particle with vertex color/alpha to match
+                        # m3_layer.bit_set('flags', 'vertex_alpha', )
+
+                if type_ii == 1:
+                    m3_mat.bit_set('additional_flags', 'unknown0x200', True)
 
                 # TODO manage flags of standard material
                 if type_ii == 3:  # composite material
