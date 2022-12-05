@@ -783,6 +783,7 @@ class Importer:
                 raise Exception('Mesh claims to not have any vertices - expected buffer to be empty, but it isn\'t. size=%d' % len(m3_vertices))
             return
 
+        v_colors = self.m3_model.bit_get('vertex_flags', 'has_vertex_colors')
         v_class = 'VertexFormat' + hex(self.m3_model.vertex_flags)
         if v_class not in io_m3.structures:
             raise Exception('Vertex flags %s can\'t be handled yet. bufferSize=%d' % (hex(self.m3_model.vertex_flags), len(m3_vertices)))
@@ -816,6 +817,24 @@ class Importer:
                 for ii in range(len(regn_m3_faces)):
                     regn_m3_faces[ii] -= region.first_vertex_index
 
+            regn_m3_vert_ids = {}
+            regn_m3_vert_to_id = {}
+            regn_m3_verts_new = []
+            regn_m3_faces_new = []
+
+            dups = 0
+            for ii, v in enumerate(regn_m3_verts):
+                id_tuple = (*to_bl_vec3(v.pos), *to_bl_vec3(v.normal), v.lookup0, v.lookup1, v.lookup2, v.lookup3, v.weight0, v.weight1, v.weight2, v.weight3)
+                regn_m3_vert_to_id[ii] = id_tuple
+                if regn_m3_vert_ids.get(id_tuple) is None:
+                    regn_m3_vert_ids[id_tuple] = ii - dups
+                    regn_m3_verts_new.append(v)
+                else:
+                    dups += 1
+
+            for ii in range(len(regn_m3_faces)):
+                regn_m3_faces_new.append(regn_m3_vert_ids.get(regn_m3_vert_to_id[regn_m3_faces[ii]]))
+
             mesh = bpy.data.meshes.new('Mesh')
             mesh_ob = bpy.data.objects.new('Mesh', mesh)
             mesh_ob.parent = ob
@@ -838,11 +857,13 @@ class Importer:
 
             layer_sign = bm.verts.layers.int.new('m3sign')
             layer_deform = bm.verts.layers.deform.new('m3lookup')
+            layer_color = bm.loops.layers.color.new('m3color') if v_colors else None
+            layer_alpha = bm.loops.layers.color.new('m3alpha') if v_colors else None
 
             for uv_prop in uv_props:
                 bm.loops.layers.uv.new(uv_prop)
 
-            for m3_vert in regn_m3_verts:
+            for m3_vert in regn_m3_verts_new:
                 vert = bm.verts.new((m3_vert.pos.x, m3_vert.pos.y, m3_vert.pos.z))
                 vert[layer_sign] = 1 if round(m3_vert.sign) > 0 else 0
 
@@ -856,7 +877,7 @@ class Importer:
             bm.verts.ensure_lookup_table()
 
             for ii in range(0, len(regn_m3_faces), 3):
-                face = bm.faces.new((bm.verts[regn_m3_faces[ii]], bm.verts[regn_m3_faces[ii + 1]], bm.verts[regn_m3_faces[ii + 2]]))
+                face = bm.faces.new((bm.verts[regn_m3_faces_new[ii]], bm.verts[regn_m3_faces_new[ii + 1]], bm.verts[regn_m3_faces_new[ii + 2]]))
                 face.smooth = True
 
                 for jj in range(3):
@@ -865,6 +886,9 @@ class Importer:
                     for uv_prop in uv_props:
                         layer_uv = bm.loops.layers.uv.get(uv_prop)
                         loop[layer_uv].uv = to_bl_uv(getattr(m3v, uv_prop), regn_uv_multiply, regn_uv_offset)
+                    if layer_color:
+                        loop[layer_color] = (m3_vert.col.r / 255, m3_vert.col.g / 255, m3_vert.col.b / 255, 1)
+                        loop[layer_alpha] = (m3_vert.col.a / 255, m3_vert.col.a / 255, m3_vert.col.a / 255, 1)
 
             bm.faces.ensure_lookup_table()
 
@@ -880,7 +904,7 @@ class Importer:
 
                 for edge in [*origin.link_edges, *target.link_edges]:
                     if len(edge.link_faces) == 1:
-                        edge.smooth = to_bl_vec3(m3v0.normal) == to_bl_vec3(m3v1.normal)
+                        edge.smooth = False
 
                 if m3v0_lookup_id != m3v1_lookup_id:
                     del doubles[origin]
