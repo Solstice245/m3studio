@@ -19,6 +19,7 @@
 import bpy
 import bmesh
 import mathutils
+import math
 import os
 from timeit import timeit
 from . import io_m3
@@ -623,10 +624,10 @@ class Exporter:
             right_correction_matrix = io_shared.rot_fix_matrix_transpose @ bind_scale_matrix
             m3_pose_matrix = left_correction_matrix @ pose_bone_mat @ right_correction_matrix
 
-            if bone.name == 'Box01':
-                print(left_correction_matrix)
-                print(pose_bone_mat)
-                print(right_correction_matrix)
+            # if bone.name == 'Box01':
+            #     print(left_correction_matrix)
+            #     print(pose_bone_mat)
+            #     print(right_correction_matrix)
 
             self.bone_name_correction_matrices = [left_correction_matrix, right_correction_matrix]
 
@@ -720,10 +721,13 @@ class Exporter:
             bm.from_object(ob, self.depsgraph)
             bmesh.ops.triangulate(bm, faces=bm.faces)
 
-            sign_layer = bm.faces.layers.int.get('m3sign') or bm.faces.layers.int.new('m3sign')
-            color_layer = bm.loops.layers.color.get('m3color')
-            alpha_layer = bm.loops.layers.color.get('m3alpha')
-            deform_layer = bm.verts.layers.deform.get('m3lookup')
+            export_rgba = False
+
+            layer_sign = bm.verts.layers.int.get('m3sign') or bm.verts.layers.int.new('m3sign')
+            layer_deform = bm.verts.layers.deform.get('m3lookup')
+            layer_color = bm.loops.layers.color.get('m3color')
+            layer_alpha = bm.loops.layers.color.get('m3alpha')
+            layer_tan_uv = bm.loops.layers.uv.values()[0]
 
             first_vertex_index = len(m3_vertices)
             first_face_index = len(m3_faces)
@@ -732,79 +736,118 @@ class Exporter:
 
             region_vertices = []
             region_faces = []
-            region_lookup = [self.bone_name_indices[group.name] for group in ob.vertex_groups]
+            region_lookup = []
+            group_to_lookup_ii = {}
+            for ii, group in enumerate(ob.vertex_groups):
+                if self.bone_name_indices.get(group.name) is not None:
+                    group_to_lookup_ii[ii] = len(region_lookup)
+                    region_lookup.append(self.bone_name_indices[group.name])
 
-            m3_verts_to_verts = []
+            region_vert_id_to_vert = {}
+            region_vert_count = 0
 
             for face in bm.faces:
-                assert len(face.loops) == 3
+                v0 = face.loops[0].vert
+                v1 = face.loops[1].vert
+                v2 = face.loops[2].vert
+
+                uvv0 = face.loops[0][layer_tan_uv].uv[1]
+                uvv1 = face.loops[1][layer_tan_uv].uv[1]
+                uvv2 = face.loops[2][layer_tan_uv].uv[1]
+
+                duvv1 = uvv1 - uvv0
+                duvv2 = uvv2 - uvv0
+
+                e1 = v1.co - v0.co
+                e2 = v2.co - v0.co
+
+                tan = duvv2 * e1 - duvv1 * e2
+                tan.length = 1 if tan.length > 0 else -1 if tan.length < 0 else 0
+
+                # print(tan, tan.length)
+                # print()
 
                 for loop in face.loops:
                     vert = loop.vert
 
-                    # TODO new vert anyway if loop UV is unique
-                    if vert.index not in m3_verts_to_verts:
-                        m3_verts_to_verts.append(loop.vert.index)
-                        region_faces.append(m3_verts_to_verts.index(vert.index))
-                    else:
-                        region_faces.append(m3_verts_to_verts.index(vert.index))
-                        continue
+                    id_tuple = []
 
                     m3_vert = m3_vertex_desc.instance()
                     m3_vert.pos = to_m3_vec3(ob.matrix_local @ vert.co)
 
-                    weight_lookup_pairs = vert[deform_layer].items()
+                    # only count groups which have a lookup match, sort by weight and then limit to a length of 4
+                    deformations = []
+                    for deformation in vert[layer_deform].items():
+                        lookup_ii = group_to_lookup_ii.get(deformation[0])
+                        if lookup_ii is not None and deformation[1]:
+                            deformations.append([lookup_ii, deformation[1]])
+                    deformations.sort(key=lambda x: x[1])
+                    deformations = deformations[0:max(4, len(deformations))]
 
-                    sum_weight = 0
-                    for index, weight in weight_lookup_pairs:
-                        sum_weight += weight
+                    if len(deformations):
+                        # normalize the weights
+                        sum_weight = 0
+                        for index, weight in deformations:
+                            sum_weight += weight
 
-                    round_weight_lookup_pairs = []
-                    correct_sum_weight = 0
-                    round_sum_weight = 0
-                    for index, weight in weight_lookup_pairs:
-                        weighted = 0
-                        if weight:
-                            weighted += 1
-                            correct_sum_weight += weight / sum_weight
-                            new_round_weight = round(correct_sum_weight * 255)
-                            round_weight_lookup_pairs.append((index, new_round_weight - round_sum_weight))
-                            round_sum_weight = new_round_weight
-                        if weighted >= 4:
-                            break
-
-                    for ii in range(0, min(4, len(weight_lookup_pairs))):
-                        setattr(m3_vert, 'lookup' + str(ii), weight_lookup_pairs[ii][0])
-                        setattr(m3_vert, 'weight' + str(ii), round(weight_lookup_pairs[ii][1] * 255))
-
-                    # TODO handle static vertex here
-
-                    vertex_lookups_used = max(vertex_lookups_used, len(round_weight_lookup_pairs))
+                        for ii in range(len(deformations)):
+                            lookup, weight = deformations[ii]
+                            setattr(m3_vert, 'lookup' + str(ii), lookup)
+                            setattr(m3_vert, 'weight' + str(ii), round(weight / sum_weight * 255))
 
                     uv_layers = bm.loops.layers.uv.values()
                     for ii in range(0, 4):
                         uv_layer = uv_layers[ii] if ii < len(uv_layers) else None
                         setattr(m3_vert, 'uv' + str(ii), to_m3_uv(loop[uv_layer].uv) if uv_layer else (0, 0))
 
-                    m3_vert.normal = to_m3_vec3_f8(vert.normal)
+                    if export_rgba:
+                        m3_vert.col = to_bl_color((*loop[layer_color][0:3], (loop[layer_alpha][0] + loop[layer_alpha][1] + loop[layer_alpha][2]) / 3))
 
-                    if face[sign_layer] == 1:
-                        m3_vert.sign = 1
-                        m3_vert.tan = to_m3_vec3_f8(-loop.calc_tangent())
+                    # m3_vert.normal = to_m3_vec3_f8(vert.normal)
+                    m3_vert.normal.x = vert.normal.x
+                    m3_vert.normal.y = vert.normal.y
+                    m3_vert.normal.z = vert.normal.z
+
+                    if vert[layer_sign] == 1:
+                        m3_vert.sign = 1.0
+                        m3_vert.tan.x = -tan.x
+                        m3_vert.tan.y = -tan.y
+                        m3_vert.tan.z = -tan.z
+                        # print(-loop.edge.calc_tangent(loop), -loop.edge.calc_tangent(loop).length)
                     else:
-                        m3_vert.sign = -1
-                        m3_vert.tan = to_m3_vec3_f8(loop.calc_tangent())
+                        m3_vert.sign = -1.0
+                        m3_vert.tan.x = tan.x
+                        m3_vert.tan.y = tan.y
+                        m3_vert.tan.z = tan.z
+                        # print(loop.edge.calc_tangent(loop), loop.edge.calc_tangent(loop).length)
 
-                    if vertex_rgba:
-                        r, g, b, a = (1, 1, 1, 1)
-                        if color_layer:
-                            r, g, b = loop[color_layer].color[0:3]
-                        if alpha_layer:
-                            bl_col = loop[color_layer].color
-                            a = (bl_col[0] + bl_col[1] + bl_col[2]) / 3
-                        m3_vert.color = to_m3_color((r, g, b, a))
+                    id_list = [
+                        m3_vert.pos.x, m3_vert.pos.y, m3_vert.pos.z, m3_vert.lookup0, m3_vert.lookup1, m3_vert.lookup2, m3_vert.lookup3, m3_vert.sign,
+                        m3_vert.weight0, m3_vert.weight1, m3_vert.weight2, m3_vert.weight3, m3_vert.normal.x, m3_vert.normal.y, m3_vert.normal.z,
+                    ]
 
-                    region_vertices.append(m3_vert)
+                    if export_rgba:
+                        id_list.extend((m3_vert.col.r, m3_vert.col.g, m3_vert.col.b, m3_vert.col.a))
+
+                    for ii in range(len(uv_layers)):
+                        uv = getattr(m3_vert, 'uv' + str(ii))
+                        id_list.extend((uv.x, uv.y))
+
+                    id_tuple = tuple(id_list)
+                    id_index = region_vert_id_to_vert.get(id_tuple)
+                    if id_index is None:
+                        id_index = region_vert_count
+                        region_vert_id_to_vert[id_tuple] = id_index
+
+                        # TODO handle static vertex here
+
+                        vertex_lookups_used = max(vertex_lookups_used, len(deformations))
+
+                        m3_vertex_desc.instance_validate(m3_vert, 'vertex')
+                        region_vertices.append(m3_vert)
+                        region_vert_count += 1
+
+                    region_faces.append(id_index)
 
             m3_vertices.extend(region_vertices)
             m3_faces.extend(region_faces)

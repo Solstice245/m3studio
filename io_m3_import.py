@@ -853,6 +853,10 @@ class Importer:
 
             vertex_groups_used = [False for g in mesh_ob.vertex_groups]
 
+            for matref_ii in region_matref_indices:
+                mesh_mat = shared.m3_item_add(mesh_ob.m3_mesh_material_refs)
+                mesh_mat.bl_handle = ob.m3_materialrefs[matref_ii].bl_handle
+
             bm = bmesh.new(use_operators=True)
 
             layer_sign = bm.verts.layers.int.new('m3sign')
@@ -865,7 +869,6 @@ class Importer:
 
             for m3_vert in regn_m3_verts_new:
                 vert = bm.verts.new((m3_vert.pos.x, m3_vert.pos.y, m3_vert.pos.z))
-                vert[layer_sign] = 1 if round(m3_vert.sign) > 0 else 0
 
                 for ii in range(0, region.vertex_lookups_used):
                     weight = getattr(m3_vert, 'weight' + str(ii))
@@ -883,12 +886,14 @@ class Importer:
                 for jj in range(3):
                     m3v = regn_m3_verts[regn_m3_faces[ii + jj]]
                     loop = face.loops[jj]
+                    if loop.vert[layer_sign] != 1:
+                        loop.vert[layer_sign] = 1 if round(m3v.sign) > 0 else 0
                     for uv_prop in uv_props:
                         layer_uv = bm.loops.layers.uv.get(uv_prop)
                         loop[layer_uv].uv = to_bl_uv(getattr(m3v, uv_prop), regn_uv_multiply, regn_uv_offset)
                     if layer_color:
-                        loop[layer_color] = (m3_vert.col.r / 255, m3_vert.col.g / 255, m3_vert.col.b / 255, 1)
-                        loop[layer_alpha] = (m3_vert.col.a / 255, m3_vert.col.a / 255, m3_vert.col.a / 255, 1)
+                        loop[layer_color] = (m3v.col.r / 255, m3v.col.g / 255, m3v.col.b / 255, 1)
+                        loop[layer_alpha] = (m3v.col.a / 255, m3v.col.a / 255, m3v.col.a / 255, 1)
 
             bm.faces.ensure_lookup_table()
 
