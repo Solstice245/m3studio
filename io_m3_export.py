@@ -53,7 +53,7 @@ def to_m3_vec3(bl_vec=None):
 
 def to_m3_vec3_f8(bl_vec=None):
     m3_vec = io_m3.structures['Vector3As3Fixed8'].get_version(0).instance()
-    m3_vec.x, m3_vec.y, m3_vec.z = bl_vec or (0, 0, 0)
+    m3_vec.x, m3_vec.y, m3_vec.z = bl_vec or (0.0, 0.0, 0.0)
     return m3_vec
 
 
@@ -723,11 +723,11 @@ class Exporter:
 
             export_rgba = False
 
-            layer_sign = bm.verts.layers.int.get('m3sign') or bm.verts.layers.int.new('m3sign')
             layer_deform = bm.verts.layers.deform.get('m3lookup')
             layer_color = bm.loops.layers.color.get('m3color')
             layer_alpha = bm.loops.layers.color.get('m3alpha')
             layer_tan_uv = bm.loops.layers.uv.values()[0]
+            layer_sign = bm.faces.layers.int.get('m3sign') or bm.verts.layers.int.new('m3sign')
 
             first_vertex_index = len(m3_vertices)
             first_face_index = len(m3_faces)
@@ -747,25 +747,16 @@ class Exporter:
             region_vert_count = 0
 
             for face in bm.faces:
-                v0 = face.loops[0].vert
-                v1 = face.loops[1].vert
-                v2 = face.loops[2].vert
+                lv0 = face.loops[0].vert
+                lv1 = face.loops[1].vert
+                lv2 = face.loops[2].vert
 
-                uvv0 = face.loops[0][layer_tan_uv].uv[1]
-                uvv1 = face.loops[1][layer_tan_uv].uv[1]
-                uvv2 = face.loops[2][layer_tan_uv].uv[1]
+                v0 = face.loops[0][layer_tan_uv].uv[1]
+                v1 = face.loops[1][layer_tan_uv].uv[1]
+                v2 = face.loops[2][layer_tan_uv].uv[1]
 
-                duvv1 = uvv1 - uvv0
-                duvv2 = uvv2 - uvv0
-
-                e1 = v1.co - v0.co
-                e2 = v2.co - v0.co
-
-                tan = duvv2 * e1 - duvv1 * e2
+                tan = (v2 - v0) * (lv1.co - lv0.co) - (v1 - v0) * (lv2.co - lv0.co)
                 tan.length = 1 if tan.length > 0 else -1 if tan.length < 0 else 0
-
-                # print(tan, tan.length)
-                # print()
 
                 for loop in face.loops:
                     vert = loop.vert
@@ -803,23 +794,14 @@ class Exporter:
                     if export_rgba:
                         m3_vert.col = to_bl_color((*loop[layer_color][0:3], (loop[layer_alpha][0] + loop[layer_alpha][1] + loop[layer_alpha][2]) / 3))
 
-                    # m3_vert.normal = to_m3_vec3_f8(vert.normal)
-                    m3_vert.normal.x = vert.normal.x
-                    m3_vert.normal.y = vert.normal.y
-                    m3_vert.normal.z = vert.normal.z
+                    m3_vert.normal = to_m3_vec3_f8(vert.normal)
 
-                    if vert[layer_sign] == 1:
+                    if face[layer_sign] == 1:
                         m3_vert.sign = 1.0
-                        m3_vert.tan.x = -tan.x
-                        m3_vert.tan.y = -tan.y
-                        m3_vert.tan.z = -tan.z
-                        # print(-loop.edge.calc_tangent(loop), -loop.edge.calc_tangent(loop).length)
+                        m3_vert.tan = to_m3_vec3_f8(-tan)
                     else:
                         m3_vert.sign = -1.0
-                        m3_vert.tan.x = tan.x
-                        m3_vert.tan.y = tan.y
-                        m3_vert.tan.z = tan.z
-                        # print(loop.edge.calc_tangent(loop), loop.edge.calc_tangent(loop).length)
+                        m3_vert.tan = to_m3_vec3_f8(tan)
 
                     id_list = [
                         m3_vert.pos.x, m3_vert.pos.y, m3_vert.pos.z, m3_vert.lookup0, m3_vert.lookup1, m3_vert.lookup2, m3_vert.lookup3, m3_vert.sign,
