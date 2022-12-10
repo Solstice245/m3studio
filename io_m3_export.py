@@ -34,8 +34,8 @@ INT16_MAX = ((1 << 15) - 1)
 
 def to_m3_uv(bl_uv):
     m3_uv = io_m3.structures['Vector2As2int16'].get_version(0).instance()
-    m3_uv.x = sorted((INT16_MIN, round(bl_uv[0] * 2040), INT16_MAX))[1]
-    m3_uv.y = (sorted((INT16_MIN, round((-bl_uv[1] + 1.0) * 2040), INT16_MAX))[1])
+    m3_uv.x = sorted((INT16_MIN, round(bl_uv[0] * 2048), INT16_MAX))[1]
+    m3_uv.y = (sorted((INT16_MIN, round((-bl_uv[1] + 1.0) * 2048), INT16_MAX))[1])
     return m3_uv
 
 

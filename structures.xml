@@ -1481,7 +1481,7 @@
             <field name="color_brightness" type="FloatAnimationReferenceV0"/>
             <field name="uv_triplanar_offset" type="Vector3AnimationReferenceV0" since_version="24"/>
             <field name="uv_triplanar_scale" type="Vector3AnimationReferenceV0" since_version="24"/> <!-- default (1.0, 1.0, 1.0)-->
-            <field name="uv_source_related" type="int32" default_value="-1"/>
+            <field name="uv_source_related" type="int32" default_value="-1"/> <!-- seems to have something to do with tangent space mapping -->
             <field name="fresnel_type" type="uint32" default_value="0"/>
             <field name="fresnel_exponent" type="float" default_value="4.0"/>
             <field name="fresnel_min" type="float" default_value="0.0"/>

@@ -867,11 +867,10 @@ class Importer:
             for uv_prop in uv_props:
                 bm.loops.layers.uv.new(uv_prop)
 
+            vert_to_m3_vert = {}
             for m3_vert in regn_m3_verts_new:
                 vert = bm.verts.new((m3_vert.pos.x, m3_vert.pos.y, m3_vert.pos.z))
-
-                # tan = to_bl_vec3(m3_vert.tan)
-                # print(vert.co, tan, tan.length, m3_vert.sign)
+                vert_to_m3_vert[vert] = m3_vert
 
                 for ii in range(0, region.vertex_lookups_used):
                     weight = getattr(m3_vert, 'weight' + str(ii))
@@ -904,15 +903,15 @@ class Importer:
             for origin in list(doubles.keys()):
                 target = doubles[origin]
 
-                m3v0 = regn_m3_verts[origin.index]
-                m3v1 = regn_m3_verts[target.index]
-
-                m3v0_lookup_id = (m3v0.lookup0, m3v0.lookup1, m3v0.lookup2, m3v0.lookup3, m3v0.weight0, m3v0.weight1, m3v0.weight2, m3v0.weight3)
-                m3v1_lookup_id = (m3v1.lookup0, m3v1.lookup1, m3v1.lookup2, m3v1.lookup3, m3v1.weight0, m3v1.weight1, m3v1.weight2, m3v1.weight3)
-
                 for edge in [*origin.link_edges, *target.link_edges]:
                     if len(edge.link_faces) == 1:
                         edge.smooth = False
+
+                m3v0 = vert_to_m3_vert[origin]
+                m3v1 = vert_to_m3_vert[target]
+
+                m3v0_lookup_id = (m3v0.lookup0, m3v0.lookup1, m3v0.lookup2, m3v0.lookup3, m3v0.weight0, m3v0.weight1, m3v0.weight2, m3v0.weight3)
+                m3v1_lookup_id = (m3v1.lookup0, m3v1.lookup1, m3v1.lookup2, m3v1.lookup3, m3v1.weight0, m3v1.weight1, m3v1.weight2, m3v1.weight3)
 
                 if m3v0_lookup_id != m3v1_lookup_id:
                     del doubles[origin]
