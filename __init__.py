@@ -44,6 +44,7 @@ from . import m3_warps
 from . import m3_shadowboxes
 from . import io_m3_import
 from . import io_m3_export
+from . import bl_graphics
 
 bl_info = {
     'name': 'M3: Used by Blizzard\'s StarCraft 2 and Heroes of the Storm',
@@ -173,20 +174,24 @@ def init_msgbus(*args):
 
 
 def register():
+    global M3_SHADER
     for clss in classes:
         bpy.utils.register_class(clss)
     for module in m3_modules:
         module.register_props()
     bpy.types.TOPBAR_MT_file_import.append(top_bar_import)
     bpy.types.TOPBAR_MT_file_export.append(top_bar_export)
+    M3_SHADER = bpy.types.SpaceView3D.draw_handler_add(bl_graphics.draw, (), 'WINDOW', 'POST_VIEW')
     bpy.app.handlers.load_post.append(init_msgbus)
 
 
 def unregister():
+    global M3_SHADER
     for clss in reversed(classes):
         bpy.utils.unregister_class(clss)
     bpy.types.TOPBAR_MT_file_import.remove(top_bar_import)
     bpy.types.TOPBAR_MT_file_export.remove(top_bar_export)
+    bpy.types.SpaceView3D.draw_handler_remove(M3_SHADER, 'WINDOW')
     bpy.app.handlers.load_post.remove(init_msgbus)
 
 

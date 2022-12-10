@@ -364,7 +364,7 @@ class Importer:
             anim_id_action_data = anim_id_data[action_name]
             fcurves = bpy.data.actions.get(action_name).fcurves
             fcurve = fcurves.new(path, index=0)
-            fcurve.keyframe_points.add(len(anim_id_action_data) / 2)
+            fcurve.keyframe_points.add(int(len(anim_id_action_data) / 2))
             fcurve.keyframe_points.foreach_set('co', anim_id_action_data)
 
     def key_vec(self, bl, field, ref, default):
@@ -387,7 +387,7 @@ class Importer:
             for index, index_data in enumerate(anim_id_action_data):
                 fcurves = bpy.data.actions.get(action_name).fcurves
                 fcurve = fcurves.new(path, index=index)
-                fcurve.keyframe_points.add(len(index_data) / 2)
+                fcurve.keyframe_points.add(int(len(index_data) / 2))
                 fcurve.keyframe_points.foreach_set('co', index_data)
 
     def create_animations(self):
@@ -617,7 +617,7 @@ class Importer:
                 fcurves_loc = []
                 for index, index_data in enumerate(anim_data_loc):
                     fcurve = fcurves.new(pose_bone.path_from_id('location'), index=index, action_group=pose_bone.name)
-                    fcurve.keyframe_points.add(len(index_data) / 2)
+                    fcurve.keyframe_points.add(int(len(index_data) / 2))
                     fcurve.keyframe_points.foreach_set('co', index_data)
                     fcurve.keyframe_points.foreach_set('interpolation', [1] * int(len(index_data) / 2))
                     fcurves_loc.append(fcurve)
@@ -625,7 +625,7 @@ class Importer:
                 fcurves_rot = []
                 for index, index_data in enumerate(anim_data_rot):
                     fcurve = fcurves.new(pose_bone.path_from_id('rotation_quaternion'), index=index, action_group=pose_bone.name)
-                    fcurve.keyframe_points.add(len(index_data) / 2)
+                    fcurve.keyframe_points.add(int(len(index_data) / 2))
                     fcurve.keyframe_points.foreach_set('co', index_data)
                     fcurve.keyframe_points.foreach_set('interpolation', [1] * int(len(index_data) / 2))
                     fcurves_rot.append(fcurve)
@@ -633,7 +633,7 @@ class Importer:
                 fcurves_scl = []
                 for index, index_data in enumerate(anim_data_scl):
                     fcurve = fcurves.new(pose_bone.path_from_id('scale'), index=index, action_group=pose_bone.name)
-                    fcurve.keyframe_points.add(len(index_data) / 2)
+                    fcurve.keyframe_points.add(int(len(index_data) / 2))
                     fcurve.keyframe_points.foreach_set('co', index_data)
                     fcurve.keyframe_points.foreach_set('interpolation', [1] * int(len(index_data) / 2))
                     fcurves_scl.append(fcurve)
@@ -869,6 +869,9 @@ class Importer:
 
             for m3_vert in regn_m3_verts_new:
                 vert = bm.verts.new((m3_vert.pos.x, m3_vert.pos.y, m3_vert.pos.z))
+
+                # tan = to_bl_vec3(m3_vert.tan)
+                # print(vert.co, tan, tan.length, m3_vert.sign)
 
                 for ii in range(0, region.vertex_lookups_used):
                     weight = getattr(m3_vert, 'weight' + str(ii))
