@@ -755,8 +755,7 @@ class Exporter:
                 v1 = face.loops[1][layer_tan_uv].uv[1]
                 v2 = face.loops[2][layer_tan_uv].uv[1]
 
-                tan = (v2 - v0) * (lv1.co - lv0.co) - (v1 - v0) * (lv2.co - lv0.co)
-                tan.length = 1 if tan.length > 0 else -1 if tan.length < 0 else 0
+                tan = ((v2 - v0) * (lv1.co - lv0.co) - (v1 - v0) * (lv2.co - lv0.co)).normalized()
 
                 for loop in face.loops:
                     vert = loop.vert
