@@ -24,10 +24,10 @@ desc_export_cull = 'This bone will not be exported to the M3 file if it\'s not u
 
 def register_props():
     bpy.types.Bone.bl_handle = bpy.props.StringProperty(options=set())
-    bpy.types.Bone.m3_bind_scale = bpy.props.FloatVectorProperty(options=set(), size=3, subtype='XYZ', default=(1, 1, 1))
+    bpy.types.Bone.m3_bind_scale = bpy.props.FloatVectorProperty(options=set(), size=3, subtype='XYZ', min=0.000001, default=(1,) * 3)
     bpy.types.Bone.m3_export_cull = bpy.props.BoolProperty(options=set(), default=True, description=desc_export_cull)
     bpy.types.EditBone.bl_handle = bpy.props.StringProperty(options=set())
-    bpy.types.EditBone.m3_bind_scale = bpy.props.FloatVectorProperty(options=set(), size=3, subtype='XYZ', default=(1, 1, 1))
+    bpy.types.EditBone.m3_bind_scale = bpy.props.FloatVectorProperty(options=set(), size=3, subtype='XYZ', min=0.000001, default=(1,) * 3)
     bpy.types.EditBone.m3_export_cull = bpy.props.BoolProperty(options=set(), default=True, description=desc_export_cull)
 
 

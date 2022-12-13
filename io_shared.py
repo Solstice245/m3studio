@@ -29,6 +29,14 @@ rot_fix_matrix = mathutils.Matrix(((0, 1, 0, 0),
 rot_fix_matrix_transpose = rot_fix_matrix.transposed()
 
 
+def bind_scale_to_matrix(vec3):
+    matrix = mathutils.Matrix()
+    matrix[0][0] = vec3[0]
+    matrix[1][1] = vec3[0]
+    matrix[2][2] = vec3[0]
+    return matrix
+
+
 def io_anim_group(processor):
     processor.float('movement_speed')
     processor.integer('frequency')

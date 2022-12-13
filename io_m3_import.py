@@ -523,6 +523,7 @@ class Importer:
                 edit_bone.head = bone_heads[index]
                 edit_bone.tail = bone_tails[index]
                 edit_bone.roll = bone_rolls[index]
+                edit_bone.select_tail = False
                 edit_bone.m3_bind_scale = (bind_scales[index][1], bind_scales[index][0], bind_scales[index][2])
 
                 if m3_bone.parent != -1:
@@ -687,7 +688,7 @@ class Importer:
         bone_tails = get_bone_tails(bone_heads, bone_vectors)
         bone_rolls = get_bone_rolls(bone_rests, bone_heads, bone_tails)
         bind_scales = [to_bl_matrix(iref.matrix).decompose()[2] for iref in m3_bone_rests]
-        bind_matrices = [mathutils.Matrix.LocRotScale(mathutils.Vector(), mathutils.Quaternion(), scl) for scl in bind_scales]
+        bind_matrices = [mathutils.Matrix.LocRotScale(None, None, scl) for scl in bind_scales]
         bpy.ops.object.mode_set(mode='EDIT', toggle=False)
         edit_bones = get_edit_bones(bone_heads, bone_tails, bone_rolls, bind_scales)
         edit_bone_relations = get_edit_bone_relations(edit_bones)

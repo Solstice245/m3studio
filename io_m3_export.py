@@ -65,7 +65,7 @@ def to_m3_vec4(bl_vec=None):
 
 def to_m3_quat(bl_quat=None):
     m3_quat = io_m3.structures['QUAT'].get_version(0).instance()
-    m3_quat.x, m3_quat.y, m3_quat.z, m3_quat.w = bl_quat or (0.0, 0.0, 0.0, 0.0)
+    m3_quat.w, m3_quat.x, m3_quat.y, m3_quat.z = bl_quat or (1.0, 0.0, 0.0, 0.0)
     return m3_quat
 
 
@@ -523,8 +523,9 @@ class Exporter:
         # TODO warning if layers have rtt channel collision, also only to be used in standard material
 
         self.bone_name_indices = {bone.name: ii for ii, bone in enumerate(self.bones)}
-        self.bone_name_correction_matrices = {}
-        self.bone_name_irefs = {}
+        self.bone_to_correction_matrices = {}
+        self.bone_to_iref = {}
+        self.bone_to_inv_iref = {}
 
         self.matref_handle_indices = {}
         for matref in ob.m3_materialrefs:
@@ -601,45 +602,36 @@ class Exporter:
             m3_bone.ar1 = self.init_anim_ref_uint32(1)
             m3_bone.ar1.null = 1
 
+            bone_matrix_local = bone.matrix_local.copy()
+            rest_matrix = bone_matrix_local @ io_shared.rot_fix_matrix_transpose
+            rest_matrix = io_shared.bind_scale_to_matrix(bone.m3_bind_scale) @ rest_matrix.inverted()
+            self.bone_to_iref[bone] = rest_matrix
+            self.bone_to_inv_iref[bone] = bone_matrix_local.inverted()
+
+            bind_scale_inv = mathutils.Vector((1.0 / bone.m3_bind_scale[ii] for ii in range(3)))
+            bind_scale_inv_matrix = io_shared.bind_scale_to_matrix(bind_scale_inv)
+
             if bone.parent is not None:
                 m3_bone.parent = self.bone_name_indices[bone.parent.name]
-                parent_iref = self.bone_name_irefs[bone.parent.name]
-                rel_rest_pose_matrix = parent_iref @ bone.matrix_local
+                parent_bind_matrix = io_shared.bind_scale_to_matrix(bone.parent.m3_bind_scale)
+                parent_inv_iref = self.bone_to_inv_iref[bone.parent]
+                left_correction_matrix = parent_bind_matrix @ io_shared.rot_fix_matrix @ parent_inv_iref @ bone.matrix_local
             else:
                 m3_bone.parent = -1
-                rel_rest_pose_matrix = bone.matrix_local
+                left_correction_matrix = bone.matrix_local
+
+            right_correction_matrix = io_shared.rot_fix_matrix_transpose @ bind_scale_inv_matrix
+
+            self.bone_to_correction_matrices[bone] = (left_correction_matrix, right_correction_matrix)
 
             pose_bone = self.ob.pose.bones[bone.name]
-            pose_bone_mat = self.ob.convert_space(pose_bone=pose_bone, matrix=pose_bone.matrix, from_space='POSE', to_space='LOCAL')
-
-            bind_scale_inverted = mathutils.Vector((1.0 / bone.m3_bind_scale[ii] for ii in range(3)))
-            bind_scale_matrix = mathutils.Matrix.LocRotScale(None, None, bind_scale_inverted)
-
-            if bone.parent is not None:
-                parent_bind_scale_matrix = mathutils.Matrix.LocRotScale(None, None, bone.parent.m3_bind_scale)
-                left_correction_matrix = parent_bind_scale_matrix @ io_shared.rot_fix_matrix @ rel_rest_pose_matrix
-            else:
-                left_correction_matrix = rel_rest_pose_matrix
-
-            right_correction_matrix = io_shared.rot_fix_matrix_transpose @ bind_scale_matrix
-            m3_pose_matrix = left_correction_matrix @ pose_bone_mat @ right_correction_matrix
-
-            # if bone.name == 'Box01':
-            #     print(left_correction_matrix)
-            #     print(pose_bone_mat)
-            #     print(right_correction_matrix)
-
-            self.bone_name_correction_matrices = [left_correction_matrix, right_correction_matrix]
+            pose_matrix = self.ob.convert_space(pose_bone=pose_bone, matrix=pose_bone.matrix, from_space='POSE', to_space='LOCAL')
+            m3_pose_matrix = left_correction_matrix @ pose_matrix @ right_correction_matrix
 
             m3_bone_loc, m3_bone_rot, m3_bone_scale = m3_pose_matrix.decompose()
             m3_bone.scale.default = to_m3_vec3(m3_bone_scale)
             m3_bone.rotation.default = to_m3_quat(m3_bone_rot)
             m3_bone.location.default = to_m3_vec3(m3_bone_loc)
-
-            abs_rest_pose_matrix_fixed = rel_rest_pose_matrix @ io_shared.rot_fix_matrix_transpose
-            abs_inv_rest_pose_matrix_fixed = abs_rest_pose_matrix_fixed.inverted()
-            abs_inv_rest_pose_matrix_fixed = bind_scale_matrix @ abs_inv_rest_pose_matrix_fixed
-            self.bone_name_irefs[bone.name] = abs_inv_rest_pose_matrix_fixed
 
     def create_division(self, model, mesh_objects, regn_version):
 
@@ -1437,7 +1429,7 @@ class Exporter:
 
         for bone in self.bones:
             iref = iref_section.content_add()
-            iref.matrix = to_m3_matrix(self.bone_name_irefs[bone.name])
+            iref.matrix = to_m3_matrix(self.bone_to_iref[bone])
 
     def create_hittests(self, model, hittests):
         if not hittests:
