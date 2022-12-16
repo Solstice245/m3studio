@@ -27,12 +27,20 @@ from sys import stderr
 from xml.etree import ElementTree as ET
 
 
-primitive_struct_names = {'CHAR', 'U8__', 'REAL', 'I16_', 'U16_', 'I32_', 'U32_', 'FLAG', 'U64_'}
-primitive_field_size = {'uint32': 4, 'int32': 4, 'uint16': 2, 'int16': 2, 'uint8': 1, 'int8': 1, 'float': 4, 'tag': 4, 'fixed8': 1, 'uint64': 8}
-primitive_field_format = {'uint32': 'I', 'int32': 'i', 'uint16': 'H', 'int16': 'h', 'uint8': 'B', 'int8': 'b', 'float': 'f', 'tag': '4s', 'fixed8': 'B', 'uint64': 'Q'}
-int_types = {'uint32', 'int32', 'uint16', 'int16', 'uint8', 'int8', 'uint64'}
-int_types_min = {'int16': (-(1 << 15)), 'uint16': 0, 'int32': (-(1 << 31)), 'uint32': 0, 'int8': -(1 << 7), 'uint8': 0, 'uint64': 0}
-int_types_max = {'int16': ((1 << 15) - 1), 'uint16': ((1 << 16) - 1), 'int32': ((1 << 31) - 1), 'uint32': ((1 << 32) - 1), 'int8': ((1 << 7) - 1), 'uint8': ((1 << 8) - 1), 'uint64': ((1 << 64) - 1)}
+primitive_struct_names = {'U8__', 'I16_', 'U16_', 'I32_', 'U32_', 'I64_', 'U64_', 'FLAG', 'REAL', 'CHAR'}
+primitive_field_info = {
+    'int8': {'size': 1, 'format': 'b', 'min': -1 << 7, 'max': (1 << 7) - 1},
+    'uint8': {'size': 1, 'format': 'B', 'min': 0, 'max': (1 << 8) - 1},
+    'int16': {'size': 2, 'format': 'h', 'min': -1 << 15, 'max': (1 << 15) - 1},
+    'uint16': {'size': 2, 'format': 'H', 'min': 0, 'max': (1 << 16) - 1},
+    'int32': {'size': 4, 'format': 'i', 'min': -1 << 31, 'max': (1 << 31) - 1},
+    'uint32': {'size': 4, 'format': 'I', 'min': 0, 'max': (1 << 32) - 1},
+    'int64': {'size': 8, 'format': 'q', 'min': -1 << 63, 'max': (1 << 63) - 1},
+    'uint64': {'size': 8, 'format': 'Q', 'min': 0, 'max': (1 << 64) - 1},
+    'fixed8': {'size': 1, 'format': 'B'},
+    'float': {'size': 4, 'format': 'f'},
+    'tag': {'size': 4, 'format': '4s'},
+}
 
 
 class M3StructureHistory:
@@ -93,16 +101,15 @@ class M3StructureDescription:
 
         # Validate the specified size:
         if validate_size and self.size != specific_size:
-            self.dump_offsets()
-            args = struct_name, struct_version, specific_size, calc_size
-            raise Exception('Size mismatch: {} in version {} has been specified to have size {}, but the calculated size was {}'.format(*args))
 
-    def dump_offsets(self):
-        offset = 0
-        stderr.write('Offsets of %s in version %d:\n' % (self.struct_name, self.struct_version))
-        for field in self.fields:
-            stderr.write('%s: %s\n' % (offset, field.name))
-            offset += field.size
+            offset = 0
+            stderr.write('Offsets of {} in version {}:\n'.format(self.struct_name, self.struct_version))
+            for field in self.fields:
+                stderr.write('{}: {}\n'.format(offset, field.name))
+                offset += field.size
+
+            args = self.struct_name, self.struct_version, specific_size, self.size
+            raise Exception('Size mismatch: {} in version {} has been specified to have size {}, but the calculated size was {}'.format(*args))
 
     def instance(self, buffer=None, offset=0, checks=True):
         return M3Structure(self, buffer, offset, checks)
@@ -126,10 +133,10 @@ class M3StructureDescription:
                 return vals
         else:
             vals = []
-            instanceOffset = 0
+            instance_offset = 0
             for i in range(count):
-                vals.append(self.instance(buffer=buffer, offset=instanceOffset, checks=checks))
-                instanceOffset += self.size
+                vals.append(self.instance(buffer=buffer, offset=instance_offset, checks=checks))
+                instance_offset += self.size
             return vals
 
     def instances_count(self, instances):
@@ -211,7 +218,7 @@ class M3Structure:
             try:
                 field.from_buffer(self, buffer, field_offset, checks)
             except struct.error as e:
-                raise Exception('failed to unpack %sV%s %s' % (self.struct_desc.struct_name, self.struct_desc.struct_version, field.name), e)
+                raise Exception('Failed to unpack %sV%s %s' % (self.struct_desc.struct_name, self.struct_desc.struct_version, field.name), e)
             field_offset += field.size
         assert field_offset - offset == self.struct_desc.size
 
@@ -302,8 +309,8 @@ class PrimitiveField(Field):
 
     def __init__(self, name, type_str, since_version, till_version, default_value, expected_value):
         Field.__init__(self, name, since_version, till_version)
-        self.size = primitive_field_size[type_str]
-        self.struct_format = struct.Struct('<' + primitive_field_format[type_str])
+        self.size = primitive_field_info[type_str]['size']
+        self.struct_format = struct.Struct('<' + primitive_field_info[type_str]['format'])
         self.type_str = type_str
         self.default_value = default_value
         self.expected_value = expected_value
@@ -311,9 +318,8 @@ class PrimitiveField(Field):
     def from_buffer(self, owner, buffer, offset, checks):
         value = self.struct_format.unpack_from(buffer, offset)[0]
         if self.expected_value is not None and value != self.expected_value:
-            struct_name = owner.struct_desc.struct_name
-            struct_version = owner.struct_desc.struct_version
-            raise Exception('Expected that field %s of %s (V. %d) has always the value %s, but it was %s' % (self.name, struct_name, struct_version, self.expected_value, value))
+            args = (self.name, owner.struct_desc.struct_name, owner.struct_desc.struct_version, self.expected_value, value)
+            raise Exception('Expected that field {} of {}V{} always has the value {}, but it was {}'.format(*args))
         setattr(owner, self.name, value)
 
     def to_buffer(self, owner, buffer, offset):
@@ -328,8 +334,8 @@ class IntField(PrimitiveField):
 
     def __init__(self, name, type_str, since_version, till_version, default_value, expected_value, bit_mask_map):
         PrimitiveField.__init__(self, name, type_str, since_version, till_version, default_value, expected_value)
-        self.min_val = int_types_min[type_str]
-        self.max_val = int_types_max[type_str]
+        self.min_val = primitive_field_info[type_str]['min']
+        self.max_val = primitive_field_info[type_str]['max']
         self.bit_mask_map = bit_mask_map
 
     def content_validate(self, field_content, field_path):
@@ -373,9 +379,8 @@ class Fixed8Field(PrimitiveField):
         float_val = ((int_val / 255.0 * 2.0) - 1)
 
         if checks and self.expected_value is not None and float_val != self.expected_value:
-            struct_name = owner.struct_desc.struct_name
-            struct_version = owner.struct_desc.struct_version
-            raise Exception('Expected that field %s of %s (V. %d) has always the value %s, but it was %s' % (self.name, struct_name, struct_version, self.expected_value, int_val))
+            args = (self.name, owner.struct_desc.struct_name, owner.struct_desc.struct_version, self.expected_value, value)
+            raise Exception('Expected that field {} of {}V{} always has the value {}, but it was {}'.format(*args))
         setattr(owner, self.name, float_val)
 
     def to_buffer(self, owner, buffer, offset):
@@ -401,8 +406,8 @@ class UnknownBytesField(Field):
     def from_buffer(self, owner, buffer, offset, checks):
         value = self.struct_format.unpack_from(buffer, offset)[0]
         if checks and self.expected_value is not None and value != self.expected_value:
-            raise Exception('Expected that %sV%s.%s has always the value %s, but it was %s' % (owner.struct_desc.struct_name, owner.struct_desc.struct_version, self.name, self.expected_value, value))
-
+            args = (self.name, owner.struct_desc.struct_name, owner.struct_desc.struct_version, self.expected_value, value)
+            raise Exception('Expected that field {} of {}V{} always has the value {}, but it was {}'.format(*args))
         setattr(owner, self.name, value)
 
     def to_buffer(self, owner, buffer, offset):
@@ -596,7 +601,7 @@ def section_list_save(sections: SectionList, filename):
         for section in sections:
             if section.index_entry.offset != file_object.tell():
                 args = previous_section.index_entry, len(previous_section.raw_bytes), section.index_entry
-                raise Exception('Section length problem: Section with index entry {} has length {} and gets followed by section with index entry {}'.format(*args))
+                raise Exception('Section length problem: Section (index entry {}) has length {} and gets followed by section with index entry {}'.format(*args))
             file_object.write(section.raw_bytes)
             previous_section = section
 
@@ -654,7 +659,7 @@ def structures_from_tree():
             if str_type == 'tag':
                 field = TagField(str_name, since_version, till_version)
 
-            elif str_type in int_types:
+            elif str_type in primitive_field_info and 'int' in str_type:
                 default_val = int(str_default_val, 0) if str_default_val else None
                 expected_val = int(str_expected_val, 0) if str_expected_val else None
                 if default_val is None:

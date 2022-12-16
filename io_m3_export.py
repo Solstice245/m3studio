@@ -21,7 +21,6 @@ import bmesh
 import mathutils
 import math
 import os
-from timeit import timeit
 from . import io_m3
 from . import io_shared
 from . import shared
@@ -284,7 +283,7 @@ class Exporter:
                 export_items.append(item)
             return export_items
 
-        export_sequences = []  # handled specially
+        # export_sequences = []  # handled specially
         export_attachment_points = valid_collections_and_requirements(ob.m3_attachmentpoints)
         export_lights = valid_collections_and_requirements(ob.m3_lights)
         export_shadow_boxes = valid_collections_and_requirements(ob.m3_shadowboxes)
@@ -526,6 +525,7 @@ class Exporter:
         self.bone_to_correction_matrices = {}
         self.bone_to_iref = {}
         self.bone_to_inv_iref = {}
+        self.bone_to_abs_pose_matrix = {}
 
         self.matref_handle_indices = {}
         for matref in ob.m3_materialrefs:
@@ -633,6 +633,15 @@ class Exporter:
             m3_bone.rotation.default = to_m3_quat(m3_bone_rot)
             m3_bone.location.default = to_m3_vec3(m3_bone_loc)
 
+            abs_pose_matrix = m3_pose_matrix
+
+            if bone.parent is not None:
+                abs_pose_matrix = self.bone_to_abs_pose_matrix[bone.parent] @ m3_pose_matrix
+
+            abs_pose_matrix @= rest_matrix
+
+            self.bone_to_abs_pose_matrix[bone] = abs_pose_matrix
+
     def create_division(self, model, mesh_objects, regn_version):
 
         model.bit_set('flags', 'has_mesh', len(mesh_objects) > 0)
@@ -647,7 +656,7 @@ class Exporter:
             msec.bounding = io_m3.structures['BNDSAnimationReference'].get_version(0).instance()
             msec.bounding.header = io_m3.structures['AnimationReferenceHeader'].get_version(0).instance()
             msec.bounding.header.interpolation = 1
-            msec.bounding.header.flags = 0x0006
+            msec.bounding.header.flags = 0x6
             msec.bounding.header.id = BOUNDING_ANIM_ID
             msec.bounding.default = io_m3.structures['BNDS'].get_version(0).instance()
             msec.bounding.default.min = self.bounds_min
@@ -689,24 +698,13 @@ class Exporter:
         region_section = self.m3.section_for_reference(div, 'regions', version=regn_version)
         batch_section = self.m3.section_for_reference(div, 'batches', version=1)
 
-        msec_section = self.m3.section_for_reference(div, 'msec', version=1)
-        msec = msec_section.content_add()
-        msec.bounding = io_m3.structures['BNDSAnimationReference'].get_version(0).instance()
-        msec.bounding.header = io_m3.structures['AnimationReferenceHeader'].get_version(0).instance()
-        msec.bounding.header.interpolation = 1
-        msec.bounding.header.flags = 0x0006
-        msec.bounding.header.id = BOUNDING_ANIM_ID
-        msec.bounding.default = io_m3.structures['BNDS'].get_version(0).instance()
-        msec.bounding.default.min = self.bounds_min
-        msec.bounding.default.max = self.bounds_max
-        msec.bounding.default.radius = self.bounds_radius
-        msec.bounding.null = io_m3.structures['BNDS'].get_version(0).instance()
-
         bone_lookup_section = self.m3.section_for_reference(model, 'bone_lookup')
 
         m3_vertices = []
         m3_faces = []
         m3_lookup = []
+
+        bone_boundings = {bone: [*(float('inf'),) * 3, *(-float('inf'),) * 3] for bone in self.bones}
 
         for ob in mesh_objects:
             bm = bmesh.new(use_operators=True)
@@ -718,7 +716,8 @@ class Exporter:
             layer_deform = bm.verts.layers.deform.get('m3lookup')
             layer_color = bm.loops.layers.color.get('m3color')
             layer_alpha = bm.loops.layers.color.get('m3alpha')
-            layer_tan_uv = bm.loops.layers.uv.values()[0]
+            layers_uv = bm.loops.layers.uv.values()
+            layer_tan = layers_uv[0]
             layer_sign = bm.faces.layers.int.get('m3sign') or bm.verts.layers.int.new('m3sign')
 
             first_vertex_index = len(m3_vertices)
@@ -739,30 +738,26 @@ class Exporter:
             region_vert_count = 0
 
             for face in bm.faces:
-                lv0 = face.loops[0].vert
-                lv1 = face.loops[1].vert
-                lv2 = face.loops[2].vert
-
-                v0 = face.loops[0][layer_tan_uv].uv[1]
-                v1 = face.loops[1][layer_tan_uv].uv[1]
-                v2 = face.loops[2][layer_tan_uv].uv[1]
-
-                tan = ((v2 - v0) * (lv1.co - lv0.co) - (v1 - v0) * (lv2.co - lv0.co)).normalized()
+                l0, l1, l2 = ((L.vert.co, L[layer_tan].uv[1]) for L in face.loops)
+                tan = ((l2[1] - l0[1]) * (l1[0] - l0[0]) - (l1[1] - l0[1]) * (l2[0] - l0[0])).normalized()
 
                 for loop in face.loops:
-                    vert = loop.vert
-
-                    id_tuple = []
-
+                    co = ob.matrix_local @ loop.vert.co
                     m3_vert = m3_vertex_desc.instance()
-                    m3_vert.pos = to_m3_vec3(ob.matrix_local @ vert.co)
+                    m3_vert.pos = to_m3_vec3(co)
 
                     # only count groups which have a lookup match, sort by weight and then limit to a length of 4
                     deformations = []
-                    for deformation in vert[layer_deform].items():
+                    for deformation in loop.vert[layer_deform].items():
                         lookup_ii = group_to_lookup_ii.get(deformation[0])
                         if lookup_ii is not None and deformation[1]:
                             deformations.append([lookup_ii, deformation[1]])
+
+                            bbl = bone_boundings[self.bones[region_lookup[lookup_ii]]]
+                            for ii in range(3):
+                                bbl[ii] = min(bbl[ii], co[ii])
+                                bbl[ii + 3] = max(bbl[ii + 3], co[ii])
+
                     deformations.sort(key=lambda x: x[1])
                     deformations = deformations[0:max(4, len(deformations))]
 
@@ -777,15 +772,14 @@ class Exporter:
                             setattr(m3_vert, 'lookup' + str(ii), lookup)
                             setattr(m3_vert, 'weight' + str(ii), round(weight / sum_weight * 255))
 
-                    uv_layers = bm.loops.layers.uv.values()
                     for ii in range(0, 4):
-                        uv_layer = uv_layers[ii] if ii < len(uv_layers) else None
+                        uv_layer = layers_uv[ii] if ii < len(layers_uv) else None
                         setattr(m3_vert, 'uv' + str(ii), to_m3_uv(loop[uv_layer].uv) if uv_layer else (0, 0))
 
                     if export_rgba:
                         m3_vert.col = to_bl_color((*loop[layer_color][0:3], (loop[layer_alpha][0] + loop[layer_alpha][1] + loop[layer_alpha][2]) / 3))
 
-                    m3_vert.normal = to_m3_vec3_f8(vert.normal)
+                    m3_vert.normal = to_m3_vec3_f8(loop.vert.normal)
 
                     if face[layer_sign] == 1:
                         m3_vert.sign = 1.0
@@ -802,7 +796,7 @@ class Exporter:
                     if export_rgba:
                         id_list.extend((m3_vert.col.r, m3_vert.col.g, m3_vert.col.b, m3_vert.col.a))
 
-                    for ii in range(len(uv_layers)):
+                    for ii in range(len(layers_uv)):
                         uv = getattr(m3_vert, 'uv' + str(ii))
                         id_list.extend((uv.x, uv.y))
 
@@ -847,6 +841,55 @@ class Exporter:
                     batch.region_index = len(region_section) - 1
                     batch.material_reference_index = self.matref_handle_indices[matref.bl_handle]
 
+        bone_bounding_cos = {bone: [] for bone in self.bones}
+
+        for bone in bone_boundings:
+            arr = bone_boundings[bone]
+            bone_bounding_cos[bone].append(mathutils.Vector((arr[0], arr[1], arr[2])))
+            bone_bounding_cos[bone].append(mathutils.Vector((arr[0], arr[4], arr[2])))
+            bone_bounding_cos[bone].append(mathutils.Vector((arr[0], arr[4], arr[5])))
+            bone_bounding_cos[bone].append(mathutils.Vector((arr[0], arr[1], arr[5])))
+            bone_bounding_cos[bone].append(mathutils.Vector((arr[3], arr[4], arr[2])))
+            bone_bounding_cos[bone].append(mathutils.Vector((arr[3], arr[1], arr[2])))
+            bone_bounding_cos[bone].append(mathutils.Vector((arr[3], arr[4], arr[5])))
+            bone_bounding_cos[bone].append(mathutils.Vector((arr[3], arr[1], arr[5])))
+
+        def calc_boundings(bone_matrices):
+            calc_bound = [float('inf'), float('inf'), float('inf'), float('-inf'), float('-inf'), float('-inf')]
+
+            for bone in self.bones:
+                bone_mat = bone_matrices[bone]
+                bone_bound = [float('inf'), float('inf'), float('inf'), float('-inf'), float('-inf'), float('-inf')]
+                bounding_cos = bone_bounding_cos[bone]
+                for co in bounding_cos:
+                    mat_co = bone_mat @ co
+                    for ii in range(3):
+                        bone_bound[ii] = min(bone_bound[ii], mat_co[ii])
+                        bone_bound[ii + 3] = max(bone_bound[ii + 3], mat_co[ii])
+                for ii in range(3):
+                    if not math.isinf(bone_bound[0]):
+                        calc_bound[ii] = min(calc_bound[ii], bone_bound[ii])
+                        calc_bound[ii + 3] = max(calc_bound[ii + 3], bone_bound[ii + 3])
+
+            vec_min = mathutils.Vector(calc_bound[0:3])
+            vec_max = mathutils.Vector(calc_bound[3:6])
+
+            bnds = io_m3.structures['BNDS'].get_version(0).instance()
+            bnds.min = to_m3_vec3(vec_min)
+            bnds.max = to_m3_vec3(vec_max)
+            bnds.radius = (vec_max - vec_min).length / 2
+            return bnds
+
+        msec_section = self.m3.section_for_reference(div, 'msec', version=1)
+        msec = msec_section.content_add()
+        msec.bounding = io_m3.structures['BNDSAnimationReference'].get_version(0).instance()
+        msec.bounding.header = io_m3.structures['AnimationReferenceHeader'].get_version(0).instance()
+        msec.bounding.header.interpolation = 1
+        msec.bounding.header.flags = 0x6
+        msec.bounding.header.id = BOUNDING_ANIM_ID
+        msec.bounding.default = calc_boundings(self.bone_to_abs_pose_matrix)
+        msec.bounding.null = io_m3.structures['BNDS'].get_version(0).instance()
+
         vertex_section.content_from_bytes(m3_vertex_desc.instances_to_bytes(m3_vertices))
         face_section.content_iter_add(m3_faces)
         bone_lookup_section.content_iter_add(m3_lookup)
@@ -856,7 +899,10 @@ class Exporter:
             return
 
         attachment_point_section = self.m3.section_for_reference(model, 'attachment_points', version=1)
-        attachment_point_addon_section = self.m3.section_for_reference(model, 'attachment_points_addon')
+
+        addon_desc = io_m3.structures['U16_'].get_version(0)
+        # manually add into section list *after* name sections are added to conform with original exporting conventions
+        attachment_point_addon_section = io_m3.Section(index_entry=None, struct_desc=addon_desc, references=[model.attachment_points_addon], content=[])
 
         for attachment in attachments:
             attachment_bone = shared.m3_pointer_get(self.ob.data.bones, attachment.bone)
@@ -867,6 +913,8 @@ class Exporter:
             m3_attachment.bone = self.bone_name_indices[attachment_bone.name]
             attachment_point_addon_section.content_add(0xffff)
         # add volumes later so that sections are in order of the modl data
+
+        self.m3.append(attachment_point_addon_section)
 
     def create_lights(self, model, lights):
         if not lights:
@@ -1006,6 +1054,10 @@ class Exporter:
                             m3_layer.unknowna4ec0796 = self.init_anim_ref_uint32(0, interpolation=1)
                             m3_layer.unknowna44bf452 = self.init_anim_ref_float(1.0)
                             m3_layer.unknowna44bf452.null = 1.0
+
+                            m3_layer.video_play.interpolation = 1
+                            m3_layer.video_restart.interpolation = 1
+                            m3_layer.uv_flipbook_frame.interpolation = 1
 
                     if type_ii == 1:
                         pass

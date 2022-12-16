@@ -16,16 +16,13 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-from timeit import timeit
 import math
 import bpy
 import bmesh
 import mathutils
-from math import sqrt
 from . import io_m3
 from . import io_shared
 from . import shared
-from .io_shared import rot_fix_matrix, rot_fix_matrix_transpose
 from .m3_animations import set_default_value
 
 
@@ -553,8 +550,8 @@ class Importer:
                 # TODO current problems:
                 # TODO seems to get wrong scale values with non 1.0 values on both scale and bind scale values
                 # TODO if scales are negative, rotation and location values are out of whack as well
-                left_mat = rel_mat if m3_bone.parent == -1 else rel_mat @ rot_fix_matrix_transpose @ bind_matrices[m3_bone.parent].inverted()
-                right_mat = bind_mat @ rot_fix_matrix
+                left_mat = rel_mat if m3_bone.parent == -1 else rel_mat @ io_shared.rot_fix_matrix_transpose @ bind_matrices[m3_bone.parent].inverted()
+                right_mat = bind_mat @ io_shared.rot_fix_matrix
                 bone_mat_comp = to_bl_vec3(m3_bone.location.default), to_bl_quat(m3_bone.rotation.default), to_bl_vec3(m3_bone.scale.default)
                 bone_mat = mathutils.Matrix.LocRotScale(*bone_mat_comp)
                 pose_bone = self.ob.pose.bones.get(self.m3_get_bone_name(ii))
