@@ -46,10 +46,7 @@ def io_anim_group(processor):
 
 
 def io_material_standard(processor):
-    processor.bit('additional_flags', 'depth_blend_falloff')
-    processor.bit('additional_flags', 'vertex_color')
-    processor.bit('additional_flags', 'vertex_alpha')
-    # processor.bit('additional_flags', 'unknown0x200')
+    processor.bit('flags', 'vertex_color')
     processor.bit('flags', 'vertex_alpha')
     processor.bit('flags', 'unfogged')
     processor.bit('flags', 'two_sided')

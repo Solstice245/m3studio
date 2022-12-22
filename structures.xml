@@ -1524,7 +1524,7 @@
                       * vertex_color of the additionaFlags field
                       * hasVertexColors of the vFlags field of the model
                     -->
-                    <bit mask="0x1" name="useVertexColor"/>
+                    <bit mask="0x1" name="vertex_color"/>
                     <!-- if useVertexAlpha is set, the following flags need also to be set:
                       * vertex_alpha of the additionaFlags field
                       * hasVertexColors of the vFlags field of the model

@@ -94,6 +94,9 @@ def anim_group_update(self, context):
     if not ob.m3_options.auto_update_timeline:
         return
 
+    if ob.m3_animations[ob.m3_animations_index].bl_handle not in [item.bl_handle for item in anim_group.animations]:
+        ob.m3_animations_index = ob.m3_animations.find(shared.m3_pointer_get(ob.m3_animations, anim_group.animations[0].bl_handle).name)
+
     bpy.context.scene.frame_start = anim_group.frame_start
     bpy.context.scene.frame_current = anim_group.frame_start
     bpy.context.scene.frame_end = anim_group.frame_end

@@ -305,17 +305,34 @@ class Exporter:
         export_attachment_volumes = []  # handled specially
         export_billboards = []  # handled specially
 
-        def recurse_composite_materials(matref):
+        self.vertex_color_mats = set()
+        self.vertex_alpha_mats = set()
+
+        for system in export_particle_systems:
+            self.vertex_color_mats.add(system.material)
+            if system.vertex_alpha:
+                self.vertex_alpha_mats.add(system.material)
+
+        for ribbon in export_ribbons:
+            self.vertex_color_mats.add(ribbon.material)
+            if ribbon.vertex_alpha:
+                self.vertex_alpha_mats.add(ribbon.material)
+
+        def recurse_composite_materials(matref, force_color, force_alpha):
+            if force_color:
+                self.vertex_color_mats.add(matref.bl_handle)
+            if force_alpha:
+                self.vertex_alpha_mats.add(matref.bl_handle)
             if matref.mat_type == 'm3_materials_composite':
                 mat = shared.m3_pointer_get(getattr(self.ob, matref.mat_type), matref.mat_handle)
                 for section in mat.sections:
                     section_matref = shared.m3_pointer_get(ob.m3_materialrefs, section.matref)
                     if section_matref:
                         self.export_required_material_references.add(section_matref)
-                        recurse_composite_materials(section_matref)
+                        recurse_composite_materials(section_matref, matref.bl_handle in self.vertex_color_mats, matref.bl_handle in self.vertex_alpha_mats)
 
         for matref in self.export_required_material_references.copy():
-            recurse_composite_materials(matref)
+            recurse_composite_materials(matref, matref.bl_handle in self.vertex_color_mats, matref.bl_handle in self.vertex_alpha_mats)
 
         # TODO exclude materials if their type cannot be exported in model version
 
@@ -633,14 +650,12 @@ class Exporter:
             m3_bone.rotation.default = to_m3_quat(m3_bone_rot)
             m3_bone.location.default = to_m3_vec3(m3_bone_loc)
 
-            abs_pose_matrix = m3_pose_matrix
-
             if bone.parent is not None:
-                abs_pose_matrix = self.bone_to_abs_pose_matrix[bone.parent] @ m3_pose_matrix
+                abs_pose_matrix = self.bone_to_abs_pose_matrix[bone.parent] @ self.bone_to_inv_iref[bone.parent].inverted() @ m3_pose_matrix
+            else:
+                abs_pose_matrix = m3_pose_matrix
 
-            abs_pose_matrix @= rest_matrix
-
-            self.bone_to_abs_pose_matrix[bone] = abs_pose_matrix
+            self.bone_to_abs_pose_matrix[bone] = abs_pose_matrix @ rest_matrix
 
     def create_division(self, model, mesh_objects, regn_version):
 
@@ -666,6 +681,7 @@ class Exporter:
 
             return
 
+        model.skin_bone_count = sorted([self.bone_name_indices[bone.name] for bone in self.skinned_bones])[-1] + 1
         model.vertex_flags = 0x182007d
 
         model.bit_set('vertex_flags', 'use_uv0', self.uv_count > 1)
@@ -697,8 +713,6 @@ class Exporter:
 
         region_section = self.m3.section_for_reference(div, 'regions', version=regn_version)
         batch_section = self.m3.section_for_reference(div, 'batches', version=1)
-
-        bone_lookup_section = self.m3.section_for_reference(model, 'bone_lookup')
 
         m3_vertices = []
         m3_faces = []
@@ -892,6 +906,7 @@ class Exporter:
 
         vertex_section.content_from_bytes(m3_vertex_desc.instances_to_bytes(m3_vertices))
         face_section.content_iter_add(m3_faces)
+        bone_lookup_section = self.m3.section_for_reference(model, 'bone_lookup')
         bone_lookup_section.content_iter_add(m3_lookup)
 
     def create_attachment_points(self, model, attachments):
@@ -1059,16 +1074,12 @@ class Exporter:
                             m3_layer.video_restart.interpolation = 1
                             m3_layer.uv_flipbook_frame.interpolation = 1
 
-                    if type_ii == 1:
-                        pass
-                        # TODO layer and material vertex color/alpha set if used by particle with vertex color/alpha to match
-                        # m3_layer.bit_set('flags', 'vertex_alpha', )
-
-                if type_ii == 1:
+                if type_ii == 1:  # standard material
+                    m3_mat.bit_set('additional_flags', 'depth_blend_falloff', mat.depth_blend_falloff != 0.0)
+                    m3_mat.bit_set('additional_flags', 'vertex_color', mat.vertex_color or matref.bl_handle in self.vertex_color_mats)
+                    m3_mat.bit_set('additional_flags', 'vertex_alpha', mat.vertex_alpha or matref.bl_handle in self.vertex_alpha_mats)
                     m3_mat.bit_set('additional_flags', 'unknown0x200', True)
-
-                # TODO manage flags of standard material
-                if type_ii == 3:  # composite material
+                elif type_ii == 3:  # composite material
                     valid_sections = []
                     for section in mat.sections:
                         matref = shared.m3_pointer_get(self.ob.m3_materialrefs, section.matref)
@@ -1091,6 +1102,18 @@ class Exporter:
 
         if len(null_layer_section.references):
             self.m3.append(null_layer_section)
+            m3_layer = null_layer_section[0]
+            m3_layer.color_brightness.null = 1.0
+            m3_layer.color_multiply.null = 1.0
+            m3_layer.color_value.null.a = 0
+            m3_layer.uv_tiling.null.x = 1.0
+            m3_layer.uv_tiling.null.y = 1.0
+            m3_layer.unknownbc0c14e5 = self.init_anim_ref_uint32(0)
+            m3_layer.unknowne740df12 = self.init_anim_ref_float(0.0)
+            m3_layer.unknown39ade219 = self.init_anim_ref_uint16(0)
+            m3_layer.unknowna4ec0796 = self.init_anim_ref_uint32(0, interpolation=1)
+            m3_layer.unknowna44bf452 = self.init_anim_ref_float(1.0)
+            m3_layer.unknowna44bf452.null = 1.0
 
     def create_particle_systems(self, model, systems, copies, version):
         if not systems:
