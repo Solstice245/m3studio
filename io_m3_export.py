@@ -154,7 +154,7 @@ class M3OutputProcessor:
             return
         if (till_version is not None) and (self.version > till_version):
             return
-        setattr(self.m3, field, to_m3_vec3(getattr(self.bl), field))
+        setattr(self.m3, field, to_m3_vec3(getattr(self.bl, field)))
 
     def vec4(self, field, since_version=None, till_version=None):
         if (since_version is not None) and (self.version < since_version):
@@ -259,6 +259,8 @@ class Exporter:
         self.export_required_regions = set()
         self.export_required_material_references = set()
         self.export_required_bones = set()
+
+        self.region_section = None  # defined in the mesh export code
 
         def valid_collections_and_requirements(collection):
             # TODO have second unexposed export custom prop for auto-culling such as invalid attachment point name
@@ -868,6 +870,8 @@ class Exporter:
             bone_bounding_cos[bone].append(mathutils.Vector((arr[3], arr[4], arr[5])))
             bone_bounding_cos[bone].append(mathutils.Vector((arr[3], arr[1], arr[5])))
 
+        self.region_section = region_section
+
         def calc_boundings(bone_matrices):
             calc_bound = [float('inf'), float('inf'), float('inf'), float('-inf'), float('-inf'), float('-inf')]
 
@@ -1361,8 +1365,22 @@ class Exporter:
             mesh_ob = physics_cloth.mesh_object
             sim_ob = physics_cloth.simulator_object
 
+            regn_inf = self.region_section[self.export_regions.index(mesh_ob)]
+            regn_sim = self.region_section[self.export_regions.index(sim_ob)]
+
+            # set flags for regions used by the cloth behavior
+            regn_inf.bit_set('flags', 'hidden', True)
+            regn_inf.bit_set('flags', 'placeholder', True)
+            regn_inf.bit_set('flags', 'cloth_influenced', True)
+
+            regn_sim.bit_set('flags', 'hidden', True)
+            regn_sim.bit_set('flags', 'cloth_simulated', True)
+
             m3_physics_cloth = physics_cloth_section.content_add()
-            m3_physics_cloth.influenced_region_index = self.export_regions.index(mesh_ob)
+            m3_physics_cloth.simulation_region_index = self.export_regions.index(sim_ob)
+
+            processor = M3OutputProcessor(self, physics_cloth, m3_physics_cloth)
+            io_shared.io_cloth(processor)
 
             skin_bones_section = self.m3.section_for_reference(m3_physics_cloth, 'skin_bones')
             skin_bones = set()

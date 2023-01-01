@@ -1228,7 +1228,7 @@
                 <bits>
                     <bit mask='0x1' name='hidden'/>
                     <bit mask='0x2' name='placeholder'/>
-                    <bit mask='0x4' name='cloth_simulator'/>
+                    <bit mask='0x4' name='cloth_simulated'/>
                     <bit mask='0x8' name='cloth_influenced'/>
                 </bits>
             </field>
@@ -2186,7 +2186,7 @@
             <version number="4" size="192"/>
         </versions>
         <fields>
-            <field name="influenced_region_index" type="uint32"/>
+            <field name="simulation_region_index" type="uint32"/>
             <field name="unknown0" type="uint32"/>
             <field name="skin_bones" type="Reference" ref_to="U16_"/> <!-- list of bone indices referenced by vertex_bones or by PHCC bone indices -->
             <field name="vertex_simulated" type="Reference" ref_to="U8__"/> <!-- 0x0 for static vertex, 0x1 for simulated vertex -->
@@ -2204,10 +2204,10 @@
             <field name="gravity" type="float"/>
             <field name="explosion_scale" type="float"/>
             <field name="wind_scale" type="float"/>
-            <field name="shear_stiffness" type="float"/>
+            <field name="stiffness_shear" type="float"/>
             <field name="drag_factor" type="float"/>
             <field name="lift_factor" type="float"/>
-            <field name="sphere_attachment_stiffness" type="float"/>
+            <field name="stiffness_spheres" type="float"/>
             <field name="unknown1" type="uint32" since_version="4"/>
             <field name="unknown2" type="uint32" since_version="4"/>
             <field name="unknown3" type="uint32" since_version="4"/> <!-- weird number, could actually be single byte values -->
