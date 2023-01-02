@@ -26,9 +26,17 @@ from . import io_shared
 from . import shared
 
 
-BOUNDING_ANIM_ID = 0x001f9bd2
+ANIM_DATA_SECTION_NAMES = ('SDEV', 'SD2V', 'SD3V', 'SD4Q', 'SDCC', 'SDR3', 'SD08', 'SDS6', 'SDU6', 'SDS3', 'SDU3', 'SDFG', 'SDMB')
+ANIM_DATA_TEMPLATE = {section_name: {} for section_name in ANIM_DATA_SECTION_NAMES}
+BNDS_ANIM_ID = 0x001f9bd2
+EVNT_ANIM_ID = 0x65bd3215
 INT16_MIN = (-(1 << 15))
 INT16_MAX = ((1 << 15) - 1)
+
+
+def to_m3_ms(bl_frame):
+    # TODO 30 is the desired scene frame rate, but more options could be accounted for
+    return round(bl_frame / 30 * 1000)
 
 
 def to_m3_uv(bl_uv):
@@ -87,6 +95,26 @@ def to_m3_matrix(bl_matrix):
     m3_matrix.z = to_m3_vec4(bl_matrix.col[2])
     m3_matrix.w = to_m3_vec4(bl_matrix.col[3])
     return m3_matrix
+
+
+def get_fcurve_anim_frames(fcurve, interpolation='LINEAR'):
+    if fcurve is None:
+        return
+
+    frames = []
+
+    last_interp = interpolation
+    last_frame = round(fcurve.keyframe_points[0].co.x)
+    for point in fcurve.keyframe_points:
+        frame = round(point.co.x)
+        if last_interp != interpolation and last_interp != 'CONSTANT':
+            for f in range(last_frame, frame):
+                frames.append(f)
+        last_interp = point.interpolation
+        last_frame = round(point.co.x)
+        frames.append(frame)
+
+    return frames
 
 
 class M3OutputProcessor:
@@ -181,33 +209,80 @@ class M3OutputProcessor:
                 setattr(self.m3, field, ii)
                 break
 
-    # def anim_single(self, field, ref_class, ref_flags, data_class, convert_method):
-    #     setattr(self.m3, field, getattr(self.bl, field))
-
     def anim_boolean_based_on_SDU3(self, field):
         anim_ref = self.exporter.init_anim_ref_uint32()
         anim_ref.default = int(getattr(self.bl, field))
         setattr(self.m3, field, anim_ref)
+
+        for anim in self.exporter.anims_data:
+            fcurve = anim.action.fcurves.find(self.bl.path_from_id(field))
+            frames = get_fcurve_anim_frames(fcurve)
+
+            if not frames:
+                continue
+
+            values = [int(fcurve.evaluate(frame)) for frame in frames]
+            self.exporter.anims_data[anim]['SDU3'][anim_ref.header.id] = (frames, values)
 
     def anim_boolean_based_on_SDFG(self, field):
         anim_ref = self.exporter.init_anim_ref_uint32()
         anim_ref.default = int(getattr(self.bl, field))
         setattr(self.m3, field, anim_ref)
 
+        for anim in self.exporter.anims_data:
+            fcurve = anim.action.fcurves.find(self.bl.path_from_id(field))
+            frames = get_fcurve_anim_frames(fcurve)
+
+            if not frames:
+                continue
+
+            values = [int(fcurve.evaluate(frame)) for frame in frames]
+            self.exporter.anims_data[anim]['SDFG'][anim_ref.header.id] = (frames, values)
+
     def anim_int16(self, field):
         anim_ref = self.exporter.init_anim_ref_int16()
         anim_ref.default = getattr(self.bl, field)
         setattr(self.m3, field, anim_ref)
+
+        for anim in self.exporter.anims_data:
+            fcurve = anim.action.fcurves.find(self.bl.path_from_id(field))
+            frames = get_fcurve_anim_frames(fcurve)
+
+            if not frames:
+                continue
+
+            values = [int(fcurve.evaluate(frame)) for frame in frames]
+            self.exporter.anims_data[anim]['SDS6'][anim_ref.header.id] = (frames, values)
 
     def anim_uint16(self, field):
         anim_ref = self.exporter.init_anim_ref_uint16()
         anim_ref.default = getattr(self.bl, field)
         setattr(self.m3, field, anim_ref)
 
+        for anim in self.exporter.anims_data:
+            fcurve = anim.action.fcurves.find(self.bl.path_from_id(field))
+            frames = get_fcurve_anim_frames(fcurve)
+
+            if not frames:
+                continue
+
+            values = [int(fcurve.evaluate(frame)) for frame in frames]
+            self.exporter.anims_data[anim]['SDU6'][anim_ref.header.id] = (frames, values)
+
     def anim_uint32(self, field):
         anim_ref = self.exporter.init_anim_ref_uint32()
-        anim_ref.default = int(getattr(self.bl, field))  # converting to int because sometimes bools use this
+        anim_ref.default = int(getattr(self.bl, field))  # casting to int because sometimes bools use this
         setattr(self.m3, field, anim_ref)
+
+        for anim in self.exporter.anims_data:
+            fcurve = anim.action.fcurves.find(self.bl.path_from_id(field))
+            frames = get_fcurve_anim_frames(fcurve)
+
+            if not frames:
+                continue
+
+            values = [int(fcurve.evaluate(frame)) for frame in frames]
+            self.exporter.anims_data[anim]['SDU3'][anim_ref.header.id] = (frames, values)
 
     def anim_float(self, field, since_version=None, till_version=None):
         if (since_version is not None) and (self.version < since_version):
@@ -218,10 +293,30 @@ class M3OutputProcessor:
         anim_ref.default = getattr(self.bl, field)
         setattr(self.m3, field, anim_ref)
 
+        for anim in self.exporter.anims_data:
+            fcurve = anim.action.fcurves.find(self.bl.path_from_id(field))
+            frames = get_fcurve_anim_frames(fcurve)
+
+            if not frames:
+                continue
+
+            values = [fcurve.evaluate(frame) for frame in frames]
+            self.exporter.anims_data[anim]['SDR3'][anim_ref.header.id] = (frames, values)
+
     def anim_vec2(self, field):
         anim_ref = self.exporter.init_anim_ref_vec2()
         anim_ref.default = to_m3_vec2(getattr(self.bl, field))
         setattr(self.m3, field, anim_ref)
+
+        for anim in self.exporter.anims_data:
+            fcurves = (anim.action.fcurves.find(self.bl.path_from_id(field), index=ii) for ii in range(2))
+            frames = sorted(list(*set(zip([get_fcurve_anim_frames(fcurve) for fcurve in fcurves]))))
+
+            if frames == [None]:
+                continue
+
+            values = [[fcurve.evaluate(frame) for frame in frames] for fcurve in fcurves]
+            self.exporter.anims_data[anim]['SD2V'][anim_ref.header.id] = (frames, values)
 
     def anim_vec3(self, field, since_version=None, till_version=None):
         if (since_version is not None) and (self.version < since_version):
@@ -232,6 +327,16 @@ class M3OutputProcessor:
         anim_ref.default = to_m3_vec3(getattr(self.bl, field))
         setattr(self.m3, field, anim_ref)
 
+        for anim in self.exporter.anims_data:
+            fcurves = (anim.action.fcurves.find(self.bl.path_from_id(field), index=ii) for ii in range(3))
+            frames = sorted(list(*set(zip([get_fcurve_anim_frames(fcurve) for fcurve in fcurves]))))
+
+            if frames == [None]:
+                continue
+
+            values = [[fcurve.evaluate(frame) for frame in frames] for fcurve in fcurves]
+            self.exporter.anims_data[anim]['SD3V'][anim_ref.header.id] = (frames, values)
+
     def anim_color(self, field, since_version=None, till_version=None):
         if (since_version is not None) and (self.version < since_version):
             return
@@ -240,6 +345,16 @@ class M3OutputProcessor:
         anim_ref = self.exporter.init_anim_ref_color()
         anim_ref.default = to_m3_color(getattr(self.bl, field))
         setattr(self.m3, field, anim_ref)
+
+        for anim in self.exporter.anims_data:
+            fcurves = (anim.action.fcurves.find(self.bl.path_from_id(field), index=ii) for ii in range(4))
+            frames = sorted(list(*set(zip([get_fcurve_anim_frames(fcurve) for fcurve in fcurves]))))
+
+            if frames == [None]:
+                continue
+
+            values = [[fcurve.evaluate(frame) for frame in frames] for fcurve in fcurves]
+            self.exporter.anims_data[anim]['SDCC'][anim_ref.header.id] = (frames, values)
 
 
 class Exporter:
@@ -259,6 +374,9 @@ class Exporter:
         self.export_required_regions = set()
         self.export_required_material_references = set()
         self.export_required_bones = set()
+        self.export_animations = set()
+
+        self.anims_data = {}
 
         self.region_section = None  # defined in the mesh export code
 
@@ -285,7 +403,7 @@ class Exporter:
                 export_items.append(item)
             return export_items
 
-        # export_sequences = []  # handled specially
+        export_sequences = []  # handled specially
         export_attachment_points = valid_collections_and_requirements(ob.m3_attachmentpoints)
         export_lights = valid_collections_and_requirements(ob.m3_lights)
         export_shadow_boxes = valid_collections_and_requirements(ob.m3_shadowboxes)
@@ -309,6 +427,12 @@ class Exporter:
 
         self.vertex_color_mats = set()
         self.vertex_alpha_mats = set()
+
+        for anim_group in ob.m3_animation_groups:
+            # TODO all anim groups must have unique name.
+            # TODO anim groups must have at least one anim.
+            if anim_group.m3_export:
+                export_sequences.append(anim_group)
 
         for system in export_particle_systems:
             self.vertex_color_mats.add(system.material)
@@ -568,7 +692,7 @@ class Exporter:
         model.boundings.max = self.bounds_max
         model.boundings.radius = self.bounds_radius
 
-        # TODO self.create_sequences(model)
+        self.create_sequences(model, export_sequences)
         self.create_bones(model)  # TODO needs correction matrices
         self.create_division(model, self.export_regions, regn_version=ob.m3_mesh_version)  # TODO lookups are incorrect
         self.create_attachment_points(model, export_attachment_points)  # TODO should exclude attachments with same bone as other attachments
@@ -592,11 +716,71 @@ class Exporter:
         self.create_billboards(model, export_billboards)
         # ???? self.create_tmd_data(model, export_tmd_data)
 
+        # TODO finalize animation sectioning here
+
+        print(self.anims_data)
+
         self.m3.resolve()
         self.m3.validate()
         self.m3.to_index()
 
         return self.m3
+
+    def create_sequences(self, model, anim_groups):
+        if not anim_groups:
+            return
+
+        seq_section = self.m3.section_for_reference(model, 'sequences', version=2)
+        stc_section = self.m3.section_for_reference(model, 'sequence_transformation_collections', version=4, pos=None)
+        stc_name_sections = []
+        stg_section = self.m3.section_for_reference(model, 'sequence_transformation_groups', version=0, pos=None)
+        stg_indices_sections = []
+
+        exported_anims = []
+
+        for anim_group in anim_groups:
+            m3_seq = seq_section.content_add()
+            m3_seq_name_section = self.m3.section_for_reference(m3_seq, 'name')
+            m3_seq_name_section.content_from_bytes(anim_group.name)
+
+            processor = M3OutputProcessor(self, anim_group, m3_seq)
+            io_shared.io_anim_group(processor)
+
+            m3_seq.anim_ms_start = to_m3_ms(anim_group.frame_start)
+            m3_seq.anim_ms_end = to_m3_ms(anim_group.frame_end)
+
+            m3_stg = stg_section.content_add()
+            m3_seq_name_section.references.append(m3_stg.name)
+            m3_stg_col_indices_section = self.m3.section_for_reference(m3_stg, 'stc_indices', pos=None)
+            stg_indices_sections.append(m3_stg_col_indices_section)
+
+            for anim in anim_group.animations:
+                anim = shared.m3_pointer_get(self.ob.m3_animations, anim.bl_handle)
+                if anim not in exported_anims:
+                    # TODO ensure stc names are unique
+                    exported_anims.append(anim)
+
+                    m3_stc = stc_section.content_add()
+                    m3_stc_name_section = self.m3.section_for_reference(m3_stc, 'name', pos=None)
+                    m3_stc_name_section.content_from_bytes(anim.name)
+                    stc_name_sections.append(m3_stc_name_section)
+
+                    m3_stc.concurrent = int(anim.concurrent)
+                    m3_stc.priority = anim.priority
+
+                    self.anims_data[anim] = ANIM_DATA_TEMPLATE.copy()
+
+                m3_stg_col_indices_section.content_add(exported_anims.index(anim))
+
+        self.m3.append(stc_section)
+
+        for stc_name_section in stc_name_sections:
+            self.m3.append(stc_name_section)
+
+        self.m3.append(stg_section)
+
+        for stg_indices_section in stg_indices_sections:
+            self.m3.append(stg_indices_section)
 
     def create_bones(self, model):
         if not self.bones:
@@ -674,7 +858,7 @@ class Exporter:
             msec.bounding.header = io_m3.structures['AnimationReferenceHeader'].get_version(0).instance()
             msec.bounding.header.interpolation = 1
             msec.bounding.header.flags = 0x6
-            msec.bounding.header.id = BOUNDING_ANIM_ID
+            msec.bounding.header.id = BNDS_ANIM_ID
             msec.bounding.default = io_m3.structures['BNDS'].get_version(0).instance()
             msec.bounding.default.min = self.bounds_min
             msec.bounding.default.max = self.bounds_max
@@ -691,15 +875,12 @@ class Exporter:
         model.bit_set('vertex_flags', 'use_uv2', self.uv_count > 3)
         model.bit_set('vertex_flags', 'use_uv3', self.uv_count > 4)
 
-        rgb_col = 'm3color'
-        alpha_col = 'm3alpha'
-
         vertex_rgba = False
         for ob in mesh_objects:
             me = ob.data
 
             for vertex_col in me.vertex_colors:
-                if vertex_col.name == rgb_col or vertex_col.name == alpha_col:
+                if vertex_col.name in ['m3color', 'm3alpha']:
                     vertex_rgba = True
 
         model.bit_set('vertex_flags', 'has_vertex_colors', vertex_rgba)
@@ -904,7 +1085,7 @@ class Exporter:
         msec.bounding.header = io_m3.structures['AnimationReferenceHeader'].get_version(0).instance()
         msec.bounding.header.interpolation = 1
         msec.bounding.header.flags = 0x6
-        msec.bounding.header.id = BOUNDING_ANIM_ID
+        msec.bounding.header.id = BNDS_ANIM_ID
         msec.bounding.default = calc_boundings(self.bone_to_abs_pose_matrix)
         msec.bounding.null = io_m3.structures['BNDS'].get_version(0).instance()
 
@@ -919,9 +1100,8 @@ class Exporter:
 
         attachment_point_section = self.m3.section_for_reference(model, 'attachment_points', version=1)
 
-        addon_desc = io_m3.structures['U16_'].get_version(0)
         # manually add into section list *after* name sections are added to conform with original exporting conventions
-        attachment_point_addon_section = io_m3.Section(index_entry=None, struct_desc=addon_desc, references=[model.attachment_points_addon], content=[])
+        attachment_point_addon_section = self.m3.section_for_reference(model, 'attachment_points_addon', pos=None)
 
         for attachment in attachments:
             attachment_bone = shared.m3_pointer_get(self.ob.data.bones, attachment.bone)
@@ -1458,15 +1638,15 @@ class Exporter:
                 sim_verts = 0
                 sim_weights = 0
                 weighted = 0
-                used_sim_verts = []
+                # used_sim_verts = []
                 for index, weight in group_weight_pairs:
                     #  there should be always be sim verts. if not, some user error likely has occurred
                     if weight:
                         distance_sim_verts = []
                         for sim_vert in mesh_group_to_sim_group_verts[index]:
-                            if sim_vert not in used_sim_verts:
-                                distance_sim_verts.append([(vert.co - sim_vert.co).length, sim_vert])
-                                used_sim_verts.append(sim_vert)
+                            # if sim_vert not in used_sim_verts:
+                            distance_sim_verts.append([(vert.co - sim_vert.co).length, sim_vert])
+                            # used_sim_verts.append(sim_vert)
                         distance_sim_verts.sort()
                         sim_verts |= distance_sim_verts[0][1].index << (weighted * 16)
                         sim_weights |= round(weight * 255) << (weighted * 8)
@@ -1663,7 +1843,7 @@ class Exporter:
 
     def new_anim_id(self):
         self.anim_id_count += 1  # increase first since we don't want to use 0
-        if self.anim_id_count == BOUNDING_ANIM_ID:
+        if self.anim_id_count == BNDS_ANIM_ID:
             self.anim_id_count += 1
         return self.anim_id_count
 

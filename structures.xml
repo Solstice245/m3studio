@@ -902,12 +902,12 @@
         </versions>
         <fields>
             <field name="name" type="Reference" ref_to="CHAR"/>
-            <field name="unknown76ff2940" type="int32" expected_value="-1"/>
-            <field name="bone" type="int16" default_value="-1"/>
-            <field name="unknown294cc515" type="uint16" expected_value="0"/>
-            <field name="matrix" type="Matrix44"/>
-            <field name="unknown7275bfa0" type="uint32" default_value="4"/> <!-- some kind of type (enum) ? -->
-            <field name="payload" type="Reference" ref_to="CHAR"/>
+            <field name="unknown76ff2940" type="int32" expected_value="-1"/> <!-- any, low, high graphics enum? -->
+            <field name="bone" type="int16" default_value="-1"/> <!-- bone on which to operate --> <!-- can evt_simulate be targeted to a bone? -->
+            <field name="bone_fb" type="uint16" expected_value="0"/> <!-- might be used for something else, but testing will be needed -->
+            <field name="matrix" type="Matrix44"/> <!-- matrix applied to model? -->
+            <field name="event_type" type="uint32" default_value="4"/> <!-- equivalent to CModel Events Type field? -->
+            <field name="payload" type="Reference" ref_to="CHAR"/> <!-- actor/model name here? --> <!-- also used to specify rtt channel for rtt event? -->
             <field name="unknown76cf1db0" type="uint32" expected_value="0" since_version="1"/>
             <field name="unknowne5f1b2a7" type="uint32" expected_value="0" since_version="2"/>
         </fields>
@@ -1057,8 +1057,6 @@
         </fields>
     </structure>
 
-
-
     <structure name="BONE">
         <description>A bone</description>
         <versions>
@@ -1108,13 +1106,13 @@
         </versions>
         <fields>
             <field name="name" type="Reference"  ref_to="CHAR"/>
-            <field name="runs_concurrent" type="uint16" default_value="0"/>
+            <field name="concurrent" type="uint16" default_value="0"/>
             <field name="priority" type="uint16" default_value="0"/>
             <field name="sts_index" type="uint16"/> <!-- seems to not have any use -->
             <field name="sts_index_fb" type="uint16"/>
             <field name="anim_ids" type="Reference" ref_to="U32_"/>
             <field name="anim_refs" type="Reference" ref_to="U32_"/>
-            <field name="unknownAt44" type="uint32" expected_value="0"/>
+            <field name="unknown44" type="uint32" expected_value="0"/>
             <field name="sdev" type="Reference" ref_to="SDEV"/>
             <field name="sd2v" type="Reference" ref_to="SD2V"/>
             <field name="sd3v" type="Reference" ref_to="SD3V"/>
@@ -1124,7 +1122,7 @@
             <field name="sd08" type="Reference"/> <!-- unknown -->
             <field name="sds6" type="Reference" ref_to="SDS6"/>
             <field name="sdu6" type="Reference" ref_to="SDU6"/>
-            <field name="sd11" type="Reference"/> <!-- unknown -->
+            <field name="sds3" type="Reference" ref_to="SDS3"/> <!-- guessing that it is an unused animatable int32 value -->
             <field name="sdu3" type="Reference" ref_to="SDU3"/>
             <field name="sdfg" type="Reference" ref_to="SDFG"/>
             <field name="sdmb" type="Reference" ref_to="SDMB"/>
@@ -1314,7 +1312,7 @@
             <field name="spec_color" type="Vector3AnimationReferenceV0"/>
             <field name="spec_intensity" type="FloatAnimationReferenceV0"/>
             <field name="attenuation_far" type="FloatAnimationReferenceV0"/>
-            <field name="unknownAt148" type="float"/>
+            <field name="unknown148" type="float"/>
             <field name="attenuation_near" type="FloatAnimationReferenceV0"/>
             <field name="hotspot" type="FloatAnimationReferenceV0"/>
             <field name="falloff" type="FloatAnimationReferenceV0"/>
@@ -1910,7 +1908,7 @@
             <field name="noise_frequency" type="float" default_value="0.0"/>
             <field name="noise_cohesion" type="float" default_value="0.0"/>
             <field name="noise_edge" type="float" default_value="0.0"/>
-            <field name="indexPlusHighestIndex" type="uint32" since_version="11"/>
+            <field name="index_plus_length" type="uint32" since_version="11"/>
             <field name="unknown406560aa" type="uint32" since_version="10" till_version="11"/>
             <field name="unknown406560ab" type="uint32" since_version="10" till_version="11"/>
             <field name="emit_max" type="uint32"/>
@@ -2273,7 +2271,7 @@
         </versions>
         <fields>
             <field name="matrix" type="Matrix44"/>
-            <field name="unknownAt64" type="uint32" default_value="0x3ca14285" till_version="1"/>
+            <field name="unknown64" type="uint32" default_value="0x3ca14285" till_version="1"/>
             <!-- Shape types:
                 0 = box
                 1 = sphere
@@ -2288,7 +2286,7 @@
             <field name="shape_fb8" type="uint8" default_value="0"/>
             <field name="shape_fb16" type="uint16" default_value="0"/>
             <field name="vertices" type="Reference" ref_to="VEC3" till_version="1"/>
-            <field name="unknownAt84" type="Reference" ref_to="U8__" till_version="1"/>
+            <field name="unknown84" type="Reference" ref_to="U8__" till_version="1"/>
             <field name="face_data" type="Reference" ref_to="U16_" till_version="1"/>
             <field name="plane_equations" type="Reference" ref_to="VEC4" till_version="1"/> <!-- Bounding planes used for convex hull shapes? (may include extra radius value?) -->
 
@@ -2343,11 +2341,11 @@
         </versions>
         <fields>
             <!-- Version 2 specific part: (please try to minimize it if possible) -->
-            <!-- Minimized: unknownAt0 fields seem to have no perceptible effect -->
-            <field till_version="2" name="unknownAt0" size="60"/>
+            <!-- Minimized: unknown0 fields seem to have no perceptible effect -->
+            <field till_version="2" name="unknown0" size="60"/>
             <field till_version="2" name="bone" type="uint16"/>
             <field till_version="2" name="bone_fb" type="uint16" default_value="0x0"/> <!-- Matches bone, but doesn't seem to be used? -->
-            <field till_version="2" name="unknownAt64" size="16" default_value="0x00000000000000000000000000000000"/>
+            <field till_version="2" name="unknown64" size="16" default_value="0x00000000000000000000000000000000"/>
 
             <field name="simulation_type" type="uint16" default_value="1" since_version="3"/>
             <field name="bone" type="uint16" since_version="3"/>
@@ -2615,7 +2613,7 @@
             <field name="noise_waves" type="float"/>
             <field name="noise_frequency" type="float"/>
             <field name="noise_scale" type="float"/>
-            <field name="indexPlusHighestIndex" type="uint32" default_value="1" since_version="5"/> <!-- 1-255 value ; never seen to be 0 on Blizzard models ; shared with PAR_ ; probably determines the rendering priority of some sort ? -->
+            <field name="index_plus_length" type="uint32" default_value="1" since_version="5"/> <!-- 1-255 value ; never seen to be 0 on Blizzard models ; shared with PAR_ ; probably determines the rendering priority of some sort ? -->
             <field name="ribbon_type" type="uint32"/>
             <field name="cull_method" type="uint32" default_value="1"/>
             <field name="divisions" type="float"/>

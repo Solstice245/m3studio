@@ -273,7 +273,7 @@ def m3_key_collect_sd08(key_frames, key_values):
     pass  # undefined
 
 
-def m3_key_collect_sd11(key_frames, key_values):
+def m3_key_collect_sds3(key_frames, key_values):
     pass  # undefined
 
 
@@ -283,7 +283,7 @@ def m3_key_collect_bnds(key_frames, key_values):
 
 m3_key_type_collection_method = [
     m3_key_collect_evnt, m3_key_collect_vec2, m3_key_collect_vec3, m3_key_collect_quat, m3_key_collect_colo, m3_key_collect_real, m3_key_collect_sd08,
-    m3_key_collect_real, m3_key_collect_real, m3_key_collect_sd11, m3_key_collect_real, m3_key_collect_real, m3_key_collect_bnds,
+    m3_key_collect_real, m3_key_collect_real, m3_key_collect_sds3, m3_key_collect_real, m3_key_collect_real, m3_key_collect_bnds,
 ]
 
 
@@ -363,6 +363,7 @@ class Importer:
             fcurve = fcurves.new(path, index=0)
             fcurve.keyframe_points.add(int(len(anim_id_action_data) / 2))
             fcurve.keyframe_points.foreach_set('co', anim_id_action_data)
+            fcurve.keyframe_points.foreach_set('interpolation', [ref.header.interpolation] * int(len(anim_id_action_data) / 2))
 
     def key_vec(self, bl, field, ref, default):
 
@@ -405,13 +406,13 @@ class Importer:
         for m3_anim in m3_stcs:
             anim_name = self.m3[m3_anim.name].content
             anim = shared.m3_item_add(ob.m3_animations, anim_name)
-            anim['runs_concurrent'] = m3_anim.runs_concurrent
+            anim['concurrent'] = m3_anim.concurrent
             anim['priority'] = m3_anim.priority
             anim['action'] = bpy.data.actions.new(ob.name + '_' + anim_name)
 
             m3_key_type_collection_list = [
                 m3_anim.sdev, m3_anim.sd2v, m3_anim.sd3v, m3_anim.sd4q, m3_anim.sdcc, m3_anim.sdr3, m3_anim.sd08,
-                m3_anim.sds6, m3_anim.sdu6, m3_anim.sd11, m3_anim.sdu3, m3_anim.sdfg, m3_anim.sdmb,
+                m3_anim.sds6, m3_anim.sdu6, m3_anim.sds3, m3_anim.sdu3, m3_anim.sdfg, m3_anim.sdmb,
             ]
 
             for stc_id, stc_ref in zip(self.m3[m3_anim.anim_ids], self.m3[m3_anim.anim_refs]):

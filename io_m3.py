@@ -461,7 +461,7 @@ class SectionList(list):
 
         return self
 
-    def section_for_reference(self, structure, field, version=0, pos=None):
+    def section_for_reference(self, structure, field, version=0, pos=-1):
         desc = structure.struct_desc
         ref = getattr(structure, field)
         ref_struct_name = desc.fields[field].ref_to
@@ -469,10 +469,11 @@ class SectionList(list):
 
         section = Section(index_entry=None, struct_desc=ref_struct_desc, references=[ref], content=[])
 
-        if pos is None:
-            self.append(section)
-        else:
-            self.insert(pos, section)
+        if type(pos) is int:
+            if pos < 0:
+                self.append(section)
+            else:
+                self.insert(pos, section)
 
         return section
 
