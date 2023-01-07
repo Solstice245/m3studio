@@ -122,6 +122,16 @@ def sqr(val):
     return val * val
 
 
+def quats_compatibility(quats):
+    if len(quats) < 2:
+        return
+
+    prev_quat = quats[0]
+    for quat in quats[1:]:
+        quat.make_compatible(prev_quat)
+        prev_quat = quat
+
+
 def float_interp(left, right, factor):
     return left * (1 - factor) + right * factor
 
@@ -143,7 +153,8 @@ def quat_interp(left, right, factor):
 
 
 def quat_equal(val0, val1):
-    return sqr(val0.x - val1.x) + sqr(val0.y - val1.y) + sqr(val0.z - val1.z) + sqr(val0.w - val1.w) < sqr(0.0001)
+    dist = sqr(val0.x - val1.x) + sqr(val0.y - val1.y) + sqr(val0.z - val1.z) + sqr(val0.w - val1.w)
+    return dist < sqr(0.0001)
 
 
 def simplify_anim_data_with_interp(keys, vals, interp_func, equal_func):
@@ -761,10 +772,6 @@ class Exporter:
 
             for data_type_ii, section_data_name in enumerate(ANIM_DATA_SECTION_NAMES):
 
-                print(action.name, section_data_name)
-                print(self.action_to_anim_data[action][section_data_name])
-                print()
-
                 if not len(self.action_to_anim_data[action][section_data_name]):
                     continue
 
@@ -898,6 +905,7 @@ class Exporter:
             return
 
         bone_section = self.m3.section_for_reference(model, 'bones', version=1)
+        m3_bone_defaults = {}
 
         for bone in self.bones:
             m3_bone = bone_section.content_add()
@@ -940,9 +948,10 @@ class Exporter:
 
             pose_bone = self.ob.pose.bones[bone.name]
             pose_matrix = self.ob.convert_space(pose_bone=pose_bone, matrix=pose_bone.matrix, from_space='POSE', to_space='LOCAL')
+
             m3_pose_matrix = left_correction_matrix @ pose_matrix @ right_correction_matrix
 
-            m3_bone_loc, m3_bone_rot, m3_bone_scl = m3_pose_matrix.decompose()
+            m3_bone_loc, m3_bone_rot, m3_bone_scl = m3_bone_defaults[m3_bone] = m3_pose_matrix.decompose()
             m3_bone.scale.default = to_m3_vec3(m3_bone_scl)
             m3_bone.rotation.default = to_m3_quat(m3_bone_rot)
             m3_bone.location.default = to_m3_vec3(m3_bone_loc)
@@ -976,26 +985,12 @@ class Exporter:
 
             bone_to_pose_matrices = {bone: [] for bone in self.bones}
 
-            # print()
-            # print(self.ob.animation_data.action)
-
-            # print(self.scene)
-
             for frame in frames:
                 self.scene.frame_set(frame)
                 self.view_layer.update()
-                # if anim.name == 'Attack Superior_full':
-                #     print(frame)
-                #     print(self.scene.frame_current)
-                for ii, bone in enumerate(self.bones):
+                for bone in self.bones:
                     pose_bone = self.ob.pose.bones[bone.name]
-                    # bone_to_pose_matrices[bone].append(self.ob.pose.bones[bone.name].matrix)
                     bone_to_pose_matrices[bone].append(self.ob.convert_space(pose_bone=pose_bone, matrix=pose_bone.matrix, from_space='POSE', to_space='LOCAL'))
-                    # if anim.name == 'Attack Superior_full' and bone.name == 'Box02':
-                    #     print(bone_to_pose_matrices[bone][-1])
-                # print()
-                # if anim.name == 'Attack Superior_full' and frame == 8:
-                #     print(obvious_error)
 
             for ii, bone in enumerate(self.bones):
                 m3_bone = bone_section[ii]
@@ -1011,17 +1006,21 @@ class Exporter:
                     anim_rots.append(m3_pose[1])
                     anim_scls.append(m3_pose[2])
 
-                if vec_list_contains_not_only(anim_locs, m3_bone_loc):
+                if vec_list_contains_not_only(anim_locs, m3_bone_defaults[m3_bone][0]):
                     keys, values = simplify_anim_data_with_interp(frames, anim_locs, vec_interp, vec_equal)
                     self.action_to_anim_data[anim.action]['SD3V'][m3_bone.location.header.id] = (keys, [to_m3_vec3(val) for val in values])
+                    m3_bone.bit_set('flags', 'animated', True)
 
-                if quat_list_contains_not_only(anim_rots, m3_bone_rot):
+                if quat_list_contains_not_only(anim_rots, m3_bone_defaults[m3_bone][1]):
+                    quats_compatibility(anim_rots)
                     keys, values = simplify_anim_data_with_interp(frames, anim_rots, quat_interp, quat_equal)
                     self.action_to_anim_data[anim.action]['SD4Q'][m3_bone.rotation.header.id] = (keys, [to_m3_quat(val) for val in values])
+                    m3_bone.bit_set('flags', 'animated', True)
 
-                if vec_list_contains_not_only(anim_scls, m3_bone_scl):
+                if vec_list_contains_not_only(anim_scls, m3_bone_defaults[m3_bone][2]):
                     keys, values = simplify_anim_data_with_interp(frames, anim_scls, vec_interp, vec_equal)
                     self.action_to_anim_data[anim.action]['SD3V'][m3_bone.scale.header.id] = (keys, [to_m3_vec3(val) for val in values])
+                    m3_bone.bit_set('flags', 'animated', True)
 
     def create_division(self, model, mesh_objects, regn_version):
 

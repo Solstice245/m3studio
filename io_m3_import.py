@@ -579,6 +579,8 @@ class Importer:
             default_rot = m3_bone.rotation.default
             default_scl = m3_bone.scale.default
 
+            # TODO ensure quaternion values are compatible
+
             for action_name in action_name_set:
                 anim_data_loc = id_data_loc.get(action_name, None)
                 anim_data_rot = id_data_rot.get(action_name, None)
