@@ -749,6 +749,8 @@ def set_bone_shape(ob, bone):
 
     if pose_bone:
 
+        # TODO consider changing this system to use bmesh api
+
         if data[0]:
             bone_mesh_name = bone.name + '_display_helper'
             if bone_mesh_name in bpy.data.meshes:

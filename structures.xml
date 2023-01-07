@@ -978,6 +978,19 @@
         </fields>
     </structure>
 
+    <structure name="SD08"> <!-- dummy structure for the unknown animation data type -->
+        <description>Animation block with reference to I32_</description>
+        <versions>
+            <version number="0" size="32"/>
+        </versions>
+        <fields>
+            <field name="frames" type="Reference" ref_to="I32_"/>
+            <field name="flags" type="uint32"/>
+            <field name="fend" type="uint32"/>
+            <field name="keys" type="Reference" ref_to="I32_"/>
+        </fields>
+    </structure>
+
     <structure name="SDS6">
         <description>Animation block with reference to I16_</description>
         <versions>
@@ -988,6 +1001,19 @@
             <field name="flags" type="uint32"/>
             <field name="fend" type="uint32"/>
             <field name="keys" type="Reference" ref_to="I16_"/>
+        </fields>
+    </structure>
+
+    <structure name="SDS3"> <!-- thus far not actually documented to exist, but making an educated guess -->
+        <description>Animation block with reference to I32_</description>
+        <versions>
+            <version number="0" size="32"/>
+        </versions>
+        <fields>
+            <field name="frames" type="Reference" ref_to="I32_"/>
+            <field name="flags" type="uint32"/>
+            <field name="fend" type="uint32"/>
+            <field name="keys" type="Reference" ref_to="I32_"/>
         </fields>
     </structure>
 
@@ -1105,7 +1131,7 @@
             <version number="4" size="204"/>
         </versions>
         <fields>
-            <field name="name" type="Reference"  ref_to="CHAR"/>
+            <field name="name" type="Reference" ref_to="CHAR"/>
             <field name="concurrent" type="uint16" default_value="0"/>
             <field name="priority" type="uint16" default_value="0"/>
             <field name="sts_index" type="uint16"/> <!-- seems to not have any use -->
@@ -1119,10 +1145,10 @@
             <field name="sd4q" type="Reference" ref_to="SD4Q"/>
             <field name="sdcc" type="Reference" ref_to="SDCC"/>
             <field name="sdr3" type="Reference" ref_to="SDR3"/>
-            <field name="sd08" type="Reference"/> <!-- unknown -->
+            <field name="sd08" type="Reference" ref_to="SD08"/> <!-- unknown -->
             <field name="sds6" type="Reference" ref_to="SDS6"/>
             <field name="sdu6" type="Reference" ref_to="SDU6"/>
-            <field name="sds3" type="Reference" ref_to="SDS3"/> <!-- guessing that it is an unused animatable int32 value -->
+            <field name="sds3" type="Reference" ref_to="SDS3"/> <!-- unknown, guessing that it is an unused animatable int32 value -->
             <field name="sdu3" type="Reference" ref_to="SDU3"/>
             <field name="sdfg" type="Reference" ref_to="SDFG"/>
             <field name="sdmb" type="Reference" ref_to="SDMB"/>
@@ -1179,7 +1205,7 @@
             <version number="0" size="28"/>
         </versions>
         <fields>
-            <field name="animIds" type="Reference" ref_to="U32_"/>
+            <field name="anim_ids" type="Reference" ref_to="U32_"/>
             <field name="unknown0" type="int32" expected_value="-1"/>
             <field name="unknown1" type="int32" expected_value="-1"/>
             <field name="unknown2" type="int32" expected_value="-1"/>

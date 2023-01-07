@@ -30,7 +30,7 @@ def get_circular_mesh_data(index, radius, height, sides, circles):
         angle = 2 * pi * ii / sides
         x = cos(angle) * radius
         y = sin(angle) * radius
-        vertices += [(x, y, height)]
+        vertices.append((x, y, height))
 
         next_side = ((ii + 1) % sides)
         if next_index != 0:
@@ -38,7 +38,7 @@ def get_circular_mesh_data(index, radius, height, sides, circles):
             i1 = index * sides + next_side
             i2 = next_index * sides + next_side
             i3 = next_index * sides + ii
-            faces += [(i0, i1, i2, i3)]
+            faces.append((i0, i1, i2, i3))
 
     return (vertices, [], faces)
 
@@ -48,7 +48,7 @@ def camera(field_of_view, focal_depth):
     y = field_of_view / 1.5
     z = focal_depth / 2
     vertices = [(0, 0, 0), (-x, -y, -z), (-x, y, -z), (x, -y, -z), (x, y, -z)]
-    faces = [(0, 1, 2), (0, 1, 3), (0, 2, 4), (0, 3, 4)]
+    faces = ((0, 1, 2), (0, 1, 3), (0, 2, 4), (0, 3, 4))
     return (vertices, [], faces)
 
 
@@ -56,7 +56,7 @@ def point(x=0.05):
     y = x * 2
     z = x * 4
     vertices = [(0, -y, 0), (0, y, 0), (x, 0, 0), (0, 0, z)]
-    faces = [(0, 1, 2), (0, 1, 3), (1, 2, 3), (0, 2, 3)]
+    faces = ((0, 1, 2), (0, 1, 3), (1, 2, 3), (0, 2, 3))
     return (vertices, [], faces)
 
 
@@ -65,7 +65,7 @@ def plane(size):
     y = size[0]
 
     vertices = [(-x, -y, 0), (-x, y, 0), (x, y, 0), (x, -y, 0)]
-    faces = [(0, 1, 2, 3)]
+    faces = ((0, 1, 2, 3))
 
     return (vertices, [], faces)
 
@@ -76,7 +76,7 @@ def cube(size):
     z = size[2]
 
     vertices = [(-x, -y, -z), (-x, -y, z), (-x, y, z), (-x, y, -z), (x, -y, -z), (x, -y, z), (x, y, -z), (x, y, z)]
-    faces = [(0, 1, 2, 3), (6, 7, 5, 4), (4, 5, 1, 0), (3, 2, 7, 6), (0, 3, 6, 4), (5, 7, 2, 1)]
+    faces = ((0, 1, 2, 3), (6, 7, 5, 4), (4, 5, 1, 0), (3, 2, 7, 6), (0, 3, 6, 4), (5, 7, 2, 1))
 
     return (vertices, [], faces)
 
@@ -90,7 +90,7 @@ def disc(radius, sides=10):
         y = sin(angle) * radius
         vertices += [(x, y, 0)]
 
-    faces = [tuple([ii for ii in range(len(vertices))])]
+    faces = [[ii for ii in range(len(vertices))]]
 
     return (vertices, [], faces)
 
@@ -104,13 +104,13 @@ def cylinder(size, radius, sides=10):
         angle = 2 * pi * ii / sides
         x = cos(angle) * radius
         y = sin(angle) * radius
-        vertices += [(x, y, -z)]
-        vertices += [(x, y, z)]
+        vertices.append((x, y, -z))
+        vertices.append((x, y, z))
         i0 = ii * 2 + 1
         i1 = ii * 2
         i2 = ((ii + 1) * 2) % (sides * 2)
         i3 = ((ii + 1) * 2 + 1) % (sides * 2)
-        faces += [(i0, i1, i2, i3)]
+        faces.append((i0, i1, i2, i3))
 
     return (vertices, [], faces)
 
@@ -174,18 +174,14 @@ def cone(size, radius, sides=10):
         angle = 2 * pi * ii / sides
         x = cos(angle) * radius
         y = sin(angle) * radius
-        vertices += [(x, y, size)]
+        vertices.append((x, y, size))
 
-    faces = [tuple([ii for ii in range(len(vertices))])]
+    faces = [[ii for ii in range(len(vertices))]]
 
     tip_vertex_index = len(vertices)
     vertices += [(0, 0, 0)]
     for ii in range(sides):
-        nextI = ((ii + 1) % sides)
-        i0 = nextI
-        i1 = tip_vertex_index
-        i2 = ii
-        faces += [(i0, i1, i2)]
+        faces.append(((ii + 1) % sides, tip_vertex_index, ii))
 
     return (vertices, [], faces)
 
@@ -207,10 +203,10 @@ def cone_dome(cone_ratio, radius, sides=10, circles=5):
     bot_vertex_index = len(vertices)
     vertices += [(0, 0, 0)]
     for ii in range(sides):
-        nextI = ((ii + 1) % sides)
-        i0 = ((circles - 1) * sides) + nextI
+        next_index = ((ii + 1) % sides)
+        i0 = ((circles - 1) * sides) + next_index
         i1 = bot_vertex_index
         i2 = ((circles - 1) * sides) + ii
-        faces += [(i0, i1, i2)]
+        faces.append((i0, i1, i2))
 
     return (vertices, [], faces)

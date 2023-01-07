@@ -20,6 +20,9 @@ import bpy
 from . import shared
 
 
+# TODO make a function for auto NLA track generation when selecting animation groups
+
+
 def register_props():
     bpy.types.Object.m3_animations_default = bpy.props.PointerProperty(type=bpy.types.Action)
     bpy.types.Object.m3_animations = bpy.props.CollectionProperty(type=AnimationProperties)
@@ -29,24 +32,25 @@ def register_props():
 
 
 def anim_update(self, context):
-    ob = context.object
+    if context.object.m3_options.auto_update_action:
+        anim_set(context.object.m3_animations[context.object.m3_animations_index], context.scene, context.view_layer, context.object)
 
-    if not ob.m3_options.auto_update_action:
-        return
 
+# this function is exported to io_m3_export.py
+def anim_set(anim, scene, view_layer, ob):
     if ob.animation_data is None:
         ob.animation_data_create()
 
     if ob.m3_animations_default is None:
         ob.m3_animations_default = bpy.data.actions.new(ob.name + '_DEFAULTS')
 
-    if ob.m3_animations_index < 0:
+    if anim is None:
         ob.animation_data.action = ob.m3_animations_default
-        bpy.context.scene.frame_current = 0
+        scene.frame_current = 0
     else:
         old_action = ob.animation_data.action
         old_props = set()
-        new_action = ob.m3_animations[ob.m3_animations_index].action
+        new_action = anim.action
         new_props = set()
 
         if old_action is not None:
@@ -77,11 +81,11 @@ def anim_update(self, context):
             ob.m3_animations_default.fcurves.remove(fcurve)
 
         ob.animation_data.action = ob.m3_animations_default
-        bpy.context.view_layer.update()
+        view_layer.update()
         ob.animation_data.action = new_action
 
 
-# this function is imported into io_m3_import.py
+# this function is exported to io_m3_import.py
 def set_default_value(action, path, index, value):
     fcurve = action.fcurves.find(path, index=index) or action.fcurves.new(path, index=index)
     fcurve.keyframe_points.insert(0, value)

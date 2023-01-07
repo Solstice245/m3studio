@@ -21,13 +21,14 @@ import bmesh
 import mathutils
 import math
 import os
+import time
 from . import io_m3
 from . import io_shared
 from . import shared
+from .m3_animations import anim_set
 
 
 ANIM_DATA_SECTION_NAMES = ('SDEV', 'SD2V', 'SD3V', 'SD4Q', 'SDCC', 'SDR3', 'SD08', 'SDS6', 'SDU6', 'SDS3', 'SDU3', 'SDFG', 'SDMB')
-ANIM_DATA_TEMPLATE = {section_name: {} for section_name in ANIM_DATA_SECTION_NAMES}
 BNDS_ANIM_ID = 0x001f9bd2
 EVNT_ANIM_ID = 0x65bd3215
 INT16_MIN = (-(1 << 15))
@@ -117,6 +118,76 @@ def get_fcurve_anim_frames(fcurve, interpolation='LINEAR'):
     return frames
 
 
+def sqr(val):
+    return val * val
+
+
+def float_interp(left, right, factor):
+    return left * (1 - factor) + right * factor
+
+
+def float_equal(val0, val1):
+    return abs(val0 - val1) < 0.0001
+
+
+def vec_interp(left, right, factor):
+    return left.lerp(right, factor)
+
+
+def vec_equal(val0, val1):
+    return (val0 - val1).length < 0.0001
+
+
+def quat_interp(left, right, factor):
+    return left.slerp(right, factor)
+
+
+def quat_equal(val0, val1):
+    return sqr(val0.x - val1.x) + sqr(val0.y - val1.y) + sqr(val0.z - val1.z) + sqr(val0.w - val1.w) < sqr(0.0001)
+
+
+def simplify_anim_data_with_interp(keys, vals, interp_func, equal_func):
+    if len(vals) < 2:
+        return keys, vals
+
+    left_key, curr_key = keys[0:2]
+    left_val, curr_val = vals[0:2]
+    new_keys = [left_key]
+    new_vals = [left_val]
+
+    for right_key, right_val in zip(keys[2:], vals[2:]):
+        interpolated_val = interp_func(left_val, right_val, (curr_key - left_key) / (right_key - left_key))
+        if equal_func(interpolated_val, curr_val):
+            # ignore current value since since it matches the given interpolation
+            pass
+        else:
+            new_keys.append(curr_key)
+            new_vals.append(curr_val)
+            left_key = curr_key
+            left_val = curr_val
+        curr_key = right_key
+        curr_val = right_val
+
+    new_keys.append(keys[-1])
+    new_vals.append(vals[-1])
+
+    return new_keys, new_vals
+
+
+def vec_list_contains_not_only(vec_list, vec):
+    for v in vec_list:
+        if not vec_equal(v, vec):
+            return True
+    return False
+
+
+def quat_list_contains_not_only(quat_list, quat):
+    for q in quat_list:
+        if not quat_equal(q, quat):
+            return True
+    return False
+
+
 class M3OutputProcessor:
 
     def __init__(self, exporter, bl, m3):
@@ -124,6 +195,28 @@ class M3OutputProcessor:
         self.bl = bl
         self.m3 = m3
         self.version = m3.struct_desc.struct_version
+
+    def collect_anim_data_single(self, field, anim_ref, anim_data_tag):
+        for action in self.exporter.action_to_anim_data:
+            fcurve = action.fcurves.find(self.bl.path_from_id(field))
+            frames = get_fcurve_anim_frames(fcurve)
+
+            if not frames:
+                continue
+
+            values = [int(fcurve.evaluate(frame)) for frame in frames]
+            self.exporter.action_to_anim_data[action][anim_data_tag][anim_ref.header.id] = (frames, values)
+
+    def collect_anim_data_vector(self, field, anim_ref, length, anim_data_tag):
+        for action in self.exporter.action_to_anim_data:
+            fcurves = (action.fcurves.find(self.bl.path_from_id(field), index=ii) for ii in range(length))
+            frames = sorted(list(*set(zip([get_fcurve_anim_frames(fcurve) for fcurve in fcurves]))))
+
+            if frames == [None]:
+                continue
+
+            values = [[fcurve.evaluate(frame) for frame in frames] for fcurve in fcurves]
+            self.exporter.action_to_anim_data[action][anim_data_tag][anim_ref.header.id] = (frames, values)
 
     def boolean(self, field, since_version=None, till_version=None):
         if (since_version is not None) and (self.version < since_version):
@@ -213,76 +306,31 @@ class M3OutputProcessor:
         anim_ref = self.exporter.init_anim_ref_uint32()
         anim_ref.default = int(getattr(self.bl, field))
         setattr(self.m3, field, anim_ref)
-
-        for anim in self.exporter.anims_data:
-            fcurve = anim.action.fcurves.find(self.bl.path_from_id(field))
-            frames = get_fcurve_anim_frames(fcurve)
-
-            if not frames:
-                continue
-
-            values = [int(fcurve.evaluate(frame)) for frame in frames]
-            self.exporter.anims_data[anim]['SDU3'][anim_ref.header.id] = (frames, values)
+        self.collect_anim_data_single(field, anim_ref, 'SDU3')
 
     def anim_boolean_based_on_SDFG(self, field):
         anim_ref = self.exporter.init_anim_ref_uint32()
         anim_ref.default = int(getattr(self.bl, field))
         setattr(self.m3, field, anim_ref)
-
-        for anim in self.exporter.anims_data:
-            fcurve = anim.action.fcurves.find(self.bl.path_from_id(field))
-            frames = get_fcurve_anim_frames(fcurve)
-
-            if not frames:
-                continue
-
-            values = [int(fcurve.evaluate(frame)) for frame in frames]
-            self.exporter.anims_data[anim]['SDFG'][anim_ref.header.id] = (frames, values)
+        self.collect_anim_data_single(field, anim_ref, 'SDFG')
 
     def anim_int16(self, field):
         anim_ref = self.exporter.init_anim_ref_int16()
         anim_ref.default = getattr(self.bl, field)
         setattr(self.m3, field, anim_ref)
-
-        for anim in self.exporter.anims_data:
-            fcurve = anim.action.fcurves.find(self.bl.path_from_id(field))
-            frames = get_fcurve_anim_frames(fcurve)
-
-            if not frames:
-                continue
-
-            values = [int(fcurve.evaluate(frame)) for frame in frames]
-            self.exporter.anims_data[anim]['SDS6'][anim_ref.header.id] = (frames, values)
+        self.collect_anim_data_single(field, anim_ref, 'SDS6')
 
     def anim_uint16(self, field):
         anim_ref = self.exporter.init_anim_ref_uint16()
         anim_ref.default = getattr(self.bl, field)
         setattr(self.m3, field, anim_ref)
-
-        for anim in self.exporter.anims_data:
-            fcurve = anim.action.fcurves.find(self.bl.path_from_id(field))
-            frames = get_fcurve_anim_frames(fcurve)
-
-            if not frames:
-                continue
-
-            values = [int(fcurve.evaluate(frame)) for frame in frames]
-            self.exporter.anims_data[anim]['SDU6'][anim_ref.header.id] = (frames, values)
+        self.collect_anim_data_single(field, anim_ref, 'SDU6')
 
     def anim_uint32(self, field):
         anim_ref = self.exporter.init_anim_ref_uint32()
         anim_ref.default = int(getattr(self.bl, field))  # casting to int because sometimes bools use this
         setattr(self.m3, field, anim_ref)
-
-        for anim in self.exporter.anims_data:
-            fcurve = anim.action.fcurves.find(self.bl.path_from_id(field))
-            frames = get_fcurve_anim_frames(fcurve)
-
-            if not frames:
-                continue
-
-            values = [int(fcurve.evaluate(frame)) for frame in frames]
-            self.exporter.anims_data[anim]['SDU3'][anim_ref.header.id] = (frames, values)
+        self.collect_anim_data_single(field, anim_ref, 'SDU3')
 
     def anim_float(self, field, since_version=None, till_version=None):
         if (since_version is not None) and (self.version < since_version):
@@ -292,31 +340,13 @@ class M3OutputProcessor:
         anim_ref = self.exporter.init_anim_ref_float()
         anim_ref.default = getattr(self.bl, field)
         setattr(self.m3, field, anim_ref)
-
-        for anim in self.exporter.anims_data:
-            fcurve = anim.action.fcurves.find(self.bl.path_from_id(field))
-            frames = get_fcurve_anim_frames(fcurve)
-
-            if not frames:
-                continue
-
-            values = [fcurve.evaluate(frame) for frame in frames]
-            self.exporter.anims_data[anim]['SDR3'][anim_ref.header.id] = (frames, values)
+        self.collect_anim_data_single(field, anim_ref, 'SDR3')
 
     def anim_vec2(self, field):
         anim_ref = self.exporter.init_anim_ref_vec2()
         anim_ref.default = to_m3_vec2(getattr(self.bl, field))
         setattr(self.m3, field, anim_ref)
-
-        for anim in self.exporter.anims_data:
-            fcurves = (anim.action.fcurves.find(self.bl.path_from_id(field), index=ii) for ii in range(2))
-            frames = sorted(list(*set(zip([get_fcurve_anim_frames(fcurve) for fcurve in fcurves]))))
-
-            if frames == [None]:
-                continue
-
-            values = [[fcurve.evaluate(frame) for frame in frames] for fcurve in fcurves]
-            self.exporter.anims_data[anim]['SD2V'][anim_ref.header.id] = (frames, values)
+        self.collect_anim_data_vector(field, anim_ref, 2, 'SD2V')
 
     def anim_vec3(self, field, since_version=None, till_version=None):
         if (since_version is not None) and (self.version < since_version):
@@ -326,16 +356,7 @@ class M3OutputProcessor:
         anim_ref = self.exporter.init_anim_ref_vec3()
         anim_ref.default = to_m3_vec3(getattr(self.bl, field))
         setattr(self.m3, field, anim_ref)
-
-        for anim in self.exporter.anims_data:
-            fcurves = (anim.action.fcurves.find(self.bl.path_from_id(field), index=ii) for ii in range(3))
-            frames = sorted(list(*set(zip([get_fcurve_anim_frames(fcurve) for fcurve in fcurves]))))
-
-            if frames == [None]:
-                continue
-
-            values = [[fcurve.evaluate(frame) for frame in frames] for fcurve in fcurves]
-            self.exporter.anims_data[anim]['SD3V'][anim_ref.header.id] = (frames, values)
+        self.collect_anim_data_vector(field, anim_ref, 3, 'SD3V')
 
     def anim_color(self, field, since_version=None, till_version=None):
         if (since_version is not None) and (self.version < since_version):
@@ -345,16 +366,7 @@ class M3OutputProcessor:
         anim_ref = self.exporter.init_anim_ref_color()
         anim_ref.default = to_m3_color(getattr(self.bl, field))
         setattr(self.m3, field, anim_ref)
-
-        for anim in self.exporter.anims_data:
-            fcurves = (anim.action.fcurves.find(self.bl.path_from_id(field), index=ii) for ii in range(4))
-            frames = sorted(list(*set(zip([get_fcurve_anim_frames(fcurve) for fcurve in fcurves]))))
-
-            if frames == [None]:
-                continue
-
-            values = [[fcurve.evaluate(frame) for frame in frames] for fcurve in fcurves]
-            self.exporter.anims_data[anim]['SDCC'][anim_ref.header.id] = (frames, values)
+        self.collect_anim_data_vector(field, anim_ref, 4, 'SDCC')
 
 
 class Exporter:
@@ -362,7 +374,12 @@ class Exporter:
     def m3_export(self, ob, filename):
         assert ob.type == 'ARMATURE'
 
+        bpy.context.view_layer.objects.active = ob
+        bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
+
         self.ob = ob
+        self.view_layer = bpy.context.view_layer
+        self.scene = bpy.context.scene
         self.m3 = io_m3.SectionList(init_header=True)
 
         self.anim_id_count = 0
@@ -374,10 +391,18 @@ class Exporter:
         self.export_required_regions = set()
         self.export_required_material_references = set()
         self.export_required_bones = set()
-        self.export_animations = set()
 
-        self.anims_data = {}
+        self.exported_anims = []
+        self.action_frame_range = {}
+        self.action_to_anim_data = {}
+        self.action_to_stc = {}
 
+        # used to calculate exact positions of later sections in the section list
+        self.stc_section = None  # defined in the sequence export
+        self.stc_to_name_section = {}  # defined in the sequence export
+        self.stg_last_indice_section = None  # defined in the sequence export
+
+        # used for later reference such as setting region flags
         self.region_section = None  # defined in the mesh export code
 
         def valid_collections_and_requirements(collection):
@@ -675,6 +700,11 @@ class Exporter:
             if matref in self.export_required_material_references:
                 self.matref_handle_indices[matref.bl_handle] = len(self.matref_handle_indices.keys())
 
+        # place armature in the default pose so that bones are in their default pose
+        anim_set(None, self.scene, self.view_layer, self.ob)
+        self.scene.frame_set(0)
+        self.view_layer.update()
+
         self.depsgraph = bpy.context.evaluated_depsgraph_get()
 
         model_section = self.m3.section_for_reference(self.m3[0][0], 'model', version=ob.m3_model_version)
@@ -716,13 +746,80 @@ class Exporter:
         self.create_billboards(model, export_billboards)
         # ???? self.create_tmd_data(model, export_tmd_data)
 
-        # TODO finalize animation sectioning here
+        # finalize animation sectioning here
+        sts_section = self.m3.section_for_reference(model, 'sts', pos=None)  # position later
+        ids_sections = []  # for collecting anim_id sections to position later
+        for action in self.action_to_stc:
+            stc_list = self.action_to_stc[action]
 
-        print(self.anims_data)
+            section_pos = self.m3.index(self.stc_to_name_section[stc_list[-1]]) + 1
+
+            ids_section = self.m3.section_for_reference(stc_list[0], 'anim_ids', pos=None)  # position later
+            ids_sections.append(ids_section)
+            refs_section = self.m3.section_for_reference(stc_list[0], 'anim_refs', pos=section_pos)
+            section_pos += 1
+
+            for data_type_ii, section_data_name in enumerate(ANIM_DATA_SECTION_NAMES):
+
+                print(action.name, section_data_name)
+                print(self.action_to_anim_data[action][section_data_name])
+                print()
+
+                if not len(self.action_to_anim_data[action][section_data_name]):
+                    continue
+
+                action_data = self.action_to_anim_data[action][section_data_name]
+                attr_name = section_data_name.lower()
+
+                data_section = self.m3.section_for_reference(stc_list[0], attr_name, pos=section_pos)
+                section_pos += 1
+
+                for ii, id_num in enumerate(action_data):
+                    data_head = data_section.content_add()
+
+                    ids_section.content_add(id_num)
+                    refs_section.content_add((data_type_ii << 16) + ii)
+
+                    if section_data_name == 'SDEV':
+                        data_head.flags = 1
+
+                    data_head.fend = to_m3_ms(action_data[id_num][0][-1])
+
+                    frames_section = self.m3.section_for_reference(data_head, 'frames', pos=section_pos)
+                    frames_section.content_iter_add([to_m3_ms(frame) for frame in action_data[id_num][0]])
+                    section_pos += 1
+
+                    values_section = self.m3.section_for_reference(data_head, 'keys', pos=section_pos)
+                    values_section.content_iter_add(action_data[id_num][1])
+                    section_pos += 1
+
+                if len(stc_list) > 1:
+                    for stc in stc_list[1:]:
+                        data_section.references.append(getattr(stc, attr_name))
+
+            if len(stc_list) > 1:
+                ids_section.references.append(getattr(stc, 'anim_ids'))
+                refs_section.references.append(getattr(stc, 'anim_refs'))
+
+            for stc in stc_list:
+                sts = sts_section.content_add()
+                ids_section.references.append(getattr(sts, 'anim_ids'))
+
+        # offseting the position the given amount assuming model unknown reference is unused
+        section_pos = self.m3.index(self.stg_last_indice_section) + 1
+        self.m3.insert(section_pos, sts_section)
+        section_pos += 1
+        for ids_section in ids_sections:
+            self.m3.insert(section_pos, ids_section)
+            section_pos += 1
 
         self.m3.resolve()
         self.m3.validate()
         self.m3.to_index()
+
+        # place armature back into the pose that it was before
+        # TODO account for the possibility that the user turned off the auto action selection
+        anim_set(self.ob.m3_animations[self.ob.m3_animations_index], self.scene, self.view_layer, self.ob)
 
         return self.m3
 
@@ -732,11 +829,10 @@ class Exporter:
 
         seq_section = self.m3.section_for_reference(model, 'sequences', version=2)
         stc_section = self.m3.section_for_reference(model, 'sequence_transformation_collections', version=4, pos=None)
+        self.stc_section = stc_section
         stc_name_sections = []
         stg_section = self.m3.section_for_reference(model, 'sequence_transformation_groups', version=0, pos=None)
         stg_indices_sections = []
-
-        exported_anims = []
 
         for anim_group in anim_groups:
             m3_seq = seq_section.content_add()
@@ -756,21 +852,36 @@ class Exporter:
 
             for anim in anim_group.animations:
                 anim = shared.m3_pointer_get(self.ob.m3_animations, anim.bl_handle)
-                if anim not in exported_anims:
+                if anim not in self.exported_anims:
                     # TODO ensure stc names are unique
-                    exported_anims.append(anim)
+                    self.exported_anims.append(anim)
 
                     m3_stc = stc_section.content_add()
                     m3_stc_name_section = self.m3.section_for_reference(m3_stc, 'name', pos=None)
                     m3_stc_name_section.content_from_bytes(anim.name)
+                    self.stc_to_name_section[m3_stc] = m3_stc_name_section
                     stc_name_sections.append(m3_stc_name_section)
 
                     m3_stc.concurrent = int(anim.concurrent)
                     m3_stc.priority = anim.priority
 
-                    self.anims_data[anim] = ANIM_DATA_TEMPLATE.copy()
+                    self.action_to_anim_data[anim.action] = {section_name: {} for section_name in ANIM_DATA_SECTION_NAMES}
 
-                m3_stg_col_indices_section.content_add(exported_anims.index(anim))
+                    if not self.action_to_stc.get(anim.action):
+                        self.action_to_stc[anim.action] = [m3_stc]
+                    else:
+                        self.action_to_stc[anim.action].append(m3_stc)
+
+                    if not self.action_frame_range.get(anim.action):
+                        self.action_frame_range[anim.action] = [anim_group.frame_start, anim_group.frame_end]
+                    else:
+                        self.action_frame_range[anim.action][0] = min(self.action_frame_range[anim.action][0], anim_group.frame_start)
+                        self.action_frame_range[anim.action][1] = max(self.action_frame_range[anim.action][1], anim_group.frame_end)
+
+                m3_stg_col_indices_section.content_add(self.exported_anims.index(anim))
+
+        # used to position other sections
+        self.stg_last_indice_section = stg_indices_sections[-1]
 
         self.m3.append(stc_section)
 
@@ -831,8 +942,8 @@ class Exporter:
             pose_matrix = self.ob.convert_space(pose_bone=pose_bone, matrix=pose_bone.matrix, from_space='POSE', to_space='LOCAL')
             m3_pose_matrix = left_correction_matrix @ pose_matrix @ right_correction_matrix
 
-            m3_bone_loc, m3_bone_rot, m3_bone_scale = m3_pose_matrix.decompose()
-            m3_bone.scale.default = to_m3_vec3(m3_bone_scale)
+            m3_bone_loc, m3_bone_rot, m3_bone_scl = m3_pose_matrix.decompose()
+            m3_bone.scale.default = to_m3_vec3(m3_bone_scl)
             m3_bone.rotation.default = to_m3_quat(m3_bone_rot)
             m3_bone.location.default = to_m3_vec3(m3_bone_loc)
 
@@ -842,6 +953,75 @@ class Exporter:
                 abs_pose_matrix = m3_pose_matrix
 
             self.bone_to_abs_pose_matrix[bone] = abs_pose_matrix @ rest_matrix
+
+        calculated_actions = []
+        for anim in self.exported_anims:
+
+            if anim.action in calculated_actions:
+                continue
+
+            calculated_actions.append(anim.action)
+
+            # setting scene properties is extremely slow
+            # maximum optimization would keep calls to anim_set and frame_set to an absolute minimum
+            anim_set(anim, self.scene, self.view_layer, self.ob)
+
+            # jog animation frame so that complicated pose calculations are completed before proceeding
+            # TODO make an export option to step through a given number of previous frames to allow completion of timed calculations (ie wigglebone)
+            self.scene.frame_set(0)
+            self.view_layer.update()
+
+            frames_range = range(self.action_frame_range[anim.action][0], self.action_frame_range[anim.action][1] + 1)
+            frames = list(frames_range)
+
+            bone_to_pose_matrices = {bone: [] for bone in self.bones}
+
+            # print()
+            # print(self.ob.animation_data.action)
+
+            # print(self.scene)
+
+            for frame in frames:
+                self.scene.frame_set(frame)
+                self.view_layer.update()
+                # if anim.name == 'Attack Superior_full':
+                #     print(frame)
+                #     print(self.scene.frame_current)
+                for ii, bone in enumerate(self.bones):
+                    pose_bone = self.ob.pose.bones[bone.name]
+                    # bone_to_pose_matrices[bone].append(self.ob.pose.bones[bone.name].matrix)
+                    bone_to_pose_matrices[bone].append(self.ob.convert_space(pose_bone=pose_bone, matrix=pose_bone.matrix, from_space='POSE', to_space='LOCAL'))
+                    # if anim.name == 'Attack Superior_full' and bone.name == 'Box02':
+                    #     print(bone_to_pose_matrices[bone][-1])
+                # print()
+                # if anim.name == 'Attack Superior_full' and frame == 8:
+                #     print(obvious_error)
+
+            for ii, bone in enumerate(self.bones):
+                m3_bone = bone_section[ii]
+                left_correction_matrix, right_correction_matrix = self.bone_to_correction_matrices[bone]
+
+                anim_locs = []
+                anim_rots = []
+                anim_scls = []
+
+                for pose_matrix in bone_to_pose_matrices[bone]:
+                    m3_pose = (left_correction_matrix @ pose_matrix @ right_correction_matrix).decompose()
+                    anim_locs.append(m3_pose[0])
+                    anim_rots.append(m3_pose[1])
+                    anim_scls.append(m3_pose[2])
+
+                if vec_list_contains_not_only(anim_locs, m3_bone_loc):
+                    keys, values = simplify_anim_data_with_interp(frames, anim_locs, vec_interp, vec_equal)
+                    self.action_to_anim_data[anim.action]['SD3V'][m3_bone.location.header.id] = (keys, [to_m3_vec3(val) for val in values])
+
+                if quat_list_contains_not_only(anim_rots, m3_bone_rot):
+                    keys, values = simplify_anim_data_with_interp(frames, anim_rots, quat_interp, quat_equal)
+                    self.action_to_anim_data[anim.action]['SD4Q'][m3_bone.rotation.header.id] = (keys, [to_m3_quat(val) for val in values])
+
+                if vec_list_contains_not_only(anim_scls, m3_bone_scl):
+                    keys, values = simplify_anim_data_with_interp(frames, anim_scls, vec_interp, vec_equal)
+                    self.action_to_anim_data[anim.action]['SD3V'][m3_bone.scale.header.id] = (keys, [to_m3_vec3(val) for val in values])
 
     def create_division(self, model, mesh_objects, regn_version):
 
