@@ -894,6 +894,11 @@ class Importer:
                 face = bm.faces.new((bm.verts[regn_m3_faces_new[ii]], bm.verts[regn_m3_faces_new[ii + 1]], bm.verts[regn_m3_faces_new[ii + 2]]))
                 face.smooth = True
 
+                # TODO fix sign import
+                # TODO when did this become broken?
+                # TODO // the problem seems to have fixed itself?
+                # TODO // something weird is going on, keep an eye on this
+
                 for jj in range(3):
                     m3v = regn_m3_verts[regn_m3_faces[ii + jj]]
                     loop = face.loops[jj]
@@ -939,7 +944,6 @@ class Importer:
         bounds = ob.m3_bounds
         bounds.left, bounds.back, bounds.bottom = to_bl_vec3(self.m3_model.boundings.min)
         bounds.right, bounds.front, bounds.top = to_bl_vec3(self.m3_model.boundings.max)
-        bounds.radius = self.m3_model.boundings.radius
         # TODO animate boundings?
 
     def create_attachments(self):

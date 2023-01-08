@@ -68,13 +68,12 @@ class OptionProperties(bpy.types.PropertyGroup):
 
 # TODO bounding preview
 class BoundingProperties(bpy.types.PropertyGroup):
-    bottom: bpy.props.FloatProperty(name='M3 Bounding Bottom', default=0.25)
-    top: bpy.props.FloatProperty(name='M3 Bounding Top', default=0.25)
-    left: bpy.props.FloatProperty(name='M3 Bounding Left', default=2.5)
-    right: bpy.props.FloatProperty(name='M3 Bounding Right', default=2.5)
-    front: bpy.props.FloatProperty(name='M3 Bounding Front', default=2.5)
-    back: bpy.props.FloatProperty(name='M3 Bounding Back', default=2.5)
-    radius: bpy.props.FloatProperty(name='M3 Bounding Radius', default=5)
+    bottom: bpy.props.FloatProperty(name='M3 Bounding Bottom', default=-0.25)
+    top: bpy.props.FloatProperty(name='M3 Bounding Top', default=2)
+    left: bpy.props.FloatProperty(name='M3 Bounding Left', default=-2)
+    right: bpy.props.FloatProperty(name='M3 Bounding Right', default=2)
+    front: bpy.props.FloatProperty(name='M3 Bounding Front', default=2)
+    back: bpy.props.FloatProperty(name='M3 Bounding Back', default=-2)
 
 
 class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
@@ -95,7 +94,6 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
         col.prop(bounds, 'right', text='Right')
         col.prop(bounds, 'front', text='Front')
         col.prop(bounds, 'back', text='Back')
-        col.prop(bounds, 'radius', text='Radius')
         col.separator()
         col.prop(options, 'bone_display_mode', text='Bone Display')
         col.prop(options, 'auto_update_bone_display_mode', text='Auto Update Bone Display')

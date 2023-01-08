@@ -98,6 +98,15 @@ def to_m3_matrix(bl_matrix):
     return m3_matrix
 
 
+def to_m3_bnds(bl_vecs=None):
+    m3_bnds = io_m3.structures['BNDS'].get_version(0).instance()
+    if bl_vecs is not None:
+        m3_bnds.min = to_m3_vec3(bl_vecs[0])
+        m3_bnds.max = to_m3_vec3(bl_vecs[1])
+        m3_bnds.radius = (bl_vecs[1] - bl_vecs[0]).length / 2
+    return m3_bnds
+
+
 def get_fcurve_anim_frames(fcurve, interpolation='LINEAR'):
     if fcurve is None:
         return
@@ -197,6 +206,27 @@ def quat_list_contains_not_only(quat_list, quat):
         if not quat_equal(q, quat):
             return True
     return False
+
+
+def bounding_vectors_from_bones(bone_rest_bounds, bone_to_matrix_dict):
+    vec_min = mathutils.Vector((float('inf'), float('inf'), float('inf')))
+    vec_max = mathutils.Vector((float('-inf'), float('-inf'), float('-inf')))
+
+    for bone, bounding_cos in bone_rest_bounds.items():
+        matrix = bone_to_matrix_dict[bone]
+        bone_vec_min = mathutils.Vector((float('inf'), float('inf'), float('inf')))
+        bone_vec_max = mathutils.Vector((float('-inf'), float('-inf'), float('-inf')))
+        for co in bounding_cos:
+            mat_co = matrix @ co
+            for ii in range(3):
+                bone_vec_min[ii] = min(bone_vec_min[ii], mat_co[ii])
+                bone_vec_max[ii] = max(bone_vec_max[ii], mat_co[ii])
+        for ii in range(3):
+            if not math.isinf(bone_vec_min[0]):
+                vec_min[ii] = min(vec_min[ii], bone_vec_min[ii])
+                vec_max[ii] = max(vec_max[ii], bone_vec_max[ii])
+
+    return vec_min, vec_max
 
 
 class M3OutputProcessor:
@@ -406,6 +436,7 @@ class Exporter:
         self.exported_anims = []
         self.action_frame_range = {}
         self.action_to_anim_data = {}
+        self.action_abs_pose_matrices = {}
         self.action_to_stc = {}
 
         # used to calculate exact positions of later sections in the section list
@@ -705,6 +736,7 @@ class Exporter:
         self.bone_to_iref = {}
         self.bone_to_inv_iref = {}
         self.bone_to_abs_pose_matrix = {}
+        self.bone_bounding_cos = None  # defined later
 
         self.matref_handle_indices = {}
         for matref in ob.m3_materialrefs:
@@ -724,23 +756,18 @@ class Exporter:
         model_name_section = self.m3.section_for_reference(model, 'model_name')
         model_name_section.content_from_bytes(os.path.basename(filename))
 
-        self.bounds_min = to_m3_vec3((self.ob.m3_bounds.left, self.ob.m3_bounds.back, self.ob.m3_bounds.bottom))
-        self.bounds_max = to_m3_vec3((self.ob.m3_bounds.right, self.ob.m3_bounds.front, self.ob.m3_bounds.top))
-        self.bounds_radius = self.ob.m3_bounds.radius
-
-        model.boundings = io_m3.structures['BNDS'].get_version(0).instance()
-        model.boundings.min = self.bounds_min
-        model.boundings.max = self.bounds_max
-        model.boundings.radius = self.bounds_radius
+        self.bounds_min = mathutils.Vector((self.ob.m3_bounds.left, self.ob.m3_bounds.back, self.ob.m3_bounds.bottom))
+        self.bounds_max = mathutils.Vector((self.ob.m3_bounds.right, self.ob.m3_bounds.front, self.ob.m3_bounds.top))
+        model.boundings = to_m3_bnds((self.bounds_min, self.bounds_max))
 
         self.create_sequences(model, export_sequences)
-        self.create_bones(model)  # TODO needs correction matrices
-        self.create_division(model, self.export_regions, regn_version=ob.m3_mesh_version)  # TODO lookups are incorrect
+        self.create_bones(model)
+        self.create_division(model, self.export_regions, regn_version=ob.m3_mesh_version)
         self.create_attachment_points(model, export_attachment_points)  # TODO should exclude attachments with same bone as other attachments
         self.create_lights(model, export_lights)
         self.create_shadow_boxes(model, export_shadow_boxes)
         self.create_cameras(model, export_cameras)
-        self.create_materials(model, export_material_references, material_versions)  # TODO standard flags and test volume, volume noise, stb
+        self.create_materials(model, export_material_references, material_versions)  # TODO test volume, volume noise and stb material types
         self.create_particle_systems(model, export_particle_systems, export_particle_copies, version=ob.m3_particle_systems_version)
         self.create_ribbons(model, export_ribbons, export_ribbon_splines, version=ob.m3_ribbons_version)
         self.create_projections(model, export_projections)
@@ -757,68 +784,7 @@ class Exporter:
         self.create_billboards(model, export_billboards)
         # ???? self.create_tmd_data(model, export_tmd_data)
 
-        # finalize animation sectioning here
-        sts_section = self.m3.section_for_reference(model, 'sts', pos=None)  # position later
-        ids_sections = []  # for collecting anim_id sections to position later
-        for action in self.action_to_stc:
-            stc_list = self.action_to_stc[action]
-
-            section_pos = self.m3.index(self.stc_to_name_section[stc_list[-1]]) + 1
-
-            ids_section = self.m3.section_for_reference(stc_list[0], 'anim_ids', pos=None)  # position later
-            ids_sections.append(ids_section)
-            refs_section = self.m3.section_for_reference(stc_list[0], 'anim_refs', pos=section_pos)
-            section_pos += 1
-
-            for data_type_ii, section_data_name in enumerate(ANIM_DATA_SECTION_NAMES):
-
-                if not len(self.action_to_anim_data[action][section_data_name]):
-                    continue
-
-                action_data = self.action_to_anim_data[action][section_data_name]
-                attr_name = section_data_name.lower()
-
-                data_section = self.m3.section_for_reference(stc_list[0], attr_name, pos=section_pos)
-                section_pos += 1
-
-                for ii, id_num in enumerate(action_data):
-                    data_head = data_section.content_add()
-
-                    ids_section.content_add(id_num)
-                    refs_section.content_add((data_type_ii << 16) + ii)
-
-                    if section_data_name == 'SDEV':
-                        data_head.flags = 1
-
-                    data_head.fend = to_m3_ms(action_data[id_num][0][-1])
-
-                    frames_section = self.m3.section_for_reference(data_head, 'frames', pos=section_pos)
-                    frames_section.content_iter_add([to_m3_ms(frame) for frame in action_data[id_num][0]])
-                    section_pos += 1
-
-                    values_section = self.m3.section_for_reference(data_head, 'keys', pos=section_pos)
-                    values_section.content_iter_add(action_data[id_num][1])
-                    section_pos += 1
-
-                if len(stc_list) > 1:
-                    for stc in stc_list[1:]:
-                        data_section.references.append(getattr(stc, attr_name))
-
-            if len(stc_list) > 1:
-                ids_section.references.append(getattr(stc, 'anim_ids'))
-                refs_section.references.append(getattr(stc, 'anim_refs'))
-
-            for stc in stc_list:
-                sts = sts_section.content_add()
-                ids_section.references.append(getattr(sts, 'anim_ids'))
-
-        # offseting the position the given amount assuming model unknown reference is unused
-        section_pos = self.m3.index(self.stg_last_indice_section) + 1
-        self.m3.insert(section_pos, sts_section)
-        section_pos += 1
-        for ids_section in ids_sections:
-            self.m3.insert(section_pos, ids_section)
-            section_pos += 1
+        self.finalize_anim_data(model)  # TODO EVNT export
 
         self.m3.resolve()
         self.m3.validate()
@@ -899,6 +865,87 @@ class Exporter:
 
         for stg_indices_section in stg_indices_sections:
             self.m3.append(stg_indices_section)
+
+    def finalize_anim_data(self, model):
+        sts_section = self.m3.section_for_reference(model, 'sts', pos=None)  # position later
+        ids_sections = []  # for collecting anim_id sections to position later
+
+        for action in self.action_to_stc:
+            self.action_to_anim_data[action]['SDMB'][BNDS_ANIM_ID] = [[], []]
+            bnds_data = self.action_to_anim_data[action]['SDMB'][BNDS_ANIM_ID]
+
+            frame_list = list(self.action_abs_pose_matrices[action].keys())
+            init_frame = frame_list.pop(0)
+
+            prev_min, prev_max = bounding_vectors_from_bones(self.bone_bounding_cos, self.action_abs_pose_matrices[action][init_frame])
+
+            bnds_data[0].append(init_frame)
+            bnds_data[1].append(to_m3_bnds((prev_min, prev_max)))
+
+            for frame in frame_list[0::2]:
+                bnds_min, bnds_max = bounding_vectors_from_bones(self.bone_bounding_cos, self.action_abs_pose_matrices[action][frame])
+                if (prev_min - bnds_min).length >= 0.025 or (prev_max - bnds_max).length >= 0.025:
+                    bnds_data[0].append(frame)
+                    bnds_data[1].append(to_m3_bnds((bnds_min, bnds_max)))
+                    prev_min, prev_max = bnds_min, bnds_max
+
+        for action, stc_list in self.action_to_stc.items():
+            section_pos = self.m3.index(self.stc_to_name_section[stc_list[-1]]) + 1
+
+            ids_section = self.m3.section_for_reference(stc_list[0], 'anim_ids', pos=None)  # position later
+            ids_sections.append(ids_section)
+            refs_section = self.m3.section_for_reference(stc_list[0], 'anim_refs', pos=section_pos)
+            section_pos += 1
+
+            for data_type_ii, section_data_name in enumerate(ANIM_DATA_SECTION_NAMES):
+
+                if not len(self.action_to_anim_data[action][section_data_name]):
+                    continue
+
+                action_data = self.action_to_anim_data[action][section_data_name]
+                attr_name = section_data_name.lower()
+
+                data_section = self.m3.section_for_reference(stc_list[0], attr_name, pos=section_pos)
+                section_pos += 1
+
+                for ii, id_num in enumerate(action_data):
+                    data_head = data_section.content_add()
+
+                    ids_section.content_add(id_num)
+                    refs_section.content_add((data_type_ii << 16) + ii)
+
+                    if section_data_name == 'SDEV':
+                        data_head.flags = 1
+
+                    data_head.fend = to_m3_ms(action_data[id_num][0][-1])
+
+                    frames_section = self.m3.section_for_reference(data_head, 'frames', pos=section_pos)
+                    frames_section.content_iter_add([to_m3_ms(frame) for frame in action_data[id_num][0]])
+                    section_pos += 1
+
+                    values_section = self.m3.section_for_reference(data_head, 'keys', pos=section_pos)
+                    values_section.content_iter_add(action_data[id_num][1])
+                    section_pos += 1
+
+                if len(stc_list) > 1:
+                    for stc in stc_list[1:]:
+                        data_section.references.append(getattr(stc, attr_name))
+
+            if len(stc_list) > 1:
+                ids_section.references.append(getattr(stc, 'anim_ids'))
+                refs_section.references.append(getattr(stc, 'anim_refs'))
+
+            for stc in stc_list:
+                sts = sts_section.content_add()
+                ids_section.references.append(getattr(sts, 'anim_ids'))
+
+        # offseting the position the given amount assuming model unknown reference is unused
+        section_pos = self.m3.index(self.stg_last_indice_section) + 1
+        self.m3.insert(section_pos, sts_section)
+        section_pos += 1
+        for ids_section in ids_sections:
+            self.m3.insert(section_pos, ids_section)
+            section_pos += 1
 
     def create_bones(self, model):
         if not self.bones:
@@ -984,6 +1031,8 @@ class Exporter:
             frames = list(frames_range)
 
             bone_to_pose_matrices = {bone: [] for bone in self.bones}
+            frame_to_bone_abs_pose_matrix = {frame: {} for frame in frames}
+            self.action_abs_pose_matrices[anim.action] = frame_to_bone_abs_pose_matrix
 
             for frame in frames:
                 self.scene.frame_set(frame)
@@ -1000,11 +1049,22 @@ class Exporter:
                 anim_rots = []
                 anim_scls = []
 
-                for pose_matrix in bone_to_pose_matrices[bone]:
-                    m3_pose = (left_correction_matrix @ pose_matrix @ right_correction_matrix).decompose()
+                frame_start = self.action_frame_range[anim.action][0]
+
+                for jj, pose_matrix in enumerate(bone_to_pose_matrices[bone]):
+                    m3_pose_matrix = left_correction_matrix @ pose_matrix @ right_correction_matrix
+                    m3_pose = m3_pose_matrix.decompose()
                     anim_locs.append(m3_pose[0])
                     anim_rots.append(m3_pose[1])
                     anim_scls.append(m3_pose[2])
+
+                    if bone.parent is not None:
+                        parent_abs_pose_matrix = frame_to_bone_abs_pose_matrix[jj + frame_start][bone.parent]
+                        abs_bone_matrix = parent_abs_pose_matrix @ self.bone_to_inv_iref[bone.parent].inverted() @ m3_pose_matrix
+                    else:
+                        abs_bone_matrix = m3_pose_matrix @ self.bone_to_inv_iref[bone].inverted()
+
+                    frame_to_bone_abs_pose_matrix[jj + frame_start][bone] = abs_bone_matrix
 
                 if vec_list_contains_not_only(anim_locs, m3_bone_defaults[m3_bone][0]):
                     keys, values = simplify_anim_data_with_interp(frames, anim_locs, vec_interp, vec_equal)
@@ -1038,11 +1098,8 @@ class Exporter:
             msec.bounding.header.interpolation = 1
             msec.bounding.header.flags = 0x6
             msec.bounding.header.id = BNDS_ANIM_ID
-            msec.bounding.default = io_m3.structures['BNDS'].get_version(0).instance()
-            msec.bounding.default.min = self.bounds_min
-            msec.bounding.default.max = self.bounds_max
-            msec.bounding.default.radius = self.bounds_radius
-            msec.bounding.null = io_m3.structures['BNDS'].get_version(0).instance()
+            msec.bounding.default = to_m3_bnds((self.bounds_min, self.bounds_max))
+            msec.bounding.null = to_m3_bnds()
 
             return
 
@@ -1217,46 +1274,19 @@ class Exporter:
                     batch.region_index = len(region_section) - 1
                     batch.material_reference_index = self.matref_handle_indices[matref.bl_handle]
 
-        bone_bounding_cos = {bone: [] for bone in self.bones}
+        self.bone_bounding_cos = {bone: [] for bone in self.bones}
 
-        for bone in bone_boundings:
-            arr = bone_boundings[bone]
-            bone_bounding_cos[bone].append(mathutils.Vector((arr[0], arr[1], arr[2])))
-            bone_bounding_cos[bone].append(mathutils.Vector((arr[0], arr[4], arr[2])))
-            bone_bounding_cos[bone].append(mathutils.Vector((arr[0], arr[4], arr[5])))
-            bone_bounding_cos[bone].append(mathutils.Vector((arr[0], arr[1], arr[5])))
-            bone_bounding_cos[bone].append(mathutils.Vector((arr[3], arr[4], arr[2])))
-            bone_bounding_cos[bone].append(mathutils.Vector((arr[3], arr[1], arr[2])))
-            bone_bounding_cos[bone].append(mathutils.Vector((arr[3], arr[4], arr[5])))
-            bone_bounding_cos[bone].append(mathutils.Vector((arr[3], arr[1], arr[5])))
+        for bone, arr in bone_boundings.items():
+            self.bone_bounding_cos[bone].append(mathutils.Vector((arr[0], arr[1], arr[2])))
+            self.bone_bounding_cos[bone].append(mathutils.Vector((arr[0], arr[4], arr[2])))
+            self.bone_bounding_cos[bone].append(mathutils.Vector((arr[0], arr[4], arr[5])))
+            self.bone_bounding_cos[bone].append(mathutils.Vector((arr[0], arr[1], arr[5])))
+            self.bone_bounding_cos[bone].append(mathutils.Vector((arr[3], arr[4], arr[2])))
+            self.bone_bounding_cos[bone].append(mathutils.Vector((arr[3], arr[1], arr[2])))
+            self.bone_bounding_cos[bone].append(mathutils.Vector((arr[3], arr[4], arr[5])))
+            self.bone_bounding_cos[bone].append(mathutils.Vector((arr[3], arr[1], arr[5])))
 
         self.region_section = region_section
-
-        def calc_boundings(bone_matrices):
-            calc_bound = [float('inf'), float('inf'), float('inf'), float('-inf'), float('-inf'), float('-inf')]
-
-            for bone in self.bones:
-                bone_mat = bone_matrices[bone]
-                bone_bound = [float('inf'), float('inf'), float('inf'), float('-inf'), float('-inf'), float('-inf')]
-                bounding_cos = bone_bounding_cos[bone]
-                for co in bounding_cos:
-                    mat_co = bone_mat @ co
-                    for ii in range(3):
-                        bone_bound[ii] = min(bone_bound[ii], mat_co[ii])
-                        bone_bound[ii + 3] = max(bone_bound[ii + 3], mat_co[ii])
-                for ii in range(3):
-                    if not math.isinf(bone_bound[0]):
-                        calc_bound[ii] = min(calc_bound[ii], bone_bound[ii])
-                        calc_bound[ii + 3] = max(calc_bound[ii + 3], bone_bound[ii + 3])
-
-            vec_min = mathutils.Vector(calc_bound[0:3])
-            vec_max = mathutils.Vector(calc_bound[3:6])
-
-            bnds = io_m3.structures['BNDS'].get_version(0).instance()
-            bnds.min = to_m3_vec3(vec_min)
-            bnds.max = to_m3_vec3(vec_max)
-            bnds.radius = (vec_max - vec_min).length / 2
-            return bnds
 
         msec_section = self.m3.section_for_reference(div, 'msec', version=1)
         msec = msec_section.content_add()
@@ -1265,8 +1295,8 @@ class Exporter:
         msec.bounding.header.interpolation = 1
         msec.bounding.header.flags = 0x6
         msec.bounding.header.id = BNDS_ANIM_ID
-        msec.bounding.default = calc_boundings(self.bone_to_abs_pose_matrix)
-        msec.bounding.null = io_m3.structures['BNDS'].get_version(0).instance()
+        msec.bounding.default = to_m3_bnds(bounding_vectors_from_bones(self.bone_bounding_cos, self.bone_to_abs_pose_matrix))
+        msec.bounding.null = to_m3_bnds()
 
         vertex_section.content_from_bytes(m3_vertex_desc.instances_to_bytes(m3_vertices))
         face_section.content_iter_add(m3_faces)
