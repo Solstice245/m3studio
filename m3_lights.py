@@ -46,7 +46,7 @@ def draw_props(light, layout):
     col.prop(light, 'intensity', text='Intensity')
     col.prop(light, 'color', text='Color')
     col = layout.column(align=True)
-    col.prop(light, 'unknownAt148', text='Unknown At 148')
+    col.prop(light, 'unknown148', text='Unknown At 148')
     col = layout.column_flow(columns=2)
     col.use_property_split = False
     col.prop(light, 'light_opaque', text='Lights Opaque')
@@ -54,6 +54,7 @@ def draw_props(light, layout):
     col.prop(light, 'team_color', text='Team Colored')
     if light.shape == 'SPOT':
         col.prop(light, 'shadows', text='Casts Shadows')
+    col.prop(light, 'ao', text='Ambient Occlusion')
 
 
 class Properties(shared.M3BoneUserPropertyGroup):
@@ -64,7 +65,8 @@ class Properties(shared.M3BoneUserPropertyGroup):
     attenuation_near: bpy.props.FloatProperty(name='M3 Light Attenuation Near', default=2)
     falloff: bpy.props.FloatProperty(name='M3 Light Falloff', default=3, update=shared.bone_shape_update_event)
     hotspot: bpy.props.FloatProperty(name='M3 Light Hotspot', default=2)
-    unknownAt148: bpy.props.FloatProperty(options=set())
+    unknown148: bpy.props.FloatProperty(options=set())
+    ao: bpy.props.BoolProperty(options=set(), description='NOTE: This feature is (probably) exclusive to campaign mode')
     light_opaque: bpy.props.BoolProperty(options=set(), default=True)
     light_transparent: bpy.props.BoolProperty(options=set())
     shadows: bpy.props.BoolProperty(options=set())

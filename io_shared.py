@@ -250,7 +250,7 @@ def io_light(processor):
     processor.enum('shape')
     processor.bit('flags', 'shadows')
     # processor.bit('flags', 'spec') # ! ignored
-    # processor.bit('flags', 'ao') # ! ignored
+    processor.bit('flags', 'ao')
     processor.bit('flags', 'light_opaque')
     processor.bit('flags', 'light_transparent')
     processor.bit('flags', 'team_color')
@@ -259,7 +259,7 @@ def io_light(processor):
     # processor.anim_vec3('spec_color') # ! ignored
     # processor.anim_float('spec_intensity') # ! ignored
     processor.anim_float('attenuation_far')
-    processor.float('unknownAt148')
+    processor.float('unknown148')
     processor.anim_float('attenuation_near')
     processor.anim_float('hotspot')
     processor.anim_float('falloff')

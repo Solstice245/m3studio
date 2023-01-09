@@ -1103,6 +1103,8 @@
                     <bit mask="0x400" name="inverseKinematics"/>
                     <bit mask="0x800" name="skinned"/>
                     <bit mask="0x2000" name="real"/>
+                    <bit mask="0x4000" name="unknown0x4000"/>
+                    <bit mask="0x8000" name="unknown0x8000"/>
                 </bits>
             </field>
             <field name="parent" type="int16" default_value="-1"/>
@@ -1110,7 +1112,7 @@
             <field name="location" type="Vector3AnimationReferenceV0"/>
             <field name="rotation" type="QuaternionAnimationReferenceV0"/>
             <field name="scale" type="Vector3AnimationReferenceV0"/>
-            <field name="ar1" type="UInt32AnimationReferenceV0"/>
+            <field name="batching" type="UInt32AnimationReferenceV0"/> <!-- BAT_ instances which point to bone are toggled by this property -->
         </fields>
     </structure>
 
@@ -1271,7 +1273,7 @@
             <field name="region_index" type="uint16"/>
             <field name="unknown1" type="uint32" default_value="0"/>
             <field name="material_reference_index" type="uint16"/>
-            <field name="unknown2" type="int16" default_value="-1"/>
+            <field name="bone" type="int16" default_value="-1"/> <!-- the bone's batching property functions as a toggle for the material -->
         </fields>
     </structure>
 

@@ -21,7 +21,6 @@ import bmesh
 import mathutils
 import math
 import os
-import time
 from . import io_m3
 from . import io_shared
 from . import shared
@@ -105,6 +104,13 @@ def to_m3_bnds(bl_vecs=None):
         m3_bnds.max = to_m3_vec3(bl_vecs[1])
         m3_bnds.radius = (bl_vecs[1] - bl_vecs[0]).length / 2
     return m3_bnds
+
+
+ANIM_VEC_DATA_SETTINGS = {
+    'SD2V': {'length': 2, 'convert': to_m3_vec2, 'attr': ['x', 'y']},
+    'SD3V': {'length': 3, 'convert': to_m3_vec3, 'attr': ['x', 'y', 'z']},
+    'SDCC': {'length': 4, 'convert': to_m3_color, 'attr': ['r', 'g', 'b', 'a']},
+}
 
 
 def get_fcurve_anim_frames(fcurve, interpolation='LINEAR'):
@@ -248,15 +254,49 @@ class M3OutputProcessor:
             values = [int(fcurve.evaluate(frame)) for frame in frames]
             self.exporter.action_to_anim_data[action][anim_data_tag][anim_ref.header.id] = (frames, values)
 
-    def collect_anim_data_vector(self, field, anim_ref, length, anim_data_tag):
+    def collect_anim_data_vector(self, field, anim_ref, anim_data_tag):
+        vec_data_settings = ANIM_VEC_DATA_SETTINGS[anim_data_tag]
         for action in self.exporter.action_to_anim_data:
-            fcurves = (action.fcurves.find(self.bl.path_from_id(field), index=ii) for ii in range(length))
-            frames = sorted(list(*set(zip([get_fcurve_anim_frames(fcurve) for fcurve in fcurves]))))
+            animated = False
+            fcurves = []
+            for ii in range(vec_data_settings['length']):
+                fcurve = action.fcurves.find(self.bl.path_from_id(field), index=ii)
 
-            if frames == [None]:
+                if fcurve:
+                    fcurves.append(fcurve)
+                    animated = True
+                else:
+                    fcurves.append(None)
+
+            if not animated:
                 continue
 
-            values = [[fcurve.evaluate(frame) for frame in frames] for fcurve in fcurves]
+            frames = []
+            for fcurve in fcurves:
+                if fcurve is None:
+                    continue
+
+                fcurve_frames = get_fcurve_anim_frames(fcurve)
+                if fcurve_frames is not None:
+                    frames.extend(fcurve_frames)
+
+            frames = sorted(list(set(frames)))
+
+            if not frames:
+                continue
+
+            values = []
+            for frame in frames:
+                vec_comps = []
+
+                for ii, fcurve in enumerate(fcurves):
+                    if fcurve is None:
+                        vec_comps.append(getattr(anim_ref.default, vec_data_settings['attr'][ii]))
+                    else:
+                        vec_comps.append(fcurve.evaluate(frame))
+
+                values.append(vec_data_settings['convert'](vec_comps))
+
             self.exporter.action_to_anim_data[action][anim_data_tag][anim_ref.header.id] = (frames, values)
 
     def boolean(self, field, since_version=None, till_version=None):
@@ -387,7 +427,7 @@ class M3OutputProcessor:
         anim_ref = self.exporter.init_anim_ref_vec2()
         anim_ref.default = to_m3_vec2(getattr(self.bl, field))
         setattr(self.m3, field, anim_ref)
-        self.collect_anim_data_vector(field, anim_ref, 2, 'SD2V')
+        self.collect_anim_data_vector(field, anim_ref, 'SD2V')
 
     def anim_vec3(self, field, since_version=None, till_version=None):
         if (since_version is not None) and (self.version < since_version):
@@ -397,7 +437,7 @@ class M3OutputProcessor:
         anim_ref = self.exporter.init_anim_ref_vec3()
         anim_ref.default = to_m3_vec3(getattr(self.bl, field))
         setattr(self.m3, field, anim_ref)
-        self.collect_anim_data_vector(field, anim_ref, 3, 'SD3V')
+        self.collect_anim_data_vector(field, anim_ref, 'SD3V')
 
     def anim_color(self, field, since_version=None, till_version=None):
         if (since_version is not None) and (self.version < since_version):
@@ -407,7 +447,7 @@ class M3OutputProcessor:
         anim_ref = self.exporter.init_anim_ref_color()
         anim_ref.default = to_m3_color(getattr(self.bl, field))
         setattr(self.m3, field, anim_ref)
-        self.collect_anim_data_vector(field, anim_ref, 4, 'SDCC')
+        self.collect_anim_data_vector(field, anim_ref, 'SDCC')
 
 
 class Exporter:
@@ -415,13 +455,13 @@ class Exporter:
     def m3_export(self, ob, filename):
         assert ob.type == 'ARMATURE'
 
-        bpy.context.view_layer.objects.active = ob
-        bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
-
         self.ob = ob
         self.view_layer = bpy.context.view_layer
         self.scene = bpy.context.scene
         self.m3 = io_m3.SectionList(init_header=True)
+
+        self.view_layer.objects.active = self.ob
+        bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
 
         self.anim_id_count = 0
         self.uv_count = 0
@@ -436,6 +476,7 @@ class Exporter:
         self.exported_anims = []
         self.action_frame_range = {}
         self.action_to_anim_data = {}
+        self.action_to_sdmb_user = {}
         self.action_abs_pose_matrices = {}
         self.action_to_stc = {}
 
@@ -664,14 +705,14 @@ class Exporter:
                 if len(me.loop_triangles) > 0:
                     self.export_regions.append(child)
 
-                    valid_mesh_material_refs = 0
-                    for mesh_matref in child.m3_mesh_material_refs:
-                        matref = shared.m3_pointer_get(ob.m3_materialrefs, mesh_matref.bl_handle)
+                    valid_mesh_batches = 0
+                    for mesh_batch in child.m3_mesh_batches:
+                        matref = shared.m3_pointer_get(ob.m3_materialrefs, mesh_batch.material)
                         if matref:
                             self.export_required_material_references.add(matref)
-                            valid_mesh_material_refs += 1
+                            valid_mesh_batches += 1
 
-                    assert valid_mesh_material_refs != 0
+                    assert valid_mesh_batches != 0
                     # TODO improve invalidation so that a list of all warnings and exceptions can be made
 
                     for vertex_group in child.vertex_groups:
@@ -746,7 +787,7 @@ class Exporter:
         # place armature in the default pose so that bones are in their default pose
         anim_set(None, self.scene, self.view_layer, self.ob)
         self.scene.frame_set(0)
-        self.view_layer.update()
+        # self.view_layer.update()
 
         self.depsgraph = bpy.context.evaluated_depsgraph_get()
 
@@ -762,7 +803,7 @@ class Exporter:
 
         self.create_sequences(model, export_sequences)
         self.create_bones(model)
-        self.create_division(model, self.export_regions, regn_version=ob.m3_mesh_version)
+        self.create_division(model, self.export_regions, regn_version=ob.m3_mesh_version)  # TODO create dummy region if 1 and only region has multiple batches
         self.create_attachment_points(model, export_attachment_points)  # TODO should exclude attachments with same bone as other attachments
         self.create_lights(model, export_lights)
         self.create_shadow_boxes(model, export_shadow_boxes)
@@ -839,6 +880,7 @@ class Exporter:
                     m3_stc.priority = anim.priority
 
                     self.action_to_anim_data[anim.action] = {section_name: {} for section_name in ANIM_DATA_SECTION_NAMES}
+                    self.action_to_sdmb_user[anim.action] = False
 
                     if not self.action_to_stc.get(anim.action):
                         self.action_to_stc[anim.action] = [m3_stc]
@@ -870,7 +912,11 @@ class Exporter:
         sts_section = self.m3.section_for_reference(model, 'sts', pos=None)  # position later
         ids_sections = []  # for collecting anim_id sections to position later
 
-        for action in self.action_to_stc:
+        # do not calculate bounds if action which has no bone animation data
+        for action, user in self.action_to_sdmb_user.items():
+            if not user:
+                continue
+
             self.action_to_anim_data[action]['SDMB'][BNDS_ANIM_ID] = [[], []]
             bnds_data = self.action_to_anim_data[action]['SDMB'][BNDS_ANIM_ID]
 
@@ -890,6 +936,15 @@ class Exporter:
                     prev_min, prev_max = bnds_min, bnds_max
 
         for action, stc_list in self.action_to_stc.items():
+
+            data_names_with_data = 0
+            for section_data_name in ANIM_DATA_SECTION_NAMES:
+                if len(self.action_to_anim_data[action][section_data_name]):
+                    data_names_with_data += 1
+
+            if not data_names_with_data:
+                continue
+
             section_pos = self.m3.index(self.stc_to_name_section[stc_list[-1]]) + 1
 
             ids_section = self.m3.section_for_reference(stc_list[0], 'anim_ids', pos=None)  # position later
@@ -955,21 +1010,22 @@ class Exporter:
         m3_bone_defaults = {}
 
         for bone in self.bones:
+            pose_bone = self.ob.pose.bones.get(bone.name)
             m3_bone = bone_section.content_add()
             m3_bone_name_section = self.m3.section_for_reference(m3_bone, 'name')
             m3_bone_name_section.content_from_bytes(bone.name)
             m3_bone.flags = 0
             m3_bone.bit_set('flags', 'real', True)
             m3_bone.bit_set('flags', 'skinned', bone in self.skinned_bones)
+            m3_bone.bit_set('flags', 'unknown0x4000', not pose_bone.m3_batching)
+            m3_bone.bit_set('flags', 'unknown0x8000', not pose_bone.m3_batching)
             m3_bone.location = self.init_anim_ref_vec3()
-            m3_bone.location.header.flags = 0x6
             m3_bone.rotation = self.init_anim_ref_quat()
-            m3_bone.rotation.header.flags = 0x6
             m3_bone.rotation.null.w = 1.0
             m3_bone.scale = self.init_anim_ref_vec3()
             m3_bone.scale.null = to_m3_vec3((1.0, 1.0, 1.0))
-            m3_bone.ar1 = self.init_anim_ref_uint32(1)
-            m3_bone.ar1.null = 1
+            m3_bone.batching = self.init_anim_ref_uint32(int(pose_bone.m3_batching))
+            m3_bone.batching.null = 1
 
             bone_matrix_local = bone.matrix_local.copy()
             rest_matrix = bone_matrix_local @ io_shared.rot_fix_matrix_transpose
@@ -1010,13 +1066,11 @@ class Exporter:
 
             self.bone_to_abs_pose_matrix[bone] = abs_pose_matrix @ rest_matrix
 
-        calculated_actions = []
+        calc_actions = []
         for anim in self.exported_anims:
-
-            if anim.action in calculated_actions:
+            if anim.action in calc_actions:
                 continue
-
-            calculated_actions.append(anim.action)
+            calc_actions.append(anim.action)
 
             # setting scene properties is extremely slow
             # maximum optimization would keep calls to anim_set and frame_set to an absolute minimum
@@ -1025,7 +1079,6 @@ class Exporter:
             # jog animation frame so that complicated pose calculations are completed before proceeding
             # TODO make an export option to step through a given number of previous frames to allow completion of timed calculations (ie wigglebone)
             self.scene.frame_set(0)
-            self.view_layer.update()
 
             frames_range = range(self.action_frame_range[anim.action][0], self.action_frame_range[anim.action][1] + 1)
             frames = list(frames_range)
@@ -1036,10 +1089,12 @@ class Exporter:
 
             for frame in frames:
                 self.scene.frame_set(frame)
-                self.view_layer.update()
+
                 for bone in self.bones:
                     pose_bone = self.ob.pose.bones[bone.name]
                     bone_to_pose_matrices[bone].append(self.ob.convert_space(pose_bone=pose_bone, matrix=pose_bone.matrix, from_space='POSE', to_space='LOCAL'))
+
+            bone_m3_pose_matrices = {bone: [] for bone in self.bones}
 
             for ii, bone in enumerate(self.bones):
                 m3_bone = bone_section[ii]
@@ -1051,36 +1106,56 @@ class Exporter:
 
                 frame_start = self.action_frame_range[anim.action][0]
 
-                for jj, pose_matrix in enumerate(bone_to_pose_matrices[bone]):
+                for pose_matrix in bone_to_pose_matrices[bone]:
                     m3_pose_matrix = left_correction_matrix @ pose_matrix @ right_correction_matrix
+                    # storing these and operating on them later if boundings are needed
+                    bone_m3_pose_matrices[bone].append(m3_pose_matrix)
                     m3_pose = m3_pose_matrix.decompose()
                     anim_locs.append(m3_pose[0])
                     anim_rots.append(m3_pose[1])
                     anim_scls.append(m3_pose[2])
 
-                    if bone.parent is not None:
-                        parent_abs_pose_matrix = frame_to_bone_abs_pose_matrix[jj + frame_start][bone.parent]
-                        abs_bone_matrix = parent_abs_pose_matrix @ self.bone_to_inv_iref[bone.parent].inverted() @ m3_pose_matrix
-                    else:
-                        abs_bone_matrix = m3_pose_matrix @ self.bone_to_inv_iref[bone].inverted()
-
-                    frame_to_bone_abs_pose_matrix[jj + frame_start][bone] = abs_bone_matrix
-
                 if vec_list_contains_not_only(anim_locs, m3_bone_defaults[m3_bone][0]):
                     keys, values = simplify_anim_data_with_interp(frames, anim_locs, vec_interp, vec_equal)
                     self.action_to_anim_data[anim.action]['SD3V'][m3_bone.location.header.id] = (keys, [to_m3_vec3(val) for val in values])
+                    self.action_to_sdmb_user[anim.action] = True
                     m3_bone.bit_set('flags', 'animated', True)
 
                 if quat_list_contains_not_only(anim_rots, m3_bone_defaults[m3_bone][1]):
                     quats_compatibility(anim_rots)
                     keys, values = simplify_anim_data_with_interp(frames, anim_rots, quat_interp, quat_equal)
                     self.action_to_anim_data[anim.action]['SD4Q'][m3_bone.rotation.header.id] = (keys, [to_m3_quat(val) for val in values])
+                    self.action_to_sdmb_user[anim.action] = True
                     m3_bone.bit_set('flags', 'animated', True)
 
                 if vec_list_contains_not_only(anim_scls, m3_bone_defaults[m3_bone][2]):
                     keys, values = simplify_anim_data_with_interp(frames, anim_scls, vec_interp, vec_equal)
                     self.action_to_anim_data[anim.action]['SD3V'][m3_bone.scale.header.id] = (keys, [to_m3_vec3(val) for val in values])
+                    self.action_to_sdmb_user[anim.action] = True
                     m3_bone.bit_set('flags', 'animated', True)
+
+                # export animated batching property
+                pose_bone = self.ob.pose.bones.get(bone.name)
+                m3_batching_fcurve = anim.action.fcurves.find(pose_bone.path_from_id('m3_batching'))
+                m3_batching_frames = get_fcurve_anim_frames(m3_batching_fcurve)
+
+                if m3_batching_frames:
+                    m3_bone.bit_set('flags', 'unknown0x4000', True)
+                    m3_bone.bit_set('flags', 'unknown0x8000', True)
+                    m3_batching_values = [int(m3_batching_fcurve.evaluate(frame)) for frame in m3_batching_frames]
+                    self.action_to_anim_data[anim.action]['SDFG'][m3_bone.batching.header.id] = (m3_batching_frames, m3_batching_values)
+
+            # calculate absolute pose matrices only if needed for boundings
+            if self.action_to_sdmb_user[anim.action]:
+                for bone in self.bones:
+                    for jj, m3_pose_matrix in enumerate(bone_m3_pose_matrices[bone]):
+                        if bone.parent is not None:
+                            parent_abs_pose_matrix = frame_to_bone_abs_pose_matrix[jj + frame_start][bone.parent]
+                            abs_bone_matrix = parent_abs_pose_matrix @ self.bone_to_inv_iref[bone.parent].inverted() @ m3_pose_matrix
+                        else:
+                            abs_bone_matrix = m3_pose_matrix @ self.bone_to_inv_iref[bone].inverted()
+
+                        frame_to_bone_abs_pose_matrix[jj + frame_start][bone] = abs_bone_matrix
 
     def create_division(self, model, mesh_objects, regn_version):
 
@@ -1093,14 +1168,7 @@ class Exporter:
 
             msec_section = self.m3.section_for_reference(div, 'msec', version=1)
             msec = msec_section.content_add()
-            msec.bounding = io_m3.structures['BNDSAnimationReference'].get_version(0).instance()
-            msec.bounding.header = io_m3.structures['AnimationReferenceHeader'].get_version(0).instance()
-            msec.bounding.header.interpolation = 1
-            msec.bounding.header.flags = 0x6
-            msec.bounding.header.id = BNDS_ANIM_ID
-            msec.bounding.default = to_m3_bnds((self.bounds_min, self.bounds_max))
-            msec.bounding.null = to_m3_bnds()
-
+            msec.bounding = self.init_anim_ref_bnds((self.bounds_min, self.bounds_max))
             return
 
         model.skin_bone_count = sorted([self.bone_name_indices[bone.name] for bone in self.skinned_bones])[-1] + 1
@@ -1265,14 +1333,13 @@ class Exporter:
             region.vertex_lookups_used = vertex_lookups_used
             region.root_bone = region_lookup[0]
 
-            matref_handles = []
-            ob_matref_handles = set([matref.bl_handle for matref in ob.m3_mesh_material_refs])
-            for matref in self.ob.m3_materialrefs:
-                if matref.bl_handle in ob_matref_handles and matref.mat_handle not in matref_handles:
-                    matref_handles.append(matref_handles)
-                    batch = batch_section.content_add()
-                    batch.region_index = len(region_section) - 1
-                    batch.material_reference_index = self.matref_handle_indices[matref.bl_handle]
+            for batch in ob.m3_mesh_batches:
+                m3_batch = batch_section.content_add()
+                m3_batch.region_index = len(region_section) - 1
+                m3_batch.material_reference_index = self.matref_handle_indices[batch.material]
+
+                bone = shared.m3_pointer_get(self.ob.data.bones, batch.bone)
+                m3_batch.bone = self.bone_name_indices[bone.name] if bone else -1
 
         self.bone_bounding_cos = {bone: [] for bone in self.bones}
 
@@ -1290,13 +1357,7 @@ class Exporter:
 
         msec_section = self.m3.section_for_reference(div, 'msec', version=1)
         msec = msec_section.content_add()
-        msec.bounding = io_m3.structures['BNDSAnimationReference'].get_version(0).instance()
-        msec.bounding.header = io_m3.structures['AnimationReferenceHeader'].get_version(0).instance()
-        msec.bounding.header.interpolation = 1
-        msec.bounding.header.flags = 0x6
-        msec.bounding.header.id = BNDS_ANIM_ID
-        msec.bounding.default = to_m3_bnds(bounding_vectors_from_bones(self.bone_bounding_cos, self.bone_to_abs_pose_matrix))
-        msec.bounding.null = to_m3_bnds()
+        msec.bounding = self.init_anim_ref_bnds(bounding_vectors_from_bones(self.bone_bounding_cos, self.bone_to_abs_pose_matrix))
 
         vertex_section.content_from_bytes(m3_vertex_desc.instances_to_bytes(m3_vertices))
         face_section.content_iter_add(m3_faces)
@@ -2056,11 +2117,11 @@ class Exporter:
             self.anim_id_count += 1
         return self.anim_id_count
 
-    def init_anim_header(self, interpolation, anim_id=None):
+    def init_anim_header(self, interpolation, flags=0, anim_id=None):
         anim_ref_header = io_m3.structures['AnimationReferenceHeader'].get_version(0).instance()
         anim_ref_header.interpolation = interpolation
-        anim_ref_header.flags = 0  # TODO make flags into param
-        anim_ref_header.id = anim_id if anim_id is not None else self.new_anim_id()
+        anim_ref_header.flags = flags
+        anim_ref_header.id = anim_id if anim_id else self.new_anim_id()
         return anim_ref_header
 
     def init_anim_ref_int16(self, val=0, interpolation=1):
@@ -2100,30 +2161,37 @@ class Exporter:
 
     def init_anim_ref_vec2(self, val=None, interpolation=1):
         anim_ref = io_m3.structures['Vector2AnimationReference'].get_version(0).instance()
-        anim_ref.header = self.init_anim_header(interpolation=interpolation)
+        anim_ref.header = self.init_anim_header(interpolation=interpolation, flags=0x6)
         anim_ref.default = to_m3_vec2(val)
         anim_ref.null = to_m3_vec2()
         return anim_ref
 
     def init_anim_ref_vec3(self, val=None, interpolation=1):
         anim_ref = io_m3.structures['Vector3AnimationReference'].get_version(0).instance()
-        anim_ref.header = self.init_anim_header(interpolation=interpolation)
+        anim_ref.header = self.init_anim_header(interpolation=interpolation, flags=0x6)
         anim_ref.default = to_m3_vec3(val)
         anim_ref.null = to_m3_vec3()
         return anim_ref
 
     def init_anim_ref_quat(self, val=None, interpolation=1):
         anim_ref = io_m3.structures['QuaternionAnimationReference'].get_version(0).instance()
-        anim_ref.header = self.init_anim_header(interpolation=interpolation)
+        anim_ref.header = self.init_anim_header(interpolation=interpolation, flags=0x6)
         anim_ref.default = to_m3_quat(val)
         anim_ref.null = to_m3_quat()
         return anim_ref
 
     def init_anim_ref_color(self, val=None, interpolation=1):
         anim_ref = io_m3.structures['ColorAnimationReference'].get_version(0).instance()
-        anim_ref.header = self.init_anim_header(interpolation=interpolation)
+        anim_ref.header = self.init_anim_header(interpolation=interpolation, flags=0x6)
         anim_ref.default = to_m3_color(val)
         anim_ref.null = to_m3_color()
+        return anim_ref
+
+    def init_anim_ref_bnds(self, val=None, interpolation=1):
+        anim_ref = io_m3.structures['BNDSAnimationReference'].get_version(0).instance()
+        anim_ref.header = self.init_anim_header(interpolation=interpolation, flags=0x6, anim_id=BNDS_ANIM_ID)
+        anim_ref.default = to_m3_bnds(val)
+        anim_ref.null = to_m3_bnds()
         return anim_ref
 
 

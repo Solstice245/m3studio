@@ -317,8 +317,8 @@ class M3CollectionOpDuplicate(M3CollectionOpBase):
 
 class M3HandleOpAdd(M3CollectionOpBase):
     bl_idname = 'm3.handle_add'
-    bl_label = 'Add Handle To List'
-    bl_description = 'Adds a new item to the li'
+    bl_label = 'Add Item To List'
+    bl_description = 'Adds a new item to the list'
 
     def invoke(self, context, event):
         m3_item_add(context.object.path_resolve(self.collection))
@@ -327,8 +327,8 @@ class M3HandleOpAdd(M3CollectionOpBase):
 
 class M3HandleOpRemove(M3CollectionOpBase):
     bl_idname = 'm3.handle_remove'
-    bl_label = 'Remove Handle From List'
-    bl_description = 'Removes the item from the collection'
+    bl_label = 'Remove Item From List'
+    bl_description = 'Removes the item from the list'
 
     index: bpy.props.IntProperty(options=set())
 
@@ -357,7 +357,8 @@ class M3PropPointerOpSearch(bpy.types.Operator):
 
     def invoke(self, context, event):
         if self.search_prop in ['data.bones', 'data.edit_bones']:
-            m3_bone_handles_verify(context.object)
+            search_ob = bpy.data.objects.get(self.search_ob_name) if self.search_ob_name else context.object
+            m3_bone_handles_verify(search_ob)
         context.window_manager.invoke_search_popup(self)
         return {'RUNNING_MODAL'}
 
@@ -385,6 +386,7 @@ class M3PropPointerOpUnlink(bpy.types.Operator):
     bl_idname = 'm3.proppointer_unlink'
     bl_label = 'Unlink'
     bl_description = 'Removes the pointer to this object from the m3 property'
+    bl_options = {'UNDO'}
 
     prop: bpy.props.StringProperty()
 
@@ -427,8 +429,6 @@ def draw_pointer_prop(layout, search_data, data, prop, bone_search=False, label=
         arm = search_data.id_data
         search_data = arm.edit_bones if arm.is_editmode else arm.bones
 
-    pointer_ob = m3_pointer_get(search_data, getattr(data, prop))
-
     main = layout.row(align=True)
     main.use_property_split = False
 
@@ -440,6 +440,9 @@ def draw_pointer_prop(layout, search_data, data, prop, bone_search=False, label=
         row = split.row(align=True)
     else:
         row = main
+
+    pointer_ob = m3_pointer_get(search_data, getattr(data, prop))
+
     op = row.operator('m3.proppointer_search', text='' if pointer_ob else 'Select', icon='VIEWZOOM')
     op.prop = data.path_from_id(prop)
     op.search_prop = search_data.path_from_id() if not arm else 'data.' + search_data.path_from_id()

@@ -273,17 +273,13 @@ def m3_key_collect_sd08(key_frames, key_values):
     pass  # undefined
 
 
-def m3_key_collect_sds3(key_frames, key_values):
-    pass  # undefined
-
-
 def m3_key_collect_bnds(key_frames, key_values):
     pass  # handle these specially
 
 
 m3_key_type_collection_method = [
     m3_key_collect_evnt, m3_key_collect_vec2, m3_key_collect_vec3, m3_key_collect_quat, m3_key_collect_colo, m3_key_collect_real, m3_key_collect_sd08,
-    m3_key_collect_real, m3_key_collect_real, m3_key_collect_sds3, m3_key_collect_real, m3_key_collect_real, m3_key_collect_bnds,
+    m3_key_collect_real, m3_key_collect_real, m3_key_collect_real, m3_key_collect_real, m3_key_collect_real, m3_key_collect_bnds,
 ]
 
 
@@ -387,6 +383,7 @@ class Importer:
                 fcurve = fcurves.new(path, index=index)
                 fcurve.keyframe_points.add(int(len(index_data) / 2))
                 fcurve.keyframe_points.foreach_set('co', index_data)
+                fcurve.keyframe_points.foreach_set('interpolation', [ref.header.interpolation] * int(len(index_data) / 2))
 
     def create_animations(self):
         ob = self.ob
@@ -557,6 +554,7 @@ class Importer:
                 bone_mat = mathutils.Matrix.LocRotScale(*bone_mat_comp)
                 pose_bone = self.ob.pose.bones.get(self.m3_get_bone_name(ii))
                 pose_bone.matrix_basis = left_mat @ bone_mat @ right_mat
+                pose_bone.m3_batching = bool(m3_bone.batching.default)
                 set_default_value(self.ob.m3_animations_default, pose_bone.path_from_id('location'), 0, pose_bone.location[0])
                 set_default_value(self.ob.m3_animations_default, pose_bone.path_from_id('location'), 1, pose_bone.location[1])
                 set_default_value(self.ob.m3_animations_default, pose_bone.path_from_id('location'), 2, pose_bone.location[2])
@@ -567,6 +565,7 @@ class Importer:
                 set_default_value(self.ob.m3_animations_default, pose_bone.path_from_id('scale'), 0, pose_bone.scale[0])
                 set_default_value(self.ob.m3_animations_default, pose_bone.path_from_id('scale'), 1, pose_bone.scale[1])
                 set_default_value(self.ob.m3_animations_default, pose_bone.path_from_id('scale'), 2, pose_bone.scale[2])
+                set_default_value(self.ob.m3_animations_default, pose_bone.path_from_id('m3_batching'), 0, pose_bone.m3_batching)
                 animate_pose_bone(m3_bone, pose_bone, left_mat, right_mat)
 
         def animate_pose_bone(m3_bone, pose_bone, left_mat, right_mat):
@@ -678,6 +677,19 @@ class Importer:
                         fcurves.remove(fcurve)
                     else:
                         fcurve.keyframe_points.foreach_set('co', index_data)
+
+            # import bone batching flag
+            id_data_render = self.stc_id_data.get(m3_bone.batching.header.id, {})
+
+            if id_data_render:
+                for action_name in id_data_render.keys():
+                    action = bpy.data.actions.get(action_name)
+                    key_frame_points_len = int(len(id_data_render[action_name]) / 2)
+
+                    fcurve = action.fcurves.new(pose_bone.path_from_id('m3_batching'), action_group=pose_bone.name)
+                    fcurve.keyframe_points.add(key_frame_points_len)
+                    fcurve.keyframe_points.foreach_set('co', id_data_render[action_name])
+                    fcurve.keyframe_points.foreach_set('interpolation', [m3_bone.batching.header.interpolation] * key_frame_points_len)
 
         m3_bone_rests = self.m3[self.m3_model.bone_rests]
 
@@ -801,9 +813,9 @@ class Importer:
         self.m3_bl_ref[self.m3_division.regions.index] = {}
 
         for region_ii, region in enumerate(self.m3[self.m3_division.regions]):
-            region_matref_indices = [batch.material_reference_index for batch in m3_batches if batch.region_index == region_ii]
+            region_batches = [batch for batch in m3_batches if batch.region_index == region_ii]
 
-            if not region_matref_indices:
+            if not region_batches:
                 continue
 
             regn_m3_verts = m3_vertices[region.first_vertex_index:region.first_vertex_index + region.vertex_count]
@@ -862,9 +874,14 @@ class Importer:
 
             vertex_groups_used = [False for g in mesh_ob.vertex_groups]
 
-            for matref_ii in region_matref_indices:
-                mesh_mat = shared.m3_item_add(mesh_ob.m3_mesh_material_refs)
-                mesh_mat.bl_handle = ob.m3_materialrefs[matref_ii].bl_handle
+            for batch in region_batches:
+                mesh_batch = shared.m3_item_add(mesh_ob.m3_mesh_batches)
+                mesh_batch.material = ob.m3_materialrefs[batch.material_reference_index].bl_handle
+
+                if batch.bone != -1:
+                    bone_name = self.m3_get_bone_name(batch.bone)
+                    bone = ob.data.bones[bone_name]
+                    mesh_batch.bone = bone.bl_handle if bone else ''
 
             bm = bmesh.new(use_operators=True)
 
@@ -879,6 +896,7 @@ class Importer:
             vert_to_m3_vert = {}
             for m3_vert in regn_m3_verts_new:
                 vert = bm.verts.new((m3_vert.pos.x, m3_vert.pos.y, m3_vert.pos.z))
+
                 vert_to_m3_vert[vert] = m3_vert
 
                 for ii in range(0, region.vertex_lookups_used):

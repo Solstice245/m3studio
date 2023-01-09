@@ -25,8 +25,13 @@ desc_mesh_export = 'The mesh will be exported to m3. If disabled, this object ma
 
 
 def register_props():
-    bpy.types.Object.m3_mesh_material_refs = bpy.props.CollectionProperty(type=shared.M3PropertyGroup)
+    bpy.types.Object.m3_mesh_batches = bpy.props.CollectionProperty(type=BatchPropertyGroup)
     bpy.types.Object.m3_mesh_export = bpy.props.BoolProperty(options=set(), default=True, description=desc_mesh_export)
+
+
+class BatchPropertyGroup(bpy.types.PropertyGroup):
+    material: bpy.props.StringProperty(options=set())
+    bone: bpy.props.StringProperty(options=set(), description='The selected bone\'s "Batching" property will determine whether the material is rendered')
 
 
 class SignOpSelect(bpy.types.Operator):
@@ -226,13 +231,16 @@ class Panel(bpy.types.Panel):
         if parent:
             box = layout.box()
             box.use_property_decorate = False
-            op = box.operator('m3.handle_add', text='Add Material Reference')
-            op.collection = ob.m3_mesh_material_refs.path_from_id()
-            for ii, matref in enumerate(ob.m3_mesh_material_refs):
-                row = box.row()
-                shared.draw_pointer_prop(row, parent.m3_materialrefs, matref, 'bl_handle', icon='MATERIAL')
+            op = box.operator('m3.handle_add', text='Add M3 Material Batch')
+            op.collection = ob.m3_mesh_batches.path_from_id()
+            for ii, batch in enumerate(ob.m3_mesh_batches):
+                sub_box = box.box()
+                row = sub_box.row()
+                col = row.column()
+                shared.draw_pointer_prop(col, parent.m3_materialrefs, batch, 'material', label='Material Reference', icon='MATERIAL')
+                shared.draw_pointer_prop(col, parent.data.bones, batch, 'bone', bone_search=True, label='Batching Toggle Bone', icon='BONE_DATA')
                 op = row.operator('m3.handle_remove', text='', icon='X')
-                op.collection = ob.m3_mesh_material_refs.path_from_id()
+                op.collection = ob.m3_mesh_batches.path_from_id()
                 op.index = ii
 
         if ob.mode == 'EDIT':
@@ -261,6 +269,7 @@ class Panel(bpy.types.Panel):
 
 
 classes = (
+    BatchPropertyGroup,
     Panel,
     SignOpSelect,
     SignOpSet,

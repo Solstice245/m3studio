@@ -16,7 +16,7 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-from timeit import timeit
+import time
 import bpy
 from bpy.app.handlers import persistent
 from . import shared
@@ -87,12 +87,13 @@ class M3ImportOperator(bpy.types.Operator):
     filepath: bpy.props.StringProperty(name='File Path', description='File path for import operation', maxlen=1023, default='')
 
     def invoke(self, context, event):
-        # io_m3_import.m3_import(self.filepath)
-        print(timeit(lambda: io_m3_import.m3_import(self.filepath), number=1))
+        start_time = time.time()
+        io_m3_import.m3_import(self.filepath)
+        print(time.time() - start_time)
         return {'RUNNING_MODAL'}
 
     def execute(self, context):
-        # print(timeit(lambda: m3_import.M3Import(self.filepath), number=1))
+        # io_m3_import.m3_import(self.filepath)
         return {'FINISHED'}
 
 
@@ -105,12 +106,13 @@ class M3ExportOperator(bpy.types.Operator):
     filepath: bpy.props.StringProperty(name='File Path', description='File path for import operation', maxlen=1023, default='')
 
     def invoke(self, context, event):
-        # io_m3_import.m3_import(self.filepath)
-        print(timeit(lambda: io_m3_export.m3_export(context.active_object, self.filepath), number=1))
+        start_time = time.time()
+        io_m3_export.m3_export(context.active_object, self.filepath)
+        print(time.time() - start_time)
         return {'RUNNING_MODAL'}
 
     def execute(self, context):
-        # print(timeit(lambda: m3_import.M3Import(self.filepath), number=1))
+        # io_m3_export.m3_export(context.active_object, self.filepath)
         return {'FINISHED'}
 
 
@@ -165,6 +167,8 @@ classes = (
 )
 
 
+# TODO the only remaining usage is the matref/mat name link, which doesn't even work properly due to a Blender bug.
+# TODO consider removing the entire msgbus system from the addon.
 @persistent
 def init_msgbus(*args):
     for arm in [ob for ob in bpy.context.scene.objects if ob.type == 'ARMATURE']:
