@@ -648,6 +648,7 @@ class Exporter:
                     if len(valid_volumes):
                         self.physics_cloth_constraint_handle_to_volumes[constraint_set.bl_handle] = valid_volumes
 
+        self.ik_bones = []
         self.export_ik_joint_bones = []
         for ik_joint in ob.m3_ikjoints:
             if not ik_joint.m3_export:
@@ -655,14 +656,17 @@ class Exporter:
             bone = shared.m3_pointer_get(ob.data.bones, ik_joint.bone)
             if bone:
                 bone_parent = bone
+
                 for ii in range(0, ik_joint.joint_length):
                     if bone_parent.parent:
                         bone_parent = bone_parent.parent if bone_parent else bone_parent
+                        self.ik_bones.append(bone_parent)
                     else:
                         pass  # TODO warning that joint length is invalid
                         # ???? warn if ik joints have any collisions?
                 if bone_parent != bone:
                     export_ik_joints.append(ik_joint)
+                    self.ik_bones.append(bone_parent)
                     self.export_ik_joint_bones.append([bone, bone_parent])
                     self.export_required_bones.add(bone)
                     self.export_required_bones.add(bone_parent)
@@ -1009,16 +1013,21 @@ class Exporter:
         bone_section = self.m3.section_for_reference(model, 'bones', version=1)
         m3_bone_defaults = {}
 
+        bone_to_m3_bone = {}
+
+        # TODO some bones matrices are not being calculated properly
         for bone in self.bones:
             pose_bone = self.ob.pose.bones.get(bone.name)
+            m3_bone_parent = bone_to_m3_bone.get(bone.parent, None) if bone.parent else None
             m3_bone = bone_section.content_add()
             m3_bone_name_section = self.m3.section_for_reference(m3_bone, 'name')
             m3_bone_name_section.content_from_bytes(bone.name)
             m3_bone.flags = 0
-            m3_bone.bit_set('flags', 'real', True)
+            m3_bone.bit_set('flags', 'real', True)  # is not always true for blizzard models
             m3_bone.bit_set('flags', 'skinned', bone in self.skinned_bones)
-            m3_bone.bit_set('flags', 'unknown0x4000', not pose_bone.m3_batching)
-            m3_bone.bit_set('flags', 'unknown0x8000', not pose_bone.m3_batching)
+            m3_bone.bit_set('flags', 'ik', bone in self.ik_bones)
+            m3_bone.bit_set('flags', 'batch1', m3_bone_parent.bit_get('flags', 'batch1') if m3_bone_parent else not pose_bone.m3_batching)
+            m3_bone.bit_set('flags', 'batch2', not pose_bone.m3_batching)
             m3_bone.location = self.init_anim_ref_vec3()
             m3_bone.rotation = self.init_anim_ref_quat()
             m3_bone.rotation.null.w = 1.0
@@ -1026,6 +1035,8 @@ class Exporter:
             m3_bone.scale.null = to_m3_vec3((1.0, 1.0, 1.0))
             m3_bone.batching = self.init_anim_ref_uint32(int(pose_bone.m3_batching))
             m3_bone.batching.null = 1
+
+            bone_to_m3_bone[bone] = m3_bone
 
             bone_matrix_local = bone.matrix_local.copy()
             rest_matrix = bone_matrix_local @ io_shared.rot_fix_matrix_transpose
@@ -1096,8 +1107,8 @@ class Exporter:
 
             bone_m3_pose_matrices = {bone: [] for bone in self.bones}
 
-            for ii, bone in enumerate(self.bones):
-                m3_bone = bone_section[ii]
+            for bone in self.bones:
+                m3_bone = bone_to_m3_bone[bone]
                 left_correction_matrix, right_correction_matrix = self.bone_to_correction_matrices[bone]
 
                 anim_locs = []
@@ -1140,8 +1151,8 @@ class Exporter:
                 m3_batching_frames = get_fcurve_anim_frames(m3_batching_fcurve)
 
                 if m3_batching_frames:
-                    m3_bone.bit_set('flags', 'unknown0x4000', True)
-                    m3_bone.bit_set('flags', 'unknown0x8000', True)
+                    m3_bone.bit_set('flags', 'batch1', True)
+                    m3_bone.bit_set('flags', 'batch2', True)
                     m3_batching_values = [int(m3_batching_fcurve.evaluate(frame)) for frame in m3_batching_frames]
                     self.action_to_anim_data[anim.action]['SDFG'][m3_bone.batching.header.id] = (m3_batching_frames, m3_batching_values)
 
@@ -1212,8 +1223,6 @@ class Exporter:
             bm.from_object(ob, self.depsgraph)
             bmesh.ops.triangulate(bm, faces=bm.faces)
 
-            export_rgba = False
-
             layer_deform = bm.verts.layers.deform.get('m3lookup')
             layer_color = bm.loops.layers.color.get('m3color')
             layer_alpha = bm.loops.layers.color.get('m3alpha')
@@ -1277,8 +1286,8 @@ class Exporter:
                         uv_layer = layers_uv[ii] if ii < len(layers_uv) else None
                         setattr(m3_vert, 'uv' + str(ii), to_m3_uv(loop[uv_layer].uv) if uv_layer else (0, 0))
 
-                    if export_rgba:
-                        m3_vert.col = to_bl_color((*loop[layer_color][0:3], (loop[layer_alpha][0] + loop[layer_alpha][1] + loop[layer_alpha][2]) / 3))
+                    if vertex_rgba:
+                        m3_vert.col = to_m3_color((*loop[layer_color][0:3], (loop[layer_alpha][0] + loop[layer_alpha][1] + loop[layer_alpha][2]) / 3))
 
                     m3_vert.normal = to_m3_vec3_f8(loop.vert.normal)
 
@@ -1294,7 +1303,7 @@ class Exporter:
                         m3_vert.weight0, m3_vert.weight1, m3_vert.weight2, m3_vert.weight3, m3_vert.normal.x, m3_vert.normal.y, m3_vert.normal.z,
                     ]
 
-                    if export_rgba:
+                    if vertex_rgba:
                         id_list.extend((m3_vert.col.r, m3_vert.col.g, m3_vert.col.b, m3_vert.col.a))
 
                     for ii in range(len(layers_uv)):

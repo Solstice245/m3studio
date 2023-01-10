@@ -248,13 +248,13 @@ def m3_key_collect_colo(key_frames, key_values):
 
     for key_frame, key_value in zip(key_frames, key_values):
         ll[0].append(key_frame)
-        ll[0].append(key_value.r)
+        ll[0].append(key_value.r / 255)
         ll[1].append(key_frame)
-        ll[1].append(key_value.g)
+        ll[1].append(key_value.g / 255)
         ll[2].append(key_frame)
-        ll[2].append(key_value.b)
+        ll[2].append(key_value.b / 255)
         ll[3].append(key_frame)
-        ll[3].append(key_value.a)
+        ll[3].append(key_value.a / 255)
 
     return ll
 
@@ -401,6 +401,9 @@ class Importer:
 
         m3_stcs = self.m3[self.m3_model.sequence_transformation_collections]
         for m3_anim in m3_stcs:
+            if not m3_anim.name.index:
+                continue
+
             anim_name = self.m3[m3_anim.name].content
             anim = shared.m3_item_add(ob.m3_animations, anim_name)
             anim['concurrent'] = m3_anim.concurrent
@@ -450,7 +453,7 @@ class Importer:
             for stc_index in m3_stc_indices:
                 anim_group = ob.m3_animation_groups[-len(m3_stgs) + ii]
                 anim_index = anim_group.animations.add()
-                anim_index.bl_handle = ob.m3_animations[-len(m3_stcs) + stc_index].bl_handle
+                anim_index.bl_handle = ob.m3_animations[stc_index].bl_handle
 
     def create_bones(self):
 
@@ -1359,7 +1362,7 @@ class Importer:
         m3_face_data = self.m3[m3_face_ref].content
         bl_tri_range = range(0, len(m3_face_data), 3)
 
-        me.vertices.add(len(bl_vert_data) / 3)
+        me.vertices.add(round(len(bl_vert_data) / 3))
         me.vertices.foreach_set('co', bl_vert_data)
         me.loops.add(len(m3_face_data))
         me.loops.foreach_set('vertex_index', m3_face_data)

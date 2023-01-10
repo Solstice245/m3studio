@@ -1098,13 +1098,13 @@
                     <bit mask="0x4" name="inheritRotation"/>
                     <bit mask="0x10" name="billboard1"/>
                     <bit mask="0x40" name="billboard2"/>
-                    <bit mask="0x100" name="twoDProjection"/>
+                    <bit mask="0x100" name="project_2d"/>
                     <bit mask="0x200" name="animated"/>
-                    <bit mask="0x400" name="inverseKinematics"/>
+                    <bit mask="0x400" name="ik"/>
                     <bit mask="0x800" name="skinned"/>
                     <bit mask="0x2000" name="real"/>
-                    <bit mask="0x4000" name="unknown0x4000"/>
-                    <bit mask="0x8000" name="unknown0x8000"/>
+                    <bit mask="0x4000" name="batch1"/> <!-- bones using their batch property use batch1 and batch2 -->
+                    <bit mask="0x8000" name="batch2"/> <!-- bones which are descended from bones with batch1 use batch2 -->
                 </bits>
             </field>
             <field name="parent" type="int16" default_value="-1"/>
