@@ -62,7 +62,7 @@ def draw_props(joint, layout):
         col.prop(joint, 'limit_angle', text='Limit Angle')
 
     if joint.joint_type == 'WELD':
-        col.prop(joint, 'angular_freq', text='Angular Frequency')
+        col.prop(joint, 'angular_frequency', text='Angular Frequency')
         col.prop(joint, 'damping_ratio', text='Damping Ratio')
     else:
         col.prop(joint, 'friction_bool', text='Friction')
@@ -86,7 +86,7 @@ class Properties(shared.M3PropertyGroup):
     friction_bool: bpy.props.BoolProperty(options=set())
     friction: bpy.props.FloatProperty(options=set(), default=0.2, min=0, max=1)
     damping_ratio: bpy.props.FloatProperty(options=set(), default=0.7, min=0, max=1)
-    angular_freq: bpy.props.FloatProperty(options=set(), min=0, default=5)
+    angular_frequency: bpy.props.FloatProperty(options=set(), min=0, default=5)
 
 
 class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):

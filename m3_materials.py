@@ -154,7 +154,7 @@ class CompositeSectionProperties(shared.M3PropertyGroup):
 class CompositeProperties(shared.M3PropertyGroup):
     sections: bpy.props.CollectionProperty(type=CompositeSectionProperties)
     sections_index: bpy.props.IntProperty(options=set(), default=-1)
-    unknown: bpy.props.IntProperty(options=set(), min=0)
+    unknown00: bpy.props.IntProperty(options=set(), min=0)
 
 
 class TerrainProperties(shared.M3PropertyGroup):
@@ -383,7 +383,7 @@ def draw_displacement_props(context, material, layout):
 
 
 def draw_composite_props(context, material, layout):
-    layout.prop(material, 'unknown', text='Unknown Number')
+    layout.prop(material, 'unknown00', text='Unknown Value')
     box = layout.box()
     box.use_property_split = False
     op = box.operator('m3.collection_add', text='Add Material Reference')

@@ -39,14 +39,15 @@ layer_versions = (
 
 def draw_props(layer, layout):
     version = int(layer.id_data.m3_materiallayers_version)
+    is_bitmap = layer.color_type == 'BITMAP'
 
     col = layout.column(align=True)
     col.prop(layer, 'color_type', text='Layer Type')
-    if layer.color_type == 'BITMAP':
+    if is_bitmap:
         col.prop(layer, 'color_bitmap', text='Image Path')
-        col.prop(layer, 'color_channels', text='Color Channels')
     else:
         col.prop(layer, 'color_value', text='Color Value')
+    col.prop(layer, 'color_channels', text='Color Channels')
     col = layout.column()
     col.prop(layer, 'color_add', text='Add')
     col.prop(layer, 'color_multiply', text='Multiply')
@@ -54,36 +55,40 @@ def draw_props(layer, layout):
     row = layout.row()
     row.prop(layer, 'color_invert', text='Invert')
     row.prop(layer, 'color_clamp', text='Clamp')
-    layout.separator()
-    layout.prop(layer, 'uv_source', text='UV Source')
-    layout.prop(layer, 'uv_source_related', text='Unknown Related')
-    row = layout.row(heading='Wrap')
-    row.prop(layer, 'uv_wrap_x', text='X')
-    row.prop(layer, 'uv_wrap_y', text='Y')
-    layout.prop(layer, 'uv_offset', text='Offset')
-    layout.prop(layer, 'uv_angle', text='Angle')
-    layout.prop(layer, 'uv_tiling', text='Tiling')
-    col = layout.column()
-    sub = col.column(align=True)
-    sub.prop(layer, 'uv_flipbook_rows', text='Flipbook Rows')
-    sub.prop(layer, 'uv_flipbook_cols', text='Columns')
-    col.prop(layer, 'uv_flipbook_frame', text='Frame')
 
-    if version >= 24 and 'TRIPLANAR' in layer.uv_source:
-        layout.prop(layer, 'uv_triplanar_offset', text='Triplanar Offset')
-        layout.prop(layer, 'uv_triplanar_scale', text='Triplanar Scale')
-
-    layout.separator()
-
-    if version >= 24:
-        col = layout.column(align=True)
-        col.prop(layer, 'noise_amplitude', text='Volume Noise Amplitude')
-        col.prop(layer, 'noise_frequency', text='Frequency')
+    if is_bitmap:
         layout.separator()
+        layout.prop(layer, 'uv_source', text='UV Source')
+        layout.prop(layer, 'uv_source_related', text='Unknown Related')
+        row = layout.row(heading='Wrap')
+        row.prop(layer, 'uv_wrap_x', text='X')
+        row.prop(layer, 'uv_wrap_y', text='Y')
+        layout.prop(layer, 'uv_offset', text='Offset')
+        layout.prop(layer, 'uv_angle', text='Angle')
+        layout.prop(layer, 'uv_tiling', text='Tiling')
+        col = layout.column()
+        sub = col.column(align=True)
+        sub.prop(layer, 'uv_flipbook_rows', text='Flipbook Rows')
+        sub.prop(layer, 'uv_flipbook_cols', text='Columns')
+        col.prop(layer, 'uv_flipbook_frame', text='Frame')
+
+        if version >= 24 and 'TRIPLANAR' in layer.uv_source:
+            layout.prop(layer, 'uv_triplanar_offset', text='Triplanar Offset')
+            layout.prop(layer, 'uv_triplanar_scale', text='Triplanar Scale')
+
+    layout.separator()
+
+    if is_bitmap:
+        if version >= 24:
+            col = layout.column(align=True)
+            col.prop(layer, 'noise_amplitude', text='Volume Noise Amplitude')
+            col.prop(layer, 'noise_frequency', text='Frequency')
+            layout.separator()
 
     layout.prop(layer, 'fresnel_type', text='Fresel Mode')
     if layer.fresnel_type != 'DISABLED':
         layout.prop(layer, 'fresnel_exponent', text='Exponent')
+        layout.prop(layer, 'fresnel_reflection', text='Reflection')
         col = layout.column(align=True)
         col.prop(layer, 'fresnel_min', text='Minimum')
         col.prop(layer, 'fresnel_max', text='Maximum')
@@ -97,17 +102,19 @@ def draw_props(layer, layout):
         row = layout.row()
         row.prop(layer, 'fresnel_local_transform', text='Local Transform')
         row.prop(layer, 'fresnel_do_not_mirror', text='Don\'t Mirror')
-    layout.separator()
-    layout.prop(layer, 'video_channel', text='RTT Channel')
-    if layer.video_channel != 'NONE':
-        layout.prop(layer, 'video_mode', text='Video Mode')
-        col = layout.column()
-        col.prop(layer, 'video_frame_rate', text='Frame Rate')
-        col.prop(layer, 'video_frame_start', text='Frame Start')
-        col.prop(layer, 'video_frame_end', text='Frame End')
-        layout.prop(layer, 'video_sync_timing', text='Sync Timing')
-        layout.prop(layer, 'video_play', text='Play')
-        layout.prop(layer, 'video_restart', text='Restart')
+
+    if is_bitmap:
+        layout.separator()
+        layout.prop(layer, 'video_channel', text='RTT Channel')
+        if layer.video_channel != 'NONE':
+            layout.prop(layer, 'video_mode', text='Video Mode')
+            col = layout.column()
+            col.prop(layer, 'video_frame_rate', text='Frame Rate')
+            col.prop(layer, 'video_frame_start', text='Frame Start')
+            col.prop(layer, 'video_frame_end', text='Frame End')
+            layout.prop(layer, 'video_sync_timing', text='Sync Timing')
+            layout.prop(layer, 'video_play', text='Play')
+            layout.prop(layer, 'video_restart', text='Restart')
 
 
 class Properties(shared.M3PropertyGroup):
@@ -136,15 +143,16 @@ class Properties(shared.M3PropertyGroup):
     fresnel_exponent: bpy.props.FloatProperty(default=4.0, options=set())
     fresnel_min: bpy.props.FloatProperty(default=0.0, options=set())
     fresnel_max: bpy.props.FloatProperty(default=1.0, options=set())
+    fresnel_reflection: bpy.props.FloatProperty(default=1.0, options=set())
     fresnel_mask: bpy.props.FloatVectorProperty(size=3, options=set(), subtype='XYZ', min=0, max=1)
     fresnel_yaw: bpy.props.FloatProperty(subtype='ANGLE', options=set())
     fresnel_pitch: bpy.props.FloatProperty(subtype='ANGLE', options=set())
     fresnel_local_transform: bpy.props.BoolProperty(options=set(), default=False)
     fresnel_do_not_mirror: bpy.props.BoolProperty(options=set(), default=False)
     video_channel: bpy.props.EnumProperty(items=bl_enum.rtt_channel, options=set())
-    video_frame_rate: bpy.props.IntProperty(options=set(), default=24)
-    video_frame_start: bpy.props.IntProperty(options=set(), default=0)
-    video_frame_end: bpy.props.IntProperty(options=set(), default=-1)
+    video_frame_rate: bpy.props.IntProperty(options=set(), min=0, default=24)
+    video_frame_start: bpy.props.IntProperty(options=set(), min=0, default=0)
+    video_frame_end: bpy.props.IntProperty(options=set(), min=-1, default=-1)
     video_mode: bpy.props.EnumProperty(items=bl_enum.video_mode, options=set())
     video_sync_timing: bpy.props.BoolProperty(options=set())
     video_play: bpy.props.BoolProperty(name='Video Play', options={'ANIMATABLE'}, default=True)

@@ -1419,7 +1419,7 @@ class Importer:
             bl_loop_start_ordered.append(num)
             num += len(loop_indices[ii])
 
-        me.vertices.add(len(bl_vert_data) / 3)
+        me.vertices.add(round(len(bl_vert_data) / 3))
         me.vertices.foreach_set('co', bl_vert_data)
         me.loops.add(len(bl_loop_data))
         me.loops.foreach_set('vertex_index', [ii for ii in bl_loop_data_ordered])

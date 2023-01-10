@@ -98,13 +98,13 @@ def io_material_standard(processor):
 
 
 def io_material_displacement(processor):
-    # processor.integer('unknown0') # ! unknown
+    # processor.integer('unknown00') # ! unknown
     processor.anim_float('strength_factor')
     processor.integer('priority')
 
 
 def io_material_composite(processor):
-    processor.integer('unknown')
+    processor.integer('unknown00')
 
 
 def io_material_composite_section(processor):
@@ -116,17 +116,17 @@ def io_material_terrain(processor):
 
 
 def io_material_volume(processor):
-    processor.integer('unknown0')
-    processor.integer('unknown1')
-    processor.anim_float('volume_density')
-    processor.integer('unknown2')
-    processor.integer('unknown3')
+    processor.integer('unknown00')
+    processor.integer('unknown01')
+    processor.anim_float('density')
+    processor.integer('unknown02')
+    processor.integer('unknown03')
 
 
 def io_material_volume_noise(processor):
     processor.integer('unknown50762f82')
     processor.bit('flags', 'draw_after_transparency')
-    processor.anim_float('volume_density')
+    processor.anim_float('density')
     processor.anim_float('near_plane')
     processor.anim_float('falloff')
     processor.anim_vec3('scroll_rate')
@@ -235,7 +235,7 @@ def io_material_layer(processor):
     processor.float('fresnel_exponent')
     processor.float('fresnel_min')
     # processor.float('fresnel_max_offset') # ! handled manually
-    # processor.float('unknown15') # ! unknown
+    processor.float('fresnel_reflection')
     # processor.integer('unknown16', since_version=25) # ! unknown
     # processor.integer('unknown17', since_version=25) # ! unknown
     # processor.float('fresnel_inverted_mask_x', since_version=25) # ! handled manually
@@ -589,11 +589,11 @@ def io_rigid_body(processor):
 
 def io_rigid_body_joint(processor):
     processor.enum('joint_type')
-    processor.integer('limit_bool')
+    processor.boolean('limit_bool')
     processor.float('limit_min')
     processor.float('limit_max')
     processor.float('limit_angle')
-    processor.integer('friction_bool')
+    processor.boolean('friction_bool')
     processor.float('friction')
     processor.float('damping_ratio')
     processor.float('angular_frequency')

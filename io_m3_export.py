@@ -552,24 +552,6 @@ class Exporter:
             if ribbon.vertex_alpha:
                 self.vertex_alpha_mats.add(ribbon.material)
 
-        def recurse_composite_materials(matref, force_color, force_alpha):
-            if force_color:
-                self.vertex_color_mats.add(matref.bl_handle)
-            if force_alpha:
-                self.vertex_alpha_mats.add(matref.bl_handle)
-            if matref.mat_type == 'm3_materials_composite':
-                mat = shared.m3_pointer_get(getattr(self.ob, matref.mat_type), matref.mat_handle)
-                for section in mat.sections:
-                    section_matref = shared.m3_pointer_get(ob.m3_materialrefs, section.matref)
-                    if section_matref:
-                        self.export_required_material_references.add(section_matref)
-                        recurse_composite_materials(section_matref, matref.bl_handle in self.vertex_color_mats, matref.bl_handle in self.vertex_alpha_mats)
-
-        for matref in self.export_required_material_references.copy():
-            recurse_composite_materials(matref, matref.bl_handle in self.vertex_color_mats, matref.bl_handle in self.vertex_alpha_mats)
-
-        # TODO exclude materials if their type cannot be exported in model version
-
         for copy in ob.m3_particle_copies:
             if not copy.m3_export:
                 continue
@@ -727,6 +709,24 @@ class Exporter:
 
                     self.uv_count = max(self.uv_count, len(me.uv_layers))
 
+        def recurse_composite_materials(matref, force_color, force_alpha):
+            if force_color:
+                self.vertex_color_mats.add(matref.bl_handle)
+            if force_alpha:
+                self.vertex_alpha_mats.add(matref.bl_handle)
+            if matref.mat_type == 'm3_materials_composite':
+                mat = shared.m3_pointer_get(getattr(self.ob, matref.mat_type), matref.mat_handle)
+                for section in mat.sections:
+                    section_matref = shared.m3_pointer_get(ob.m3_materialrefs, section.matref)
+                    if section_matref:
+                        self.export_required_material_references.add(section_matref)
+                        recurse_composite_materials(section_matref, matref.bl_handle in self.vertex_color_mats, matref.bl_handle in self.vertex_alpha_mats)
+
+        for matref in self.export_required_material_references.copy():
+            recurse_composite_materials(matref, matref.bl_handle in self.vertex_color_mats, matref.bl_handle in self.vertex_alpha_mats)
+
+        # TODO exclude materials if their type cannot be exported in model version
+
         def export_bone_bool(bone):
             result = False
             if not bone.m3_export_cull:
@@ -818,8 +818,8 @@ class Exporter:
         self.create_projections(model, export_projections)
         self.create_forces(model, export_forces)
         self.create_warps(model, export_warps)
-        self.create_physics_bodies(model, export_physics_bodies, body_version=ob.m3_rigidbodies_version, shape_version=ob.m3_physicsshapes_version)
-        self.create_physics_joints(model, export_physics_joints)
+        self.create_physics_bodies(model, export_physics_bodies, body_version=ob.m3_rigidbodies_version, shape_version=1)  # TODO research PHSHV2/3
+        self.create_physics_joints(model, export_physics_bodies, export_physics_joints)
         self.create_physics_cloths(model, export_physics_cloths, version=ob.m3_cloths_version)  # TODO simulation rigging
         self.create_ik_joints(model, export_ik_joints)
         self.create_turrets(model, export_turrets, part_version=ob.m3_turrets_part_version)
@@ -916,30 +916,42 @@ class Exporter:
         sts_section = self.m3.section_for_reference(model, 'sts', pos=None)  # position later
         ids_sections = []  # for collecting anim_id sections to position later
 
-        # do not calculate bounds if action which has no bone animation data
-        for action, user in self.action_to_sdmb_user.items():
-            if not user:
-                continue
-
-            self.action_to_anim_data[action]['SDMB'][BNDS_ANIM_ID] = [[], []]
-            bnds_data = self.action_to_anim_data[action]['SDMB'][BNDS_ANIM_ID]
-
-            frame_list = list(self.action_abs_pose_matrices[action].keys())
-            init_frame = frame_list.pop(0)
-
-            prev_min, prev_max = bounding_vectors_from_bones(self.bone_bounding_cos, self.action_abs_pose_matrices[action][init_frame])
-
-            bnds_data[0].append(init_frame)
-            bnds_data[1].append(to_m3_bnds((prev_min, prev_max)))
-
-            for frame in frame_list[0::2]:
-                bnds_min, bnds_max = bounding_vectors_from_bones(self.bone_bounding_cos, self.action_abs_pose_matrices[action][frame])
-                if (prev_min - bnds_min).length >= 0.025 or (prev_max - bnds_max).length >= 0.025:
-                    bnds_data[0].append(frame)
-                    bnds_data[1].append(to_m3_bnds((bnds_min, bnds_max)))
-                    prev_min, prev_max = bnds_min, bnds_max
-
         for action, stc_list in self.action_to_stc.items():
+
+            evnt_name_sections = []
+            for stc in stc_list:
+                anim_index = self.ob.m3_animations.find(self.stc_to_name_section[stc].content)
+                if anim_index is not None:
+                    anim = self.ob.m3_animations[anim_index]
+                if anim and anim.simulate:
+                    self.action_to_anim_data[action]['SDEV'][EVNT_ANIM_ID] = [[], []]
+                    evnt_data = self.action_to_anim_data[action]['SDEV'][EVNT_ANIM_ID]
+                    evnt_data[0].append(anim.simulate_frame)
+                    evnt = io_m3.structures['EVNT'].get_version(0).instance()
+                    evnt_name_section = self.m3.section_for_reference(evnt, 'name', pos=None)
+                    evnt_name_section.content_from_bytes('Evt_Simulate')
+                    evnt_data[1].append(evnt)
+                    evnt_name_sections.append(evnt_name_section)
+
+            # do not calculate bounds if action which has no bone animation data
+            if self.action_to_sdmb_user.get(action):
+                self.action_to_anim_data[action]['SDMB'][BNDS_ANIM_ID] = [[], []]
+                bnds_data = self.action_to_anim_data[action]['SDMB'][BNDS_ANIM_ID]
+
+                frame_list = list(self.action_abs_pose_matrices[action].keys())
+                init_frame = frame_list.pop(0)
+
+                prev_min, prev_max = bounding_vectors_from_bones(self.bone_bounding_cos, self.action_abs_pose_matrices[action][init_frame])
+
+                bnds_data[0].append(init_frame)
+                bnds_data[1].append(to_m3_bnds((prev_min, prev_max)))
+
+                for frame in frame_list[0::2]:
+                    bnds_min, bnds_max = bounding_vectors_from_bones(self.bone_bounding_cos, self.action_abs_pose_matrices[action][frame])
+                    if (prev_min - bnds_min).length >= 0.025 or (prev_max - bnds_max).length >= 0.025:
+                        bnds_data[0].append(frame)
+                        bnds_data[1].append(to_m3_bnds((bnds_min, bnds_max)))
+                        prev_min, prev_max = bnds_min, bnds_max
 
             data_names_with_data = 0
             for section_data_name in ANIM_DATA_SECTION_NAMES:
@@ -973,9 +985,6 @@ class Exporter:
                     ids_section.content_add(id_num)
                     refs_section.content_add((data_type_ii << 16) + ii)
 
-                    if section_data_name == 'SDEV':
-                        data_head.flags = 1
-
                     data_head.fend = to_m3_ms(action_data[id_num][0][-1])
 
                     frames_section = self.m3.section_for_reference(data_head, 'frames', pos=section_pos)
@@ -985,6 +994,13 @@ class Exporter:
                     values_section = self.m3.section_for_reference(data_head, 'keys', pos=section_pos)
                     values_section.content_iter_add(action_data[id_num][1])
                     section_pos += 1
+
+                    if section_data_name == 'SDEV':
+                        data_head.flags = 1
+
+                        for evnt_name_section in evnt_name_sections:
+                            self.m3.insert(section_pos, evnt_name_section)
+                            section_pos += 1
 
                 if len(stc_list) > 1:
                     for stc in stc_list[1:]:
@@ -1495,12 +1511,20 @@ class Exporter:
                         else:
                             layer_section = self.m3.section_for_reference(m3_mat, layer_name_full, version=self.ob.m3_materiallayers_version)
                             m3_layer = layer_section.content_add()
-                            m3_layer_bitmap_section = self.m3.section_for_reference(m3_layer, 'color_bitmap')
-                            m3_layer_bitmap_section.content_from_bytes(layer.color_bitmap)
+
+                            if layer.color_type == 'BITMAP':
+                                m3_layer_bitmap_section = self.m3.section_for_reference(m3_layer, 'color_bitmap')
+                                m3_layer_bitmap_section.content_from_bytes(layer.color_bitmap)
+                            else:
+                                m3_layer.bit_set('flags', 'color', True)
+
                             processor = M3OutputProcessor(self, layer, m3_layer)
                             io_shared.io_material_layer(processor)
 
                             m3_layer.fresnel_max_offset = layer.fresnel_max - layer.fresnel_min
+
+                            if int(self.ob.m3_materiallayers_version) >= 24:
+                                m3_layer.uv_triplanar_scale.null = to_m3_vec3((1.0, 1.0, 1.0))
 
                             if int(self.ob.m3_materiallayers_version) >= 25:
                                 m3_layer.fresnel_inverted_mask_x = 1 - layer.fresnel_mask[0]
@@ -1509,7 +1533,7 @@ class Exporter:
 
                             m3_layer.bit_set('flags', 'particle_uv_flipbook', m3_layer.uv_source == 6)
 
-                            if layer.color_bitmap.endswith('.ogg'):
+                            if layer.color_bitmap.endswith('.ogg') and layer.color_type == 'BITMAP':
                                 m3_layer.bit_set('flags', 'video', True)
                             else:
                                 m3_layer.video_frame_rate = 0
@@ -1541,7 +1565,7 @@ class Exporter:
                     m3_mat.bit_set('additional_flags', 'depth_blend_falloff', mat.depth_blend_falloff != 0.0)
                     m3_mat.bit_set('additional_flags', 'vertex_color', mat.vertex_color or matref.bl_handle in self.vertex_color_mats)
                     m3_mat.bit_set('additional_flags', 'vertex_alpha', mat.vertex_alpha or matref.bl_handle in self.vertex_alpha_mats)
-                    m3_mat.bit_set('additional_flags', 'unknown0x200', True)
+                    m3_mat.parallax_height.header.flags = 0x8
                 elif type_ii == 3:  # composite material
                     valid_sections = []
                     for section in mat.sections:
@@ -1594,6 +1618,9 @@ class Exporter:
             processor = M3OutputProcessor(self, system, m3_system)
             io_shared.io_particle_system(processor)
 
+            m3_system.emit_count.header.interpolation = 0
+            m3_system.emit_count.header.flags = 0x6
+
             trail_particle = shared.m3_pointer_get(systems, system.trail_particle)
             if trail_particle:
                 m3_system.trail_particle = systems.index(trail_particle)
@@ -1625,6 +1652,7 @@ class Exporter:
                 m3_system.unknownb35ad6e1 = self.init_anim_ref_vec2()
                 m3_system.unknown686e5943 = self.init_anim_ref_vec3()
                 m3_system.unknown18a90564 = self.init_anim_ref_vec2((1.0, 1.0))
+                m3_system.unknown18a90564.null = to_m3_vec2((1.0, 1.0))
 
                 if m3_system.emit_shape == 7:
                     region_indices = set()
@@ -1792,15 +1820,15 @@ class Exporter:
                     shape_section = self.shape_to_section[physics_body.physics_shape]
                     shape_section.references.append(m3_physics_body.physics_shape)
 
-    def create_physics_joints(self, model, physics_joints):
+    def create_physics_joints(self, model, physics_bodies, physics_joints):
         if not physics_joints:
             return
 
         physics_joint_section = self.m3.section_for_reference(model, 'physics_joints', version=0)
 
         for physics_joint in physics_joints:
-            body1 = shared.m3_pointer_get(export_physics_bodies, physics_joint.rigidbody1)
-            body2 = shared.m3_pointer_get(export_physics_bodies, physics_joint.rigidbody2)
+            body1 = shared.m3_pointer_get(physics_bodies, physics_joint.rigidbody1)
+            body2 = shared.m3_pointer_get(physics_bodies, physics_joint.rigidbody2)
             bone1 = shared.m3_pointer_get(self.ob.data.bones, body1.bone)
             bone2 = shared.m3_pointer_get(self.ob.data.bones, body2.bone)
             m3_physics_joint = physics_joint_section.content_add()
