@@ -30,13 +30,6 @@ def update_collection_index(self, context):
     bl = ob.m3_attachmentpoints[ob.m3_attachmentpoints_index]
     shared.select_bones_handles(ob, [bl.bone])
     shared.auto_update_bone_display_mode(ob, 'ATT_')
-    force_mesh_update = False
-    for vol in bl.volumes:
-        if vol.shape == 'MESH':
-            force_mesh_update = True
-            break
-    if force_mesh_update:
-        ob.m3_options.bone_display_mode = 'ATT_'
 
 
 def draw_props(point, layout):

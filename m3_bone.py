@@ -47,6 +47,11 @@ class ToolPanel(bpy.types.Panel):
 
     def draw(self, context):
         self.layout.prop(context.active_pose_bone, 'm3_batching', text='Batching')
+        col = self.layout.column(align=True)
+        col.label(text='Bind Scale:')
+        col.prop(context.active_bone, 'm3_bind_scale', index=0, text='X')
+        col.prop(context.active_bone, 'm3_bind_scale', index=1, text='Y')
+        col.prop(context.active_bone, 'm3_bind_scale', index=2, text='Z')
 
 
 class Panel(bpy.types.Panel):

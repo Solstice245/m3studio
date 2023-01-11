@@ -40,7 +40,7 @@ def draw_props(warp, layout):
 
 
 class Properties(shared.M3BoneUserPropertyGroup):
-    radius: bpy.props.FloatProperty(name='M3 Warp Radius', min=0, default=1, update=shared.bone_shape_update_event)
+    radius: bpy.props.FloatProperty(name='M3 Warp Radius', min=0, default=1)
     strength: bpy.props.FloatProperty(name='M3 Warp Strength', min=0, default=1)
 
 

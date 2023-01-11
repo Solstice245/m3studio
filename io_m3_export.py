@@ -844,7 +844,6 @@ class Exporter:
         self.m3.to_index()
 
         # place armature back into the pose that it was before
-        # TODO account for the possibility that the user turned off the auto action selection
         anim_set(self.ob.m3_animations[self.ob.m3_animations_index], self.scene, self.view_layer, self.ob)
         self.ob.animation_data.action = self.init_action
         self.scene.frame_current = self.init_frame
@@ -1208,6 +1207,10 @@ class Exporter:
                             abs_bone_matrix = m3_pose_matrix
 
                         frame_to_bone_abs_pose_matrix[jj + frame_start][bone] = abs_bone_matrix @ self.bone_to_iref[bone]
+
+        # place armature in the default pose again so that default values of m3 properties are accessed properly
+        anim_set(None, self.scene, self.view_layer, self.ob)
+        self.scene.frame_set(0)
 
     def create_division(self, model, mesh_objects, regn_version):
         model.bit_set('flags', 'has_mesh', len(mesh_objects) > 0)
@@ -1855,6 +1858,25 @@ class Exporter:
             body2 = shared.m3_pointer_get(physics_bodies, physics_joint.rigidbody2)
             bone1 = shared.m3_pointer_get(self.ob.data.bones, body1.bone)
             bone2 = shared.m3_pointer_get(self.ob.data.bones, body2.bone)
+
+            bone1_head = bone1.matrix_local.translation
+            bone1_vec = bone1.matrix_local.col[1].to_3d().normalized()
+
+            bone2_head = bone2.matrix_local.translation
+            bone2_vec = bone2.matrix_local.col[1].to_3d().normalized()
+
+            print(bone1_vec - bone2_vec)
+            print(bone2_vec - bone1_vec)
+            print()
+
+            # # this produces the
+            # print(bone2.matrix_local - bone1.matrix_local)
+            # print(bone1.matrix_local - bone2.matrix_local)
+            # print(bone2.matrix_local - bone1.matrix_local)
+            # print(bone1.matrix_local @ bone2.matrix_local)
+            # print(bone2.matrix_local @ bone1.matrix_local)
+            # print()
+
             m3_physics_joint = physics_joint_section.content_add()
             m3_physics_joint.bone1 = self.bone_name_indices[bone1.name]
             m3_physics_joint.bone2 = self.bone_name_indices[bone2.name]

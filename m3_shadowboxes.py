@@ -41,9 +41,9 @@ def draw_props(shbx, layout):
 
 
 class Properties(shared.M3BoneUserPropertyGroup):
-    length: bpy.props.FloatProperty(name='M3 Shadow Box Length', min=0, default=1, update=shared.bone_shape_update_event)
-    width: bpy.props.FloatProperty(name='M3 Shadow Box Width', min=0, default=1, update=shared.bone_shape_update_event)
-    height: bpy.props.FloatProperty(name='M3 Shadow Box Height', min=0, default=1, update=shared.bone_shape_update_event)
+    length: bpy.props.FloatProperty(name='M3 Shadow Box Length', min=0, default=1)
+    width: bpy.props.FloatProperty(name='M3 Shadow Box Width', min=0, default=1)
+    height: bpy.props.FloatProperty(name='M3 Shadow Box Height', min=0, default=1)
 
 
 class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):

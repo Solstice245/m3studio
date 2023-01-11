@@ -51,11 +51,6 @@ def update_collection_index(self, context):
     shared.auto_update_bone_display_mode(ob, 'PAR_')
 
 
-def bone_shape_update_event(self, context):
-    # shared.set_bone_shape(context.object, shared.m3_pointer_get(context.object, 'data.bones', self.bone, True))
-    pass
-
-
 def draw_copy_props(copy, layout):
     shared.draw_pointer_prop(layout, copy.id_data.data.bones, copy, 'bone', bone_search=True, label='Bone', icon='BONE_DATA')
     col = layout.column(align=True)
@@ -310,12 +305,12 @@ class SystemProperties(shared.M3BoneUserPropertyGroup):
     lod_cut: bpy.props.EnumProperty(options=set(), items=bl_enum.lod)
     lod_reduce: bpy.props.EnumProperty(options=set(), items=bl_enum.lod)
     emit_type: bpy.props.EnumProperty(options=set(), items=bl_enum.particle_emit_type)
-    emit_shape: bpy.props.EnumProperty(options=set(), items=bl_enum.particle_shape, update=bone_shape_update_event)
-    emit_shape_cutout: bpy.props.BoolProperty(options=set(), update=bone_shape_update_event)
-    emit_shape_size: bpy.props.FloatVectorProperty(name='Emission Area Size', subtype='XYZ', size=3, default=(1, 1, 1), update=bone_shape_update_event)
-    emit_shape_size_cutout: bpy.props.FloatVectorProperty(name='Emission Area Size Cutout', subtype='XYZ', size=3, update=bone_shape_update_event)
-    emit_shape_radius: bpy.props.FloatProperty(name='Emission Radius', default=1, update=bone_shape_update_event)
-    emit_shape_radius_cutout: bpy.props.FloatProperty(name='Emission Radius Cutout', update=bone_shape_update_event)
+    emit_shape: bpy.props.EnumProperty(options=set(), items=bl_enum.particle_shape)
+    emit_shape_cutout: bpy.props.BoolProperty(options=set())
+    emit_shape_size: bpy.props.FloatVectorProperty(name='Emission Area Size', subtype='XYZ', size=3, default=(1, 1, 1))
+    emit_shape_size_cutout: bpy.props.FloatVectorProperty(name='Emission Area Size Cutout', subtype='XYZ', size=3)
+    emit_shape_radius: bpy.props.FloatProperty(name='Emission Radius', default=1)
+    emit_shape_radius_cutout: bpy.props.FloatProperty(name='Emission Radius Cutout')
     emit_shape_meshes: bpy.props.CollectionProperty(type=shared.M3ObjectPropertyGroup)
     emit_shape_spline: bpy.props.CollectionProperty(type=SplinePointProperties)
     emit_max: bpy.props.IntProperty(options=set(), min=0)

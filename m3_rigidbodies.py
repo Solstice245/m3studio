@@ -49,14 +49,6 @@ def update_collection_index(self, context):
     bl = ob.m3_rigidbodies[ob.m3_rigidbodies_index]
     shared.select_bones_handles(ob, [bl.bone])
     shared.auto_update_bone_display_mode(ob, 'PHRB')
-    force_mesh_update = False
-    shape = shared.m3_pointer_get(ob.m3_physicsshapes, bl.physics_shape)
-    for vol in shape.volumes:
-        if vol.shape == 'MESH':
-            force_mesh_update = True
-            break
-    if force_mesh_update:
-        ob.m3_options.bone_display_mode = 'PHRB'
 
 
 def draw_volume_props(shape, layout):

@@ -54,12 +54,11 @@ def draw_props(force, layout):
 
 
 class Properties(shared.M3BoneUserPropertyGroup):
-    force_type: bpy.props.EnumProperty(options=set(), items=bl_enum.force_type, update=shared.bone_shape_update_event)
-    shape: bpy.props.EnumProperty(options=set(), items=bl_enum.force_shape, update=shared.bone_shape_update_event)
-    size: bpy.props.FloatVectorProperty(name='M3 Force Size', subtype='XYZ', size=3, min=0.001, default=tuple(3 * [1]), update=shared.bone_shape_update_event)
-    width: bpy.props.FloatProperty(name='M3 Force Width', min=0.001, default=1.0, update=shared.bone_shape_update_event)
-    height: bpy.props.FloatProperty(name='M3 Force Height', min=0.001, default=1.0, update=shared.bone_shape_update_event)
-    length: bpy.props.FloatProperty(name='M3 Force Length', min=0.001, default=1.0, update=shared.bone_shape_update_event)
+    force_type: bpy.props.EnumProperty(options=set(), items=bl_enum.force_type)
+    shape: bpy.props.EnumProperty(options=set(), items=bl_enum.force_shape)
+    width: bpy.props.FloatProperty(name='M3 Force Width', min=0.001, default=1.0)
+    height: bpy.props.FloatProperty(name='M3 Force Height', min=0.001, default=1.0)
+    length: bpy.props.FloatProperty(name='M3 Force Length', min=0.001, default=1.0)
     channels: bpy.props.BoolVectorProperty(options=set(), subtype='LAYER', size=32)
     strength: bpy.props.FloatProperty(name='M3 Force Strength', default=1)
     falloff: bpy.props.BoolProperty(options=set())

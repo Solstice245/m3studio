@@ -96,11 +96,11 @@ def draw_cloth_props(cloth, layout):
 
 
 class ConstraintProperties(shared.M3BoneUserPropertyGroup):
-    location: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, update=shared.bone_shape_update_event)
-    rotation: bpy.props.FloatVectorProperty(options=set(), subtype='EULER', unit='ROTATION', size=3, update=shared.bone_shape_update_event)
-    scale: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0, default=(1, 1, 1), update=shared.bone_shape_update_event)
-    radius: bpy.props.FloatProperty(options=set(), min=0, default=1, update=shared.bone_shape_update_event)
-    height: bpy.props.FloatProperty(options=set(), min=0, default=1, update=shared.bone_shape_update_event)
+    location: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3)
+    rotation: bpy.props.FloatVectorProperty(options=set(), subtype='EULER', unit='ROTATION', size=3)
+    scale: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0, default=(1, 1, 1))
+    radius: bpy.props.FloatProperty(options=set(), min=0, default=1)
+    height: bpy.props.FloatProperty(options=set(), min=0, default=1)
 
 
 class ConstraintSetProperties(shared.M3PropertyGroup):

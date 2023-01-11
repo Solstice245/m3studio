@@ -463,7 +463,7 @@ class Importer:
                 length = 0.1
                 for child_index in child_indices:
                     head_to_child_head = bone_heads[child_index] - head
-                    if head_to_child_head.length >= 0.0001 and abs(head_to_child_head.angle(vector)) < 0.1:
+                    if head_to_child_head.length >= 0.01 and abs(head_to_child_head.angle(vector)) < 0.1:
                         length = head_to_child_head.length
                 tail_offset = length * vector
                 tail = head + tail_offset

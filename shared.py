@@ -179,10 +179,6 @@ def m3_msgbus_sub(self, sub, key, owner):
     )
 
 
-def bone_shape_update_event(self, context):
-    set_bone_shape(self.id_data, m3_pointer_get(self.id_data.data.bones, self.bone))
-
-
 def select_bones_handles(ob, bl_handles):
     if ob.m3_options.auto_update_bone_selection and bl_handles:
         for bone in ob.data.bones:
@@ -192,6 +188,7 @@ def select_bones_handles(ob, bl_handles):
                 ob.data.bones.active = bone
 
 
+# TODO rework this system
 def auto_update_bone_display_mode(ob, setting):
     if ob.m3_options.auto_update_bone_display_mode:
         if ob.m3_options.bone_display_mode != setting:
@@ -220,12 +217,12 @@ class M3BoneUserPropertyGroup(M3PropertyGroup):
 
 
 class M3VolumePropertyGroup(M3BoneUserPropertyGroup):
-    shape: bpy.props.EnumProperty(options=set(), items=bl_enum.volume_shape, update=bone_shape_update_event)
-    size: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0, default=(1, 1, 1), update=bone_shape_update_event)
-    location: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, update=bone_shape_update_event)
-    rotation: bpy.props.FloatVectorProperty(options=set(), subtype='EULER', unit='ROTATION', size=3, update=bone_shape_update_event)
-    scale: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0, default=(1, 1, 1), update=bone_shape_update_event)
-    mesh_object: bpy.props.PointerProperty(type=bpy.types.Object, update=bone_shape_update_event)
+    shape: bpy.props.EnumProperty(options=set(), items=bl_enum.volume_shape)
+    size: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0, default=(1, 1, 1))
+    location: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3)
+    rotation: bpy.props.FloatVectorProperty(options=set(), subtype='EULER', unit='ROTATION', size=3)
+    scale: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0, default=(1, 1, 1))
+    mesh_object: bpy.props.PointerProperty(type=bpy.types.Object)
 
 
 class M3ObjectPropertyGroup(M3PropertyGroup):
@@ -565,215 +562,57 @@ def swap_m3_action_keyframes(ob, prefix, old, new):
             fcurve.data_path = fcurve.data_path.replace(path_new, path)
 
 
-def set_bone_shape(ob, bone):
-    if not bone:
-        return
-
-    data = [[], [], []]
-    pose_bone = ob.pose.bones.get(bone.name)
-
-    def add_mesh_data(prop, new_data, matrix_data=None):
-
-        if not prop or bone.bl_handle != prop:
-            return
-
-        if str(type(new_data)) == '<class \'bpy_types.Mesh\'>':
-            me = new_data
-            new_data = [[vert.co for vert in me.vertices], [], [poly.vertices for poly in me.polygons]]
-            for ii, v in enumerate(new_data[0]):
-                angle = math.pi / 2
-                x = (math.cos(angle) * v[0]) - (math.sin(angle) * v[1])
-                y = (math.sin(angle) * v[0]) + (math.cos(angle) * v[1])
-                z = v[2]
-                new_data[0][ii] = (x, y, z)
-
-        if matrix_data:
-            # loc, rot, scl = matrix
-            mat_translation = mathutils.Matrix.LocRotScale(matrix_data[0], None, None)
-            mat_rotation = mathutils.Matrix.LocRotScale(matrix_data[0], matrix_data[1], None)
-            mat_scale = mathutils.Matrix.LocRotScale(None, None, matrix_data[2])
-            for ii, v in enumerate(new_data[0]):
-                new_data[0][ii] = mat_translation @ mat_rotation @ mat_scale @ mathutils.Vector(v)
-
-                # x, y, z = v
-
-                # x *= scl[0]
-                # y *= scl[1]
-                # z *= scl[2]
-
-                # y0 = (math.cos(rot[0]) * y) - (math.sin(rot[0]) * z)
-                # z0 = (math.sin(rot[0]) * y) + (math.cos(rot[0]) * z)
-                # x, y, z = x, y0, z0
-                # x0 = (math.sin(rot[1]) * z) + (math.cos(rot[1]) * x)
-                # z0 = (math.cos(rot[1]) * z) - (math.sin(rot[1]) * x)
-                # x, y, z = x0, y, z0
-                # x0 = (math.cos(rot[2]) * x) - (math.sin(rot[2]) * y)
-                # y0 = (math.sin(rot[2]) * x) + (math.cos(rot[2]) * y)
-                # x, y, z = x0, y0, z
-
-                # x += loc[0]
-                # y += loc[1]
-                # z += loc[2]
-
-                # new_data[0][ii] = (x, y, z)
-
-        for ii in new_data[2]:
-            new_face = []
-            for jj in ii:
-                new_face.append(jj + len(data[0]))
-            data[2].append(new_face)
-
-        for ii in new_data[1]:
-            data[1].append((ii[0] + len(data[0]), ii[1] + len(data[0])))
-
-        data[0] += new_data[0]
-
-    if ob.m3_options.bone_display_mode == 'ATT_':
-        for point in ob.m3_attachmentpoints:
-            add_mesh_data(point.bone, bl_mesh_gen.point())
-            for volume in point.volumes:
-                mat = (volume.location, volume.rotation, volume.scale)
-                if volume.shape == 'CUBE':
-                    add_mesh_data(volume.bone, bl_mesh_gen.cube(volume.size), mat)
-                elif volume.shape == 'SPHERE':
-                    add_mesh_data(volume.bone, bl_mesh_gen.sphere(volume.size[0]), mat)
-                elif volume.shape == 'CAPSULE':
-                    add_mesh_data(volume.bone, bl_mesh_gen.capsule(volume.size, volume.size[0]), mat)
-                elif volume.shape == 'MESH' and volume.mesh_object:
-                    add_mesh_data(volume.bone, volume.mesh_object.data, mat)
-
-    elif ob.m3_options.bone_display_mode == 'CAM_':
-        for camera in ob.m3_cameras:
-            add_mesh_data(camera.bone, bl_mesh_gen.camera(0.5, camera.focal_depth))
-
-    elif ob.m3_options.bone_display_mode == 'LITE':
-        for light in ob.m3_lights:
-            if light.shape == 'POINT':
-                add_mesh_data(light.bone, bl_mesh_gen.sphere(light.attenuation_far))
-            elif light.shape == 'SPOT':
-                add_mesh_data(light.bone, bl_mesh_gen.cone(light.falloff, light.attenuation_far))
-
-    elif ob.m3_options.bone_display_mode == 'FOR_':
-        for force in ob.m3_forces:
-            if force.shape == 'CUBE':
-                add_mesh_data(force.bone, bl_mesh_gen.cube((force.width, force.length, force.height)))
-            elif force.shape == 'CYLINDER':
-                add_mesh_data(force.bone, bl_mesh_gen.cylinder((force.width, force.length, force.height), force.width))
-            elif force.shape == 'SPHERE':
-                add_mesh_data(force.bone, bl_mesh_gen.sphere(force.width))
-            elif force.shape == 'HEMISPHERE':
-                add_mesh_data(force.bone, bl_mesh_gen.hemisphere(force.width))
-            elif force.shape == 'CONEDOME':
-                add_mesh_data(force.bone, bl_mesh_gen.cone_dome(force.height, force.width))
-
-    elif ob.m3_options.bone_display_mode == 'PAR_':
-        for particle in ob.m3_particle_systems:
-
-            mesh_gen_data = [[], [], []]
-            mesh_gen_data_cutout = [[], [], []]
-
-            if particle.emit_shape == 'POINT':
-                mesh_gen_data = bl_mesh_gen.point()
-            elif particle.emit_shape == 'PLANE':
-                mesh_gen_data = bl_mesh_gen.plane(particle.emit_shape_size)
-                if particle.emit_shape_cutout:
-                    mesh_gen_data_cutout = bl_mesh_gen.plane(particle.emit_shape_size_cutout)
-            elif particle.emit_shape == 'CUBE':
-                mesh_gen_data = bl_mesh_gen.cube(particle.emit_shape_size)
-                if particle.emit_shape_cutout:
-                    mesh_gen_data_cutout = bl_mesh_gen.cube(particle.emit_shape_size_cutout)
-            elif particle.emit_shape == 'DISC':
-                mesh_gen_data = bl_mesh_gen.disc(particle.emit_shape_radius)
-                if particle.emit_shape_cutout:
-                    mesh_gen_data_cutout = bl_mesh_gen.disc(particle.emit_shape_radius_cutout)
-            elif particle.emit_shape == 'CYLINDER':
-                mesh_gen_data = bl_mesh_gen.cylinder(particle.emit_shape_size, particle.emit_shape_radius)
-                if particle.emit_shape_cutout:
-                    mesh_gen_data_cutout = bl_mesh_gen.cylinder(particle.emit_shape_size_cutout, particle.emit_shape_radius_cutout)
-            elif particle.emit_shape == 'SPHERE':
-                mesh_gen_data = bl_mesh_gen.sphere(particle.emit_shape_radius)
-                if particle.emit_shape_cutout:
-                    mesh_gen_data_cutout = bl_mesh_gen.sphere(particle.emit_shape_radius_cutout)
-
-            add_mesh_data(particle.bone, mesh_gen_data)
-            if particle.emit_shape_cutout:
-                add_mesh_data(particle.bone, mesh_gen_data_cutout)
-
-            # for copy in particle.copies:
-            #     add_mesh_data(copy.bone, mesh_gen_data)
-            #     if particle.emit_shape_cutout:
-            #         add_mesh_data(copy.bone, mesh_gen_data_cutout)
-
-    elif ob.m3_options.bone_display_mode == 'PHRB':
-        for rigid_body in ob.m3_rigidbodies:
-            shape = m3_pointer_get(ob.m3_physicsshapes, rigid_body.physics_shape)
-            for volume in shape.volumes:
-                mat = (volume.location, volume.rotation, volume.scale)
-                if volume.shape == 'CUBE':
-                    add_mesh_data(rigid_body.bone, bl_mesh_gen.cube(volume.size), mat)
-                elif volume.shape == 'SPHERE':
-                    add_mesh_data(rigid_body.bone, bl_mesh_gen.sphere(volume.size[0]), mat)
-                elif volume.shape == 'CAPSULE':
-                    add_mesh_data(rigid_body.bone, bl_mesh_gen.capsule(volume.size, volume.size[0]), mat)
-                elif volume.shape == 'CYLINDER':
-                    add_mesh_data(rigid_body.bone, bl_mesh_gen.cylinder(volume.size, volume.size[0]), mat)
-                elif (volume.shape == 'CONVEXHULL' or volume.shape == 'MESH') and volume.mesh_object:
-                    add_mesh_data(rigid_body.bone, volume.mesh_object.data, mat)
-
-    elif ob.m3_options.bone_display_mode == 'FTHT':
-        mat = (ob.m3_hittest_tight.location, ob.m3_hittest_tight.rotation, ob.m3_hittest_tight.scale)
-        if ob.m3_hittest_tight.shape == 'CUBE':
-            add_mesh_data(ob.m3_hittest_tight.bone, bl_mesh_gen.cube(ob.m3_hittest_tight.size), mat)
-        elif ob.m3_hittest_tight.shape == 'SPHERE':
-            add_mesh_data(ob.m3_hittest_tight.bone, bl_mesh_gen.sphere(ob.m3_hittest_tight.size[0]), mat)
-        elif ob.m3_hittest_tight.shape == 'CYLINDER':
-            add_mesh_data(ob.m3_hittest_tight.bone, bl_mesh_gen.cylinder(hittest.size, hittest.size[0]), mat)
-        elif ob.m3_hittest_tight.shape == 'MESH' and ob.m3_hittest_tight.mesh_object:
-            add_mesh_data(ob.m3_hittest_tight.bone, ob.m3_hittest_tight.mesh_object.data, mat)
-        for hittest in ob.m3_hittests:
-            mat = (hittest.location, hittest.rotation, hittest.scale)
-            if hittest.shape == 'CUBE':
-                add_mesh_data(hittest.bone, bl_mesh_gen.cube(hittest.size), mat)
-            elif hittest.shape == 'SPHERE':
-                add_mesh_data(hittest.bone, bl_mesh_gen.sphere(hittest.size[0]), mat)
-            elif hittest.shape == 'CYLINDER':
-                add_mesh_data(hittest.bone, bl_mesh_gen.cylinder(hittest.size, hittest.size[0]), mat)
-            elif hittest.shape == 'MESH' and hittest.mesh_object:
-                add_mesh_data(hittest.bone, hittest.mesh_object.data, mat)
-
-    elif ob.m3_options.bone_display_mode == 'PHCL':
-        for cloth in ob.m3_cloths:
-            pass  # TODO
-            # for constraint in cloth.constraints:
-            #     add_mesh_data(constraint.bone, bl_mesh_gen.capsule((0, constraint.height, 0), constraint.radius))
-
-    elif ob.m3_options.bone_display_mode == 'WRP_':
-        for warp in ob.m3_warps:
-            add_mesh_data(warp.bone, bl_mesh_gen.sphere(warp.radius))
-
-    if pose_bone:
-
-        # TODO consider changing this system to use bmesh api
-
-        if data[0]:
-            bone_mesh_name = bone.name + '_display_helper'
-            if bone_mesh_name in bpy.data.meshes:
-                bpy.data.meshes.remove(bpy.data.meshes[bone_mesh_name])
-
-            me = bpy.data.meshes.new(bone_mesh_name)
-            helper_ob = pose_bone.custom_shape or bpy.data.objects.new(bone_mesh_name, me)
-            helper_ob.data = me
-
-            me.from_pydata(data[0], data[1], data[2])
-            me.update(calc_edges=True)
-
-            pose_bone.custom_shape = helper_ob
-            pose_bone.use_custom_shape_bone_size = False
-            bone.show_wire = True
-        else:
-            pose_bone.custom_shape = None
-            pose_bone.use_custom_shape_bone_size = True
-            bone.show_wire = False
+# TODO port all of this to bl_graphics_draw
+# def set_bone_shape(ob, bone):
+#
+#     if ob.m3_options.bone_display_mode == 'PAR_':
+#         for particle in ob.m3_particle_systems:
+#
+#             mesh_gen_data = [[], [], []]
+#             mesh_gen_data_cutout = [[], [], []]
+#
+#             if particle.emit_shape == 'POINT':
+#                 mesh_gen_data = bl_mesh_gen.point()
+#             elif particle.emit_shape == 'PLANE':
+#                 mesh_gen_data = bl_mesh_gen.plane(particle.emit_shape_size)
+#                 if particle.emit_shape_cutout:
+#                     mesh_gen_data_cutout = bl_mesh_gen.plane(particle.emit_shape_size_cutout)
+#             elif particle.emit_shape == 'CUBE':
+#                 mesh_gen_data = bl_mesh_gen.cube(particle.emit_shape_size)
+#                 if particle.emit_shape_cutout:
+#                     mesh_gen_data_cutout = bl_mesh_gen.cube(particle.emit_shape_size_cutout)
+#             elif particle.emit_shape == 'DISC':
+#                 mesh_gen_data = bl_mesh_gen.disc(particle.emit_shape_radius)
+#                 if particle.emit_shape_cutout:
+#                     mesh_gen_data_cutout = bl_mesh_gen.disc(particle.emit_shape_radius_cutout)
+#             elif particle.emit_shape == 'CYLINDER':
+#                 mesh_gen_data = bl_mesh_gen.cylinder(particle.emit_shape_size, particle.emit_shape_radius)
+#                 if particle.emit_shape_cutout:
+#                     mesh_gen_data_cutout = bl_mesh_gen.cylinder(particle.emit_shape_size_cutout, particle.emit_shape_radius_cutout)
+#             elif particle.emit_shape == 'SPHERE':
+#                 mesh_gen_data = bl_mesh_gen.sphere(particle.emit_shape_radius)
+#                 if particle.emit_shape_cutout:
+#                     mesh_gen_data_cutout = bl_mesh_gen.sphere(particle.emit_shape_radius_cutout)
+#
+#             add_mesh_data(particle.bone, mesh_gen_data)
+#             if particle.emit_shape_cutout:
+#                 add_mesh_data(particle.bone, mesh_gen_data_cutout)
+#
+#     elif ob.m3_options.bone_display_mode == 'PHRB':
+#         for rigid_body in ob.m3_rigidbodies:
+#             shape = m3_pointer_get(ob.m3_physicsshapes, rigid_body.physics_shape)
+#             for volume in shape.volumes:
+#                 mat = (volume.location, volume.rotation, volume.scale)
+#                 if volume.shape == 'CUBE':
+#                     add_mesh_data(rigid_body.bone, bl_mesh_gen.cube(volume.size), mat)
+#                 elif volume.shape == 'SPHERE':
+#                     add_mesh_data(rigid_body.bone, bl_mesh_gen.sphere(volume.size[0]), mat)
+#                 elif volume.shape == 'CAPSULE':
+#                     add_mesh_data(rigid_body.bone, bl_mesh_gen.capsule(volume.size, volume.size[0]), mat)
+#                 elif volume.shape == 'CYLINDER':
+#                     add_mesh_data(rigid_body.bone, bl_mesh_gen.cylinder(volume.size, volume.size[0]), mat)
+#                 elif (volume.shape == 'CONVEXHULL' or volume.shape == 'MESH') and volume.mesh_object:
+#                     add_mesh_data(rigid_body.bone, volume.mesh_object.data, mat)
 
 
 classes = (

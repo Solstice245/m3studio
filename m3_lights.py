@@ -58,12 +58,12 @@ def draw_props(light, layout):
 
 
 class Properties(shared.M3BoneUserPropertyGroup):
-    shape: bpy.props.EnumProperty(options=set(), items=bl_enum.light_shape, default='POINT', update=shared.bone_shape_update_event)
+    shape: bpy.props.EnumProperty(options=set(), items=bl_enum.light_shape, default='POINT')
     color: bpy.props.FloatVectorProperty(name='M3 Light Color', subtype='COLOR', size=3, min=0, max=1, default=(1, 1, 1))
     intensity: bpy.props.FloatProperty(name='M3 Light Intensity')
-    attenuation_far: bpy.props.FloatProperty(name='M3 Light Attenuation Far', default=3, update=shared.bone_shape_update_event)
+    attenuation_far: bpy.props.FloatProperty(name='M3 Light Attenuation Far', default=3)
     attenuation_near: bpy.props.FloatProperty(name='M3 Light Attenuation Near', default=2)
-    falloff: bpy.props.FloatProperty(name='M3 Light Falloff', default=3, update=shared.bone_shape_update_event)
+    falloff: bpy.props.FloatProperty(name='M3 Light Falloff', default=3)
     hotspot: bpy.props.FloatProperty(name='M3 Light Hotspot', default=2)
     unknown148: bpy.props.FloatProperty(options=set())
     ao: bpy.props.BoolProperty(options=set(), description='NOTE: This feature is (probably) exclusive to campaign mode')

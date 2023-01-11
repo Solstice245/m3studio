@@ -88,7 +88,7 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
         bounds = ob.m3_bounds
 
         op = layout.operator('m3.export')
-        op.filepath = 'C:\\Users\\John Wharton\\Documents\\M3Test_export.m3'
+        op.filepath = 'C:\\Users\\John Wharton\\Documents\\M3Test_studio.m3'
 
         col = layout.column(align=True)
         col.prop(bounds, 'bottom', text='Bounding Bottom')

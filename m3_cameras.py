@@ -61,11 +61,11 @@ def draw_props(camera, layout):
 
 
 class Properties(shared.M3BoneUserPropertyGroup):
-    field_of_view: bpy.props.FloatProperty(name='M3 Camera Field Of View', default=0.5, update=shared.bone_shape_update_event)
+    field_of_view: bpy.props.FloatProperty(name='M3 Camera Field Of View', default=0.5)
     far_clip: bpy.props.FloatProperty(name='M3 Camera Far Clip', default=10)
     near_clip: bpy.props.FloatProperty(name='M3 Camera Near Clip', default=0.1)
     clip2: bpy.props.FloatProperty(name='M3 Camera Clip 2', default=10)
-    focal_depth: bpy.props.FloatProperty(name='M3 Camera Focal Depth', default=2, update=shared.bone_shape_update_event)
+    focal_depth: bpy.props.FloatProperty(name='M3 Camera Focal Depth', default=2)
     falloff_start: bpy.props.FloatProperty(name='M3 Camera Falloff Start', default=1)
     falloff_end: bpy.props.FloatProperty(name='M3 Camera Falloff End', default=2)
     depth_of_field: bpy.props.FloatProperty(name='M3 Camera Depth Of Field', default=0.5)
