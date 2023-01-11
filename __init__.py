@@ -70,11 +70,11 @@ class M3ScenePanel(bpy.types.Panel):
         layout = self.layout
 
         op = layout.operator('m3.import')
-        op.filepath = 'C:\\Users\\John Wharton\\Documents\\M3Test.m3'
+        op.filepath = 'C:\\Users\\John Wharton\\Documents\\M3Test_editor.m3'
         op = layout.operator('m3.import', text='Import Result')
-        op.filepath = 'C:\\Users\\John Wharton\\Documents\\M3Test_export.m3'
+        op.filepath = 'C:\\Users\\John Wharton\\Documents\\M3Test_studio.m3'
         op = layout.operator('m3.export')
-        op.filepath = 'C:\\Users\\John Wharton\\Documents\\M3Test_export.m3'
+        op.filepath = 'C:\\Users\\John Wharton\\Documents\\M3Test_studio.m3'
 
 
 class M3ImportOperator(bpy.types.Operator):

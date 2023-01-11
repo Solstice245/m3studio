@@ -180,7 +180,6 @@ def m3_msgbus_sub(self, sub, key, owner):
 
 
 def bone_shape_update_event(self, context):
-    # print(self)
     set_bone_shape(self.id_data, m3_pointer_get(self.id_data.data.bones, self.bone))
 
 
@@ -525,11 +524,13 @@ def draw_collection_list(layout, collection, draw_func, can_duplicate=True, ops=
     if not len(collection):
         return
 
-    item = collection[sorted((0, index, len(collection) - 1))[1]]
+    item_ii = sorted((-1, index, len(collection) - 1))[1]
 
-    col = layout.column()
-    col.use_property_split = True
-    draw_func(item, col)
+    if item_ii >= 0:
+        item = collection[item_ii]
+        col = layout.column()
+        col.use_property_split = True
+        draw_func(item, col)
 
 
 def remove_m3_action_keyframes(ob, prefix, index):

@@ -488,6 +488,9 @@ class Exporter:
         # used for later reference such as setting region flags
         self.region_section = None  # defined in the mesh export code
 
+        self.init_action = self.ob.animation_data.action if self.ob.animation_data else None
+        self.init_frame = self.scene.frame_current
+
         def valid_collections_and_requirements(collection):
             # TODO have second unexposed export custom prop for auto-culling such as invalid attachment point name
             export_items = []
@@ -788,10 +791,15 @@ class Exporter:
             if matref in self.export_required_material_references:
                 self.matref_handle_indices[matref.bl_handle] = len(self.matref_handle_indices.keys())
 
-        # place armature in the default pose so that bones are in their default pose
-        anim_set(None, self.scene, self.view_layer, self.ob)
-        self.scene.frame_set(0)
-        # self.view_layer.update()
+        # make sure mesh objects are in their rest position
+        for ob in self.export_regions:
+            arm_mod = None
+            for modifier in ob.modifiers:
+                if modifier.type == 'ARMATURE':
+                    assert arm_mod is None
+                    arm_mod = modifier
+                    assert arm_mod.object == self.ob
+                    arm_mod.object = None
 
         self.depsgraph = bpy.context.evaluated_depsgraph_get()
 
@@ -838,6 +846,20 @@ class Exporter:
         # place armature back into the pose that it was before
         # TODO account for the possibility that the user turned off the auto action selection
         anim_set(self.ob.m3_animations[self.ob.m3_animations_index], self.scene, self.view_layer, self.ob)
+        self.ob.animation_data.action = self.init_action
+        self.scene.frame_current = self.init_frame
+
+        for ob in self.export_regions:
+            arm_mod = None
+            for modifier in ob.modifiers:
+                if modifier.type == 'ARMATURE':
+                    arm_mod = modifier
+                    arm_mod.object = self.ob
+
+            # auto generate armature modifier if one does not already exist
+            if arm_mod is None:
+                arm_mod = ob.modifiers.new('Armature', 'ARMATURE')
+                arm_mod.object = self.ob
 
         return self.m3
 
@@ -1026,6 +1048,10 @@ class Exporter:
         if not self.bones:
             return
 
+        # place armature in the default pose so that bones are in their default pose
+        anim_set(None, self.scene, self.view_layer, self.ob)
+        self.scene.frame_set(0)
+
         bone_section = self.m3.section_for_reference(model, 'bones', version=1)
         m3_bone_defaults = {}
 
@@ -1039,10 +1065,10 @@ class Exporter:
             m3_bone_name_section = self.m3.section_for_reference(m3_bone, 'name')
             m3_bone_name_section.content_from_bytes(bone.name)
             m3_bone.flags = 0
-            m3_bone.bit_set('flags', 'real', True)  # is not always true for blizzard models
+            m3_bone.bit_set('flags', 'real', True)  # TODO is not always true for blizzard models, figure out when this is applicable
             m3_bone.bit_set('flags', 'skinned', bone in self.skinned_bones)
             m3_bone.bit_set('flags', 'ik', bone in self.ik_bones)
-            m3_bone.bit_set('flags', 'batch1', m3_bone_parent.bit_get('flags', 'batch1') if m3_bone_parent else not pose_bone.m3_batching)
+            m3_bone.bit_set('flags', 'batch1', not pose_bone.m3_batching or m3_bone_parent.bit_get('flags', 'batch1') if m3_bone_parent else False)
             m3_bone.bit_set('flags', 'batch2', not pose_bone.m3_batching)
             m3_bone.location = self.init_anim_ref_vec3()
             m3_bone.rotation = self.init_anim_ref_quat()
@@ -1054,11 +1080,9 @@ class Exporter:
 
             bone_to_m3_bone[bone] = m3_bone
 
-            bone_matrix_local = bone.matrix_local.copy()
-            rest_matrix = bone_matrix_local @ io_shared.rot_fix_matrix_transpose
-            rest_matrix = io_shared.bind_scale_to_matrix(bone.m3_bind_scale) @ rest_matrix.inverted()
-            self.bone_to_iref[bone] = rest_matrix
-            self.bone_to_inv_iref[bone] = bone_matrix_local.inverted()
+            bone_local_inv_matrix = (bone.matrix_local @ io_shared.rot_fix_matrix_transpose).inverted()
+            self.bone_to_iref[bone] = io_shared.bind_scale_to_matrix(bone.m3_bind_scale) @ bone_local_inv_matrix
+            self.bone_to_inv_iref[bone] = bone.matrix_local.inverted()
 
             bind_scale_inv = mathutils.Vector((1.0 / bone.m3_bind_scale[ii] for ii in range(3)))
             bind_scale_inv_matrix = io_shared.bind_scale_to_matrix(bind_scale_inv)
@@ -1091,7 +1115,7 @@ class Exporter:
             else:
                 abs_pose_matrix = m3_pose_matrix
 
-            self.bone_to_abs_pose_matrix[bone] = abs_pose_matrix @ rest_matrix
+            self.bone_to_abs_pose_matrix[bone] = abs_pose_matrix @ self.bone_to_iref[bone]
 
         calc_actions = []
         for anim in self.exported_anims:
@@ -1176,16 +1200,16 @@ class Exporter:
             if self.action_to_sdmb_user[anim.action]:
                 for bone in self.bones:
                     for jj, m3_pose_matrix in enumerate(bone_m3_pose_matrices[bone]):
+
                         if bone.parent is not None:
                             parent_abs_pose_matrix = frame_to_bone_abs_pose_matrix[jj + frame_start][bone.parent]
                             abs_bone_matrix = parent_abs_pose_matrix @ self.bone_to_inv_iref[bone.parent].inverted() @ m3_pose_matrix
                         else:
-                            abs_bone_matrix = m3_pose_matrix @ self.bone_to_inv_iref[bone].inverted()
+                            abs_bone_matrix = m3_pose_matrix
 
-                        frame_to_bone_abs_pose_matrix[jj + frame_start][bone] = abs_bone_matrix
+                        frame_to_bone_abs_pose_matrix[jj + frame_start][bone] = abs_bone_matrix @ self.bone_to_iref[bone]
 
     def create_division(self, model, mesh_objects, regn_version):
-
         model.bit_set('flags', 'has_mesh', len(mesh_objects) > 0)
 
         if not len(mesh_objects):

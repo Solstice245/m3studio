@@ -33,10 +33,13 @@ def register_props():
 
 def anim_update(self, context):
     if context.object.m3_options.auto_update_action:
-        anim_set(context.object.m3_animations[context.object.m3_animations_index], context.scene, context.view_layer, context.object)
+        anim = None
+        if context.object.m3_animations_index in range(len(context.object.m3_animations)):
+            anim = context.object.m3_animations[context.object.m3_animations_index]
+        anim_set(anim, context.scene, context.view_layer, context.object)
 
 
-# this function is exported to io_m3_export.py
+# this function is exported to io_m3_import.py and io_m3_export.py
 def anim_set(anim, scene, view_layer, ob):
     if ob.animation_data is None:
         ob.animation_data_create()
@@ -98,17 +101,21 @@ def anim_group_update(self, context):
     if not ob.m3_options.auto_update_timeline:
         return
 
-    if ob.m3_animations[ob.m3_animations_index].bl_handle not in [item.bl_handle for item in anim_group.animations]:
-        ob.m3_animations_index = ob.m3_animations.find(shared.m3_pointer_get(ob.m3_animations, anim_group.animations[0].bl_handle).name)
+    if ob.m3_animation_groups_index >= 0:
+        if ob.m3_animations[ob.m3_animations_index].bl_handle not in [item.bl_handle for item in anim_group.animations]:
+            ob.m3_animations_index = ob.m3_animations.find(shared.m3_pointer_get(ob.m3_animations, anim_group.animations[0].bl_handle).name)
 
-    bpy.context.scene.frame_start = anim_group.frame_start
-    bpy.context.scene.frame_current = anim_group.frame_start
-    bpy.context.scene.frame_end = anim_group.frame_end
+        bpy.context.scene.frame_start = anim_group.frame_start
+        bpy.context.scene.frame_current = anim_group.frame_start
+        bpy.context.scene.frame_end = anim_group.frame_end
+
+    else:
+        ob.m3_animations_index = -1
 
 
 def anim_group_frame_update(self, context):
     ob = context.object
-    anim_group = ob.m3_animation_groups[ob.m3_animtions_groups_index]
+    anim_group = ob.m3_animation_groups[ob.m3_animations_groups_index]
 
     if not ob.m3_options.auto_update_timeline:
         return

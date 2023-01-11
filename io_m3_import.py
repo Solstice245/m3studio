@@ -23,7 +23,7 @@ import mathutils
 from . import io_m3
 from . import io_shared
 from . import shared
-from .m3_animations import set_default_value
+from .m3_animations import set_default_value, anim_set
 
 
 FRAME_RATE = 30
@@ -186,14 +186,7 @@ class M3InputProcessor:
             return
         anim_ref = getattr(self.m3, field)
         default = to_bl_color(anim_ref.default)
-        # ! waiting to see when this fails
         setattr(self.bl, field, default)
-        # # without alpha
-        # if len(getattr(self.bl, field)) == 3:
-        #     setattr(self.bl, field, [*default][:3])
-        # else:
-        #     setattr(self.bl, field, default)
-
         self.importer.key_vec(self.bl, field, anim_ref, default)
 
 
@@ -329,6 +322,7 @@ class Importer:
 
         self.ob.m3_model_version = str(self.m3_model.struct_desc.struct_version)
 
+        anim_set(None, bpy.context.scene, bpy.context.view_layer, self.ob)
         bpy.context.view_layer.objects.active = self.ob
         self.ob.select_set(True)
 
