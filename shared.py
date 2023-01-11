@@ -18,10 +18,7 @@
 
 import bpy
 import random
-import math
-import mathutils
 from . import bl_enum
-from . import bl_mesh_gen
 
 
 m3_collections_suggested_names = {
