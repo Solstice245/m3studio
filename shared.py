@@ -259,7 +259,6 @@ class M3CollectionOpRemove(M3CollectionOpBase):
         if self.index not in range(len(collection)):
             return {'FINISHED'}
 
-        bone_list = m3_item_find_bones(collection[self.index])
         collection.remove(self.index)
 
         remove_m3_action_keyframes(context.object, self.collection, self.index)
@@ -267,10 +266,6 @@ class M3CollectionOpRemove(M3CollectionOpBase):
             shift_m3_action_keyframes(context.object, self.collection, ii + 1)
 
         m3_collection_index_set(collection, self.index - (1 if self.index == len(collection) else 0))
-
-        for bone in context.object.data.bones:
-            if bone.bl_handle in bone_list:
-                set_bone_shape(context.object, bone)
 
         return {'FINISHED'}
 
@@ -357,21 +352,7 @@ class M3PropPointerOpSearch(bpy.types.Operator):
 
     def execute(self, context):
         ob = bpy.data.objects.get(self.ob_name) or bpy.context.object
-        search_ob = bpy.data.objects.get(self.search_ob_name) if self.search_ob_name else ob
-
-        is_bone_search_prop = self.search_prop in ['data.bones', 'data.edit_bones']
-
-        if is_bone_search_prop:
-            bone_before = m3_pointer_get(search_ob.path_resolve(self.search_prop), ob.path_resolve(self.prop))
-
         bl_resolved_set(ob, self.prop, self.enum)
-
-        if is_bone_search_prop:
-            bone_after = m3_pointer_get(search_ob.path_resolve(self.search_prop), ob.path_resolve(self.prop))
-
-            set_bone_shape(search_ob, bone_before)
-            set_bone_shape(search_ob, bone_after)
-
         return {'FINISHED'}
 
 
@@ -385,12 +366,7 @@ class M3PropPointerOpUnlink(bpy.types.Operator):
 
     def invoke(self, context, event):
         ob = context.object
-        is_bone_search_prop = hasattr(ob.data, 'bones')
-        if is_bone_search_prop:
-            bone = m3_pointer_get(ob.data.bones, ob.path_resolve(self.prop))
         bl_resolved_set(ob, self.prop, '')
-        if is_bone_search_prop:
-            set_bone_shape(ob, bone)
         return {'FINISHED'}
 
 
@@ -557,59 +533,6 @@ def swap_m3_action_keyframes(ob, prefix, old, new):
 
         for fcurve in fcurves_new:
             fcurve.data_path = fcurve.data_path.replace(path_new, path)
-
-
-# TODO port all of this to bl_graphics_draw
-# def set_bone_shape(ob, bone):
-#
-#     if ob.m3_options.bone_display_mode == 'PAR_':
-#         for particle in ob.m3_particle_systems:
-#
-#             mesh_gen_data = [[], [], []]
-#             mesh_gen_data_cutout = [[], [], []]
-#
-#             if particle.emit_shape == 'POINT':
-#                 mesh_gen_data = bl_mesh_gen.point()
-#             elif particle.emit_shape == 'PLANE':
-#                 mesh_gen_data = bl_mesh_gen.plane(particle.emit_shape_size)
-#                 if particle.emit_shape_cutout:
-#                     mesh_gen_data_cutout = bl_mesh_gen.plane(particle.emit_shape_size_cutout)
-#             elif particle.emit_shape == 'CUBE':
-#                 mesh_gen_data = bl_mesh_gen.cube(particle.emit_shape_size)
-#                 if particle.emit_shape_cutout:
-#                     mesh_gen_data_cutout = bl_mesh_gen.cube(particle.emit_shape_size_cutout)
-#             elif particle.emit_shape == 'DISC':
-#                 mesh_gen_data = bl_mesh_gen.disc(particle.emit_shape_radius)
-#                 if particle.emit_shape_cutout:
-#                     mesh_gen_data_cutout = bl_mesh_gen.disc(particle.emit_shape_radius_cutout)
-#             elif particle.emit_shape == 'CYLINDER':
-#                 mesh_gen_data = bl_mesh_gen.cylinder(particle.emit_shape_size, particle.emit_shape_radius)
-#                 if particle.emit_shape_cutout:
-#                     mesh_gen_data_cutout = bl_mesh_gen.cylinder(particle.emit_shape_size_cutout, particle.emit_shape_radius_cutout)
-#             elif particle.emit_shape == 'SPHERE':
-#                 mesh_gen_data = bl_mesh_gen.sphere(particle.emit_shape_radius)
-#                 if particle.emit_shape_cutout:
-#                     mesh_gen_data_cutout = bl_mesh_gen.sphere(particle.emit_shape_radius_cutout)
-#
-#             add_mesh_data(particle.bone, mesh_gen_data)
-#             if particle.emit_shape_cutout:
-#                 add_mesh_data(particle.bone, mesh_gen_data_cutout)
-#
-#     elif ob.m3_options.bone_display_mode == 'PHRB':
-#         for rigid_body in ob.m3_rigidbodies:
-#             shape = m3_pointer_get(ob.m3_physicsshapes, rigid_body.physics_shape)
-#             for volume in shape.volumes:
-#                 mat = (volume.location, volume.rotation, volume.scale)
-#                 if volume.shape == 'CUBE':
-#                     add_mesh_data(rigid_body.bone, bl_mesh_gen.cube(volume.size), mat)
-#                 elif volume.shape == 'SPHERE':
-#                     add_mesh_data(rigid_body.bone, bl_mesh_gen.sphere(volume.size[0]), mat)
-#                 elif volume.shape == 'CAPSULE':
-#                     add_mesh_data(rigid_body.bone, bl_mesh_gen.capsule(volume.size, volume.size[0]), mat)
-#                 elif volume.shape == 'CYLINDER':
-#                     add_mesh_data(rigid_body.bone, bl_mesh_gen.cylinder(volume.size, volume.size[0]), mat)
-#                 elif (volume.shape == 'CONVEXHULL' or volume.shape == 'MESH') and volume.mesh_object:
-#                     add_mesh_data(rigid_body.bone, volume.mesh_object.data, mat)
 
 
 classes = (

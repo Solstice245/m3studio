@@ -39,6 +39,7 @@ def draw_props(force, layout):
     col.prop(force, 'force_type', text='Type')
     col = layout.column(align=True)
     col.prop(force, 'shape', text='Shape')
+    # TODO display dimension props only relevent to current shape
     col.prop(force, 'width', text='Width')
     col.prop(force, 'height', text='Height')
     col.prop(force, 'length', text='Length')

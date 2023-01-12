@@ -46,9 +46,10 @@ rigid_body_versions = (
 
 def update_collection_index(self, context):
     ob = context.object
-    bl = ob.m3_rigidbodies[ob.m3_rigidbodies_index]
-    shared.select_bones_handles(ob, [bl.bone])
-    shared.auto_update_bone_display_mode(ob, 'PHRB')
+    if len(ob.m3_rigidbodies):
+        bl = ob.m3_rigidbodies[ob.m3_rigidbodies_index]
+        shared.select_bones_handles(ob, [bl.bone])
+        shared.auto_update_bone_display_mode(ob, 'PHRB')
 
 
 def draw_volume_props(shape, layout):

@@ -2127,7 +2127,7 @@
             <field name="lifetime_hold_to" type="float"/>
             <field name="lifetime_decay" type="float"/>
             <field name="lifetime_decay_to" type="float"/>
-            <field name="attenuation_plane_distance" type="float"/>
+            <field name="attenuation_distance" type="float"/>
             <field name="active" type="UInt32AnimationReferenceV0"/>
             <field name="layer" type="uint32" since_version="4"/>
             <field name="lod_reduce" type="uint32" since_version="4"/>

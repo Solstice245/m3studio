@@ -24,26 +24,26 @@ from mathutils import Color as C
 att_point_color_normal = C((0.1, 0.5, 0.1))
 att_point_color_select = C((0.3, 1.0, 0.3))
 
-hittest_color_normal = C((0.35, 0.35, 0.0))
-hittest_color_select = C((0.75, 0.75, 0.25))
+hittest_color_normal = C((0.4, 0.3, 0.4))
+hittest_color_select = C((0.75, 0.6, 0.75))
 
-light_color_normal = C((0.0, 0.0, 0.0))
-light_color_select = C((0.0, 0.0, 0.0))
+light_color_normal = C((0.5, 0.5, 0.1))
+light_color_select = C((1.0, 1.0, 0.25))
 
-particle_color_normal = C((0.0, 0.0, 0.0))
-particle_color_select = C((0.0, 0.0, 0.0))
+particle_color_normal = C((0.5, 0.1, 0.1))
+particle_color_select = C((1.0, 0.3, 0.3))
 
-force_color_normal = C((0.0, 0.0, 0.0))
-force_color_select = C((0.0, 0.0, 0.0))
+force_color_normal = C((0.6, 0.3, 0.1))
+force_color_select = C((1.0, 0.6, 0.2))
 
-projector_color_normal = C((0.0, 0.0, 0.0))
-projector_color_select = C((0.0, 0.0, 0.0))
+projector_color_normal = C((0.4, 0.0, 0.4))
+projector_color_select = C((0.8, 0.2, 0.8))
 
-physics_color_normal = C((0.0, 0.0, 0.0))
-physics_color_select = C((0.0, 0.0, 0.0))
+physics_color_normal = C((0.3, 0.1, 0.6))
+physics_color_select = C((0.5, 0.3, 1.0))
 
-cloth_color_normal = C((0.0, 0.0, 0.0))
-cloth_color_select = C((0.0, 0.0, 0.0))
+cloth_color_normal = C((0.5, 0.0, 0.25))
+cloth_color_select = C((1.0, 0.1, 0.6))
 
 camera_color_normal = C((0.1, 0.2, 0.5))
 camera_color_select = C((0.3, 0.6, 1.0))
@@ -51,8 +51,8 @@ camera_color_select = C((0.3, 0.6, 1.0))
 ik_color_normal = C((0.5, 0.25, 0.0))
 ik_color_select = C((1.0, 0.5, 0.15))
 
-shbx_color_normal = C((0.0, 0.0, 0.0))
-shbx_color_select = C((0.0, 0.0, 0.0))
+shbx_color_normal = C((0.1, 0.25, 0.5))
+shbx_color_select = C((0.25, 0.75, 1.0))
 
 warp_color_normal = C((0.1, 0.1, 0.5))
 warp_color_select = C((0.3, 0.3, 1.0))

@@ -157,6 +157,7 @@ def draw_props(particle, layout):
     sub.prop(particle, 'mass2', text='')
     col.separator()
     col.prop(particle, 'gravity', text='Gravity')
+    col.prop(particle, 'drag', text='Drag')
     col.prop(particle, 'friction', text='Friction')
     col.prop(particle, 'bounce', text='Bounce')
     col.prop(particle, 'wind_multiplier', text='Wind Multiplier')
@@ -285,6 +286,8 @@ def draw_props(particle, layout):
     col.prop(particle, 'local_time', text='Use Local Time')
     col.prop(particle, 'simulate_init', text='Simulate On Init')
     col.prop(particle, 'copy', text='Copy')
+    col.prop(particle, 'relative', text='Relative Rotation')
+    col.prop(particle, 'always_set', text='Always Set')
 
 
 class SplinePointProperties(shared.M3PropertyGroup):
@@ -332,7 +335,7 @@ class SystemProperties(shared.M3BoneUserPropertyGroup):
     mass_randomize: bpy.props.BoolProperty(options=set())
     friction: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0, max=1)
     bounce: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0, max=1)
-    drag: bpy.props.FloatProperty(options=set(), min=0)  # TODO draw
+    drag: bpy.props.FloatProperty(options=set(), min=0)
     wind_multiplier: bpy.props.FloatProperty(options=set())
     color_init: bpy.props.FloatVectorProperty(name='Initial Color', subtype='COLOR', size=4, min=0, max=1, default=(1, 1, 1, 1))
     color_mid: bpy.props.FloatVectorProperty(name='Middle Color', subtype='COLOR', size=4, min=0, max=1, default=(1, 1, 1, 1))
@@ -405,8 +408,8 @@ class SystemProperties(shared.M3BoneUserPropertyGroup):
     local_time: bpy.props.BoolProperty(options=set())
     simulate_init: bpy.props.BoolProperty(options=set())
     copy: bpy.props.BoolProperty(options=set())
-    relative: bpy.props.BoolProperty(options=set())  # TODO draw
-    always_set: bpy.props.BoolProperty(options=set())  # TODO draw
+    relative: bpy.props.BoolProperty(options=set())
+    always_set: bpy.props.BoolProperty(options=set())
 
 
 class CopyPanel(shared.ArmatureObjectPanel, bpy.types.Panel):

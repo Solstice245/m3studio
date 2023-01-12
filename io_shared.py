@@ -510,7 +510,7 @@ def io_projection(processor):
     processor.float('lifetime_hold_to')
     processor.float('lifetime_decay')
     processor.float('lifetime_decay_to')
-    processor.float('attenuation_plane_distance')
+    processor.float('attenuation_distance')
     processor.anim_uint32('active')
     processor.enum('layer')
     processor.enum('lod_reduce')

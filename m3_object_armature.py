@@ -48,8 +48,7 @@ mesh_versions = (
 
 
 def update_bone_display_mode(self, context):
-    for bone in context.object.data.bones:
-        shared.set_bone_shape(context.object, bone)
+    pass
 
 
 desc_auto_bone_display_mode = 'Clicking on m3 list items changes the bone display mode, when applicable'
