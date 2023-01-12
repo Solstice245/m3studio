@@ -21,6 +21,13 @@ import random
 from . import bl_enum
 
 
+bl_id_type_to_collection_name = {
+    bpy.types.Object: 'objects',
+    bpy.types.Mesh: 'meshes',
+    bpy.types.Armature: 'armatures',
+}
+
+
 m3_collections_suggested_names = {
     'm3_animations': ['Stand_full', 'Walk_full', 'Attack_full', 'Birth_full', 'Spell_full'],
     'm3_animation_groups': ['Stand', 'Walk', 'Attack', 'Birth', 'Spell'],
@@ -28,7 +35,7 @@ m3_collections_suggested_names = {
     'm3_billboards': ['Billboard'],
     'm3_cameras': ['CameraPortrait', 'CameraAvatar', 'Camera'],
     'm3_forces': ['Force'],
-    'm3_fuzzyhittests': ['Fuzzy Hit Test'],
+    'm3_hittests': ['Hit Test Fuzzy'],
     'm3_ikjoints': ['IK Joint'],
     'm3_lights': ['Light'],
     'm3_materiallayers': ['Layer'],
@@ -43,8 +50,13 @@ m3_collections_suggested_names = {
     'm3_ribbons': ['Ribbon'],
     'm3_ribbonsplines': ['Ribbon Spline'],
     'm3_rigidbodies': ['Rigid Body'],
+    'm3_shadowbox': ['Shadow Box'],
     'm3_turrets': ['Turret'],
     'm3_warps': ['Warp'],
+    'volumes': ['Volume'],
+    'points': ['Spline Point'],
+    'parts': ['Turret Part'],
+    'constraints': ['Cloth Constraint'],
 }
 
 
@@ -53,8 +65,7 @@ def m3_handle_gen():
 
 
 def m3_item_get_name(collection, prefix=''):
-    # TODO restore name suggestion functionality
-    suggested_names = None  # m3_collections_suggested_names.get(collection_name)
+    suggested_names = m3_collections_suggested_names.get(collection.path_from_id().rsplit('.', 1)[-1])
     used_names = {item.name for item in collection}
 
     if prefix not in used_names:
@@ -94,7 +105,7 @@ def m3_item_duplicate(collection, src):
 
     for key in type(dst).__annotations__.keys():
         prop = getattr(src, key)
-        if str(type(prop)) != '<class \'bpy_prop_collection_idprop\'>':
+        if str(type(prop)) != bpy.types.bpy_prop_collection:
             setattr(dst, key, prop)
         else:
             for item in prop:
@@ -106,28 +117,6 @@ def m3_item_duplicate(collection, src):
     return dst
 
 
-def m3_item_find_bones(item):
-    bone_list = []
-
-    if hasattr(item, 'bone'):
-        bone_list.append(getattr(item, 'bone'))
-
-    if hasattr(item, 'bone1'):
-        bone_list.append(getattr(item, 'bone1'))
-
-    if hasattr(item, 'bone2'):
-        bone_list.append(getattr(item, 'bone2'))
-
-    if hasattr(type(item), '__annotations__'):
-        for key in type(item).__annotations__.keys():
-            prop = getattr(item, key)
-            if str(type(prop)) == '<class \'bpy_prop_collection_idprop\'>':
-                for sub_item in prop:
-                    bone_list += m3_item_find_bones(sub_item)
-
-    return bone_list
-
-
 def m3_collection_index_set(bl, value):
     ob = bl.id_data
     rsp = bl.path_from_id().rsplit('.', 1)
@@ -137,14 +126,6 @@ def m3_collection_index_set(bl, value):
         setattr(ob.path_resolve(rsp[0]), rsp[1] + '_index', value)
 
 
-def bl_resolved_set(ob, bl, value):
-    rsp = bl.rsplit('.', 1)
-    if len(rsp) == 1:
-        setattr(ob, rsp[0], value)
-    else:
-        setattr(ob.path_resolve(rsp[0]), rsp[1], value)
-
-
 def m3_pointer_get(search_data, handle):
     if not handle:
         return None
@@ -152,14 +133,6 @@ def m3_pointer_get(search_data, handle):
         if item.bl_handle == handle:
             return item
     return None
-
-
-def m3_bone_handles_verify(ob):
-    handles = set()
-    for bone in ob.data.edit_bones if ob.mode == 'EDIT' else ob.data.bones:
-        if not bone.bl_handle or bone.bl_handle in handles:
-            bone.bl_handle = m3_handle_gen()
-        handles.add(bone.bl_handle)
 
 
 def m3_msgbus_callback(self, sub, key, owner):
@@ -325,48 +298,65 @@ class M3HandleOpRemove(M3CollectionOpBase):
         return {'FINISHED'}
 
 
-def m3_prop_pointer_enum(self, context):
-    search_ob = bpy.data.objects.get(self.search_ob_name if self.search_ob_name else self.ob_name) or bpy.context.object
-    for item in search_ob.path_resolve(self.search_prop):
+def m3_data_handles_verify(self, context):
+    if self.search_data_verify:
+        handles = set()
+        for item in self.search_data:
+            if not item.bl_handle or item.bl_handle in handles:
+                item.bl_handle = m3_hangle_get()
+            handles.add(item.bl_handle)
+
+
+def m3_data_handles_enum(self, context):
+    for item in self.search_data:
         yield item.bl_handle, item.name, ''
 
 
-class M3PropPointerOpSearch(bpy.types.Operator):
-    bl_idname = 'm3.proppointer_search'
+class M3PropHandleSearch(bpy.types.Operator):
+    bl_idname = 'm3.prophandle_search'
     bl_label = 'Search'
     bl_description = 'Search for an object to point to for the m3 property'
     bl_property = 'enum'
 
-    ob_name: bpy.props.StringProperty()
-    prop: bpy.props.StringProperty()
-    search_ob_name: bpy.props.StringProperty()
-    search_prop: bpy.props.StringProperty()
-    enum: bpy.props.EnumProperty(items=m3_prop_pointer_enum)
+    prop_id_name: bpy.props.StringProperty()
+    prop_id_collection_name: bpy.props.StringProperty()
+    prop_path: bpy.props.StringProperty()
+    prop_name: bpy.props.StringProperty()
+    search_data_id_name: bpy.props.StringProperty()
+    search_data_id_collection_name: bpy.props.StringProperty()
+    search_data_path: bpy.props.StringProperty()
+    search_data_verify: bpy.props.BoolProperty()
+    enum: bpy.props.EnumProperty(items=m3_data_handles_enum)
 
     def invoke(self, context, event):
-        if self.search_prop in ['data.bones', 'data.edit_bones']:
-            search_ob = bpy.data.objects.get(self.search_ob_name) if self.search_ob_name else context.object
-            m3_bone_handles_verify(search_ob)
+        self.search_data_id = getattr(bpy.data, self.search_data_id_collection_name).get(self.search_data_id_name)
+        self.search_data = self.search_data_id.path_resolve(self.search_data_path)
+        m3_data_handles_verify(self, context)
         context.window_manager.invoke_search_popup(self)
         return {'RUNNING_MODAL'}
 
     def execute(self, context):
-        ob = bpy.data.objects.get(self.ob_name) or bpy.context.object
-        bl_resolved_set(ob, self.prop, self.enum)
+        self.prop_id = getattr(bpy.data, self.prop_id_collection_name).get(self.prop_id_name)
+        self.prop_owner = self.prop_id.path_resolve(self.prop_path)
+        setattr(self.prop_owner, self.prop_name, self.enum)
         return {'FINISHED'}
 
 
-class M3PropPointerOpUnlink(bpy.types.Operator):
-    bl_idname = 'm3.proppointer_unlink'
+class M3PropHandleUnlink(bpy.types.Operator):
+    bl_idname = 'm3.prophandle_unlink'
     bl_label = 'Unlink'
     bl_description = 'Removes the pointer to this object from the m3 property'
     bl_options = {'UNDO'}
 
-    prop: bpy.props.StringProperty()
+    prop_id_name: bpy.props.StringProperty()
+    prop_id_collection_name: bpy.props.StringProperty()
+    prop_path: bpy.props.StringProperty()
+    prop_name: bpy.props.StringProperty()
 
     def invoke(self, context, event):
-        ob = context.object
-        bl_resolved_set(ob, self.prop, '')
+        self.prop_id = getattr(bpy.data, self.prop_id_collection_name).get(self.prop_id_name)
+        self.prop_owner = prop_id.path_resolve(self.prop_path)
+        setattr(self.prop_owner, self.prop_name, '')
         return {'FINISHED'}
 
 
@@ -383,20 +373,24 @@ def draw_handle_list_item(layout, search_data, collection, label, item, index):
 
     row = layout.row(align=True)
     row.use_property_split = False
-    op = row.operator('m3.proppointer_search', text=pointer_ob.name if pointer_ob else 'Select ' + label, icon='VIEWZOOM')
-    op.prop = item.path_from_id('bl_handle')
-    op.search_prop = search_data.path_from_id()
+    op = row.operator('m3.prophandle_search', text=pointer_ob.name if pointer_ob else 'Select ' + label, icon='VIEWZOOM')
+    op.prop_path = item.path_from_id()
+    op.prop_name = 'bl_handle'
+    op.search_data_path = search_data.path_from_id()
     op = row.operator('m3.handle_remove', text='', icon='X')
     op.collection = collection.path_from_id()
     op.index = index
 
 
-def draw_pointer_prop(layout, search_data, data, prop, bone_search=False, label='', icon=''):
+def draw_pointer_prop(layout, search_data, data, prop_name, label='', icon=''):
+    search_data_verify = False
 
-    arm = None
-    if bone_search:
-        arm = search_data.id_data
-        search_data = arm.edit_bones if arm.is_editmode else arm.bones
+    search_id_bl = search_data.id_data
+    if type(search_id_bl) == bpy.types.Armature:
+        if search_data == search_id_bl.bones:
+            search_data_verify = True
+            if search_id_bl.is_editmode:
+                search_data = search_id_bl.edit_bones
 
     main = layout.row(align=True)
     main.use_property_split = False
@@ -410,20 +404,28 @@ def draw_pointer_prop(layout, search_data, data, prop, bone_search=False, label=
     else:
         row = main
 
-    pointer_ob = m3_pointer_get(search_data, getattr(data, prop))
+    pointer_ob = m3_pointer_get(search_data, getattr(data, prop_name))
 
-    op = row.operator('m3.proppointer_search', text='' if pointer_ob else 'Select', icon='VIEWZOOM')
-    op.prop = data.path_from_id(prop)
-    op.search_prop = search_data.path_from_id() if not arm else 'data.' + search_data.path_from_id()
-    op.search_ob_name = search_data.id_data.name
+    op = row.operator('m3.prophandle_search', text='' if pointer_ob else 'Select', icon='VIEWZOOM')
+    op.prop_id_name = data.id_data.name
+    op.prop_id_collection_name = bl_id_type_to_collection_name[type(data.id_data)]
+    op.prop_path = data.path_from_id()
+    op.prop_name = prop_name
+    op.search_data_id_name = search_id_bl.name
+    op.search_data_id_collection_name = bl_id_type_to_collection_name[type(search_data.id_data)]
+    op.search_data_path = search_data.path_from_id()
+    op.search_data_verify = search_data_verify
 
     if pointer_ob:
         if icon:
             row.prop(pointer_ob, 'name', text='', icon=icon)
         else:
             row.prop(pointer_ob, 'name', text='')
-        op = row.operator('m3.proppointer_unlink', text='', icon='CANCEL')
-        op.prop = data.path_from_id(prop)
+        op = row.operator('m3.prophandle_unlink', text='', icon='CANCEL')
+        op.prop_id_name = data.id_data.name
+        op.prop_id_collection_name = bl_id_type_to_collection_name[type(data.id_data)]
+        op.prop_path = data.path_from_id()
+        op.prop_name = prop_name
 
     if layout.use_property_split and layout.use_property_decorate:
         row = main.row()
@@ -432,7 +434,7 @@ def draw_pointer_prop(layout, search_data, data, prop, bone_search=False, label=
 
 
 def draw_volume_props(volume, layout):
-    draw_pointer_prop(layout, volume.id_data.data.bones, volume, 'bone', bone_search=True, label='Bone', icon='BONE_DATA')
+    draw_pointer_prop(layout, volume.id_data.data.bones, volume, 'bone', label='Bone', icon='BONE_DATA')
     sub = layout.column(align=True)
     sub.prop(volume, 'shape', text='Shape Type')
     if volume.shape == 'CUBE':
@@ -468,9 +470,12 @@ def draw_collection_list(layout, collection, draw_func, can_duplicate=True, ops=
         list_obj = ob.path_resolve(rsp[0])
 
     if label:
-        layout.label(text=label)
+        col = layout.column(align=True)
+        col.label(text=label)
+        row = col.row()
+    else:
+        row = layout.row()
 
-    row = layout.row()
     col = row.column()
     col.template_list('UI_UL_list', list_str, list_obj, list_str, list_obj, list_str + '_index', rows=rows)
     col = row.column()
@@ -547,6 +552,6 @@ classes = (
     M3CollectionOpDuplicate,
     M3HandleOpAdd,
     M3HandleOpRemove,
-    M3PropPointerOpUnlink,
-    M3PropPointerOpSearch,
+    M3PropHandleUnlink,
+    M3PropHandleSearch,
 )

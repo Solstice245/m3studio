@@ -34,7 +34,7 @@ def update_collection_index(self, context):
 
 
 def draw_props(light, layout):
-    shared.draw_pointer_prop(layout, light.id_data.data.bones, light, 'bone', bone_search=True, label='Bone', icon='BONE_DATA')
+    shared.draw_pointer_prop(layout, light.id_data.data.bones, light, 'bone', label='Bone', icon='BONE_DATA')
     col = layout.column(align=True)
     col.prop(light, 'shape', text='Shape')
     col.prop(light, 'attenuation_near', text='Attenuation Near')

@@ -77,7 +77,7 @@ def draw_spline_props(spline, layout):
 
 
 def draw_ribbon_props(ribbon, layout):
-    shared.draw_pointer_prop(layout, ribbon.id_data.data.bones, ribbon, 'bone', bone_search=True, label='Bone', icon='BONE_DATA')
+    shared.draw_pointer_prop(layout, ribbon.id_data.data.bones, ribbon, 'bone', label='Bone', icon='BONE_DATA')
     shared.draw_pointer_prop(layout, ribbon.id_data.m3_materialrefs, ribbon, 'material', label='Material', icon='MATERIAL')
     shared.draw_pointer_prop(layout, ribbon.id_data.m3_ribbonsplines, ribbon, 'spline', label='Ribbon Spline', icon='LINKED')
     col = layout.column(align=True)

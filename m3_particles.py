@@ -52,7 +52,7 @@ def update_collection_index(self, context):
 
 
 def draw_copy_props(copy, layout):
-    shared.draw_pointer_prop(layout, copy.id_data.data.bones, copy, 'bone', bone_search=True, label='Bone', icon='BONE_DATA')
+    shared.draw_pointer_prop(layout, copy.id_data.data.bones, copy, 'bone', label='Bone', icon='BONE_DATA')
     col = layout.column(align=True)
     col.prop(copy, 'emit_rate', text='Emission Rate')
     col.prop(copy, 'emit_count', text='Emission Amount')
@@ -62,7 +62,7 @@ def draw_copy_props(copy, layout):
 
 def draw_props(particle, layout):
     col = layout.column()
-    shared.draw_pointer_prop(col, particle.id_data.data.bones, particle, 'bone', bone_search=True, label='Bone', icon='BONE_DATA')
+    shared.draw_pointer_prop(col, particle.id_data.data.bones, particle, 'bone', label='Bone', icon='BONE_DATA')
     shared.draw_pointer_prop(col, particle.id_data.m3_materialrefs, particle, 'material', label='Material', icon='MATERIAL')
     col.prop(particle, 'particle_type', text='Type')
 

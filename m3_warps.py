@@ -33,7 +33,7 @@ def update_collection_index(self, context):
 
 
 def draw_props(warp, layout):
-    shared.draw_pointer_prop(layout, warp.id_data.data.bones, warp, 'bone', bone_search=True, label='Bone', icon='BONE_DATA')
+    shared.draw_pointer_prop(layout, warp.id_data.data.bones, warp, 'bone', label='Bone', icon='BONE_DATA')
     col = layout.column(align=True)
     col.prop(warp, 'radius', text='Radius')
     col.prop(warp, 'strength', text='Strength')

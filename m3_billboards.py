@@ -33,7 +33,7 @@ def update_collection_index(self, context):
 
 
 def draw_props(billboard, layout):
-    shared.draw_pointer_prop(layout, billboard.id_data.data.bones, billboard, 'bone', bone_search=True, label='Bone', icon='BONE_DATA')
+    shared.draw_pointer_prop(layout, billboard.id_data.data.bones, billboard, 'bone', label='Bone', icon='BONE_DATA')
     layout.prop(billboard, 'billboard_type', text='Type')
     layout.prop(billboard, 'look', text='Look At Camera Center')
 

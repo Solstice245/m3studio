@@ -592,9 +592,9 @@ class M3MaterialLayerOpAdd(bpy.types.Operator):
         layer = m3_material_layer_get(ob, getattr(mat, self.layer_name))
 
         if layer:
-            new_layer = shared.m3_item_duplicate(ob.materiallayers, layer)
+            new_layer = shared.m3_item_duplicate(ob.m3_materiallayers, layer)
         else:
-            new_layer = shared.m3_item_add(ob.materiallayers)
+            new_layer = shared.m3_item_add(ob.m3_materiallayers)
 
         setattr(mat, self.layer_name, new_layer.bl_handle)
 
@@ -742,7 +742,7 @@ class M3MaterialOpDuplicate(bpy.types.Operator):
     def invoke(self, context, event):
         matrefs = context.object.m3_materialrefs
         matref = matrefs[context.object.m3_materialrefs_index]
-        mat_col = getattr(ob, matref.mat_type)
+        mat_col = getattr(context.object, matref.mat_type)
         mat = m3_material_get(context.object, matref)
 
         if context.object.m3_materialrefs_index == -1:

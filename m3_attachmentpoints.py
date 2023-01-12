@@ -33,7 +33,7 @@ def update_collection_index(self, context):
 
 
 def draw_props(point, layout):
-    shared.draw_pointer_prop(layout, point.id_data.data.bones, point, 'bone', bone_search=True, label='Bone', icon='BONE_DATA')
+    shared.draw_pointer_prop(layout, point.id_data.data.bones, point, 'bone', label='Bone', icon='BONE_DATA')
     shared.draw_collection_list(layout.box(), point.volumes, shared.draw_volume_props, label='Volumes:')
 
 
