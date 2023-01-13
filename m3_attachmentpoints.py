@@ -26,10 +26,10 @@ def register_props():
 
 
 def update_collection_index(self, context):
-    ob = context.object
-    bl = ob.m3_attachmentpoints[ob.m3_attachmentpoints_index]
-    shared.select_bones_handles(ob, [bl.bone])
-    shared.auto_update_bone_display_mode(ob, 'ATT_')
+    if self.m3_attachmentpoints_index in range(len(self.m3_attachmentpoints)):
+        bl = self.m3_attachmentpoints[self.m3_attachmentpoints_index]
+        shared.select_bones_handles(context.object, [bl.bone])
+        shared.auto_update_bone_display_mode(context.object, 'ATT_')
 
 
 def draw_props(point, layout):

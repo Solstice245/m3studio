@@ -38,6 +38,13 @@ def update_collection_index(self, context):
     shared.auto_update_bone_display_mode(context.object, 'PHCL')
 
 
+def update_constraints_collection_index(self, context):
+    if self.constraints_index in range(len(self.constraints)):
+        bl = self.constraints[self.constraints_index]
+        shared.select_bones_handles(context.object, [bl.bone])
+        shared.auto_update_bone_display_mode(context.object, 'PAR_')
+
+
 def draw_constraint_props(constraint, layout):
     shared.draw_pointer_prop(layout, constraint.id_data.data.bones, constraint, 'bone', label='Bone', icon='BONE_DATA')
     col = layout.column()
@@ -105,7 +112,7 @@ class ConstraintProperties(shared.M3BoneUserPropertyGroup):
 
 class ConstraintSetProperties(shared.M3PropertyGroup):
     constraints: bpy.props.CollectionProperty(type=ConstraintProperties)
-    constraints_index: bpy.props.IntProperty(options=set(), default=-1)
+    constraints_index: bpy.props.IntProperty(options=set(), default=-1, update=update_constraints_collection_index)
 
 
 class ClothProperties(shared.M3PropertyGroup):

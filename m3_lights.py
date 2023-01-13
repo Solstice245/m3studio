@@ -27,10 +27,10 @@ def register_props():
 
 
 def update_collection_index(self, context):
-    ob = context.object
-    bl = ob.m3_lights[ob.m3_lights_index]
-    shared.select_bones_handles(ob, [bl.bone])
-    shared.auto_update_bone_display_mode(ob, 'LITE')
+    if self.m3_lights_index in range(len(self.m3_lights)):
+        bl = self.m3_lights[self.m3_lights_index]
+        shared.select_bones_handles(context.object, [bl.bone])
+        shared.auto_update_bone_display_mode(context.object, 'LITE')
 
 
 def draw_props(light, layout):

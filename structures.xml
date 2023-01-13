@@ -111,15 +111,15 @@
             <field name="w" type="VEC4V0"/>
         </fields>
     </structure>
-    <structure name="Vector3As3Fixed8">
-        <description>A vector out of 3 bytes which must be converted with the formula (((i / 255.0) * 2) -1) to get the actual float value</description>
+    <structure name="Vector3As3uint8">
+        <description>A vector out of 3 bytes which must be converted with the formula (i / 255.0) to get the actual float value</description>
         <versions>
             <version number="0" size="3"/>
         </versions>
         <fields>
-            <field name="x" type="fixed8"/>
-            <field name="y" type="fixed8"/>
-            <field name="z" type="fixed8"/>
+            <field name="x" type="uint8"/>
+            <field name="y" type="uint8"/>
+            <field name="z" type="uint8"/>
         </fields>
     </structure>
     <structure name="Vector2As2int16">
@@ -420,12 +420,12 @@
             <field name="lookup1" type="uint8" default_value="0"/>
             <field name="lookup2" type="uint8" default_value="0"/>
             <field name="lookup3" type="uint8" default_value="0"/>
-            <field name="normal" type="Vector3As3Fixed8V0"/>
-            <field name="sign" type="fixed8"/>
+            <field name="normal" type="Vector3As3uint8V0"/>
+            <field name="sign" type="uint8"/>
             <field name="col" type="COL"/>
             <field name="uv0" type="Vector2As2int16V0"/>
-            <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default_value="1.0"/> <!-- Can be -1.0 in old 3ds max exporter files -->
+            <field name="tan" type="Vector3As3uint8V0"/>
+            <field name="unused" type="uint8" default_value="0"/>
         </fields>
     </structure>
     <structure name="VertexFormat0x182007d" >
@@ -443,11 +443,11 @@
             <field name="lookup1" type="uint8" default_value="0"/>
             <field name="lookup2" type="uint8" default_value="0"/>
             <field name="lookup3" type="uint8" default_value="0"/>
-            <field name="normal" type="Vector3As3Fixed8V0"/>
-            <field name="sign" type="fixed8"/>
+            <field name="normal" type="Vector3As3uint8V0"/>
+            <field name="sign" type="uint8"/>
             <field name="uv0" type="Vector2As2int16V0"/>
-            <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default_value="1.0"/>
+            <field name="tan" type="Vector3As3uint8V0"/>
+            <field name="unused" type="uint8" default_value="0"/>
         </fields>
     </structure>
     <structure name="VertexFormat0x186007d" >
@@ -465,12 +465,12 @@
             <field name="lookup1" type="uint8" default_value="0"/>
             <field name="lookup2" type="uint8" default_value="0"/>
             <field name="lookup3" type="uint8" default_value="0"/>
-            <field name="normal" type="Vector3As3Fixed8V0"/>
-            <field name="sign" type="fixed8"/>
+            <field name="normal" type="Vector3As3uint8V0"/>
+            <field name="sign" type="uint8"/>
             <field name="uv0" type="Vector2As2int16V0"/>
             <field name="uv1" type="Vector2As2int16V0"/>
-            <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default_value="1.0"/>
+            <field name="tan" type="Vector3As3uint8V0"/>
+            <field name="unused" type="uint8" default_value="0"/>
         </fields>
     </structure>
     <structure name="VertexFormat0x186027d" >
@@ -488,13 +488,13 @@
             <field name="lookup1" type="uint8" default_value="0"/>
             <field name="lookup2" type="uint8" default_value="0"/>
             <field name="lookup3" type="uint8" default_value="0"/>
-            <field name="normal" type="Vector3As3Fixed8V0"/>
-            <field name="sign" type="fixed8"/>
+            <field name="normal" type="Vector3As3uint8V0"/>
+            <field name="sign" type="uint8"/>
             <field name="col" type="COL"/>
             <field name="uv0" type="Vector2As2int16V0"/>
             <field name="uv1" type="Vector2As2int16V0"/>
-            <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default_value="1.0"/>
+            <field name="tan" type="Vector3As3uint8V0"/>
+            <field name="unused" type="uint8" default_value="0"/>
         </fields>
     </structure>
     <structure name="VertexFormat0x18e007d">
@@ -512,13 +512,13 @@
             <field name="lookup1" type="uint8" default_value="0"/>
             <field name="lookup2" type="uint8" default_value="0"/>
             <field name="lookup3" type="uint8" default_value="0"/>
-            <field name="normal" type="Vector3As3Fixed8V0"/>
-            <field name="sign" type="fixed8"/>
+            <field name="normal" type="Vector3As3uint8V0"/>
+            <field name="sign" type="uint8"/>
             <field name="uv0" type="Vector2As2int16V0"/>
             <field name="uv1" type="Vector2As2int16V0"/>
             <field name="uv2" type="Vector2As2int16V0"/>
-            <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default_value="1.0"/>
+            <field name="tan" type="Vector3As3uint8V0"/>
+            <field name="unused" type="uint8" default_value="0"/>
         </fields>
     </structure>
     <structure name="VertexFormat0x18e027d" >
@@ -536,14 +536,14 @@
             <field name="lookup1" type="uint8" default_value="0"/>
             <field name="lookup2" type="uint8" default_value="0"/>
             <field name="lookup3" type="uint8" default_value="0"/>
-            <field name="normal" type="Vector3As3Fixed8V0"/>
-            <field name="sign" type="fixed8"/>
+            <field name="normal" type="Vector3As3uint8V0"/>
+            <field name="sign" type="uint8"/>
             <field name="col" type="COL"/>
             <field name="uv0" type="Vector2As2int16V0"/>
             <field name="uv1" type="Vector2As2int16V0"/>
             <field name="uv2" type="Vector2As2int16V0"/>
-            <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default_value="1.0"/>
+            <field name="tan" type="Vector3As3uint8V0"/>
+            <field name="unused" type="uint8" default_value="0"/>
         </fields>
     </structure>
     <structure name="VertexFormat0x19e007d" >
@@ -561,14 +561,14 @@
             <field name="lookup1" type="uint8" default_value="0"/>
             <field name="lookup2" type="uint8" default_value="0"/>
             <field name="lookup3" type="uint8" default_value="0"/>
-            <field name="normal" type="Vector3As3Fixed8V0"/>
-            <field name="sign" type="fixed8"/>
+            <field name="normal" type="Vector3As3uint8V0"/>
+            <field name="sign" type="uint8"/>
             <field name="uv0" type="Vector2As2int16V0"/>
             <field name="uv1" type="Vector2As2int16V0"/>
             <field name="uv2" type="Vector2As2int16V0"/>
             <field name="uv3" type="Vector2As2int16V0"/>
-            <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default_value="1.0"/>
+            <field name="tan" type="Vector3As3uint8V0"/>
+            <field name="unused" type="uint8" default_value="0"/>
         </fields>
     </structure>
 
@@ -587,15 +587,15 @@
             <field name="lookup1" type="uint8" default_value="0"/>
             <field name="lookup2" type="uint8" default_value="0"/>
             <field name="lookup3" type="uint8" default_value="0"/>
-            <field name="normal" type="Vector3As3Fixed8V0"/>
-            <field name="sign" type="fixed8"/>
+            <field name="normal" type="Vector3As3uint8V0"/>
+            <field name="sign" type="uint8"/>
             <field name="col" type="COL"/>
             <field name="uv0" type="Vector2As2int16V0"/>
             <field name="uv1" type="Vector2As2int16V0"/>
             <field name="uv2" type="Vector2As2int16V0"/>
             <field name="uv3" type="Vector2As2int16V0"/>
-            <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default_value="1.0"/>
+            <field name="tan" type="Vector3As3uint8V0"/>
+            <field name="unused" type="uint8" default_value="0"/>
         </fields>
     </structure>
 
@@ -614,12 +614,12 @@
             <field name="lookup1" type="uint8" default_value="0"/>
             <field name="lookup2" type="uint8" default_value="0"/>
             <field name="lookup3" type="uint8" default_value="0"/>
-            <field name="normal" type="Vector3As3Fixed8V0"/>
-            <field name="sign" type="fixed8"/>
+            <field name="normal" type="Vector3As3uint8V0"/>
+            <field name="sign" type="uint8"/>
             <field name="col" type="COL"/>
             <field name="uv0" type="Vector2As2int16V0"/>
-            <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default_value="1.0"/> <!-- Can be -1.0 in old 3ds max exporter files -->
+            <field name="tan" type="Vector3As3uint8V0"/>
+            <field name="unused" type="uint8" default_value="0"/> <!-- Can be -1.0 in old 3ds max exporter files -->
         </fields>
     </structure>
     <structure name="VertexFormat0x1820061" >
@@ -637,11 +637,11 @@
             <field name="lookup1" type="uint8" default_value="0"/>
             <field name="lookup2" type="uint8" default_value="0"/>
             <field name="lookup3" type="uint8" default_value="0"/>
-            <field name="normal" type="Vector3As3Fixed8V0"/>
-            <field name="sign" type="fixed8"/>
+            <field name="normal" type="Vector3As3uint8V0"/>
+            <field name="sign" type="uint8"/>
             <field name="uv0" type="Vector2As2int16V0"/>
-            <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default_value="1.0"/>
+            <field name="tan" type="Vector3As3uint8V0"/>
+            <field name="unused" type="uint8" default_value="0"/>
         </fields>
     </structure>
     <structure name="VertexFormat0x1860061" >
@@ -659,12 +659,12 @@
             <field name="lookup1" type="uint8" default_value="0"/>
             <field name="lookup2" type="uint8" default_value="0"/>
             <field name="lookup3" type="uint8" default_value="0"/>
-            <field name="normal" type="Vector3As3Fixed8V0"/>
-            <field name="sign" type="fixed8"/>
+            <field name="normal" type="Vector3As3uint8V0"/>
+            <field name="sign" type="uint8"/>
             <field name="uv0" type="Vector2As2int16V0"/>
             <field name="uv1" type="Vector2As2int16V0"/>
-            <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default_value="1.0"/>
+            <field name="tan" type="Vector3As3uint8V0"/>
+            <field name="unused" type="uint8" default_value="0"/>
         </fields>
     </structure>
     <structure name="VertexFormat0x1860261" >
@@ -682,13 +682,13 @@
             <field name="lookup1" type="uint8" default_value="0"/>
             <field name="lookup2" type="uint8" default_value="0"/>
             <field name="lookup3" type="uint8" default_value="0"/>
-            <field name="normal" type="Vector3As3Fixed8V0"/>
-            <field name="sign" type="fixed8"/>
+            <field name="normal" type="Vector3As3uint8V0"/>
+            <field name="sign" type="uint8"/>
             <field name="col" type="COL"/>
             <field name="uv0" type="Vector2As2int16V0"/>
             <field name="uv1" type="Vector2As2int16V0"/>
-            <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default_value="1.0"/>
+            <field name="tan" type="Vector3As3uint8V0"/>
+            <field name="unused" type="uint8" default_value="0"/>
         </fields>
     </structure>
     <structure name="VertexFormat0x18e0061">
@@ -706,13 +706,13 @@
             <field name="lookup1" type="uint8" default_value="0"/>
             <field name="lookup2" type="uint8" default_value="0"/>
             <field name="lookup3" type="uint8" default_value="0"/>
-            <field name="normal" type="Vector3As3Fixed8V0"/>
-            <field name="sign" type="fixed8"/>
+            <field name="normal" type="Vector3As3uint8V0"/>
+            <field name="sign" type="uint8"/>
             <field name="uv0" type="Vector2As2int16V0"/>
             <field name="uv1" type="Vector2As2int16V0"/>
             <field name="uv2" type="Vector2As2int16V0"/>
-            <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default_value="1.0"/>
+            <field name="tan" type="Vector3As3uint8V0"/>
+            <field name="unused" type="uint8" default_value="0"/>
         </fields>
     </structure>
     <structure name="VertexFormat0x18e0261" >
@@ -730,14 +730,14 @@
             <field name="lookup1" type="uint8" default_value="0"/>
             <field name="lookup2" type="uint8" default_value="0"/>
             <field name="lookup3" type="uint8" default_value="0"/>
-            <field name="normal" type="Vector3As3Fixed8V0"/>
-            <field name="sign" type="fixed8"/>
+            <field name="normal" type="Vector3As3uint8V0"/>
+            <field name="sign" type="uint8"/>
             <field name="col" type="COL"/>
             <field name="uv0" type="Vector2As2int16V0"/>
             <field name="uv1" type="Vector2As2int16V0"/>
             <field name="uv2" type="Vector2As2int16V0"/>
-            <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default_value="1.0"/>
+            <field name="tan" type="Vector3As3uint8V0"/>
+            <field name="unused" type="uint8" default_value="0"/>
         </fields>
     </structure>
     <structure name="VertexFormat0x19e0061" >
@@ -755,14 +755,14 @@
             <field name="lookup1" type="uint8" default_value="0"/>
             <field name="lookup2" type="uint8" default_value="0"/>
             <field name="lookup3" type="uint8" default_value="0"/>
-            <field name="normal" type="Vector3As3Fixed8V0"/>
-            <field name="sign" type="fixed8"/>
+            <field name="normal" type="Vector3As3uint8V0"/>
+            <field name="sign" type="uint8"/>
             <field name="uv0" type="Vector2As2int16V0"/>
             <field name="uv1" type="Vector2As2int16V0"/>
             <field name="uv2" type="Vector2As2int16V0"/>
             <field name="uv3" type="Vector2As2int16V0"/>
-            <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default_value="1.0"/>
+            <field name="tan" type="Vector3As3uint8V0"/>
+            <field name="unused" type="uint8" default_value="0"/>
         </fields>
     </structure>
 
@@ -781,15 +781,15 @@
             <field name="lookup1" type="uint8" default_value="0"/>
             <field name="lookup2" type="uint8" default_value="0"/>
             <field name="lookup3" type="uint8" default_value="0"/>
-            <field name="normal" type="Vector3As3Fixed8V0"/>
-            <field name="sign" type="fixed8"/>
+            <field name="normal" type="Vector3As3uint8V0"/>
+            <field name="sign" type="uint8"/>
             <field name="col" type="COL"/>
             <field name="uv0" type="Vector2As2int16V0"/>
             <field name="uv1" type="Vector2As2int16V0"/>
             <field name="uv2" type="Vector2As2int16V0"/>
             <field name="uv3" type="Vector2As2int16V0"/>
-            <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default_value="1.0"/>
+            <field name="tan" type="Vector3As3uint8V0"/>
+            <field name="unused" type="uint8" default_value="0"/>
         </fields>
     </structure>
 
@@ -808,12 +808,12 @@
             <field name="lookup1" type="uint8" default_value="0"/>
             <field name="lookup2" type="uint8" default_value="0"/>
             <field name="lookup3" type="uint8" default_value="0"/>
-            <field name="normal" type="Vector3As3Fixed8V0"/>
-            <field name="sign" type="fixed8"/>
+            <field name="normal" type="Vector3As3uint8V0"/>
+            <field name="sign" type="uint8"/>
             <field name="uv0" type="Vector2As2int16V0"/>
             <field name="uv1" type="Vector2As2int16V0"/>
-            <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default_value="1.0"/>
+            <field name="tan" type="Vector3As3uint8V0"/>
+            <field name="unused" type="uint8" default_value="0"/>
         </fields>
     </structure>
 
@@ -832,13 +832,13 @@
             <field name="lookup1" type="uint8" default_value="0"/>
             <field name="lookup2" type="uint8" default_value="0"/>
             <field name="lookup3" type="uint8" default_value="0"/>
-            <field name="normal" type="Vector3As3Fixed8V0"/>
-            <field name="sign" type="fixed8"/>
+            <field name="normal" type="Vector3As3uint8V0"/>
+            <field name="sign" type="uint8"/>
             <field name="col" type="COL"/>
             <field name="uv0" type="Vector2As2int16V0"/>
             <field name="uv1" type="Vector2As2int16V0"/>
-            <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default_value="1.0"/>
+            <field name="tan" type="Vector3As3uint8V0"/>
+            <field name="unused" type="uint8" default_value="0"/>
         </fields>
     </structure>
 
@@ -857,14 +857,14 @@
             <field name="lookup1" type="uint8" default_value="0"/>
             <field name="lookup2" type="uint8" default_value="0"/>
             <field name="lookup3" type="uint8" default_value="0"/>
-            <field name="normal" type="Vector3As3Fixed8V0"/>
-            <field name="sign" type="fixed8"/>
+            <field name="normal" type="Vector3As3uint8V0"/>
+            <field name="sign" type="uint8"/>
             <field name="color" type="COL"/>
             <field name="uv0" type="Vector2As2int16V0"/>
             <field name="uv1" type="Vector2As2int16V0"/>
             <field name="uv2" type="Vector2As2int16V0"/>
-            <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default_value="1.0"/>
+            <field name="tan" type="Vector3As3uint8V0"/>
+            <field name="unused" type="uint8" default_value="0"/>
         </fields>
     </structure>
 
@@ -883,13 +883,13 @@
             <field name="lookup1" type="uint8" default_value="0"/>
             <field name="lookup2" type="uint8" default_value="0"/>
             <field name="lookup3" type="uint8" default_value="0"/>
-            <field name="normal" type="Vector3As3Fixed8V0"/>
-            <field name="sign" type="fixed8"/>
+            <field name="normal" type="Vector3As3uint8V0"/>
+            <field name="sign" type="uint8"/>
             <field name="uv0" type="Vector2As2int16V0"/>
             <field name="uv1" type="Vector2As2int16V0"/>
             <field name="uv2" type="Vector2As2int16V0"/>
-            <field name="tan" type="Vector3As3Fixed8V0"/>
-            <field name="unused" type="fixed8" default_value="1.0"/>
+            <field name="tan" type="Vector3As3uint8V0"/>
+            <field name="unused" type="uint8" default_value="0"/>
         </fields>
     </structure>
 
@@ -2272,7 +2272,7 @@
             <version number="0" size="4"/>
         </versions>
         <fields>
-            <field name="unknown00" type="int8"/> <!-- values seem to always alternate between 0 and -1 -->
+            <field name="unknown00" type="uint8"/> <!-- values seem to always alternate between 0 and -1 -->
             <field name="vertex" type="uint8"/>
             <field name="polygon" type="uint8"/>
             <field name="loop" type="uint8"/>

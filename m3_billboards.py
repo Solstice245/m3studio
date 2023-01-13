@@ -27,9 +27,9 @@ def register_props():
 
 
 def update_collection_index(self, context):
-    ob = context.object
-    bl = ob.m3_billboards[ob.m3_billboards_index]
-    shared.select_bones_handles(ob, [bl.bone])
+    if self.m3_billboards_index in range(len(self.m3_billboards)):
+        bl = self.m3_billboards[self.m3_billboards_index]
+        shared.select_bones_handles(context.object, [bl.bone])
 
 
 def draw_props(billboard, layout):

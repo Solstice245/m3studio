@@ -27,9 +27,10 @@ def register_props():
 
 
 def update_collection_index(self, context):
-    ob = context.object
-    # bl = ob.m3_physicsjoints[ob.m3_physicsjoints_index]
-    # shared.select_bones_handles(ob, [bl.bone1, bl.bone2])
+    if self.m3_physicsjoints_index in range(len(self.m3_physicsjoints)):
+        bl = self.m3_physicsjoints[self.m3_physicsjoints_index]
+        shared.select_bones_handles(context.object, [bl.bone1, bl.bone2])
+        shared.auto_update_bone_display_mode(context.object, 'PHRB')
 
 
 def draw_props(joint, layout):

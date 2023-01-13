@@ -26,10 +26,10 @@ def register_props():
 
 
 def update_collection_index(self, context):
-    ob = context.object
-    bl = ob.m3_warps[ob.m3_warps_index]
-    shared.select_bones_handles(ob, [bl.bone])
-    shared.auto_update_bone_display_mode(ob, 'WRP_')
+    if self.m3_warps_index in range(len(self.m3_warps)):
+        bl = self.m3_warps[self.m3_warps_index]
+        shared.select_bones_handles(context.object, [bl.bone])
+        shared.auto_update_bone_display_mode(context.object, 'WRP_')
 
 
 def draw_props(warp, layout):

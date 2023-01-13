@@ -98,7 +98,7 @@ def init_point(x=0.05):
 
 def init_plane(x=1, y=1):
     coords = (V((-x, -y, 0)), V((-x, y, 0)), V((x, y, 0)), V((x, -y, 0)))
-    indices = ((0, 1), (0, 3), (1, 2), (2, 4))
+    indices = ((0, 1), (0, 3), (1, 2), (2, 3))
     return coords, indices
 
 

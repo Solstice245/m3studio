@@ -64,13 +64,13 @@ def m3_handle_gen():
     return '%064x' % random.getrandbits(256)
 
 
-def m3_item_get_name(collection, prefix=''):
-    suggested_names = m3_collections_suggested_names.get(collection.path_from_id().rsplit('.', 1)[-1])
+def m3_item_get_name(collection, prefix='', suggest=True):
     used_names = {item.name for item in collection}
 
     if prefix not in used_names:
         return prefix
 
+    suggested_names = m3_collections_suggested_names.get(collection.path_from_id().rsplit('.', 1)[-1]) if suggest else None
     if not prefix and suggested_names:
         for name in suggested_names:
             prefix = name
@@ -105,14 +105,14 @@ def m3_item_duplicate(collection, src):
 
     for key in type(dst).__annotations__.keys():
         prop = getattr(src, key)
-        if str(type(prop)) != bpy.types.bpy_prop_collection:
+        if str(type(prop)) != '<class \'bpy_prop_collection_idprop\'>':
             setattr(dst, key, prop)
         else:
             for item in prop:
                 m3_item_duplicate(prop, item)
 
     dst.name = ''
-    dst.name = m3_item_get_name(collection, src.name)
+    dst.name = m3_item_get_name(collection, src.name if not src.name.isdigit() else '', suggest=False)
 
     return dst
 
@@ -276,7 +276,7 @@ class M3CollectionOpDuplicate(M3CollectionOpBase):
         return {'FINISHED'}
 
 
-class M3HandleOpAdd(M3CollectionOpBase):
+class M3HandleListOpAdd(M3CollectionOpBase):
     bl_idname = 'm3.handle_add'
     bl_label = 'Add Item To List'
     bl_description = 'Adds a new item to the list'
@@ -286,7 +286,7 @@ class M3HandleOpAdd(M3CollectionOpBase):
         return {'FINISHED'}
 
 
-class M3HandleOpRemove(M3CollectionOpBase):
+class M3HandleListOpRemove(M3CollectionOpBase):
     bl_idname = 'm3.handle_remove'
     bl_label = 'Remove Item From List'
     bl_description = 'Removes the item from the list'
@@ -308,7 +308,9 @@ def m3_data_handles_verify(self, context):
 
 
 def m3_data_handles_enum(self, context):
-    for item in self.search_data:
+    search_data_id = getattr(bpy.data, self.search_data_id_collection_name).get(self.search_data_id_name)
+    search_data = search_data_id.path_resolve(self.search_data_path)
+    for item in search_data:
         yield item.bl_handle, item.name, ''
 
 
@@ -550,8 +552,8 @@ classes = (
     M3CollectionOpRemove,
     M3CollectionOpMove,
     M3CollectionOpDuplicate,
-    M3HandleOpAdd,
-    M3HandleOpRemove,
+    M3HandleListOpAdd,
+    M3HandleListOpRemove,
     M3PropHandleUnlink,
     M3PropHandleSearch,
 )

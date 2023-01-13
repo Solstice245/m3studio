@@ -26,10 +26,10 @@ def register_props():
 
 
 def update_collection_index(self, context):
-    ob = context.object
-    bl = ob.m3_projections[ob.m3_projections_index]
-    shared.select_bones_handles(ob, [bl.bone])
-    shared.auto_update_bone_display_mode(ob, 'PROJ')
+    if self.m3_projections_index in range(len(self.m3_projections)):
+        bl = self.m3_projections[self.m3_projections_index]
+        shared.select_bones_handles(context.object, [bl.bone])
+        shared.auto_update_bone_display_mode(context.object, 'PROJ')
 
 
 def draw_props(projection, layout):

@@ -27,10 +27,10 @@ def register_props():
 
 
 def update_collection_index(self, context):
-    ob = context.object
-    bl = ob.m3_hittests[ob.m3_hittests_index]
-    shared.select_bones_handles(ob, [bl.bone])
-    shared.auto_update_bone_display_mode(ob, 'FTHT')
+    if self.m3_hittests_index in range(len(self.m3_hittests)):
+        bl = self.m3_hittests[self.m3_hittests_index]
+        shared.select_bones_handles(context.object, [bl.bone])
+        shared.auto_update_bone_display_mode(context.object, 'FTHT')
 
 
 class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):

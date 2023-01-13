@@ -41,10 +41,17 @@ ribbon_version = (
 
 
 def update_collection_index(self, context):
-    ob = context.object
-    bl = ob.m3_ribbons[ob.m3_ribbons_index]
-    shared.select_bones_handles(ob, [bl.bone])
-    shared.auto_update_bone_display_mode(ob, 'RIB_')
+    if self.m3_ribbons_index in range(len(self.m3_ribbons)):
+        bl = self.m3_ribbons[self.m3_ribbons_index]
+        shared.select_bones_handles(context.object, [bl.bone])
+        shared.auto_update_bone_display_mode(context.object, 'RIB_')
+
+
+def update_splines_collection_index(self, context):
+    if self.points_index in range(len(self.points)):
+        bl = self.points[spline.points_index]
+        shared.select_bones_handles(context.object, [bl.bone])
+        shared.auto_update_bone_display_mode(context.object, 'RIB_')
 
 
 def draw_point_props(point, layout):
@@ -208,7 +215,7 @@ class PointProperties(shared.M3BoneUserPropertyGroup):
 
 class SplineProperties(shared.M3PropertyGroup):
     points: bpy.props.CollectionProperty(type=PointProperties)
-    points_index: bpy.props.IntProperty(options=set(), default=-1)
+    points_index: bpy.props.IntProperty(options=set(), default=-1, update=update_splines_collection_index)
 
 
 class RibbonProperties(shared.M3BoneUserPropertyGroup):

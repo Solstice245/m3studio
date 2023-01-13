@@ -26,7 +26,7 @@ def register_props():
     bpy.types.Object.m3_particle_systems_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
     bpy.types.Object.m3_particle_systems_version = bpy.props.EnumProperty(options=set(), items=particle_system_versions, default='24')
     bpy.types.Object.m3_particle_copies = bpy.props.CollectionProperty(type=CopyProperties)
-    bpy.types.Object.m3_particle_copies_index = bpy.props.IntProperty(options=set(), default=-1)
+    bpy.types.Object.m3_particle_copies_index = bpy.props.IntProperty(options=set(), default=-1, update=update_copy_collection_index)
 
 
 # TODO UI stuff
@@ -45,10 +45,17 @@ particle_system_versions = (
 
 
 def update_collection_index(self, context):
-    ob = context.object
-    bl = ob.m3_particle_systems[ob.m3_particle_systems_index]
-    shared.select_bones_handles(ob, [bl.bone])
-    shared.auto_update_bone_display_mode(ob, 'PAR_')
+    if self.m3_particle_systems_index in range(len(self.m3_particle_systems)):
+        bl = self.m3_particle_systems[self.m3_particle_systems_index]
+        shared.select_bones_handles(context.object, [bl.bone])
+        shared.auto_update_bone_display_mode(context.object, 'PAR_')
+
+
+def update_copy_collection_index(self, context):
+    if self.m3_particle_copies_index in range(len(self.m3_particle_copies)):
+        bl = self.m3_particle_copies[self.m3_particle_copies_index]
+        shared.select_bones_handles(context.object, [bl.bone])
+        shared.auto_update_bone_display_mode(context.object, 'PAR_')
 
 
 def draw_copy_props(copy, layout):

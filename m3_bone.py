@@ -25,10 +25,10 @@ desc_batching = 'If a mesh material reference is bound to this bone, this proper
 
 def register_props():
     bpy.types.Bone.bl_handle = bpy.props.StringProperty(options=set())
-    bpy.types.Bone.m3_bind_scale = bpy.props.FloatVectorProperty(options=set(), size=3, subtype='XYZ', min=0.000001, default=(1,) * 3)
+    bpy.types.Bone.m3_bind_scale = bpy.props.FloatVectorProperty(options=set(), size=3, subtype='XYZ', default=(1,) * 3)  # setter to prevent == 0?
     bpy.types.Bone.m3_export_cull = bpy.props.BoolProperty(options=set(), default=True, description=desc_export_cull)
     bpy.types.EditBone.bl_handle = bpy.props.StringProperty(options=set())
-    bpy.types.EditBone.m3_bind_scale = bpy.props.FloatVectorProperty(options=set(), size=3, subtype='XYZ', min=0.000001, default=(1,) * 3)
+    bpy.types.EditBone.m3_bind_scale = bpy.props.FloatVectorProperty(options=set(), size=3, subtype='XYZ', default=(1,) * 3)
     bpy.types.EditBone.m3_export_cull = bpy.props.BoolProperty(options=set(), default=True, description=desc_export_cull)
 
     bpy.types.PoseBone.m3_batching = bpy.props.BoolProperty(name='M3 Bone Render', default=True, description=desc_batching)

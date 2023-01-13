@@ -33,12 +33,15 @@ turret_part_versions = (
 
 
 def update_collection_index(self, context):
-    ob = context.object
-    bl = ob.m3_turrets[ob.m3_turrets_index]
-    bl_handles = []
-    if bl:
-        bl_handles = [part.bone for part in bl.parts]
-    shared.select_bones_handles(ob, bl_handles)
+    if self.m3_turrets_index in range(len(self.m3_turrets)):
+        bl = self.m3_turrets[self.m3_turrets_index]
+        shared.select_bones_handles(self, [part.bone for part in bl.parts])
+
+
+def update_parts_collection_index(self, context):
+    if self.parts_index in range(len(self.parts)):
+        bl = self.parts[self.parts_index]
+        shared.select_bones_handles(ob, [bl.bone])
 
 
 def draw_part_props(part, layout):
@@ -116,7 +119,7 @@ class PartProperties(shared.M3BoneUserPropertyGroup):
 
 class Properties(shared.M3PropertyGroup):
     parts: bpy.props.CollectionProperty(type=PartProperties)
-    parts_index: bpy.props.IntProperty(options=set(), default=-1)
+    parts_index: bpy.props.IntProperty(options=set(), default=-1, update=update_parts_collection_index)
 
 
 class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):

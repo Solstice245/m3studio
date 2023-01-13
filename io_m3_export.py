@@ -58,9 +58,12 @@ def to_m3_vec3(bl_vec=None):
     return m3_vec
 
 
-def to_m3_vec3_f8(bl_vec=None):
-    m3_vec = io_m3.structures['Vector3As3Fixed8'].get_version(0).instance()
-    m3_vec.x, m3_vec.y, m3_vec.z = bl_vec or (0.0, 0.0, 0.0)
+def to_m3_vec3_uint8(bl_vec=None):
+    m3_vec = io_m3.structures['Vector3As3uint8'].get_version(0).instance()
+    if bl_vec:
+        m3_vec.x = round((bl_vec[0] + 1) / 2 * 255)
+        m3_vec.y = round((bl_vec[1] + 1) / 2 * 255)
+        m3_vec.z = round((bl_vec[2] + 1) / 2 * 255)
     return m3_vec
 
 
@@ -104,6 +107,15 @@ def to_m3_bnds(bl_vecs=None):
         m3_bnds.max = to_m3_vec3(bl_vecs[1])
         m3_bnds.radius = (bl_vecs[1] - bl_vecs[0]).length / 2
     return m3_bnds
+
+
+def bind_scale_to_matrix(vec3):
+    matrix = mathutils.Matrix()
+    matrix[0][0] = vec3[1]
+    matrix[1][1] = vec3[0]
+    matrix[2][2] = vec3[2]
+    matrix[3][3] = 1.0
+    return matrix
 
 
 ANIM_VEC_DATA_SETTINGS = {
@@ -164,7 +176,7 @@ def vec_equal(val0, val1):
 
 
 def quat_interp(left, right, factor):
-    return left.slerp(right, factor)
+    return left  # slerp not working as intended right now  # TODO fix or optimize out
 
 
 def quat_equal(val0, val1):
@@ -176,8 +188,8 @@ def simplify_anim_data_with_interp(keys, vals, interp_func, equal_func):
     if len(vals) < 2:
         return keys, vals
 
-    left_key, curr_key = keys[0:2]
-    left_val, curr_val = vals[0:2]
+    left_key, curr_key = keys[:2]
+    left_val, curr_val = vals[:2]
     new_keys = [left_key]
     new_vals = [left_val]
 
@@ -241,7 +253,7 @@ class M3OutputProcessor:
         self.exporter = exporter
         self.bl = bl
         self.m3 = m3
-        self.version = m3.struct_desc.struct_version
+        self.version = m3.desc.version
 
     def collect_anim_data_single(self, field, anim_ref, anim_data_tag):
         for action in self.exporter.action_to_anim_data:
@@ -1080,15 +1092,15 @@ class Exporter:
             bone_to_m3_bone[bone] = m3_bone
 
             bone_local_inv_matrix = (bone.matrix_local @ io_shared.rot_fix_matrix_transpose).inverted()
-            self.bone_to_iref[bone] = io_shared.bind_scale_to_matrix(bone.m3_bind_scale) @ bone_local_inv_matrix
+            self.bone_to_iref[bone] = bind_scale_to_matrix(bone.m3_bind_scale) @ bone_local_inv_matrix
             self.bone_to_inv_iref[bone] = bone.matrix_local.inverted()
 
             bind_scale_inv = mathutils.Vector((1.0 / bone.m3_bind_scale[ii] for ii in range(3)))
-            bind_scale_inv_matrix = io_shared.bind_scale_to_matrix(bind_scale_inv)
+            bind_scale_inv_matrix = bind_scale_to_matrix(bind_scale_inv)
 
             if bone.parent is not None:
                 m3_bone.parent = self.bone_name_indices[bone.parent.name]
-                parent_bind_matrix = io_shared.bind_scale_to_matrix(bone.parent.m3_bind_scale)
+                parent_bind_matrix = bind_scale_to_matrix(bone.parent.m3_bind_scale)
                 parent_inv_iref = self.bone_to_inv_iref[bone.parent]
                 left_correction_matrix = parent_bind_matrix @ io_shared.rot_fix_matrix @ parent_inv_iref @ bone.matrix_local
             else:
@@ -1332,14 +1344,14 @@ class Exporter:
                     if vertex_rgba:
                         m3_vert.col = to_m3_color((*loop[layer_color][0:3], (loop[layer_alpha][0] + loop[layer_alpha][1] + loop[layer_alpha][2]) / 3))
 
-                    m3_vert.normal = to_m3_vec3_f8(loop.vert.normal)
+                    m3_vert.normal = to_m3_vec3_uint8(loop.vert.normal)
 
                     if face[layer_sign] == 1:
-                        m3_vert.sign = 1.0
-                        m3_vert.tan = to_m3_vec3_f8(-tan)
+                        m3_vert.sign = 255
+                        m3_vert.tan = to_m3_vec3_uint8(-tan)
                     else:
-                        m3_vert.sign = -1.0
-                        m3_vert.tan = to_m3_vec3_f8(tan)
+                        m3_vert.sign = 0
+                        m3_vert.tan = to_m3_vec3_uint8(tan)
 
                     id_list = [
                         m3_vert.pos.x, m3_vert.pos.y, m3_vert.pos.z, m3_vert.lookup0, m3_vert.lookup1, m3_vert.lookup2, m3_vert.lookup3, m3_vert.sign,
@@ -1392,6 +1404,24 @@ class Exporter:
 
                 bone = shared.m3_pointer_get(self.ob.data.bones, batch.bone)
                 m3_batch.bone = self.bone_name_indices[bone.name] if bone else -1
+
+        # TODO more testing on when this is applicable is needed
+        # # this prevents the multi-batch mesh hack from crashing the game
+        # if len(mesh_objects) == 1 and len(batch_section) > 1:
+        #     vertices_len = len(m3_vertices)
+        #     faces_len = len(m3_faces)
+        #     extra_vertices = [m3_vertex_desc.instance()] * 3
+        #     extra_face = [vertices_len, vertices_len + 1, vertices_len + 2]
+        #     m3_vertices.extend(extra_vertices)
+        #     m3_faces.extend(extra_face)
+        #     extra_region = region_section.content_add()
+        #     extra_region.first_vertex_index = vertices_len
+        #     extra_region.vertex_count = 3
+        #     extra_region.first_face_index = faces_len
+        #     extra_region.face_count = 1
+        #     extra_region.bone_lookup_count = 0
+        #     extra_region.vertex_lookups_used = 0
+        #     extra_region.root_bone = 0
 
         self.bone_bounding_cos = {bone: [] for bone in self.bones}
 
@@ -1490,7 +1520,7 @@ class Exporter:
 
         layer_desc = io_m3.structures['LAYR'].get_version(self.ob.m3_materiallayers_version)
         # manually add into section list if referenced
-        null_layer_section = io_m3.Section(index_entry=None, struct_desc=layer_desc, references=[], content=[])
+        null_layer_section = io_m3.Section(index_entry=None, desc=layer_desc, references=[], content=[])
         null_layer_section.content_add()
 
         matrefs_typed = {ii: [] for ii in range(0, 13)}
@@ -1859,15 +1889,15 @@ class Exporter:
             bone1 = shared.m3_pointer_get(self.ob.data.bones, body1.bone)
             bone2 = shared.m3_pointer_get(self.ob.data.bones, body2.bone)
 
-            bone1_head = bone1.matrix_local.translation
-            bone1_vec = bone1.matrix_local.col[1].to_3d().normalized()
+            # bone1_head = bone1.matrix_local.translation
+            # bone1_vec = bone1.matrix_local.col[1].to_3d().normalized()
 
-            bone2_head = bone2.matrix_local.translation
-            bone2_vec = bone2.matrix_local.col[1].to_3d().normalized()
+            # bone2_head = bone2.matrix_local.translation
+            # bone2_vec = bone2.matrix_local.col[1].to_3d().normalized()
 
-            print(bone1_vec - bone2_vec)
-            print(bone2_vec - bone1_vec)
-            print()
+            # print(bone1_vec - bone2_vec)
+            # print(bone2_vec - bone1_vec)
+            # print()
 
             # # this produces the
             # print(bone2.matrix_local - bone1.matrix_local)

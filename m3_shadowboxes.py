@@ -26,10 +26,10 @@ def register_props():
 
 
 def update_collection_index(self, context):
-    ob = context.object
-    bl = ob.m3_shadowboxes[ob.m3_shadowboxes_index]
-    shared.select_bones_handles(ob, [bl.bone])
-    shared.auto_update_bone_display_mode(ob, 'SHBX')
+    if self.m3_shadowboxes_index in range(len(self.m3_shadowboxes)):
+        bl = self.m3_shadowboxes[self.m3_shadowboxes_index]
+        shared.select_bones_handles(self, [bl.bone])
+        shared.auto_update_bone_display_mode(self, 'SHBX')
 
 
 def draw_props(shbx, layout):

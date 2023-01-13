@@ -23,18 +23,11 @@ from . import bl_enum
 
 def register_props():
     bpy.types.Object.m3_physicsshapes = bpy.props.CollectionProperty(type=ShapeProperties)
-    bpy.types.Object.m3_physicsshapes_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
-    bpy.types.Object.m3_physicsshapes_version = bpy.props.EnumProperty(options=set(), items=physics_shape_versions, default='3')
+    bpy.types.Object.m3_physicsshapes_index = bpy.props.IntProperty(options=set(), default=-1, update=update_shapes_collection_index)
     bpy.types.Object.m3_rigidbodies = bpy.props.CollectionProperty(type=BodyProperties)
     bpy.types.Object.m3_rigidbodies_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
     bpy.types.Object.m3_rigidbodies_version = bpy.props.EnumProperty(options=set(), items=rigid_body_versions, default='4')
 
-
-physics_shape_versions = (
-    ('1', '1', 'Version 1'),
-    ('2', '2', 'Version 2'),
-    ('3', '3', 'Version 3'),
-)
 
 # need better documentation of non version 3 version
 rigid_body_versions = (
@@ -45,11 +38,15 @@ rigid_body_versions = (
 
 
 def update_collection_index(self, context):
-    ob = context.object
-    if len(ob.m3_rigidbodies):
-        bl = ob.m3_rigidbodies[ob.m3_rigidbodies_index]
-        shared.select_bones_handles(ob, [bl.bone])
-        shared.auto_update_bone_display_mode(ob, 'PHRB')
+    if self.m3_rigidbodies_index in range(len(self.m3_rigidbodies)):
+        bl = self.m3_rigidbodies[self.m3_rigidbodies_index]
+        shared.select_bones_handles(context.object, [bl.bone])
+        shared.auto_update_bone_display_mode(context.object, 'PHRB')
+
+
+def update_shapes_collection_index(self, context):
+    if len(self.m3_physicsshapes):
+        shared.auto_update_bone_display_mode(context.object, 'PHRB')
 
 
 def draw_volume_props(shape, layout):
