@@ -19,7 +19,6 @@
 import bpy
 import bmesh
 import mathutils
-import math
 import os
 from . import io_m3
 from . import io_shared
@@ -110,12 +109,7 @@ def to_m3_bnds(bl_vecs=None):
 
 
 def bind_scale_to_matrix(vec3):
-    matrix = mathutils.Matrix()
-    matrix[0][0] = vec3[1]
-    matrix[1][1] = vec3[0]
-    matrix[2][2] = vec3[2]
-    matrix[3][3] = 1.0
-    return matrix
+    return mathutils.Matrix.LocRotScale(None, None, (vec3[1], vec3[0], vec3[2]))
 
 
 ANIM_VEC_DATA_SETTINGS = {
@@ -227,24 +221,16 @@ def quat_list_contains_not_only(quat_list, quat):
 
 
 def bounding_vectors_from_bones(bone_rest_bounds, bone_to_matrix_dict):
-    vec_min = mathutils.Vector((float('inf'), float('inf'), float('inf')))
-    vec_max = mathutils.Vector((float('-inf'), float('-inf'), float('-inf')))
-
-    for bone, bounding_cos in bone_rest_bounds.items():
+    vals = ([], [], [])
+    for bone, bound_vecs in bone_rest_bounds.items():
         matrix = bone_to_matrix_dict[bone]
-        bone_vec_min = mathutils.Vector((float('inf'), float('inf'), float('inf')))
-        bone_vec_max = mathutils.Vector((float('-inf'), float('-inf'), float('-inf')))
-        for co in bounding_cos:
+        for co in bound_vecs:
             mat_co = matrix @ co
-            for ii in range(3):
-                bone_vec_min[ii] = min(bone_vec_min[ii], mat_co[ii])
-                bone_vec_max[ii] = max(bone_vec_max[ii], mat_co[ii])
-        for ii in range(3):
-            if not math.isinf(bone_vec_min[0]):
-                vec_min[ii] = min(vec_min[ii], bone_vec_min[ii])
-                vec_max[ii] = max(vec_max[ii], bone_vec_max[ii])
+            vals[0].append(mat_co.x)
+            vals[1].append(mat_co.y)
+            vals[2].append(mat_co.z)
 
-    return vec_min, vec_max
+    return mathutils.Vector((min(vals[0]), min(vals[1]), min(vals[2]))), mathutils.Vector((max(vals[0]), max(vals[1]), max(vals[2])))
 
 
 class M3OutputProcessor:
@@ -794,9 +780,8 @@ class Exporter:
         self.bone_name_indices = {bone.name: ii for ii, bone in enumerate(self.bones)}
         self.bone_to_correction_matrices = {}
         self.bone_to_iref = {}
-        self.bone_to_inv_iref = {}
         self.bone_to_abs_pose_matrix = {}
-        self.bone_bounding_cos = None  # defined later
+        self.bone_bound_vecs = None  # defined later
 
         self.matref_handle_indices = {}
         for matref in ob.m3_materialrefs:
@@ -849,7 +834,7 @@ class Exporter:
         self.create_billboards(model, export_billboards)
         # ???? self.create_tmd_data(model, export_tmd_data)
 
-        self.finalize_anim_data(model)  # TODO EVNT export
+        self.finalize_anim_data(model)
 
         self.m3.resolve()
         self.m3.validate()
@@ -974,13 +959,13 @@ class Exporter:
                 frame_list = list(self.action_abs_pose_matrices[action].keys())
                 init_frame = frame_list.pop(0)
 
-                prev_min, prev_max = bounding_vectors_from_bones(self.bone_bounding_cos, self.action_abs_pose_matrices[action][init_frame])
+                prev_min, prev_max = bounding_vectors_from_bones(self.bone_bound_vecs, self.action_abs_pose_matrices[action][init_frame])
 
                 bnds_data[0].append(init_frame)
                 bnds_data[1].append(to_m3_bnds((prev_min, prev_max)))
 
                 for frame in frame_list[0::2]:
-                    bnds_min, bnds_max = bounding_vectors_from_bones(self.bone_bounding_cos, self.action_abs_pose_matrices[action][frame])
+                    bnds_min, bnds_max = bounding_vectors_from_bones(self.bone_bound_vecs, self.action_abs_pose_matrices[action][frame])
                     if (prev_min - bnds_min).length >= 0.025 or (prev_max - bnds_max).length >= 0.025:
                         bnds_data[0].append(frame)
                         bnds_data[1].append(to_m3_bnds((bnds_min, bnds_max)))
@@ -1068,13 +1053,13 @@ class Exporter:
 
         bone_to_m3_bone = {}
 
-        # TODO some bones matrices are not being calculated properly
         for bone in self.bones:
             pose_bone = self.ob.pose.bones.get(bone.name)
             m3_bone_parent = bone_to_m3_bone.get(bone.parent, None) if bone.parent else None
             m3_bone = bone_section.content_add()
             m3_bone_name_section = self.m3.section_for_reference(m3_bone, 'name')
             m3_bone_name_section.content_from_bytes(bone.name)
+            m3_bone.parent = self.bone_name_indices.get(bone.parent.name) if bone.parent else -1
             m3_bone.flags = 0
             m3_bone.bit_set('flags', 'real', True)  # TODO is not always true for blizzard models, figure out when this is applicable
             m3_bone.bit_set('flags', 'skinned', bone in self.skinned_bones)
@@ -1093,18 +1078,14 @@ class Exporter:
 
             bone_local_inv_matrix = (bone.matrix_local @ io_shared.rot_fix_matrix_transpose).inverted()
             self.bone_to_iref[bone] = bind_scale_to_matrix(bone.m3_bind_scale) @ bone_local_inv_matrix
-            self.bone_to_inv_iref[bone] = bone.matrix_local.inverted()
 
             bind_scale_inv = mathutils.Vector((1.0 / bone.m3_bind_scale[ii] for ii in range(3)))
             bind_scale_inv_matrix = bind_scale_to_matrix(bind_scale_inv)
 
-            if bone.parent is not None:
-                m3_bone.parent = self.bone_name_indices[bone.parent.name]
+            if bone.parent:
                 parent_bind_matrix = bind_scale_to_matrix(bone.parent.m3_bind_scale)
-                parent_inv_iref = self.bone_to_inv_iref[bone.parent]
-                left_correction_matrix = parent_bind_matrix @ io_shared.rot_fix_matrix @ parent_inv_iref @ bone.matrix_local
+                left_correction_matrix = parent_bind_matrix @ io_shared.rot_fix_matrix @ bone.parent.matrix_local.inverted() @ bone.matrix_local
             else:
-                m3_bone.parent = -1
                 left_correction_matrix = bone.matrix_local
 
             right_correction_matrix = io_shared.rot_fix_matrix_transpose @ bind_scale_inv_matrix
@@ -1121,8 +1102,8 @@ class Exporter:
             m3_bone.rotation.default = to_m3_quat(m3_bone_rot)
             m3_bone.location.default = to_m3_vec3(m3_bone_loc)
 
-            if bone.parent is not None:
-                abs_pose_matrix = self.bone_to_abs_pose_matrix[bone.parent] @ self.bone_to_inv_iref[bone.parent].inverted() @ m3_pose_matrix
+            if bone.parent:
+                abs_pose_matrix = self.bone_to_abs_pose_matrix[bone.parent] @ self.bone_to_iref[bone.parent].inverted() @ m3_pose_matrix
             else:
                 abs_pose_matrix = m3_pose_matrix
 
@@ -1214,7 +1195,7 @@ class Exporter:
 
                         if bone.parent is not None:
                             parent_abs_pose_matrix = frame_to_bone_abs_pose_matrix[jj + frame_start][bone.parent]
-                            abs_bone_matrix = parent_abs_pose_matrix @ self.bone_to_inv_iref[bone.parent].inverted() @ m3_pose_matrix
+                            abs_bone_matrix = parent_abs_pose_matrix @ self.bone_to_iref[bone.parent].inverted() @ m3_pose_matrix
                         else:
                             abs_bone_matrix = m3_pose_matrix
 
@@ -1271,7 +1252,7 @@ class Exporter:
         m3_faces = []
         m3_lookup = []
 
-        bone_boundings = {bone: [*(float('inf'),) * 3, *(-float('inf'),) * 3] for bone in self.bones}
+        bone_bounding_points = {bone: [] for bone in self.bones}
 
         for ob in mesh_objects:
             bm = bmesh.new(use_operators=True)
@@ -1317,11 +1298,7 @@ class Exporter:
                         lookup_ii = group_to_lookup_ii.get(deformation[0])
                         if lookup_ii is not None and deformation[1]:
                             deformations.append([lookup_ii, deformation[1]])
-
-                            bbl = bone_boundings[self.bones[region_lookup[lookup_ii]]]
-                            for ii in range(3):
-                                bbl[ii] = min(bbl[ii], co[ii])
-                                bbl[ii + 3] = max(bbl[ii + 3], co[ii])
+                            bone_bounding_points[self.bones[region_lookup[lookup_ii]]].append(co)
 
                     deformations.sort(key=lambda x: x[1])
                     deformations = deformations[0:max(4, len(deformations))]
@@ -1423,23 +1400,21 @@ class Exporter:
         #     extra_region.vertex_lookups_used = 0
         #     extra_region.root_bone = 0
 
-        self.bone_bounding_cos = {bone: [] for bone in self.bones}
+        self.bone_bound_vecs = {}
 
-        for bone, arr in bone_boundings.items():
-            self.bone_bounding_cos[bone].append(mathutils.Vector((arr[0], arr[1], arr[2])))
-            self.bone_bounding_cos[bone].append(mathutils.Vector((arr[0], arr[4], arr[2])))
-            self.bone_bounding_cos[bone].append(mathutils.Vector((arr[0], arr[4], arr[5])))
-            self.bone_bounding_cos[bone].append(mathutils.Vector((arr[0], arr[1], arr[5])))
-            self.bone_bounding_cos[bone].append(mathutils.Vector((arr[3], arr[4], arr[2])))
-            self.bone_bounding_cos[bone].append(mathutils.Vector((arr[3], arr[1], arr[2])))
-            self.bone_bounding_cos[bone].append(mathutils.Vector((arr[3], arr[4], arr[5])))
-            self.bone_bounding_cos[bone].append(mathutils.Vector((arr[3], arr[1], arr[5])))
+        for bone in self.bones:
+            if not bone_bounding_points[bone]:
+                continue
+            x_cos, y_cos, z_cos = zip(*bone_bounding_points[bone])
+            vec_min = mathutils.Vector((min(x_cos), min(y_cos), min(z_cos)))
+            vec_max = mathutils.Vector((max(x_cos), max(y_cos), max(z_cos)))
+            self.bone_bound_vecs[bone] = (vec_min, vec_max)
 
         self.region_section = region_section
 
         msec_section = self.m3.section_for_reference(div, 'msec', version=1)
         msec = msec_section.content_add()
-        msec.bounding = self.init_anim_ref_bnds(bounding_vectors_from_bones(self.bone_bounding_cos, self.bone_to_abs_pose_matrix))
+        msec.bounding = self.init_anim_ref_bnds(bounding_vectors_from_bones(self.bone_bound_vecs, self.bone_to_abs_pose_matrix))
 
         vertex_section.content_from_bytes(m3_vertex_desc.instances_to_bytes(m3_vertices))
         face_section.content_iter_add(m3_faces)
