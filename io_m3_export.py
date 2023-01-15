@@ -453,13 +453,15 @@ class Exporter:
     def m3_export(self, ob, filename):
         assert ob.type == 'ARMATURE'
 
+        bpy.context.view_layer.objects.active = ob
+        bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
+
+        if not ob.animation_data:
+            ob.animation_data_create()
+
         self.ob = ob
-        self.view_layer = bpy.context.view_layer
         self.scene = bpy.context.scene
         self.m3 = io_m3.SectionList(init_header=True)
-
-        self.view_layer.objects.active = self.ob
-        bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
 
         self.anim_id_count = 0
         self.uv_count = 0
@@ -486,7 +488,7 @@ class Exporter:
         # used for later reference such as setting region flags
         self.region_section = None  # defined in the mesh export code
 
-        self.init_action = self.ob.animation_data.action if self.ob.animation_data else None
+        self.init_action = self.ob.animation_data.action
         self.init_frame = self.scene.frame_current
 
         def valid_collections_and_requirements(collection):
@@ -841,10 +843,12 @@ class Exporter:
         self.m3.to_index()
 
         # place armature back into the pose that it was before
-        anim_set(self.ob.m3_animations[self.ob.m3_animations_index], self.scene, self.view_layer, self.ob)
+        anim_set(self.scene, self.ob, self.ob.m3_animations[self.ob.m3_animations_index])
         self.ob.animation_data.action = self.init_action
         self.scene.frame_current = self.init_frame
 
+        # animation data is exported much faster while no armature modifiers point to them.
+        # keep this below anything handling animation data.
         for ob in self.export_regions:
             arm_mod = None
             for modifier in ob.modifiers:
@@ -1045,7 +1049,7 @@ class Exporter:
             return
 
         # place armature in the default pose so that bones are in their default pose
-        anim_set(None, self.scene, self.view_layer, self.ob)
+        anim_set(self.scene, self.ob, None)
         self.scene.frame_set(0)
 
         bone_section = self.m3.section_for_reference(model, 'bones', version=1)
@@ -1117,7 +1121,7 @@ class Exporter:
 
             # setting scene properties is extremely slow
             # maximum optimization would keep calls to anim_set and frame_set to an absolute minimum
-            anim_set(anim, self.scene, self.view_layer, self.ob)
+            anim_set(self.scene, self.ob, anim)
 
             # jog animation frame so that complicated pose calculations are completed before proceeding
             # TODO make an export option to step through a given number of previous frames to allow completion of timed calculations (ie wigglebone)
@@ -1202,7 +1206,7 @@ class Exporter:
                         frame_to_bone_abs_pose_matrix[jj + frame_start][bone] = abs_bone_matrix @ self.bone_to_iref[bone]
 
         # place armature in the default pose again so that default values of m3 properties are accessed properly
-        anim_set(None, self.scene, self.view_layer, self.ob)
+        anim_set(self.scene, self.ob, None)
         self.scene.frame_set(0)
 
     def create_division(self, model, mesh_objects, regn_version):

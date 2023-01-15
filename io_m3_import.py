@@ -316,7 +316,7 @@ class Importer:
 
         self.ob.m3_model_version = str(self.m3_model.desc.version)
 
-        anim_set(None, bpy.context.scene, bpy.context.view_layer, self.ob)
+        anim_set(bpy.context.scene, self.ob, None)
         bpy.context.view_layer.objects.active = self.ob
         self.ob.select_set(True)
 
@@ -1449,6 +1449,6 @@ class Importer:
         return me_ob
 
 
-def m3_import(filename):
+def m3_import(filename, ob=None):
     importer = Importer()
-    importer.m3_import(filename)
+    importer.m3_import(filename, ob)

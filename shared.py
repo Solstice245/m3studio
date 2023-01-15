@@ -363,24 +363,28 @@ class M3PropHandleUnlink(bpy.types.Operator):
 
 
 # TODO Make it so that handle list items must be unique
-def draw_handle_list(layout, search_data, collection, label=''):
+def draw_handle_list(layout, search_data, data, prop_name, label=''):
     op = layout.operator('m3.handle_add', text=('Add ' + label) if label else None)
-    op.collection = collection.path_from_id()
-    for ii, item in enumerate(collection):
-        draw_handle_list_item(layout, search_data, collection, label, item, ii)
+    op.collection = data.path_from_id(prop_name)
+    for ii, item in enumerate(getattr(data, prop_name)):
+        draw_handle_list_item(layout, search_data, data, prop_name, label, item, ii)
 
 
-def draw_handle_list_item(layout, search_data, collection, label, item, index):
+def draw_handle_list_item(layout, search_data, data, prop_name, label, item, index):
     pointer_ob = m3_pointer_get(search_data, item.bl_handle)
 
     row = layout.row(align=True)
     row.use_property_split = False
     op = row.operator('m3.prophandle_search', text=pointer_ob.name if pointer_ob else 'Select ' + label, icon='VIEWZOOM')
+    op.prop_id_name = data.id_data.name
+    op.prop_id_collection_name = bl_id_type_to_collection_name[type(data.id_data)]
     op.prop_path = item.path_from_id()
     op.prop_name = 'bl_handle'
+    op.search_data_id_name = search_data.id_data.name
+    op.search_data_id_collection_name = bl_id_type_to_collection_name[type(search_data.id_data)]
     op.search_data_path = search_data.path_from_id()
     op = row.operator('m3.handle_remove', text='', icon='X')
-    op.collection = collection.path_from_id()
+    op.collection = data.path_from_id(prop_name)
     op.index = index
 
 

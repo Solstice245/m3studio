@@ -64,7 +64,7 @@ def draw_copy_props(copy, layout):
     col.prop(copy, 'emit_rate', text='Emission Rate')
     col.prop(copy, 'emit_count', text='Emission Amount')
     layout.separator()
-    shared.draw_handle_list(layout.box(), copy.id_data.m3_particle_systems, copy.systems, label='Particle System')
+    shared.draw_handle_list(layout.box(), copy.id_data.m3_particle_systems, copy, 'systems', label='Particle System')
 
 
 def draw_props(particle, layout):

@@ -85,10 +85,13 @@ class M3ImportOperator(bpy.types.Operator):
     filename_ext = '.m3'
     filter_glob: bpy.props.StringProperty(options={'HIDDEN'}, default='*.m3;*.m3a')
     filepath: bpy.props.StringProperty(name='File Path', description='File path for import operation', maxlen=1023, default='')
+    id_name: bpy.props.StringProperty(default='')
 
     def invoke(self, context, event):
+        id_object = bpy.data.objects.get(self.id_name)
+
         start_time = time.time()
-        io_m3_import.m3_import(self.filepath)
+        io_m3_import.m3_import(self.filepath, id_object)
         print(time.time() - start_time)
         return {'RUNNING_MODAL'}
 
@@ -173,7 +176,7 @@ classes = (
 def init_msgbus(*args):
     for arm in [ob for ob in bpy.context.scene.objects if ob.type == 'ARMATURE']:
         for module in m3_modules:
-            if module.init_msgbus:
+            if hasattr(module, 'init_msgbus'):
                 module.init_msgbus(arm, bpy.context)
 
 

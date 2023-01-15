@@ -36,11 +36,11 @@ def anim_update(self, context):
         anim = None
         if context.object.m3_animations_index in range(len(context.object.m3_animations)):
             anim = context.object.m3_animations[context.object.m3_animations_index]
-        anim_set(anim, context.scene, context.view_layer, context.object)
+        anim_set(context.scene, context.object, anim)
 
 
 # this function is exported to io_m3_import.py and io_m3_export.py
-def anim_set(anim, scene, view_layer, ob):
+def anim_set(scene, ob, anim):
     if ob.animation_data is None:
         ob.animation_data_create()
 
@@ -49,7 +49,7 @@ def anim_set(anim, scene, view_layer, ob):
 
     if anim is None:
         ob.animation_data.action = ob.m3_animations_default
-        scene.frame_current = 0
+        scene.frame_set(0)
     else:
         old_action = ob.animation_data.action
         old_props = set()
@@ -84,7 +84,7 @@ def anim_set(anim, scene, view_layer, ob):
             ob.m3_animations_default.fcurves.remove(fcurve)
 
         ob.animation_data.action = ob.m3_animations_default
-        view_layer.update()
+        scene.frame_set(scene.frame_current)
         ob.animation_data.action = new_action
 
 
@@ -146,7 +146,7 @@ def draw_group_props(anim_group, layout):
     col.prop(anim_group, 'not_looping', text='Does Not Loop')
     col.prop(anim_group, 'always_global', text='Always Global')
     col.prop(anim_group, 'global_in_previewer', text='Global In Previewer')
-    shared.draw_handle_list(layout.box(), anim_group.id_data.m3_animations, anim_group.animations, label='Animation')
+    shared.draw_handle_list(layout.box(), anim_group.id_data.m3_animations, anim_group, 'animations', label='Animation')
 
 
 class AnimationProperties(shared.M3PropertyGroup):
