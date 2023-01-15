@@ -88,6 +88,11 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
 
         op = layout.operator('m3.export')
         op.filepath = 'C:\\Users\\John Wharton\\Documents\\M3Test_studio.m3'
+        layout.separator()
+        op = layout.operator('m3.import')
+        op.id_name = context.object.name
+        op.filepath = 'C:\\Users\\John Wharton\\Documents\\M3Test_editor2.m3'
+        layout.separator()
 
         col = layout.column(align=True)
         col.prop(bounds, 'bottom', text='Bounding Bottom')
