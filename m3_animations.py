@@ -98,16 +98,18 @@ def anim_group_update(self, context):
     ob = context.object
     anim_group = ob.m3_animation_groups[ob.m3_animation_groups_index]
 
-    if not ob.m3_options.auto_update_timeline:
-        return
-
     if ob.m3_animation_groups_index >= 0:
-        if ob.m3_animations[ob.m3_animations_index].bl_handle not in [item.bl_handle for item in anim_group.animations]:
+        anim = ob.m3_animations[ob.m3_animations_index] if ob.m3_animations_index in range(len(ob.m3_animations)) else None
+        if anim:
+            if anim.bl_handle not in [item.bl_handle for item in anim_group.animations]:
+                ob.m3_animations_index = ob.m3_animations.find(shared.m3_pointer_get(ob.m3_animations, anim_group.animations[0].bl_handle).name)
+        else:
             ob.m3_animations_index = ob.m3_animations.find(shared.m3_pointer_get(ob.m3_animations, anim_group.animations[0].bl_handle).name)
 
-        bpy.context.scene.frame_start = anim_group.frame_start
-        bpy.context.scene.frame_current = anim_group.frame_start
-        bpy.context.scene.frame_end = anim_group.frame_end
+        if ob.m3_options.auto_update_timeline:
+            bpy.context.scene.frame_start = anim_group.frame_start
+            bpy.context.scene.frame_current = anim_group.frame_start
+            bpy.context.scene.frame_end = anim_group.frame_end
 
     else:
         ob.m3_animations_index = -1
@@ -115,7 +117,7 @@ def anim_group_update(self, context):
 
 def anim_group_frame_update(self, context):
     ob = context.object
-    anim_group = ob.m3_animation_groups[ob.m3_animations_groups_index]
+    anim_group = ob.m3_animation_groups[ob.m3_animation_groups_index]
 
     if not ob.m3_options.auto_update_timeline:
         return

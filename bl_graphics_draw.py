@@ -98,6 +98,21 @@ def draw():
         handle_to_bone = {}
         bone_to_inv_bind_scale_matrix = {}
 
+        if ob.m3_bounds.opt_display:
+            bnds = ob.m3_bounds
+            coords, indices = blgd.cube
+            coords = []
+            coords.append(mathutils.Vector((bnds.right, bnds.front, bnds.bottom)))
+            coords.append(mathutils.Vector((bnds.left, bnds.front, bnds.bottom)))
+            coords.append(mathutils.Vector((bnds.right, bnds.back, bnds.bottom)))
+            coords.append(mathutils.Vector((bnds.left, bnds.back, bnds.bottom)))
+            coords.append(mathutils.Vector((bnds.right, bnds.front, bnds.top)))
+            coords.append(mathutils.Vector((bnds.left, bnds.front, bnds.top)))
+            coords.append(mathutils.Vector((bnds.right, bnds.back, bnds.top)))
+            coords.append(mathutils.Vector((bnds.left, bnds.back, bnds.top)))
+            coords = get_transformed_coords(coords, ob.matrix_world)
+            batch_uni_polyline(coords, indices, (1, 1, 1))
+
         for bone in ob.data.bones:
             bs = bone.m3_bind_scale
             bone_to_inv_bind_scale_matrix[bone] = mathutils.Matrix.LocRotScale(None, None, (1 / bs[0], 1 / bs[1], 1 / bs[2]))

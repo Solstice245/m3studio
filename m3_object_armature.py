@@ -67,15 +67,47 @@ class OptionProperties(bpy.types.PropertyGroup):
 
 # TODO bounding preview
 class BoundingProperties(bpy.types.PropertyGroup):
-    bottom: bpy.props.FloatProperty(name='M3 Bounding Bottom', default=-0.25)
-    top: bpy.props.FloatProperty(name='M3 Bounding Top', default=2)
-    left: bpy.props.FloatProperty(name='M3 Bounding Left', default=-2)
-    right: bpy.props.FloatProperty(name='M3 Bounding Right', default=2)
-    front: bpy.props.FloatProperty(name='M3 Bounding Front', default=2)
-    back: bpy.props.FloatProperty(name='M3 Bounding Back', default=-2)
+    opt_display: bpy.props.BoolProperty(options=set())
+    bottom: bpy.props.FloatProperty(options=set(), default=-0.25)
+    top: bpy.props.FloatProperty(options=set(), default=2)
+    left: bpy.props.FloatProperty(options=set(), default=-2)
+    right: bpy.props.FloatProperty(options=set(), default=2)
+    front: bpy.props.FloatProperty(options=set(), default=2)
+    back: bpy.props.FloatProperty(options=set(), default=-2)
 
 
-class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
+class IOPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_M3_IO'
+    bl_label = 'M3 Import/Export'
+
+    def draw(self, context):
+        ob = context.object
+        layout = self.layout
+        layout.use_property_split = True
+
+        op = layout.operator('m3.import')
+        op.id_name = context.object.name
+        op.filepath = 'C:\\Users\\John Wharton\\Documents\\M3Test_editor2.m3'
+        layout.separator()
+        op = layout.operator('m3.export')
+        op.filepath = 'C:\\Users\\John Wharton\\Documents\\M3Test_studio.m3'
+        layout.separator()
+
+        col = layout.column()
+        col.prop(ob, 'm3_model_version', text='Model Version')
+        col.prop(ob, 'm3_mesh_version', text='Mesh Version')
+        col.prop(ob, 'm3_materiallayers_version', text='Material Layer Version')
+        col.prop(ob, 'm3_materials_standard_version', text='Standard Material Version')
+        col.prop(ob, 'm3_materials_reflection_version', text='Reflection Material Version')
+        col.prop(ob, 'm3_cameras_version', text='Camera Version')
+        col.prop(ob, 'm3_particle_systems_version', text='Particle System Version')
+        col.prop(ob, 'm3_ribbons_version', text='Ribbon Version')
+        col.prop(ob, 'm3_rigidbodies_version', text='Rigid Body Version')
+        col.prop(ob, 'm3_turrets_part_version', text='Turret Part Version')
+        col.prop(ob, 'm3_cloths_version', text='Cloth Version')
+
+
+class OptionsPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_idname = 'OBJECT_PT_M3_OBJECT_OPTIONS'
     bl_label = 'M3 Object Options'
 
@@ -84,16 +116,27 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
         layout = self.layout
         layout.use_property_split = True
         options = ob.m3_options
+
+        col = layout.column(align=True)
+        col.prop(options, 'bone_display_mode', text='Bone Display')
+        col.prop(options, 'auto_update_bone_display_mode', text='Auto Update Bone Display')
+        col.prop(options, 'auto_update_bone_selection', text='Auto Update Bone Selection')
+        col.separator()
+        col.prop(options, 'auto_update_timeline', text='Auto Update Animation Timeline')
+        col.prop(options, 'auto_update_action', text='Auto Update Animation Action')
+
+
+class BoundsPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_M3_BOUNDS'
+    bl_label = 'M3 Bounds'
+
+    def draw(self, context):
+        ob = context.object
         bounds = ob.m3_bounds
+        layout = self.layout
+        layout.use_property_split = True
 
-        op = layout.operator('m3.export')
-        op.filepath = 'C:\\Users\\John Wharton\\Documents\\M3Test_studio.m3'
-        layout.separator()
-        op = layout.operator('m3.import')
-        op.id_name = context.object.name
-        op.filepath = 'C:\\Users\\John Wharton\\Documents\\M3Test_editor2.m3'
-        layout.separator()
-
+        layout.prop(bounds, 'opt_display', text='Preview')
         col = layout.column(align=True)
         col.prop(bounds, 'bottom', text='Bounding Bottom')
         col.prop(bounds, 'top', text='Top')
@@ -101,30 +144,12 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
         col.prop(bounds, 'right', text='Right')
         col.prop(bounds, 'front', text='Front')
         col.prop(bounds, 'back', text='Back')
-        col.separator()
-        col.prop(options, 'bone_display_mode', text='Bone Display')
-        col.prop(options, 'auto_update_bone_display_mode', text='Auto Update Bone Display')
-        col.prop(options, 'auto_update_bone_selection', text='Auto Update Bone Selection')
-        col.separator()
-        col.prop(options, 'auto_update_timeline', text='Auto Update Animation Timeline')
-        col.prop(options, 'auto_update_action', text='Auto Update Animation Action')
-        col.separator()
-        col = layout.column()
-        col.prop(ob, 'm3_model_version', text='M3 Model Version')
-        col.prop(ob, 'm3_mesh_version', text='M3 Mesh Version')
-        col.prop(ob, 'm3_materiallayers_version', text='M3 Material Layer Version')
-        col.prop(ob, 'm3_materials_standard_version', text='M3 Standard Material Version')
-        col.prop(ob, 'm3_materials_reflection_version', text='M3 Reflection Material Version')
-        col.prop(ob, 'm3_cameras_version', text='M3 Camera Version')
-        col.prop(ob, 'm3_particle_systems_version', text='M3 Particle System Version')
-        col.prop(ob, 'm3_ribbons_version', text='M3 Ribbon Version')
-        col.prop(ob, 'm3_rigidbodies_version', text='M3 Rigid Body Version')
-        col.prop(ob, 'm3_turrets_part_version', text='M3 Turret Part Version')
-        col.prop(ob, 'm3_cloths_version', text='M3 Cloth Version')
 
 
 classes = (
     OptionProperties,
     BoundingProperties,
-    Panel,
+    IOPanel,
+    OptionsPanel,
+    BoundsPanel,
 )
