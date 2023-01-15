@@ -109,15 +109,24 @@ class Properties(shared.M3BoneUserPropertyGroup):
     unknown_flag0x8: bpy.props.BoolProperty(options=set())
 
 
+class Menu(bpy.types.Menu):
+    bl_idname = 'OBJECT_MT_m3_projections'
+    bl_label = 'Menu'
+
+    def draw(self, context):
+        shared.draw_menu_duplicate(self.layout, context.object.m3_projections, dup_keyframes_opt=True)
+
+
 class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_idname = 'OBJECT_PT_M3_PROJECTIONS'
     bl_label = 'M3 Projections'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, context.object.m3_projections, draw_props)
+        shared.draw_collection_list(self.layout, context.object.m3_projections, draw_props, menu_id=Menu.bl_idname)
 
 
 classes = (
     Properties,
+    Menu,
     Panel,
 )

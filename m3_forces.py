@@ -67,15 +67,24 @@ class Properties(shared.M3BoneUserPropertyGroup):
     unbounded: bpy.props.BoolProperty(options=set())
 
 
+class Menu(bpy.types.Menu):
+    bl_idname = 'OBJECT_MT_m3_forces'
+    bl_label = 'Menu'
+
+    def draw(self, context):
+        shared.draw_menu_duplicate(self.layout, context.object.m3_forces, dup_keyframes_opt=True)
+
+
 class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_idname = 'OBJECT_PT_M3_FORCES'
     bl_label = 'M3 Forces'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, context.object.m3_forces, draw_props)
+        shared.draw_collection_list(self.layout, context.object.m3_forces, draw_props, menu_id=Menu.bl_idname)
 
 
 classes = (
     Properties,
+    Menu,
     Panel,
 )

@@ -67,7 +67,6 @@ def batch_uni_polyline(coords, indices, color, line_width=0.35):
 
 # TODO options to filter generation of helper types
 # TODO optionally pass over items which are not to be exported
-# TODO RIB_, PHYJ, PATU
 def draw():
     space_3d = bpy.context.space_data
 
@@ -418,6 +417,8 @@ def draw():
                     coords = get_transformed_coords(item[0], final_matrix)
                     batch_uni_polyline(coords, item[1], col)
 
+        # TODO PHYJ
+
         for constraint_set in ob.m3_clothconstraintsets:
             # TODO only procede if the constraint set is used
             for item in constraint_set.constraints:
@@ -467,4 +468,5 @@ def draw():
                 coords, indices = blgd.sphere
                 coords = get_transformed_coords(coords, final_matrix)
                 batch_uni_polyline(coords, indices, col)
-    #
+
+        # TODO PATU

@@ -34,7 +34,24 @@ def update_collection_index(self, context):
 
 def draw_props(point, layout):
     shared.draw_pointer_prop(layout, point.id_data.data.bones, point, 'bone', label='Bone', icon='BONE_DATA')
-    shared.draw_collection_list(layout.box(), point.volumes, shared.draw_volume_props, label='Volumes:')
+    shared.draw_collection_list(layout.box(), point.volumes, shared.draw_volume_props, menu_id=VolumeMenu.bl_idname, label='Volumes:')
+
+
+class VolumeMenu(bpy.types.Menu):
+    bl_idname = 'OBJECT_MT_m3_attachmentvolumes'
+    bl_label = 'Menu'
+
+    def draw(self, context):
+        point = context.object.m3_attachmentpoints[context.object.m3_attachmentpoints_index]
+        shared.draw_menu_duplicate(self.layout, point.volumes, dup_keyframes_opt=False)
+
+
+class PointMenu(bpy.types.Menu):
+    bl_idname = 'OBJECT_MT_m3_attachmentpoints'
+    bl_label = 'Menu'
+
+    def draw(self, context):
+        shared.draw_menu_duplicate(self.layout, context.object.m3_attachmentpoints, dup_keyframes_opt=False)
 
 
 class Properties(shared.M3BoneUserPropertyGroup):
@@ -47,10 +64,12 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Attachment Points'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, context.object.m3_attachmentpoints, draw_props)
+        shared.draw_collection_list(self.layout, context.object.m3_attachmentpoints, draw_props, menu_id=PointMenu.bl_idname)
 
 
 classes = (
     Properties,
+    VolumeMenu,
+    PointMenu,
     Panel,
 )

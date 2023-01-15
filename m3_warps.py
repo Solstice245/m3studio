@@ -44,15 +44,24 @@ class Properties(shared.M3BoneUserPropertyGroup):
     strength: bpy.props.FloatProperty(name='M3 Warp Strength', min=0, default=1)
 
 
+class Menu(bpy.types.Menu):
+    bl_idname = 'OBJECT_MT_m3_warps'
+    bl_label = 'Menu'
+
+    def draw(self, context):
+        shared.draw_menu_duplicate(self.layout, context.object.m3_warps, dup_keyframes_opt=True)
+
+
 class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_idname = 'OBJECT_PT_M3_WARPS'
     bl_label = 'M3 Vertex Warpers'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, context.object.m3_warps, draw_props)
+        shared.draw_collection_list(self.layout, context.object.m3_warps, draw_props, menu_id=Menu.bl_idname)
 
 
 classes = (
     Properties,
+    Menu,
     Panel,
 )

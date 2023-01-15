@@ -52,15 +52,24 @@ class Properties(shared.M3PropertyGroup):
     goal_threshold: bpy.props.FloatProperty(options=set(), min=0, default=0.05)
 
 
+class Menu(bpy.types.Menu):
+    bl_idname = 'OBJECT_MT_m3_ikjoints'
+    bl_label = 'Menu'
+
+    def draw(self, context):
+        shared.draw_menu_duplicate(self.layout, context.object.m3_ikjoints, dup_keyframes_opt=False)
+
+
 class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_idname = 'OBJECT_PT_M3_IKJOINTS'
     bl_label = 'M3 Inverse Kinematics'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, context.object.m3_ikjoints, draw_props)
+        shared.draw_collection_list(self.layout, context.object.m3_ikjoints, draw_props, menu_id=Menu.bl_idname)
 
 
 classes = (
     Properties,
+    Menu,
     Panel,
 )

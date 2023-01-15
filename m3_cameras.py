@@ -73,12 +73,20 @@ class Properties(shared.M3BoneUserPropertyGroup):
     use_vertical_fov: bpy.props.BoolProperty(options=set())
 
 
+class Menu(bpy.types.Menu):
+    bl_idname = 'OBJECT_MT_m3_cameras'
+    bl_label = 'Menu'
+
+    def draw(self, context):
+        shared.draw_menu_duplicate(self.layout, context.object.m3_cameras, dup_keyframes_opt=True)
+
+
 class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_idname = 'OBJECT_PT_M3_CAMERAS'
     bl_label = 'M3 Cameras'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, context.object.m3_cameras, draw_props)
+        shared.draw_collection_list(self.layout, context.object.m3_cameras, draw_props, menu_id=Menu.bl_idname)
 
 
 classes = (

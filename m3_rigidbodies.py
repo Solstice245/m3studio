@@ -141,6 +141,14 @@ class BodyProperties(shared.M3BoneUserPropertyGroup):
     no_simulation: bpy.props.BoolProperty(options=set())
 
 
+class BodyMenu(bpy.types.Menu):
+    bl_idname = 'OBJECT_MT_m3_rigidbodies'
+    bl_label = 'Menu'
+
+    def draw(self, context):
+        shared.draw_menu_duplicate(self.layout, context.object.m3_rigidbodies, dup_keyframes_opt=False)
+
+
 class ShapePanel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_idname = 'OBJECT_PT_M3_PHYSICSSHAPES'
     bl_label = 'M3 Physics Shapes'
@@ -154,13 +162,14 @@ class BodyPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Physics Rigid Bodies'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, context.object.m3_rigidbodies, draw_body_props)
+        shared.draw_collection_list(self.layout, context.object.m3_rigidbodies, draw_body_props, menu_id=BodyMenu.bl_idname)
 
 
 classes = (
     VolumeProperties,
     ShapeProperties,
     BodyProperties,
+    BodyMenu,
     ShapePanel,
     BodyPanel,
 )

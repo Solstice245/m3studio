@@ -170,12 +170,28 @@ class GroupProperties(shared.M3PropertyGroup):
     animations: bpy.props.CollectionProperty(type=shared.M3PropertyGroup)
 
 
+class SequenceMenu(bpy.types.Menu):
+    bl_idname = 'OBJECT_MT_m3_animations'
+    bl_label = 'Menu'
+
+    def draw(self, context):
+        shared.draw_menu_duplicate(self.layout, context.object.m3_animations, dup_keyframes_opt=False)
+
+
+class GroupMenu(bpy.types.Menu):
+    bl_idname = 'OBJECT_MT_m3_animation_groups'
+    bl_label = 'Menu'
+
+    def draw(self, context):
+        shared.draw_menu_duplicate(self.layout, context.object.m3_animation_groups, dup_keyframes_opt=False)
+
+
 class SequencePanel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_idname = 'OBJECT_PT_M3_ANIMATIONS'
     bl_label = 'M3 Animations'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, context.object.m3_animations, draw_animation_props, can_duplicate=False)
+        shared.draw_collection_list(self.layout, context.object.m3_animations, draw_animation_props, menu_id=SequenceMenu.bl_idname)
 
 
 class GroupPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
@@ -183,7 +199,7 @@ class GroupPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Animation Groups'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, context.object.m3_animation_groups, draw_group_props)
+        shared.draw_collection_list(self.layout, context.object.m3_animation_groups, draw_group_props, menu_id=GroupMenu.bl_idname)
 
 
 class M3AnimationActionNewOp(bpy.types.Operator):
@@ -214,6 +230,8 @@ class M3AnimationActionUnlinkOp(bpy.types.Operator):
 classes = (
     AnimationProperties,
     GroupProperties,
+    SequenceMenu,
+    GroupMenu,
     SequencePanel,
     GroupPanel,
     M3AnimationActionNewOp,

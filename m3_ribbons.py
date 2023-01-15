@@ -80,7 +80,7 @@ def draw_point_props(point, layout):
 
 
 def draw_spline_props(spline, layout):
-    shared.draw_collection_list(layout.box(), spline.points, draw_point_props)
+    shared.draw_collection_list(layout.box(), spline.points, draw_point_props, menu_id=PointsMenu.bl_idname)
 
 
 def draw_ribbon_props(ribbon, layout):
@@ -296,12 +296,37 @@ class RibbonProperties(shared.M3BoneUserPropertyGroup):
     accurate_gpu_tangents: bpy.props.BoolProperty(options=set())  # TODO add to draw method
 
 
+class PointsMenu(bpy.types.Menu):
+    bl_idname = 'OBJECT_MT_m3_ribbonsplinepoints'
+    bl_label = 'Menu'
+
+    def draw(self, context):
+        spline = context.object.m3_ribbonsplines[context.object.m3_ribbonsplines_index]
+        shared.draw_menu_duplicate(self.layout, spline.points, dup_keyframes_opt=True)
+
+
+class SplineMenu(bpy.types.Menu):
+    bl_idname = 'OBJECT_MT_m3_ribbonsplines'
+    bl_label = 'Menu'
+
+    def draw(self, context):
+        shared.draw_menu_duplicate(self.layout, context.object.m3_ribbonsplines, dup_keyframes_opt=True)
+
+
+class RibbonMenu(bpy.types.Menu):
+    bl_idname = 'OBJECT_MT_m3_ribbons'
+    bl_label = 'Menu'
+
+    def draw(self, context):
+        shared.draw_menu_duplicate(self.layout, context.object.m3_ribbons, dup_keyframes_opt=True)
+
+
 class RibbonPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_idname = 'OBJECT_PT_M3_RIBBONS'
     bl_label = 'M3 Ribbons'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, context.object.m3_ribbons, draw_ribbon_props)
+        shared.draw_collection_list(self.layout, context.object.m3_ribbons, draw_ribbon_props, menu_id=RibbonMenu.bl_idname)
 
 
 class SplinePanel(shared.ArmatureObjectPanel, bpy.types.Panel):
@@ -309,13 +334,16 @@ class SplinePanel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Ribbon Splines'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, context.object.m3_ribbonsplines, draw_spline_props)
+        shared.draw_collection_list(self.layout, context.object.m3_ribbonsplines, draw_spline_props, menu_id=SplineMenu.bl_idname)
 
 
 classes = (
     PointProperties,
     SplineProperties,
     RibbonProperties,
+    PointsMenu,
+    SplineMenu,
+    RibbonMenu,
     RibbonPanel,
     SplinePanel,
 )

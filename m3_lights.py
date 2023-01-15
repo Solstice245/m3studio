@@ -73,15 +73,24 @@ class Properties(shared.M3BoneUserPropertyGroup):
     team_color: bpy.props.BoolProperty(options=set())
 
 
+class Menu(bpy.types.Menu):
+    bl_idname = 'OBJECT_MT_m3_lights'
+    bl_label = 'Menu'
+
+    def draw(self, context):
+        shared.draw_menu_duplicate(self.layout, context.object.m3_lights, dup_keyframes_opt=True)
+
+
 class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_idname = 'OBJECT_PT_M3_LIGHTS'
     bl_label = 'M3 Lights'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, context.object.m3_lights, draw_props)
+        shared.draw_collection_list(self.layout, context.object.m3_lights, draw_props, menu_id=Menu.bl_idname)
 
 
 classes = (
     Properties,
+    Menu,
     Panel,
 )

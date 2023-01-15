@@ -164,15 +164,24 @@ class Properties(shared.M3PropertyGroup):
     ignored_fresnel_flag2: bpy.props.BoolProperty(options=set())  # no UI
 
 
+class Menu(bpy.types.Menu):
+    bl_idname = 'OBJECT_MT_m3_materiallayers'
+    bl_label = 'Menu'
+
+    def draw(self, context):
+        shared.draw_menu_duplicate(self.layout, context.object.m3_materiallayers, dup_keyframes_opt=True)
+
+
 class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_idname = 'OBJECT_PT_M3_MATERIALLAYERS'
     bl_label = 'M3 Material Layers'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, context.object.m3_materiallayers, draw_props)
+        shared.draw_collection_list(self.layout, context.object.m3_materiallayers, draw_props, menu_id=Menu.bl_idname)
 
 
 classes = (
     Properties,
+    Menu,
     Panel,
 )

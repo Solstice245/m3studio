@@ -33,6 +33,14 @@ def update_collection_index(self, context):
         shared.auto_update_bone_display_mode(context.object, 'FTHT')
 
 
+class Menu(bpy.types.Menu):
+    bl_idname = 'OBJECT_MT_m3_hittests'
+    bl_label = 'Menu'
+
+    def draw(self, context):
+        shared.draw_menu_duplicate(self.layout, context.object.m3_hittests, dup_keyframes_opt=False)
+
+
 class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_idname = 'OBJECT_PT_M3_HITTESTS'
     bl_label = 'M3 Hit Test Volumes'
@@ -44,9 +52,10 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
         layout.label(text='Tight Hit Test:')
         shared.draw_volume_props(ob.m3_hittest_tight, layout)
         layout.label(text='Fuzzy Hit Tests:')
-        shared.draw_collection_list(layout, ob.m3_hittests, shared.draw_volume_props)
+        shared.draw_collection_list(layout, ob.m3_hittests, shared.draw_volume_props, menu_id=Menu.bl_idname)
 
 
 classes = (
+    Menu,
     Panel,
 )

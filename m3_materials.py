@@ -537,6 +537,18 @@ class ReferenceProperties(shared.M3PropertyGroup):
     mat_handle: bpy.props.StringProperty(options=set())
 
 
+class MaterialMenu(bpy.types.Menu):
+    bl_idname = 'OBJECT_MT_m3_materials'
+    bl_label = 'Menu'
+
+    def draw(self, context):
+        layout = self.layout
+        op = layout.operator('m3.material_duplicate', icon='DUPLICATE', text='Duplicate')
+        op.dup_action_keyframes = False
+        op = layout.operator('m3.material_duplicate', text='Duplicate With Keyframes')
+        op.dup_action_keyframes = True
+
+
 class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_idname = 'OBJECT_PT_M3_MATERIALS'
     bl_label = 'M3 Materials'
@@ -555,7 +567,7 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
         op = sub.operator('m3.material_add_popup', icon='ADD', text='')
         op = sub.operator('m3.material_remove', icon='REMOVE', text='')
         sub.separator()
-        op = sub.operator('m3.material_duplicate', icon='DUPLICATE', text='')
+        sub.menu(MaterialMenu.bl_idname, icon='DOWNARROW_HLT', text='')
 
         if len(ob.m3_materialrefs):
             sub.separator()
@@ -592,7 +604,7 @@ class M3MaterialLayerOpAdd(bpy.types.Operator):
         layer = m3_material_layer_get(ob, getattr(mat, self.layer_name))
 
         if layer:
-            new_layer = shared.m3_item_duplicate(ob.m3_materiallayers, layer)
+            new_layer = shared.m3_item_duplicate(ob.m3_materiallayers, layer, True)
         else:
             new_layer = shared.m3_item_add(ob.m3_materiallayers)
 
@@ -739,6 +751,8 @@ class M3MaterialOpDuplicate(bpy.types.Operator):
     bl_description = 'Duplicates the active item in the list'
     bl_options = {'UNDO'}
 
+    dup_action_keyframes: bpy.props.BoolProperty(default=False)
+
     def invoke(self, context, event):
         matrefs = context.object.m3_materialrefs
         matref = matrefs[context.object.m3_materialrefs_index]
@@ -748,8 +762,8 @@ class M3MaterialOpDuplicate(bpy.types.Operator):
         if context.object.m3_materialrefs_index == -1:
             return {'FINISHED'}
 
-        new_mat = shared.m3_item_duplicate(mat_col, mat)
-        new_matref = shared.m3_item_duplicate(matrefs, matref)
+        new_mat = shared.m3_item_duplicate(mat_col, mat, self.dup_action_keyframes)
+        new_matref = shared.m3_item_duplicate(matrefs, matref, False)
         new_matref.mat_handle = new_mat.bl_handle
 
         context.object.m3_materialrefs_index = len(matrefs) - 1
@@ -771,6 +785,7 @@ classes = (
     LensFlareStarburstProperties,
     LensFlareProperties,
     ReferenceProperties,
+    MaterialMenu,
     Panel,
     M3MaterialOpAddPopup,
     M3MaterialOpAdd,

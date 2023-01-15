@@ -46,6 +46,14 @@ class Properties(shared.M3BoneUserPropertyGroup):
     height: bpy.props.FloatProperty(name='M3 Shadow Box Height', min=0, default=1)
 
 
+class Menu(bpy.types.Menu):
+    bl_idname = 'OBJECT_MT_m3_shadowboxes'
+    bl_label = 'Menu'
+
+    def draw(self, context):
+        shared.draw_menu_duplicate(self.layout, context.object.m3_shadowboxes, dup_keyframes_opt=True)
+
+
 class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_idname = 'OBJECT_PT_M3_shadowboxes'
     bl_label = 'M3 Shadow Boxes'
@@ -54,12 +62,13 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
         model_version = int(context.object.m3_model_version)
 
         if model_version >= 21:
-            shared.draw_collection_list(self.layout, context.object.m3_shadowboxes, draw_props)
+            shared.draw_collection_list(self.layout, context.object.m3_shadowboxes, draw_props, menu_id=Menu.bl_idname)
         else:
             self.layout.label(icon='ERROR', text='M3 model version must be at least 21.')
 
 
 classes = (
     Properties,
+    Menu,
     Panel,
 )

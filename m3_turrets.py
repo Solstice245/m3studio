@@ -89,7 +89,7 @@ def draw_part_props(part, layout):
 
 
 def draw_props(turret, layout):
-    shared.draw_collection_list(layout.box(), turret.parts, draw_part_props)
+    shared.draw_collection_list(layout.box(), turret.parts, draw_part_props, menu_id=PartMenu.bl_idname)
 
 
 class PartProperties(shared.M3BoneUserPropertyGroup):
@@ -122,16 +122,35 @@ class Properties(shared.M3PropertyGroup):
     parts_index: bpy.props.IntProperty(options=set(), default=-1, update=update_parts_collection_index)
 
 
+class PartMenu(bpy.types.Menu):
+    bl_idname = 'OBJECT_MT_m3_parts'
+    bl_label = 'Menu'
+
+    def draw(self, context):
+        turret = context.object.m3_turrets[context.object.m3_turrets_index]
+        shared.draw_menu_duplicate(self.layout, turret.parts, dup_keyframes_opt=False)
+
+
+class TurretMenu(bpy.types.Menu):
+    bl_idname = 'OBJECT_MT_m3_turrets'
+    bl_label = 'Menu'
+
+    def draw(self, context):
+        shared.draw_menu_duplicate(self.layout, context.object.m3_turrets, dup_keyframes_opt=False)
+
+
 class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_idname = 'OBJECT_PT_M3_turrets'
     bl_label = 'M3 Turrets'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, context.object.m3_turrets, draw_props)
+        shared.draw_collection_list(self.layout, context.object.m3_turrets, draw_props, menu_id=TurretMenu.bl_idname)
 
 
 classes = (
     PartProperties,
     Properties,
+    PartMenu,
+    TurretMenu,
     Panel,
 )

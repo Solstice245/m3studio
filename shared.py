@@ -70,7 +70,7 @@ def m3_item_get_name(collection, prefix='', suggest=True):
     if prefix not in used_names:
         return prefix
 
-    suggested_names = m3_collections_suggested_names.get(collection.path_from_id().rsplit('.', 1)[-1]) if suggest else None
+    suggested_names = None if not suggest else m3_collections_suggested_names.get(collection.path_from_id().rsplit('.', 1)[-1])
     if not prefix and suggested_names:
         for name in suggested_names:
             prefix = name
@@ -96,23 +96,67 @@ def m3_item_add(collection, item_name=''):
     return item
 
 
-def m3_item_duplicate(collection, src):
-    dst = m3_item_add(collection)
+def m3_item_duplicate(collection, src, dup_action_keyframes, dst_collection=None):
+    # need to get path before adding item to collection
+    src_path_base = src.path_from_id()
+    dst_path_base = collection.path_from_id() + '[{}]'.format(len(collection))
+
+    if dst_collection is None:
+        dst_collection = collection
+
+    dst = m3_item_add(dst_collection)
 
     if (type(dst) != type(src)):
         collection.remove(len(collection) - 1)
         return None
 
+    dup_actions = []
+    if dup_action_keyframes:
+        for anim in collection.id_data.m3_animations:
+            if anim.action not in dup_actions:
+                dup_actions.append(anim.action)
+
     for key in type(dst).__annotations__.keys():
         prop = getattr(src, key)
         if str(type(prop)) != '<class \'bpy_prop_collection_idprop\'>':
             setattr(dst, key, prop)
+
+            rna_props = src.bl_rna.properties[key]
+
+            if not rna_props.is_animatable or type(prop) == str:
+                continue
+
+            src_path = '{}.{}'.format(src_path_base, key)
+            dst_path = '{}.{}'.format(dst_path_base, key)
+
+            for action in dup_actions:
+                for ii in range(max(1, rna_props.array_length)):
+                    src_fcurve = action.fcurves.find(src_path, index=ii)
+                    if src_fcurve is None or src_fcurve.is_empty:
+                        continue
+
+                    points = len(src_fcurve.keyframe_points)
+                    src_fcurve.keyframe_points.foreach_get('co', src_coords := [0] * (points * 2))
+                    src_fcurve.keyframe_points.foreach_get('interpolation', src_interps := [0] * points)
+                    src_fcurve.keyframe_points.foreach_get('type', src_types := [0] * points)
+
+                    dst_fcurve = action.fcurves.new(dst_path, index=ii)
+                    dst_fcurve.select = False
+                    dst_fcurve.keyframe_points.add(points)
+                    dst_fcurve.keyframe_points.foreach_set('co', src_coords)
+                    dst_fcurve.keyframe_points.foreach_set('interpolation', src_interps)
+                    dst_fcurve.keyframe_points.foreach_set('type', src_types)
+
         else:
             for item in prop:
-                m3_item_duplicate(prop, item)
+                m3_item_duplicate(prop, item, dup_action_keyframes, dst_collection=getattr(dst, key))
 
     dst.name = ''
-    dst.name = m3_item_get_name(collection, src.name if not src.name.isdigit() else '', suggest=False)
+    dst.name = m3_item_get_name(dst_collection, src.name if not src.name.isdigit() else '', suggest=False)
+
+    if dup_action_keyframes:
+        # for some reason fcurve values are only properly displayed once animation view is updated manually
+        collection.id_data.animation_data.action = collection.id_data.animation_data.action
 
     return dst
 
@@ -264,13 +308,15 @@ class M3CollectionOpDuplicate(M3CollectionOpBase):
     bl_label = 'Duplicate Collection Item'
     bl_description = 'Duplicates the active item in the collection'
 
+    dup_action_keyframes: bpy.props.BoolProperty(default=False)
+
     def invoke(self, context, event):
         collection = context.object.path_resolve(self.collection)
 
         if self.index == -1:
             return {'FINISHED'}
 
-        m3_item_duplicate(collection, collection[self.index])
+        m3_item_duplicate(collection, collection[self.index], self.dup_action_keyframes)
         m3_collection_index_set(collection, len(collection) - 1)
 
         return {'FINISHED'}
@@ -360,6 +406,20 @@ class M3PropHandleUnlink(bpy.types.Operator):
         self.prop_owner = prop_id.path_resolve(self.prop_path)
         setattr(self.prop_owner, self.prop_name, '')
         return {'FINISHED'}
+
+
+def draw_menu_duplicate(layout, collection, dup_keyframes_opt=False):
+    path = collection.path_from_id()
+    index = collection.id_data.path_resolve(path + '_index')
+    op = layout.operator('m3.collection_duplicate', icon='DUPLICATE', text='Duplicate')
+    op.collection = collection.path_from_id()
+    op.index = index
+    op.dup_action_keyframes = False
+    if dup_keyframes_opt:
+        op = layout.operator('m3.collection_duplicate', text='Duplicate With Keyframes')
+        op.collection = collection.path_from_id()
+        op.index = index
+        op.dup_action_keyframes = True
 
 
 # TODO Make it so that handle list items must be unique
@@ -458,7 +518,7 @@ def draw_volume_props(volume, layout):
     col.prop(volume, 'scale', text='Scale')
 
 
-def draw_collection_list(layout, collection, draw_func, can_duplicate=True, ops=[], label=''):
+def draw_collection_list(layout, collection, draw_func, menu_id='', ops=[], label=''):
     ob = collection.id_data
     collection_path = collection.path_from_id()
     index = ob.path_resolve(collection_path + '_index')
@@ -490,10 +550,9 @@ def draw_collection_list(layout, collection, draw_func, can_duplicate=True, ops=
     op.collection, op.index = (collection_path, index)
     op = sub.operator(ops[1], icon='REMOVE', text='')
     op.collection, op.index = (collection_path, index)
-    if can_duplicate:
+    if menu_id:
         sub.separator()
-        op = sub.operator(ops[3], icon='DUPLICATE', text='')
-        op.collection, op.index = (collection_path, index)
+        sub.menu(menu_id, icon='DOWNARROW_HLT', text='')
 
     if len(collection):
         sub.separator()

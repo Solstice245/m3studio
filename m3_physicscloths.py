@@ -57,7 +57,7 @@ def draw_constraint_props(constraint, layout):
 
 
 def draw_constraint_set_props(constraint_set, layout):
-    shared.draw_collection_list(layout, constraint_set.constraints, draw_constraint_props)
+    shared.draw_collection_list(layout, constraint_set.constraints, draw_constraint_props, menu_id=ConstraintMenu.bl_idname)
 
 
 def draw_cloth_props(cloth, layout):
@@ -140,6 +140,31 @@ class ClothProperties(shared.M3PropertyGroup):
     local_wind: bpy.props.FloatVectorProperty(options=set(), size=3, subtype='XYZ')
 
 
+class ClothMenu(bpy.types.Menu):
+    bl_idname = 'OBJECT_MT_m3_cloths'
+    bl_label = 'Menu'
+
+    def draw(self, context):
+        shared.draw_menu_duplicate(self.layout, context.object.m3_cloths, dup_keyframes_opt=False)
+
+
+class ClothConstraintsMenu(bpy.types.Menu):
+    bl_idname = 'OBJECT_MT_m3_cloth_constraints'
+    bl_label = 'Menu'
+
+    def draw(self, context):
+        shared.draw_menu_duplicate(self.layout, context.object.m3_clothconstraintsets, dup_keyframes_opt=False)
+
+
+class ConstraintMenu(bpy.types.Menu):
+    bl_idname = 'OBJECT_MT_m3_cloth_constraints_item'
+    bl_label = 'Menu'
+
+    def draw(self, context):
+        constraintset = context.object.m3_clothconstraintsets[context.object.m3_clothconstraintsets_index]
+        shared.draw_menu_duplicate(self.layout, constraintset.constraints, dup_keyframes_opt=False)
+
+
 class ClothPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_idname = 'OBJECT_PT_m3_cloths'
     bl_label = 'M3 Cloths'
@@ -149,7 +174,7 @@ class ClothPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
         mesh_version = int(context.object.m3_mesh_version)
 
         if model_version >= 28 and mesh_version >= 4:
-            shared.draw_collection_list(self.layout, context.object.m3_cloths, draw_cloth_props)
+            shared.draw_collection_list(self.layout, context.object.m3_cloths, draw_cloth_props, menu_id=ClothMenu.bl_idname)
         else:
             if model_version < 28:
                 self.layout.label(icon='ERROR', text='M3 model version must be at least 28.')
@@ -166,7 +191,7 @@ class ClothConstraintsPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
         mesh_version = int(context.object.m3_mesh_version)
 
         if model_version >= 28 and mesh_version >= 4:
-            shared.draw_collection_list(self.layout, context.object.m3_clothconstraintsets, draw_constraint_set_props)
+            shared.draw_collection_list(self.layout, context.object.m3_clothconstraintsets, draw_constraint_set_props, menu_id=ClothConstraintsMenu.bl_idname)
         else:
             if model_version < 28:
                 self.layout.label(icon='ERROR', text='M3 model version must be at least 28.')
@@ -177,6 +202,9 @@ class ClothConstraintsPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
 classes = (
     ConstraintProperties,
     ConstraintSetProperties,
+    ClothMenu,
+    ClothConstraintsMenu,
+    ConstraintMenu,
     ClothProperties,
     ClothPanel,
     ClothConstraintsPanel,

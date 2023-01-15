@@ -361,9 +361,13 @@ class Importer:
             points_len = len(anim_id_action_data) // 2
             fcurves = bpy.data.actions.get(action_name).fcurves
             fcurve = fcurves.new(path, index=0)
+            fcurve.select = False
             fcurve.keyframe_points.add(points_len)
             fcurve.keyframe_points.foreach_set('co', anim_id_action_data)
             fcurve.keyframe_points.foreach_set('interpolation', [ref.header.interpolation] * points_len)
+            fcurve.keyframe_points.foreach_set('select_control_point', key_sel := [False] * points_len)
+            fcurve.keyframe_points.foreach_set('select_left_handle', key_sel)
+            fcurve.keyframe_points.foreach_set('select_right_handle', key_sel)
 
     def key_vec(self, bl, field, ref, default):
 
@@ -386,9 +390,13 @@ class Importer:
                 points_len = len(index_data) // 2
                 fcurves = bpy.data.actions.get(action_name).fcurves
                 fcurve = fcurves.new(path, index=index)
+                fcurve.select = False
                 fcurve.keyframe_points.add(points_len)
                 fcurve.keyframe_points.foreach_set('co', index_data)
                 fcurve.keyframe_points.foreach_set('interpolation', [ref.header.interpolation] * points_len)
+                fcurve.keyframe_points.foreach_set('select_control_point', key_sel := [False] * points_len)
+                fcurve.keyframe_points.foreach_set('select_left_handle', key_sel)
+                fcurve.keyframe_points.foreach_set('select_right_handle', key_sel)
 
     def create_animations(self):
 
@@ -627,27 +635,39 @@ class Importer:
                 for index, index_data in enumerate(anim_data_loc):
                     points_len = len(index_data) // 2
                     fcurve = fcurves.new(pose_bone.path_from_id('location'), index=index, action_group=pose_bone.name)
+                    fcurve.select = False
                     fcurve.keyframe_points.add(points_len)
                     fcurve.keyframe_points.foreach_set('co', index_data)
                     fcurve.keyframe_points.foreach_set('interpolation', [1] * points_len)
+                    fcurve.keyframe_points.foreach_set('select_control_point', key_sel := [False] * points_len)
+                    fcurve.keyframe_points.foreach_set('select_left_handle', key_sel)
+                    fcurve.keyframe_points.foreach_set('select_right_handle', key_sel)
                     fcurves_loc.append(fcurve)
 
                 fcurves_rot = []
                 for index, index_data in enumerate(anim_data_rot):
                     points_len = len(index_data) // 2
                     fcurve = fcurves.new(pose_bone.path_from_id('rotation_quaternion'), index=index, action_group=pose_bone.name)
+                    fcurve.select = False
                     fcurve.keyframe_points.add(points_len)
                     fcurve.keyframe_points.foreach_set('co', index_data)
                     fcurve.keyframe_points.foreach_set('interpolation', [1] * points_len)
+                    fcurve.keyframe_points.foreach_set('select_control_point', key_sel := [False] * points_len)
+                    fcurve.keyframe_points.foreach_set('select_left_handle', key_sel)
+                    fcurve.keyframe_points.foreach_set('select_right_handle', key_sel)
                     fcurves_rot.append(fcurve)
 
                 fcurves_scl = []
                 for index, index_data in enumerate(anim_data_scl):
                     points_len = len(index_data) // 2
                     fcurve = fcurves.new(pose_bone.path_from_id('scale'), index=index, action_group=pose_bone.name)
+                    fcurve.select = False
                     fcurve.keyframe_points.add(points_len)
                     fcurve.keyframe_points.foreach_set('co', index_data)
                     fcurve.keyframe_points.foreach_set('interpolation', [1] * points_len)
+                    fcurve.keyframe_points.foreach_set('select_control_point', key_sel := [False] * points_len)
+                    fcurve.keyframe_points.foreach_set('select_left_handle', key_sel)
+                    fcurve.keyframe_points.foreach_set('select_right_handle', key_sel)
                     fcurves_scl.append(fcurve)
 
                 new_anim_data = [[], [], []]
@@ -707,6 +727,7 @@ class Importer:
                     key_frame_points_len = len(id_data_render[action_name]) // 2
 
                     fcurve = action.fcurves.new(pose_bone.path_from_id('m3_batching'), action_group=pose_bone.name)
+                    fcurve.select = False
                     fcurve.keyframe_points.add(key_frame_points_len)
                     fcurve.keyframe_points.foreach_set('co', id_data_render[action_name])
                     fcurve.keyframe_points.foreach_set('interpolation', [m3_bone.batching.header.interpolation] * key_frame_points_len)

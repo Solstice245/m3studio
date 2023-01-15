@@ -419,12 +419,28 @@ class SystemProperties(shared.M3BoneUserPropertyGroup):
     always_set: bpy.props.BoolProperty(options=set())
 
 
+class SystemMenu(bpy.types.Menu):
+    bl_idname = 'OBJECT_MT_m3_particle_systems'
+    bl_label = 'Menu'
+
+    def draw(self, context):
+        shared.draw_menu_duplicate(self.layout, context.object.m3_particle_systems, dup_keyframes_opt=True)
+
+
+class CopyMenu(bpy.types.Menu):
+    bl_idname = 'OBJECT_MT_m3_particle_copies'
+    bl_label = 'Menu'
+
+    def draw(self, context):
+        shared.draw_menu_duplicate(self.layout, context.object.m3_particle_copies, dup_keyframes_opt=True)
+
+
 class CopyPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_idname = 'OBJECT_PT_m3_particle_copies'
     bl_label = 'M3 Particle Copies'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, context.object.m3_particle_copies, draw_copy_props)
+        shared.draw_collection_list(self.layout, context.object.m3_particle_copies, draw_copy_props, menu_id=CopyMenu.bl_idname)
 
 
 class SystemPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
@@ -432,13 +448,15 @@ class SystemPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Particle Systems'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, context.object.m3_particle_systems, draw_props)
+        shared.draw_collection_list(self.layout, context.object.m3_particle_systems, draw_props, menu_id=SystemMenu.bl_idname)
 
 
 classes = (
     SplinePointProperties,
     CopyProperties,
     SystemProperties,
+    SystemMenu,
+    CopyMenu,
     SystemPanel,
     CopyPanel,
 )
