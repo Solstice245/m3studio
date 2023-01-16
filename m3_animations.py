@@ -32,7 +32,7 @@ def register_props():
 
 
 def anim_update(self, context):
-    if context.object.m3_options.auto_update_action:
+    if context.object.m3_options.update_action:
         anim = None
         if context.object.m3_animations_index in range(len(context.object.m3_animations)):
             anim = context.object.m3_animations[context.object.m3_animations_index]
@@ -106,7 +106,7 @@ def anim_group_update(self, context):
         else:
             ob.m3_animations_index = ob.m3_animations.find(shared.m3_pointer_get(ob.m3_animations, anim_group.animations[0].bl_handle).name)
 
-        if ob.m3_options.auto_update_timeline:
+        if ob.m3_options.update_timeline:
             bpy.context.scene.frame_start = anim_group.frame_start
             bpy.context.scene.frame_current = anim_group.frame_start
             bpy.context.scene.frame_end = anim_group.frame_end
@@ -119,7 +119,7 @@ def anim_group_frame_update(self, context):
     ob = context.object
     anim_group = ob.m3_animation_groups[ob.m3_animation_groups_index]
 
-    if not ob.m3_options.auto_update_timeline:
+    if not ob.m3_options.update_timeline:
         return
 
     bpy.context.scene.frame_start = anim_group.frame_start

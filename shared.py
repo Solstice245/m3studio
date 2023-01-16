@@ -180,7 +180,7 @@ def m3_pointer_get(search_data, handle):
 
 
 def select_bones_handles(ob, bl_handles):
-    if ob.m3_options.auto_update_bone_selection and bl_handles:
+    if ob.m3_options.update_bone_selection and bl_handles:
         for bone in ob.data.bones:
             bone.select = bone.bl_handle in bl_handles
             bone.select_tail = bone.select

@@ -46,9 +46,9 @@ mesh_versions = (
 )
 
 
-desc_auto_update_bone_selection = 'Clicking on m3 list items selects associated bones, when applicable'
-desc_auto_update_timeline = 'Clicking on an m3 animation group sets the range of the scene timeline to its beginning and ending frames'
-desc_auto_update_action = 'Clicking on an m3 animation sets the action of the object'
+desc_update_bone_selection = 'Clicking on m3 list items selects associated bones, when applicable'
+desc_update_timeline = 'Clicking on an m3 animation group sets the range of the scene timeline to its beginning and ending frames'
+desc_update_anim_data = 'Clicking on an m3 animation sets the action of the object'
 desc_draw_selected = 'Display all m3 helper models if they are associated with the selected bone'
 desc_draw_attach_points = 'Display attachment points'
 desc_draw_attach_volumes = 'Display attachment volumes'
@@ -68,9 +68,9 @@ desc_draw_turrets = 'TODO: Display turret part vectors'
 
 
 class OptionProperties(bpy.types.PropertyGroup):
-    auto_update_bone_selection: bpy.props.BoolProperty(options=set(), default=True, description=desc_auto_update_bone_selection)
-    auto_update_timeline: bpy.props.BoolProperty(options=set(), default=True, description=desc_auto_update_timeline)
-    auto_update_action: bpy.props.BoolProperty(options=set(), default=True, description=desc_auto_update_action)
+    update_bone_selection: bpy.props.BoolProperty(options=set(), default=True, description=desc_update_bone_selection)
+    update_timeline: bpy.props.BoolProperty(options=set(), default=True, description=desc_update_timeline)
+    update_anim_data: bpy.props.BoolProperty(options=set(), default=True, description=desc_update_anim_data)
     draw_selected: bpy.props.BoolProperty(options=set(), default=True, description=desc_draw_selected)
     draw_attach_points: bpy.props.BoolProperty(options=set(), default=True, description=desc_draw_attach_points)
     draw_attach_volumes: bpy.props.BoolProperty(options=set(), default=True, description=desc_draw_attach_volumes)
@@ -89,7 +89,6 @@ class OptionProperties(bpy.types.PropertyGroup):
     draw_turrets: bpy.props.BoolProperty(options=set(), default=True, description=desc_draw_turrets)
 
 
-# TODO bounding preview
 class BoundingProperties(bpy.types.PropertyGroup):
     opt_display: bpy.props.BoolProperty(options=set())
     bottom: bpy.props.FloatProperty(options=set(), default=-0.25)
@@ -136,37 +135,35 @@ class OptionsPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Object Options'
 
     def draw(self, context):
-        ob = context.object
         layout = self.layout
-        layout.use_property_split = True
-        options = ob.m3_options
-
-        col = layout.column(align=True)
-        col.prop(options, 'auto_update_bone_selection', text='Auto Update Bone Selection')
-        col.separator()
-        col.prop(options, 'auto_update_timeline', text='Auto Update Animation Timeline')
-        col.prop(options, 'auto_update_action', text='Auto Update Animation Action')
-        col.separator()
-        col = layout.column(align=True)
-        col.use_property_split = False
-        colf = col.column_flow(columns=2)
-        colf.label(text='M3 Property Pose Display:')
-        colf.prop(options, 'draw_attach_points', text='Draw Attachment Points')
-        colf.prop(options, 'draw_attach_volumes', text='Draw Attachment Volumes')
-        colf.prop(options, 'draw_hittests', text='Draw Hit Tests')
-        colf.prop(options, 'draw_lights', text='Draw Lights')
-        colf.prop(options, 'draw_particles', text='Draw Particles')
-        colf.prop(options, 'draw_ribbons', text='Draw Ribbons')
-        colf.prop(options, 'draw_projections', text='Draw Projection Bounds')
-        colf.prop(options, 'draw_forces', text='Draw Forces')
-        colf.prop(options, 'draw_selected', text='Draw If Selected')
-        colf.prop(options, 'draw_cameras', text='Draw Cameras')
-        colf.prop(options, 'draw_rigidbodies', text='Draw Rigid Bodies')
-        colf.prop(options, 'draw_clothconstraints', text='Draw Cloth Constraints')
-        colf.prop(options, 'draw_ikjoints', text='Draw IK Joints')
-        colf.prop(options, 'draw_shadowboxes', text='Draw Shadow Boxes')
-        colf.prop(options, 'draw_warps', text='Draw Vertex Warpers')
-        colf.prop(options, 'draw_turrets', text='Draw Turrets')
+        options = context.object.m3_options
+        gflow = layout.grid_flow(row_major=True, columns=2, even_columns=True, even_rows=True, align=True)
+        gflow.label(text='M3 Automatic Manipulation:')
+        gflow.separator()
+        gflow.prop(options, 'update_timeline', text='Update Timeline')
+        gflow.prop(options, 'update_anim_data', text='Update Animation Data')
+        gflow.prop(options, 'update_bone_selection', text='Update Bone Selection')
+        gflow.separator()
+        gflow.separator()
+        gflow.separator()
+        gflow.label(text='M3 Property Pose Display:')
+        gflow.separator()
+        gflow.prop(options, 'draw_attach_points', text='Draw Attachment Points')
+        gflow.prop(options, 'draw_selected', text='Draw If Selected')
+        gflow.prop(options, 'draw_attach_volumes', text='Draw Attachment Volumes')
+        gflow.prop(options, 'draw_rigidbodies', text='Draw Rigid Bodies')
+        gflow.prop(options, 'draw_hittests', text='Draw Hit Tests')
+        gflow.prop(options, 'draw_cameras', text='Draw Cameras')
+        gflow.prop(options, 'draw_lights', text='Draw Lights')
+        gflow.prop(options, 'draw_turrets', text='Draw Turrets')
+        gflow.prop(options, 'draw_particles', text='Draw Particles')
+        gflow.prop(options, 'draw_clothconstraints', text='Draw Cloth Constraints')
+        gflow.prop(options, 'draw_ribbons', text='Draw Ribbons')
+        gflow.prop(options, 'draw_ikjoints', text='Draw IK Joints')
+        gflow.prop(options, 'draw_projections', text='Draw Projection Bounds')
+        gflow.prop(options, 'draw_shadowboxes', text='Draw Shadow Boxes')
+        gflow.prop(options, 'draw_forces', text='Draw Forces')
+        gflow.prop(options, 'draw_warps', text='Draw Vertex Warpers')
 
 
 class BoundsPanel(shared.ArmatureObjectPanel, bpy.types.Panel):

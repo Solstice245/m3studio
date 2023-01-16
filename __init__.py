@@ -16,7 +16,6 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-import time
 import bpy
 from . import shared
 from . import m3_bone
@@ -58,72 +57,64 @@ bl_info = {
 }
 
 
-class M3ScenePanel(bpy.types.Panel):
-    bl_idname = 'OBJECT_PT_M3_ScenePanel'
-    bl_label = 'M3 Scene Panel'
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = 'scene'
-
-    def draw(self, context):
-        layout = self.layout
-
-        op = layout.operator('m3.import')
-        op.filepath = 'C:\\Users\\John Wharton\\Documents\\M3Test_editor.m3'
-        op = layout.operator('m3.import', text='Import Result')
-        op.filepath = 'C:\\Users\\John Wharton\\Documents\\M3Test_studio.m3'
-        op = layout.operator('m3.export')
-        op.filepath = 'C:\\Users\\John Wharton\\Documents\\M3Test_studio.m3'
+def m3_import_id_names(self, context):
+    yield '(New Object)', '(New Object)', 'Creates a new object to hold the imported M3 data.'
+    for ob in bpy.data.objects:
+        if ob.type == 'ARMATURE':
+            yield ob.name, ob.name, 'Imports the M3 data into the selected object. Note that various data such as animations will not be imported.'
 
 
 class M3ImportOperator(bpy.types.Operator):
+    ''' Imports M3 data from an M3 file to a new armature object or the selected armature object '''
     bl_idname = 'm3.import'
     bl_label = 'Import M3'
     bl_options = {'UNDO'}
 
     filename_ext = '.m3'
-    filter_glob: bpy.props.StringProperty(options={'HIDDEN'}, default='*.m3;*.m3a')
+    filter_glob: bpy.props.StringProperty(options={'HIDDEN'}, default='*.m3')  # TODO .m3a
     filepath: bpy.props.StringProperty(name='File Path', description='File path for import operation', maxlen=1023, default='')
-    id_name: bpy.props.StringProperty(default='')
+    id_name: bpy.props.EnumProperty(items=m3_import_id_names, name='Armature Object')
 
     def invoke(self, context, event):
-        id_object = bpy.data.objects.get(self.id_name)
-
-        start_time = time.time()
-        io_m3_import.m3_import(self.filepath, id_object)
-        print(time.time() - start_time)
+        context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
 
     def execute(self, context):
-        # io_m3_import.m3_import(self.filepath)
+        io_m3_import.m3_import(self.filepath, bpy.data.objects.get(self.id_name))
         return {'FINISHED'}
 
 
 class M3ExportOperator(bpy.types.Operator):
+    ''' Exports M3 data from the selected armature object to an M3 file '''
     bl_idname = 'm3.export'
     bl_label = 'Export M3'
 
     filename_ext = '.m3'
     filter_glob: bpy.props.StringProperty(options={'HIDDEN'}, default='*.m3;*.m3a')
-    filepath: bpy.props.StringProperty(name='File Path', description='File path for import operation', maxlen=1023, default='')
+    filepath: bpy.props.StringProperty(name='File Path', description='File path for export operation', maxlen=1023, default='')
+
+    @classmethod
+    def poll(cls, context):
+        return (context.object and context.object.type == 'ARMATURE')
 
     def invoke(self, context, event):
-        start_time = time.time()
-        io_m3_export.m3_export(context.active_object, self.filepath)
-        print(time.time() - start_time)
+        context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
 
     def execute(self, context):
-        # io_m3_export.m3_export(context.active_object, self.filepath)
+        io_m3_export.m3_export(context.active_object, self.filepath)
         return {'FINISHED'}
 
 
 def top_bar_import(self, context):
-    self.layout.operator('m3.import', text='StarCraft 2 Model/Animation (.m3/.m3a)')
+    self.layout.operator('m3.import', text='StarCraft 2 Model (.m3)')
 
 
 def top_bar_export(self, context):
-    self.layout.operator('m3.import', text='StarCraft 2 Model (.m3)')
+    col = self.layout.column()
+    if not context.object or (context.object and context.object.type != 'ARMATURE'):
+        col.active = False
+    col.operator('m3.export', text='StarCraft 2 Model (.m3)')
 
 
 m3_modules = (
@@ -165,7 +156,6 @@ classes = (
     *m3_module_classes(),
     M3ImportOperator,
     M3ExportOperator,
-    M3ScenePanel,
 )
 
 
