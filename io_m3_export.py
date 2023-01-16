@@ -1387,22 +1387,22 @@ class Exporter:
                 m3_batch.bone = self.bone_name_indices[bone.name] if bone else -1
 
         # TODO more testing on when this is applicable is needed
-        # # this prevents the multi-batch mesh hack from crashing the game
-        # if len(mesh_objects) == 1 and len(batch_section) > 1:
-        #     vertices_len = len(m3_vertices)
-        #     faces_len = len(m3_faces)
-        #     extra_vertices = [m3_vertex_desc.instance()] * 3
-        #     extra_face = [vertices_len, vertices_len + 1, vertices_len + 2]
-        #     m3_vertices.extend(extra_vertices)
-        #     m3_faces.extend(extra_face)
-        #     extra_region = region_section.content_add()
-        #     extra_region.first_vertex_index = vertices_len
-        #     extra_region.vertex_count = 3
-        #     extra_region.first_face_index = faces_len
-        #     extra_region.face_count = 1
-        #     extra_region.bone_lookup_count = 0
-        #     extra_region.vertex_lookups_used = 0
-        #     extra_region.root_bone = 0
+        # this prevents the multi-batch mesh hack from crashing the game
+        if len(mesh_objects) == 1 and len(batch_section) > 1:
+            vertices_len = len(m3_vertices)
+            faces_len = len(m3_faces)
+            extra_vertices = [m3_vertex_desc.instance()] * 3
+            extra_face = [vertices_len, vertices_len + 1, vertices_len + 2]
+            m3_vertices.extend(extra_vertices)
+            m3_faces.extend(extra_face)
+            extra_region = region_section.content_add()
+            extra_region.first_vertex_index = vertices_len
+            extra_region.vertex_count = 3
+            extra_region.first_face_index = faces_len
+            extra_region.face_count = 1
+            extra_region.bone_lookup_count = 0
+            extra_region.vertex_lookups_used = 0
+            extra_region.root_bone = 0
 
         self.bone_bound_vecs = {}
 

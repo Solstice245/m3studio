@@ -787,8 +787,6 @@ class Importer:
             matref.mat_type = 'm3_' + io_shared.material_type_to_model_reference[m3_matref.type]
             matref.mat_handle = mat.bl_handle
 
-            shared.m3_msgbus_sub(mat, matref, 'name', 'name')
-
             if m3_matref.type == 3:
                 for m3_section in self.m3[m3_mat.sections]:
                     section = shared.m3_item_add(mat.sections)
@@ -818,7 +816,7 @@ class Importer:
 
                 self.m3_set_struct_version('m3_materiallayers_version', self.m3[m3_layer_field].desc.version)
 
-                layer = shared.m3_item_add(ob.m3_materiallayers, item_name=mat.name + '_' + layer_name)
+                layer = shared.m3_item_add(ob.m3_materiallayers, item_name=matref.name + '_' + layer_name)
                 layer.color_bitmap = m3_layer_bitmap_str
                 processor = M3InputProcessor(self, layer, m3_layer)
                 io_shared.io_material_layer(processor)

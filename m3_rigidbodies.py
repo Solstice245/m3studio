@@ -23,7 +23,7 @@ from . import bl_enum
 
 def register_props():
     bpy.types.Object.m3_physicsshapes = bpy.props.CollectionProperty(type=ShapeProperties)
-    bpy.types.Object.m3_physicsshapes_index = bpy.props.IntProperty(options=set(), default=-1, update=update_shapes_collection_index)
+    bpy.types.Object.m3_physicsshapes_index = bpy.props.IntProperty(options=set(), default=-1)
     bpy.types.Object.m3_rigidbodies = bpy.props.CollectionProperty(type=BodyProperties)
     bpy.types.Object.m3_rigidbodies_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
     bpy.types.Object.m3_rigidbodies_version = bpy.props.EnumProperty(options=set(), items=rigid_body_versions, default='4')
@@ -41,12 +41,6 @@ def update_collection_index(self, context):
     if self.m3_rigidbodies_index in range(len(self.m3_rigidbodies)):
         bl = self.m3_rigidbodies[self.m3_rigidbodies_index]
         shared.select_bones_handles(context.object, [bl.bone])
-        shared.auto_update_bone_display_mode(context.object, 'PHRB')
-
-
-def update_shapes_collection_index(self, context):
-    if len(self.m3_physicsshapes):
-        shared.auto_update_bone_display_mode(context.object, 'PHRB')
 
 
 def draw_volume_props(shape, layout):

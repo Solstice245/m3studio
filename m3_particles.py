@@ -48,14 +48,12 @@ def update_collection_index(self, context):
     if self.m3_particle_systems_index in range(len(self.m3_particle_systems)):
         bl = self.m3_particle_systems[self.m3_particle_systems_index]
         shared.select_bones_handles(context.object, [bl.bone])
-        shared.auto_update_bone_display_mode(context.object, 'PAR_')
 
 
 def update_copy_collection_index(self, context):
     if self.m3_particle_copies_index in range(len(self.m3_particle_copies)):
         bl = self.m3_particle_copies[self.m3_particle_copies_index]
         shared.select_bones_handles(context.object, [bl.bone])
-        shared.auto_update_bone_display_mode(context.object, 'PAR_')
 
 
 def draw_copy_props(copy, layout):

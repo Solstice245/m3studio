@@ -18,7 +18,6 @@
 
 import bpy
 from . import shared
-from . import bl_enum
 
 
 def register_props():
@@ -47,22 +46,47 @@ mesh_versions = (
 )
 
 
-def update_bone_display_mode(self, context):
-    pass
-
-
-desc_auto_bone_display_mode = 'Clicking on m3 list items changes the bone display mode, when applicable'
 desc_auto_update_bone_selection = 'Clicking on m3 list items selects associated bones, when applicable'
-desc_auto_update_timeline = 'Clicking on an m3 animation group sets the end points of the timeline to its beginning and ending frames'
+desc_auto_update_timeline = 'Clicking on an m3 animation group sets the range of the scene timeline to its beginning and ending frames'
 desc_auto_update_action = 'Clicking on an m3 animation sets the action of the object'
+desc_draw_selected = 'Display all m3 helper models if they are associated with the selected bone'
+desc_draw_attach_points = 'Display attachment points'
+desc_draw_attach_volumes = 'Display attachment volumes'
+desc_draw_hittests = 'Display hit test volumes'
+desc_draw_lights = 'Display light areas'
+desc_draw_particles = 'Display particle emission areas and TODO: emission vectors'
+desc_draw_ribbons = 'TODO: Display ribbon shapes'
+desc_draw_projections = 'Display projection bounding boxes'
+desc_draw_forces = 'Display force influence areas'
+desc_draw_cameras = 'Display cameras'
+desc_draw_rigidbodies = 'Display rigid body shapes and TODO: their joint shapes and vectors'
+desc_draw_clothconstraints = 'Display cloth constraint volumes'
+desc_draw_ikjoints = 'Display IK joint relationship lines'
+desc_draw_shadowboxes = 'Display shadow box areas'
+desc_draw_warps = 'Display vertex warp influence areas'
+desc_draw_turrets = 'TODO: Display turret part vectors'
 
 
 class OptionProperties(bpy.types.PropertyGroup):
-    bone_display_mode: bpy.props.EnumProperty(options=set(), items=bl_enum.options_bone_display, update=update_bone_display_mode)
-    auto_update_bone_display_mode: bpy.props.BoolProperty(options=set(), default=True, description=desc_auto_bone_display_mode)
     auto_update_bone_selection: bpy.props.BoolProperty(options=set(), default=True, description=desc_auto_update_bone_selection)
     auto_update_timeline: bpy.props.BoolProperty(options=set(), default=True, description=desc_auto_update_timeline)
     auto_update_action: bpy.props.BoolProperty(options=set(), default=True, description=desc_auto_update_action)
+    draw_selected: bpy.props.BoolProperty(options=set(), default=True, description=desc_draw_selected)
+    draw_attach_points: bpy.props.BoolProperty(options=set(), default=True, description=desc_draw_attach_points)
+    draw_attach_volumes: bpy.props.BoolProperty(options=set(), default=True, description=desc_draw_attach_volumes)
+    draw_hittests: bpy.props.BoolProperty(options=set(), default=True, description=desc_draw_hittests)
+    draw_lights: bpy.props.BoolProperty(options=set(), default=True, description=desc_draw_lights)
+    draw_particles: bpy.props.BoolProperty(options=set(), default=True, description=desc_draw_particles)
+    draw_ribbons: bpy.props.BoolProperty(options=set(), default=True, description=desc_draw_ribbons)
+    draw_projections: bpy.props.BoolProperty(options=set(), default=True, description=desc_draw_projections)
+    draw_forces: bpy.props.BoolProperty(options=set(), default=True, description=desc_draw_forces)
+    draw_cameras: bpy.props.BoolProperty(options=set(), default=True, description=desc_draw_cameras)
+    draw_rigidbodies: bpy.props.BoolProperty(options=set(), default=True, description=desc_draw_rigidbodies)
+    draw_clothconstraints: bpy.props.BoolProperty(options=set(), default=True, description=desc_draw_clothconstraints)
+    draw_ikjoints: bpy.props.BoolProperty(options=set(), default=True, description=desc_draw_ikjoints)
+    draw_shadowboxes: bpy.props.BoolProperty(options=set(), default=True, description=desc_draw_shadowboxes)
+    draw_warps: bpy.props.BoolProperty(options=set(), default=True, description=desc_draw_warps)
+    draw_turrets: bpy.props.BoolProperty(options=set(), default=True, description=desc_draw_turrets)
 
 
 # TODO bounding preview
@@ -118,12 +142,31 @@ class OptionsPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
         options = ob.m3_options
 
         col = layout.column(align=True)
-        col.prop(options, 'bone_display_mode', text='Bone Display')
-        col.prop(options, 'auto_update_bone_display_mode', text='Auto Update Bone Display')
         col.prop(options, 'auto_update_bone_selection', text='Auto Update Bone Selection')
         col.separator()
         col.prop(options, 'auto_update_timeline', text='Auto Update Animation Timeline')
         col.prop(options, 'auto_update_action', text='Auto Update Animation Action')
+        col.separator()
+        col = layout.column(align=True)
+        col.use_property_split = False
+        colf = col.column_flow(columns=2)
+        colf.label(text='M3 Property Pose Display:')
+        colf.prop(options, 'draw_attach_points', text='Draw Attachment Points')
+        colf.prop(options, 'draw_attach_volumes', text='Draw Attachment Volumes')
+        colf.prop(options, 'draw_hittests', text='Draw Hit Tests')
+        colf.prop(options, 'draw_lights', text='Draw Lights')
+        colf.prop(options, 'draw_particles', text='Draw Particles')
+        colf.prop(options, 'draw_ribbons', text='Draw Ribbons')
+        colf.prop(options, 'draw_projections', text='Draw Projection Bounds')
+        colf.prop(options, 'draw_forces', text='Draw Forces')
+        colf.prop(options, 'draw_selected', text='Draw If Selected')
+        colf.prop(options, 'draw_cameras', text='Draw Cameras')
+        colf.prop(options, 'draw_rigidbodies', text='Draw Rigid Bodies')
+        colf.prop(options, 'draw_clothconstraints', text='Draw Cloth Constraints')
+        colf.prop(options, 'draw_ikjoints', text='Draw IK Joints')
+        colf.prop(options, 'draw_shadowboxes', text='Draw Shadow Boxes')
+        colf.prop(options, 'draw_warps', text='Draw Vertex Warpers')
+        colf.prop(options, 'draw_turrets', text='Draw Turrets')
 
 
 class BoundsPanel(shared.ArmatureObjectPanel, bpy.types.Panel):

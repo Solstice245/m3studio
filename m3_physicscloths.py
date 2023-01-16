@@ -22,10 +22,10 @@ from . import shared
 
 def register_props():
     bpy.types.Object.m3_cloths = bpy.props.CollectionProperty(type=ClothProperties)
-    bpy.types.Object.m3_cloths_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
+    bpy.types.Object.m3_cloths_index = bpy.props.IntProperty(options=set(), default=-1)
     bpy.types.Object.m3_cloths_version = bpy.props.EnumProperty(options=set(), items=cloth_versions, default='4')
     bpy.types.Object.m3_clothconstraintsets = bpy.props.CollectionProperty(type=ConstraintSetProperties)
-    bpy.types.Object.m3_clothconstraintsets_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
+    bpy.types.Object.m3_clothconstraintsets_index = bpy.props.IntProperty(options=set(), default=-1)
 
 
 cloth_versions = (
@@ -34,15 +34,10 @@ cloth_versions = (
 )
 
 
-def update_collection_index(self, context):
-    shared.auto_update_bone_display_mode(context.object, 'PHCL')
-
-
 def update_constraints_collection_index(self, context):
     if self.constraints_index in range(len(self.constraints)):
         bl = self.constraints[self.constraints_index]
         shared.select_bones_handles(context.object, [bl.bone])
-        shared.auto_update_bone_display_mode(context.object, 'PAR_')
 
 
 def draw_constraint_props(constraint, layout):

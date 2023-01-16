@@ -39,7 +39,6 @@ def update_collection_index(self, context):
     if self.m3_cameras_index in range(len(self.m3_cameras)):
         bl = self.m3_cameras[self.m3_cameras_index]
         shared.select_bones_handles(context.object, [bl.bone])
-        shared.auto_update_bone_display_mode(context.object, 'CAM_')
 
 
 def draw_props(camera, layout):

@@ -29,7 +29,6 @@ def update_collection_index(self, context):
     if self.m3_shadowboxes_index in range(len(self.m3_shadowboxes)):
         bl = self.m3_shadowboxes[self.m3_shadowboxes_index]
         shared.select_bones_handles(self, [bl.bone])
-        shared.auto_update_bone_display_mode(self, 'SHBX')
 
 
 def draw_props(shbx, layout):

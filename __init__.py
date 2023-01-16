@@ -18,7 +18,6 @@
 
 import time
 import bpy
-from bpy.app.handlers import persistent
 from . import shared
 from . import m3_bone
 from . import m3_object_armature
@@ -52,7 +51,7 @@ bl_info = {
     'version': (0, 1, 0),
     'blender': (3, 0, 0),
     'location': 'Properties Editor -> Object Data -> M3 Panels',
-    'description': 'Allows to export and import models in M3 format.',
+    'description': 'Allows import and export of models in the M3 format.',
     'category': 'Import-Export',
     'doc_url': 'https://github.com/Solstice245/m3studio/blob/master/README.md',
     'tracker_url': 'https://github.com/Solstice245/m3studio/issues',
@@ -170,16 +169,6 @@ classes = (
 )
 
 
-# TODO the only remaining usage is the matref/mat name link, which doesn't even work properly due to a Blender bug.
-# TODO consider removing the entire msgbus system from the addon.
-@persistent
-def init_msgbus(*args):
-    for arm in [ob for ob in bpy.context.scene.objects if ob.type == 'ARMATURE']:
-        for module in m3_modules:
-            if hasattr(module, 'init_msgbus'):
-                module.init_msgbus(arm, bpy.context)
-
-
 def register():
     global M3_SHADER
     for clss in classes:
@@ -189,7 +178,6 @@ def register():
     bpy.types.TOPBAR_MT_file_import.append(top_bar_import)
     bpy.types.TOPBAR_MT_file_export.append(top_bar_export)
     M3_SHADER = bpy.types.SpaceView3D.draw_handler_add(bl_graphics_draw.draw, (), 'WINDOW', 'POST_VIEW')
-    bpy.app.handlers.load_post.append(init_msgbus)
 
 
 def unregister():
@@ -199,7 +187,6 @@ def unregister():
     bpy.types.TOPBAR_MT_file_import.remove(top_bar_import)
     bpy.types.TOPBAR_MT_file_export.remove(top_bar_export)
     bpy.types.SpaceView3D.draw_handler_remove(M3_SHADER, 'WINDOW')
-    bpy.app.handlers.load_post.remove(init_msgbus)
 
 
 if __name__ == '__main__':

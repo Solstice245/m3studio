@@ -179,20 +179,6 @@ def m3_pointer_get(search_data, handle):
     return None
 
 
-def m3_msgbus_callback(self, sub, key, owner):
-    setattr(self, owner, getattr(sub, key))
-
-
-def m3_msgbus_sub(self, sub, key, owner):
-    bpy.msgbus.subscribe_rna(
-        key=sub.path_resolve(key, False),
-        owner=self.bl_handle + owner,
-        args=(self, sub, key, owner),
-        notify=m3_msgbus_callback,
-        options={'PERSISTENT'}
-    )
-
-
 def select_bones_handles(ob, bl_handles):
     if ob.m3_options.auto_update_bone_selection and bl_handles:
         for bone in ob.data.bones:
@@ -200,13 +186,6 @@ def select_bones_handles(ob, bl_handles):
             bone.select_tail = bone.select
             if bone.bl_handle == bl_handles[0]:
                 ob.data.bones.active = bone
-
-
-# TODO rework this system
-def auto_update_bone_display_mode(ob, setting):
-    if ob.m3_options.auto_update_bone_display_mode:
-        if ob.m3_options.bone_display_mode != setting:
-            ob.m3_options.bone_display_mode = setting
 
 
 class ArmatureObjectPanel(bpy.types.Panel):
@@ -416,7 +395,7 @@ def draw_menu_duplicate(layout, collection, dup_keyframes_opt=False):
     op.index = index
     op.dup_action_keyframes = False
     if dup_keyframes_opt:
-        op = layout.operator('m3.collection_duplicate', text='Duplicate With Keyframes')
+        op = layout.operator('m3.collection_duplicate', text='Duplicate With Animations')
         op.collection = collection.path_from_id()
         op.index = index
         op.dup_action_keyframes = True

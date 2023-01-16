@@ -61,13 +61,15 @@ lensflare_versions = (
 )
 
 
-def init_msgbus(ob, context):
-    for matref in ob.m3_materialrefs:
-        mat = m3_material_get(ob, matref)
-        shared.m3_msgbus_sub(mat, matref, 'name', 'name')
+def get_material_name(self):
+    for matref in self.id_data.m3_materialrefs:
+        if matref.mat_handle == self.bl_handle:
+            return matref.name
+    return 'Unknown Material'
 
 
 class StandardProperties(shared.M3PropertyGroup):
+    name: bpy.props.StringProperty(options=set(), get=get_material_name)
     layer_diff: bpy.props.StringProperty(options=set())
     layer_decal: bpy.props.StringProperty(options=set())
     layer_spec: bpy.props.StringProperty(options=set())
@@ -139,6 +141,7 @@ class StandardProperties(shared.M3PropertyGroup):
 
 
 class DisplacementProperties(shared.M3PropertyGroup):
+    name: bpy.props.StringProperty(options=set(), get=get_material_name)
     layer_norm: bpy.props.StringProperty(options=set())
     layer_strength: bpy.props.StringProperty(options=set())
     priority: bpy.props.IntProperty(options=set())
@@ -152,16 +155,19 @@ class CompositeSectionProperties(shared.M3PropertyGroup):
 
 
 class CompositeProperties(shared.M3PropertyGroup):
+    name: bpy.props.StringProperty(options=set(), get=get_material_name)
     sections: bpy.props.CollectionProperty(type=CompositeSectionProperties)
     sections_index: bpy.props.IntProperty(options=set(), default=-1)
     unknown00: bpy.props.IntProperty(options=set(), min=0)
 
 
 class TerrainProperties(shared.M3PropertyGroup):
+    name: bpy.props.StringProperty(options=set(), get=get_material_name)
     layer_terrain: bpy.props.StringProperty(options=set())
 
 
 class VolumeProperties(shared.M3PropertyGroup):
+    name: bpy.props.StringProperty(options=set(), get=get_material_name)
     layer_color: bpy.props.StringProperty(options=set())
     layer_unknown1: bpy.props.StringProperty(options=set())
     layer_unknown2: bpy.props.StringProperty(options=set())
@@ -169,6 +175,7 @@ class VolumeProperties(shared.M3PropertyGroup):
 
 
 class VolumeNoiseProperties(shared.M3PropertyGroup):
+    name: bpy.props.StringProperty(options=set(), get=get_material_name)
     layer_color: bpy.props.StringProperty(options=set())
     layer_noise1: bpy.props.StringProperty(options=set())
     layer_noise2: bpy.props.StringProperty(options=set())
@@ -184,16 +191,19 @@ class VolumeNoiseProperties(shared.M3PropertyGroup):
 
 
 class CreepProperties(shared.M3PropertyGroup):
+    name: bpy.props.StringProperty(options=set(), get=get_material_name)
     layer_creep: bpy.props.StringProperty(options=set())
 
 
 class SplatTerrainBakeProperties(shared.M3PropertyGroup):
+    name: bpy.props.StringProperty(options=set(), get=get_material_name)
     layer_diff: bpy.props.StringProperty(options=set())
     layer_norm: bpy.props.StringProperty(options=set())
     layer_spec: bpy.props.StringProperty(options=set())
 
 
 class ReflectionProperties(shared.M3PropertyGroup):
+    name: bpy.props.StringProperty(options=set(), get=get_material_name)
     layer_norm: bpy.props.StringProperty(options=set())
     layer_strength: bpy.props.StringProperty(options=set())
     layer_blur: bpy.props.StringProperty(options=set())
@@ -210,6 +220,7 @@ class ReflectionProperties(shared.M3PropertyGroup):
 
 
 class LensFlareStarburstProperties(shared.M3PropertyGroup):
+    name: bpy.props.StringProperty(options=set(), get=get_material_name)
     uv_index: bpy.props.IntProperty(options=set(), min=0)
     distance_factor: bpy.props.FloatProperty(options=set(), default=1)
     width: bpy.props.FloatProperty(options=set(), min=0, default=500)
@@ -223,6 +234,7 @@ class LensFlareStarburstProperties(shared.M3PropertyGroup):
 
 
 class LensFlareProperties(shared.M3PropertyGroup):
+    name: bpy.props.StringProperty(options=set(), get=get_material_name)
     layer_color: bpy.props.StringProperty(options=set())
     layer_unknown: bpy.props.StringProperty(options=set())
     starbursts: bpy.props.CollectionProperty(type=LensFlareStarburstProperties)
@@ -545,7 +557,7 @@ class MaterialMenu(bpy.types.Menu):
         layout = self.layout
         op = layout.operator('m3.material_duplicate', icon='DUPLICATE', text='Duplicate')
         op.dup_action_keyframes = False
-        op = layout.operator('m3.material_duplicate', text='Duplicate With Keyframes')
+        op = layout.operator('m3.material_duplicate', text='Duplicate With Animations')
         op.dup_action_keyframes = True
 
 
@@ -584,8 +596,8 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
         col = layout.column()
         col.use_property_split = True
         col.separator()
-        col.prop(matref, 'name', text='Name')
-        col.separator()
+        # col.prop(matref, 'name', text='Name')
+        # col.separator()
         draw_props(context, matref, col)
 
 
@@ -687,12 +699,9 @@ class M3MaterialOpAdd(bpy.types.Operator):
     def invoke(self, context, event):
         ob = context.object
         matref = shared.m3_item_add(ob.m3_materialrefs, item_name=mat_type_dict[self.mat_type]['name'])
-        mat = shared.m3_item_add(getattr(ob, self.mat_type), item_name=matref.name)
+        mat = shared.m3_item_add(getattr(ob, self.mat_type))
         matref.mat_type = self.mat_type
         matref.mat_handle = mat.bl_handle
-
-        shared.m3_msgbus_sub(mat, matref, 'name', 'name')
-
         context.object.m3_materialrefs_index = len(context.object.m3_materialrefs) - 1
 
         return {'FINISHED'}
