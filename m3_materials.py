@@ -228,7 +228,7 @@ class ReflectionProperties(shared.M3PropertyGroup):
     reflection_strength: bpy.props.FloatProperty(name='Reflection Strength', default=1)
     reflection_strength_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     displacement_strength: bpy.props.FloatProperty(name='Displacement Strength', default=1)
-    displacement_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
+    displacement_strength_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     use_layer_norm: bpy.props.BoolProperty(options=set())
     use_layer_strength: bpy.props.BoolProperty(options=set())
     blurring: bpy.props.BoolProperty(options=set())
@@ -412,7 +412,7 @@ def draw_displacement_props(context, material, layout):
     draw_layer_pointer_prop(context.object, layout, material, 'layer_strength', 'Strength')
     layout.separator()
     layout.prop(material, 'priority', text='Priority')
-    layout.prop(material, 'strength_factor', text='Strength Multiplier')
+    shared.draw_prop_anim(layout, material, 'strength_factor', text='Strength Multiplier')
 
 
 def draw_composite_props(context, material, layout):
@@ -423,8 +423,8 @@ def draw_composite_props(context, material, layout):
     op.collection = material.sections.path_from_id()
     for ii, item in enumerate(material.sections):
         row = box.row()
-        shared.draw_pointer_prop(row, item.id_data.m3_materialrefs, item, 'matref', icon='MATERIAL')
-        row.prop(item, 'alpha_factor', text='Alpha Factor')
+        shared.draw_prop_pointer(row, item.id_data.m3_materialrefs, item, 'matref', icon='MATERIAL')
+        shared.draw_prop_anim(row, item, 'alpha_factor', text='Alpha Factor')
         op = row.operator('m3.collection_remove', icon='X', text='')
         op.collection, op.index = (material.sections.path_from_id(), ii)
 
@@ -438,7 +438,7 @@ def draw_volume_props(context, material, layout):
     draw_layer_pointer_prop(context.object, layout, material, 'layer_unknown1', 'Unknown 1')
     draw_layer_pointer_prop(context.object, layout, material, 'layer_unknown2', 'Unknown 2')
     layout.separator()
-    layout.prop(material, 'density', text='Density')
+    shared.draw_prop_anim(layout, material, 'density', text='Density')
 
 
 def draw_volumenoise_props(context, material, layout):
@@ -446,14 +446,14 @@ def draw_volumenoise_props(context, material, layout):
     draw_layer_pointer_prop(context.object, layout, material, 'layer_noise1', 'Noise 1')
     draw_layer_pointer_prop(context.object, layout, material, 'layer_noise2', 'Noise 2')
     layout.separator()
-    layout.prop(material, 'density', text='Density')
-    layout.prop(material, 'near_plane', text='Near Plane')
-    layout.prop(material, 'falloff', text='Falloff')
-    layout.prop(material, 'scroll_rate', text='Scroll Rate')
+    shared.draw_prop_anim(layout, material, 'density', text='Density')
+    shared.draw_prop_anim(layout, material, 'near_plane', text='Near Plane')
+    shared.draw_prop_anim(layout, material, 'falloff', text='Falloff')
+    shared.draw_prop_anim(layout, material, 'scroll_rate', text='Scroll Rate')
     layout.separator()
-    layout.prop(material, 'translation', text='Translation')
-    layout.prop(material, 'rotation', text='Rotation')
-    layout.prop(material, 'scale', text='Scale')
+    shared.draw_prop_anim(layout, material, 'translation', text='Translation')
+    shared.draw_prop_anim(layout, material, 'rotation', text='Rotation')
+    shared.draw_prop_anim(layout, material, 'scale', text='Scale')
     layout.separator()
     layout.prop(material, 'alpha_threshold', text='Alpha Threshold')
     layout.prop(material, 'draw_after_transparency', text='Draw After Transparency')
@@ -470,7 +470,7 @@ def draw_stb_props(context, material, layout):
 
 
 def draw_reflection_props(context, material, layout):
-    version = str(material.id_data.m3_materials_reflection_version)
+    version = int(material.id_data.m3_materials_reflection_version)
 
     draw_layer_pointer_prop(context.object, layout, material, 'layer_norm', 'Normal')
     draw_layer_pointer_prop(context.object, layout, material, 'layer_strength', 'Strength')
@@ -481,15 +481,15 @@ def draw_reflection_props(context, material, layout):
     layout.separator()
 
     if version >= 2:
-        layout.prop(material, 'reflection_offset', text='Reflection Offset')
+        shared.draw_prop_anim(layout, material, 'reflection_offset', text='Reflection Offset')
 
-    layout.prop(material, 'reflection_strength', text='Reflection Strength')
-    layout.prop(material, 'displacement_strength', text='Displacement Strength')
+    shared.draw_prop_anim(layout, material, 'reflection_strength', text='Reflection Strength')
+    shared.draw_prop_anim(layout, material, 'displacement_strength', text='Displacement Strength')
 
     if version >= 2:
         layout.separator()
-        layout.prop(material, 'blur_angle', text='Blur Angle')
-        layout.prop(material, 'blur_distance', text='Blur Distance')
+        shared.draw_prop_anim(layout, material, 'blur_angle', text='Blur Angle')
+        shared.draw_prop_anim(layout, material, 'blur_distance', text='Blur Distance')
 
     layout.separator()
     col = layout.column_flow(columns=2)
@@ -533,12 +533,12 @@ def draw_lensflare_props(context, material, layout):
     layout.separator()
     layout.prop(material, 'render_distance', text='Render Distance')
     layout.separator()
-    layout.prop(material, 'intensity', text='Intensity')
-    layout.prop(material, 'intensity2', text='Intensity 2')
+    shared.draw_prop_anim(layout, material, 'intensity', text='Intensity')
+    shared.draw_prop_anim(layout, material, 'intensity2', text='Intensity 2')
     layout.separator()
-    layout.prop(material, 'uniform_scale', text='Uniform Scale')
+    shared.draw_prop_anim(layout, material, 'uniform_scale', text='Uniform Scale')
     layout.separator()
-    layout.prop(material, 'color', text='Tint Color')
+    shared.draw_prop_anim(layout, material, 'color', text='Tint Color')
     layout.separator()
     shared.draw_collection_list(layout.box(), material.starbursts, draw_lensflare_starburst_props, label='Starbursts:')
 
@@ -616,9 +616,6 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
 
         col = layout.column()
         col.use_property_split = True
-        col.separator()
-        # col.prop(matref, 'name', text='Name')
-        # col.separator()
         draw_props(context, matref, col)
 
 

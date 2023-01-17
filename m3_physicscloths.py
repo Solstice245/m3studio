@@ -41,7 +41,7 @@ def update_constraints_collection_index(self, context):
 
 
 def draw_constraint_props(constraint, layout):
-    shared.draw_pointer_prop(layout, constraint.id_data.data.bones, constraint, 'bone', label='Bone', icon='BONE_DATA')
+    shared.draw_prop_pointer(layout, constraint.id_data.data.bones, constraint, 'bone', label='Bone', icon='BONE_DATA')
     col = layout.column()
     col.prop(constraint, 'radius', text='Radius')
     col.prop(constraint, 'height', text='Height')
@@ -61,7 +61,7 @@ def draw_cloth_props(cloth, layout):
     layout.prop(cloth, 'mesh_object', text='Mesh Object')
     layout.prop(cloth, 'simulator_object', text='Simulator Object')
     layout.separator()
-    shared.draw_pointer_prop(layout, cloth.id_data.m3_clothconstraintsets, cloth, 'constraint_set', label='Constraint Set', icon='LINKED')
+    shared.draw_prop_pointer(layout, cloth.id_data.m3_clothconstraintsets, cloth, 'constraint_set', label='Constraint Set', icon='LINKED')
     layout.separator()
     layout.prop(cloth, 'density', text='Cloth Density')
     layout.separator()

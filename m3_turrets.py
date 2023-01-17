@@ -47,7 +47,7 @@ def update_parts_collection_index(self, context):
 def draw_part_props(part, layout):
     version = int(part.id_data.m3_turrets_part_version)
 
-    shared.draw_pointer_prop(layout, part.id_data.data.bones, part, 'bone', label='Bone', icon='BONE_DATA')
+    shared.draw_prop_pointer(layout, part.id_data.data.bones, part, 'bone', label='Bone', icon='BONE_DATA')
     col = layout.column()
     col.prop(part, 'group_id', text='Part Group')
     col.prop(part, 'main_part', text='Main Part')

@@ -57,18 +57,18 @@ def update_copy_collection_index(self, context):
 
 
 def draw_copy_props(copy, layout):
-    shared.draw_pointer_prop(layout, copy.id_data.data.bones, copy, 'bone', label='Bone', icon='BONE_DATA')
+    shared.draw_prop_pointer(layout, copy.id_data.data.bones, copy, 'bone', label='Bone', icon='BONE_DATA')
     col = layout.column(align=True)
-    col.prop(copy, 'emit_rate', text='Emission Rate')
-    col.prop(copy, 'emit_count', text='Emission Amount')
+    shared.draw_prop_anim(col, copy, 'emit_rate', text='Emission Rate')
+    shared.draw_prop_anim(col, copy, 'emit_count', text='Emission Amount')
     layout.separator()
     shared.draw_handle_list(layout.box(), copy.id_data.m3_particle_systems, copy, 'systems', label='Particle System')
 
 
 def draw_props(particle, layout):
     col = layout.column()
-    shared.draw_pointer_prop(col, particle.id_data.data.bones, particle, 'bone', label='Bone', icon='BONE_DATA')
-    shared.draw_pointer_prop(col, particle.id_data.m3_materialrefs, particle, 'material', label='Material', icon='MATERIAL')
+    shared.draw_prop_pointer(col, particle.id_data.data.bones, particle, 'bone', label='Bone', icon='BONE_DATA')
+    shared.draw_prop_pointer(col, particle.id_data.m3_materialrefs, particle, 'material', label='Material', icon='MATERIAL')
     col.prop(particle, 'particle_type', text='Type')
 
     if particle.particle_type == 'RECT_BILLBOARD':
@@ -80,8 +80,8 @@ def draw_props(particle, layout):
     col.prop(particle, 'lod_cut', text='Cutoff')
     col.separator()
     col.prop(particle, 'emit_max', text='Emission Max')
-    col.prop(particle, 'emit_rate', text='Rate')
-    col.prop(particle, 'emit_count', text='Count')
+    shared.draw_prop_anim(col, particle, 'emit_rate', text='Rate')
+    shared.draw_prop_anim(col, particle, 'emit_count', text='Count')
     col.separator()
     col = layout.column(align=True)
     col.prop(particle, 'emit_type', text='Emission Type')
@@ -93,22 +93,22 @@ def draw_props(particle, layout):
         size_r = particle.emit_shape in ['SPHERE', 'CYLINDER', 'DISC']
         if size_xy or size_z or size_r:
             if size_xy:
-                col.prop(particle, 'emit_shape_size', index=0, text='X')
-                col.prop(particle, 'emit_shape_size', index=1, text='Y')
+                shared.draw_prop_anim(col, particle, 'emit_shape_size', index=0, text='X')
+                shared.draw_prop_anim(col, particle, 'emit_shape_size', index=1, text='Y')
             if size_z:
-                col.prop(particle, 'emit_shape_size', index=2, text='Z')
+                shared.draw_prop_anim(col, particle, 'emit_shape_size', index=2, text='Z')
             if size_r:
-                col.prop(particle, 'emit_shape_radius', text='R')
+                shared.draw_prop_anim(col, particle, 'emit_shape_radius', text='R')
             col.prop(particle, 'emit_shape_cutout', index=0, text='Emission Area Cutout')
             col = col.column(align=True)
             col.active = particle.emit_shape_cutout
             if size_xy:
-                col.prop(particle, 'emit_shape_size_cutout', index=0, text='X')
-                col.prop(particle, 'emit_shape_size_cutout', index=1, text='Y')
+                shared.draw_prop_anim(col, particle, 'emit_shape_size_cutout', index=0, text='X')
+                shared.draw_prop_anim(col, particle, 'emit_shape_size_cutout', index=1, text='Y')
             if size_z:
-                col.prop(particle, 'emit_shape_size_cutout', index=2, text='Z')
+                shared.draw_prop_anim(col, particle, 'emit_shape_size_cutout', index=2, text='Z')
             if size_r:
-                col.prop(particle, 'emit_shape_radius_cutout', text='R')
+                shared.draw_prop_anim(col, particle, 'emit_shape_radius_cutout', text='R')
         elif particle.emit_shape == 'SPLINE':
             box = col.box()
             box.use_property_split = False
@@ -116,9 +116,9 @@ def draw_props(particle, layout):
             op.collection = particle.emit_shape_spline.path_from_id()
             for ii, item in enumerate(particle.emit_shape_spline):
                 row = box.row(align=True)
-                row.prop(item, 'location', index=0, text='X')
-                row.prop(item, 'location', index=1, text='Y')
-                row.prop(item, 'location', index=2, text='Z')
+                shared.draw_prop_anim(row, item, 'location', index=0, text='X')
+                shared.draw_prop_anim(row, item, 'location', index=1, text='Y')
+                shared.draw_prop_anim(row, item, 'location', index=2, text='Z')
                 row.separator()
                 op = row.operator('m3.collection_remove', icon='X', text='')
                 op.collection, op.index = (particle.emit_shape_spline.path_from_id(), ii)
@@ -134,25 +134,25 @@ def draw_props(particle, layout):
                 op.collection, op.index = (particle.emit_shape_meshes.path_from_id(), ii)
 
     col = layout.column(align=True)
-    col.prop(particle, 'emit_speed', text='Emission Speed')
+    shared.draw_prop_anim(col, particle, 'emit_speed', text='Emission Speed')
     row = col.row(align=True, heading='Randomize')
     row.prop(particle, 'emit_speed_randomize', text='')
     sub = row.column(align=True)
     sub.active = particle.emit_speed_randomize
-    sub.prop(particle, 'emit_speed_random', text='')
+    shared.draw_prop_anim(sub, particle, 'emit_speed_random', text='')
     col.separator()
-    col.prop(particle, 'emit_angle_x', text='Emission Angle X')
-    col.prop(particle, 'emit_angle_y', text='Y')
+    shared.draw_prop_anim(col, particle, 'emit_angle_x', text='Emission Angle X')
+    shared.draw_prop_anim(col, particle, 'emit_angle_y', text='Y')
     col.separator()
-    col.prop(particle, 'emit_spread_x', text='Emission Spread X')
-    col.prop(particle, 'emit_spread_y', text='Y')
+    shared.draw_prop_anim(col, particle, 'emit_spread_x', text='Emission Spread X')
+    shared.draw_prop_anim(col, particle, 'emit_spread_y', text='Y')
     col.separator()
-    col.prop(particle, 'lifespan', text='Lifespan')
+    shared.draw_prop_anim(col, particle, 'lifespan', text='Lifespan')
     row = col.row(align=True, heading='Randomize')
     row.prop(particle, 'lifespan_randomize', text='')
     sub = row.column(align=True)
     sub.active = particle.lifespan_randomize
-    sub.prop(particle, 'lifespan_random', text='')
+    shared.draw_prop_anim(sub, particle, 'lifespan_random', text='')
     col.separator()
     col.prop(particle, 'mass', text='Mass')
     row = col.row(align=True, heading='Randomize')
@@ -169,16 +169,16 @@ def draw_props(particle, layout):
     col = layout.column()
     col.separator()
     sub = col.column(align=True)
-    sub.prop(particle, 'color_init', text='Color Initial')
-    sub.prop(particle, 'color_mid', text='Middle')
-    sub.prop(particle, 'color_end', text='Final')
+    shared.draw_prop_anim(col, particle, 'color_init', text='Color Initial')
+    shared.draw_prop_anim(col, particle, 'color_mid', text='Middle')
+    shared.draw_prop_anim(col, particle, 'color_end', text='Final')
     row = col.row(align=True, heading='Randomize')
     row.prop(particle, 'color_randomize', text='')
     sub = col.column(align=True)
     sub.active = particle.color_randomize
-    sub.prop(particle, 'color2_init', text='Color Random Initial')
-    sub.prop(particle, 'color2_mid', text='Middle')
-    sub.prop(particle, 'color2_end', text='Final')
+    shared.draw_prop_anim(sub, particle, 'color2_init', text='Color Random Initial')
+    shared.draw_prop_anim(sub, particle, 'color2_mid', text='Middle')
+    shared.draw_prop_anim(sub, particle, 'color2_end', text='Final')
     sub = col.column()
     sub.separator()
     sub2 = sub.column(align=True)
@@ -191,16 +191,16 @@ def draw_props(particle, layout):
         sub2.prop(particle, 'alpha_hold', text='Alpha Hold Time')
 
     col = layout.column(align=True)
-    col.prop(particle, 'rotation', index=0, text='Rotation Initial')
-    col.prop(particle, 'rotation', index=1, text='Middle')
-    col.prop(particle, 'rotation', index=2, text='Final')
+    shared.draw_prop_anim(col, particle, 'rotation', index=0, text='Rotation Initial')
+    shared.draw_prop_anim(col, particle, 'rotation', index=1, text='Middle')
+    shared.draw_prop_anim(col, particle, 'rotation', index=2, text='Final')
     row = col.row(align=True, heading='Randomize')
     row.prop(particle, 'rotation_randomize', text='')
     sub = col.column(align=True)
     sub.active = particle.rotation_randomize
-    sub.prop(particle, 'rotation2', index=0, text='Rotation Random Initial')
-    sub.prop(particle, 'rotation2', index=1, text='Middle')
-    sub.prop(particle, 'rotation2', index=2, text='Final')
+    shared.draw_prop_anim(sub, particle, 'rotation2', index=0, text='Rotation Random Initial')
+    shared.draw_prop_anim(sub, particle, 'rotation2', index=1, text='Middle')
+    shared.draw_prop_anim(sub, particle, 'rotation2', index=2, text='Final')
     sub = col.column(align=True)
     sub.separator()
     sub2 = sub.column(align=True)
@@ -211,16 +211,16 @@ def draw_props(particle, layout):
         sub2.prop(particle, 'rotation_hold', text='Rotation Hold Time')
 
     col = layout.column(align=True)
-    col.prop(particle, 'size', index=0, text='Size Initial')
-    col.prop(particle, 'size', index=1, text='Middle')
-    col.prop(particle, 'size', index=2, text='Final')
+    shared.draw_prop_anim(col, particle, 'size', index=0, text='Size Initial')
+    shared.draw_prop_anim(col, particle, 'size', index=1, text='Middle')
+    shared.draw_prop_anim(col, particle, 'size', index=2, text='Final')
     row = col.row(align=True, heading='Randomize')
     row.prop(particle, 'size_randomize', text='')
     sub = col.column(align=True)
     sub.active = particle.size_randomize
-    sub.prop(particle, 'size2', index=0, text='Size Random Initial')
-    sub.prop(particle, 'size2', index=1, text='Middle')
-    sub.prop(particle, 'size2', index=2, text='Final')
+    shared.draw_prop_anim(sub, particle, 'size2', index=0, text='Size Random Initial')
+    shared.draw_prop_anim(sub, particle, 'size2', index=1, text='Middle')
+    shared.draw_prop_anim(sub, particle, 'size2', index=2, text='Final')
     sub = col.column()
     sub.separator()
     sub2 = sub.column(align=True)
@@ -253,9 +253,9 @@ def draw_props(particle, layout):
     sub.prop(particle, 'uv_flipbook_start_lifespan_factor', text='Phase 1 Length')
     col = layout.column(align=True)
     col.separator()
-    shared.draw_pointer_prop(col, particle.id_data.m3_particle_systems, particle, 'trail_particle', label='Trailing Particle', icon='LINKED')
+    shared.draw_prop_pointer(col, particle.id_data.m3_particle_systems, particle, 'trail_particle', label='Trailing Particle', icon='LINKED')
     col.prop(particle, 'trail_chance', text='Chance')
-    col.prop(particle, 'trail_rate', text='Rate')
+    shared.draw_prop_anim(col, particle, 'trail_rate', text='Rate')
     col = layout.column()
     col.use_property_split = False
     col.prop(particle, 'local_forces', text='Local Force Channels')
@@ -302,7 +302,9 @@ class SplinePointProperties(shared.M3PropertyGroup):
 class CopyProperties(shared.M3BoneUserPropertyGroup):
     systems: bpy.props.CollectionProperty(type=shared.M3PropertyGroup)
     emit_rate: bpy.props.FloatProperty(name='Particle Copy Emission Rate', min=0)
+    emit_rate_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     emit_count: bpy.props.IntProperty(name='Particle Copy Emission Count', min=0)
+    emit_count_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
 
 
 class SystemProperties(shared.M3BoneUserPropertyGroup):

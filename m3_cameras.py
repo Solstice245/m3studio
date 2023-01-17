@@ -44,18 +44,18 @@ def update_collection_index(self, context):
 def draw_props(camera, layout):
     version = int(camera.id_data.m3_cameras_version)
 
-    shared.draw_pointer_prop(layout, camera.id_data.data.bones, camera, 'bone', label='Bone', icon='BONE_DATA')
+    shared.draw_prop_pointer(layout, camera.id_data.data.bones, camera, 'bone', label='Bone', icon='BONE_DATA')
     col = layout.column(align=True)
-    col.prop(camera, 'field_of_view', text='Field Of View')
-    col.prop(camera, 'far_clip', text='Far Clip')
-    col.prop(camera, 'near_clip', text='Near Clip')
-    col.prop(camera, 'clip2', text='Clip 2')
-    col.prop(camera, 'focal_depth', text='Focal Depth')
-    col.prop(camera, 'falloff_start', text='Falloff Start')
-    col.prop(camera, 'falloff_end', text='Fallof End')
+    shared.draw_prop_anim(col, camera, 'field_of_view', text='Field Of View')
+    shared.draw_prop_anim(col, camera, 'far_clip', text='Far Clip')
+    shared.draw_prop_anim(col, camera, 'near_clip', text='Near Clip')
+    shared.draw_prop_anim(col, camera, 'clip2', text='Clip 2')
+    shared.draw_prop_anim(col, camera, 'focal_depth', text='Focal Depth')
+    shared.draw_prop_anim(col, camera, 'falloff_start', text='Falloff Start')
+    shared.draw_prop_anim(col, camera, 'falloff_end', text='Fallof End')
     if version >= 5:
         col.prop(camera, 'depth_of_field_type', text='Depth Of Field Type')
-    col.prop(camera, 'depth_of_field', text='Depth Of Field')
+    shared.draw_prop_anim(col, camera,  'depth_of_field', text='Depth Of Field')
     col.prop(camera, 'use_vertical_fov', text='Vertical FOV')
 
 
@@ -98,5 +98,6 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
 
 classes = (
     Properties,
+    Menu,
     Panel,
 )

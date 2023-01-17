@@ -64,6 +64,10 @@ def m3_handle_gen():
     return '%064x' % random.getrandbits(256)
 
 
+def m3_anim_id_gen():
+    return '%08x' % random.getrandbits(256)
+
+
 def m3_item_get_name(collection, prefix='', suggest=True):
     used_names = {item.name for item in collection}
 
@@ -93,6 +97,12 @@ def m3_item_add(collection, item_name=''):
     item = collection.add()
     item['bl_handle'] = m3_handle_gen()
     item['name'] = m3_item_get_name(collection, item_name)
+
+    for key in type(item).__annotations__.keys():
+        prop = getattr(item, key)
+        if type(prop) == M3AnimHeaderProp:
+            prop.hex_id = m3_anim_id_gen()
+
     return item
 
 
@@ -118,7 +128,16 @@ def m3_item_duplicate(collection, src, dup_action_keyframes, dst_collection=None
 
     for key in type(dst).__annotations__.keys():
         prop = getattr(src, key)
-        if str(type(prop)) != '<class \'bpy_prop_collection_idprop\'>':
+
+        if type(prop) == M3AnimHeaderProp:
+            dst_prop = getattr(dst, key)
+            dst_prop.hex_id = m3_anim_id_gen()
+            dst_prop.interpolation = prop.interpolation
+            dst_prop.flags = prop.flags
+        elif str(type(prop)) == '<class \'bpy_prop_collection_idprop\'>':
+            for item in prop:
+                m3_item_duplicate(prop, item, dup_action_keyframes, dst_collection=getattr(dst, key))
+        else:
             setattr(dst, key, prop)
 
             rna_props = src.bl_rna.properties[key]
@@ -146,10 +165,6 @@ def m3_item_duplicate(collection, src, dup_action_keyframes, dst_collection=None
                     dst_fcurve.keyframe_points.foreach_set('co', src_coords)
                     dst_fcurve.keyframe_points.foreach_set('interpolation', src_interps)
                     dst_fcurve.keyframe_points.foreach_set('type', src_types)
-
-        else:
-            for item in prop:
-                m3_item_duplicate(prop, item, dup_action_keyframes, dst_collection=getattr(dst, key))
 
     dst.name = ''
     dst.name = m3_item_get_name(dst_collection, src.name if not src.name.isdigit() else '', suggest=False)
@@ -200,6 +215,7 @@ class ArmatureObjectPanel(bpy.types.Panel):
 
 
 class M3AnimHeaderProp(bpy.types.PropertyGroup):
+    bl_user_mark_as_dup: bpy.props.BoolProperty(options=set())
     hex_id: bpy.props.StringProperty(options=set(), maxlen=8)  # TODO ensure that this is a proper hex string
     interpolation: bpy.props.EnumProperty(options=set(), items=bl_enum.anim_header_interp, default='AUTO')
     flags: bpy.props.IntProperty(options=set(), min=-1, default=-1)  # -1 means automatic
@@ -387,9 +403,48 @@ class M3PropHandleUnlink(bpy.types.Operator):
     prop_name: bpy.props.StringProperty()
 
     def invoke(self, context, event):
+        # TODO op for generating new hex id
         self.prop_id = getattr(bpy.data, self.prop_id_collection_name).get(self.prop_id_name)
         self.prop_owner = prop_id.path_resolve(self.prop_path)
         setattr(self.prop_owner, self.prop_name, '')
+        return {'FINISHED'}
+
+
+def draw_popup_anim_header(self, context):
+    global m3_anim_header
+    self.layout.label(text='M3 Animation Header')
+    main = self.layout.row(align=True)
+    split = main.split(factor=0.275)
+    row = split.row()
+    col = row.column()
+    col.alignment = 'RIGHT'
+    col.label(text='Animation ID')
+    col.label(text='Interpolation')
+    col.label(text='Flags')
+    row = split.row()
+    col = row.column()
+    col.prop(m3_anim_header, 'hex_id', text='')
+    col.prop(m3_anim_header, 'interpolation', text='')
+    col.prop(m3_anim_header, 'flags', text='')
+    subrow = col.row(align=True)
+    subrow.alignment = 'LEFT'
+    subrow.prop(m3_anim_header, 'bl_user_mark_as_dup', text='')
+    subrow.label(text='Mark Property As Duplicate ID User')
+
+
+class M3EditAnimHeader(bpy.types.Operator):
+    bl_idname = 'm3.edit_anim_header'
+    bl_label = 'Edit M3 Animation Header'
+    bl_description = 'Opens a window for editing M3 animation header properties'
+
+    prop_id_name: bpy.props.StringProperty()
+    prop_path: bpy.props.StringProperty()
+    prop_name: bpy.props.StringProperty()
+
+    def invoke(self, context, event):
+        global m3_anim_header
+        m3_anim_header = getattr(bpy.data.objects.get(self.prop_id_name).path_resolve(self.prop_path), self.prop_name + '_header')
+        context.window_manager.popover(draw_popup_anim_header, ui_units_x=16)
         return {'FINISHED'}
 
 
@@ -433,7 +488,57 @@ def draw_handle_list_item(layout, search_data, data, prop_name, label, item, ind
     op.index = index
 
 
-def draw_pointer_prop(layout, search_data, data, prop_name, label='', icon=''):
+def draw_prop_anim(layout, data, field, index=-1, text=''):
+    main = layout.row(align=True)
+    main.use_property_split = False
+
+    prop_header = getattr(data, field + '_header')
+    rna_props = data.bl_rna.properties[field]
+
+    vec_name_items = None
+    if rna_props.array_length and rna_props.subtype != 'COLOR' and index == -1:
+        vec_name_items = 'XYZ'
+
+    if layout.use_property_split:
+        split = main.split(factor=0.4, align=True)
+        row = split.row(align=True)
+        if vec_name_items and not prop_header.bl_user_mark_as_dup:
+            col = row.column(align=True)
+            col.alignment = 'RIGHT'
+            col.label(text=(text or rna_props.name or field) + ' ' + vec_name_items[0])
+            for ii in range(1, rna_props.array_length):
+                col.label(text=vec_name_items[ii])
+        else:
+            row.alignment = 'RIGHT'
+            row.label(text=text or rna_props.name or field)
+
+        row = split.row(align=True)
+    else:
+        row = main
+
+    if index < 1:
+        op = row.operator('m3.edit_anim_header', text='' if not prop_header.bl_user_mark_as_dup else 'User Marked As Duplicate ID', icon='PREFERENCES')
+        op.prop_id_name = data.id_data.name
+        op.prop_path = data.path_from_id()
+        op.prop_name = field
+    else:
+        row.separator(factor=3.6)
+
+    if not prop_header.bl_user_mark_as_dup:
+        col = row.column(align=True)
+
+        if vec_name_items:
+            for ii in range(max(1, rna_props.array_length)):
+                col.prop(data, field, index=ii, text='' if layout.use_property_split else text)
+        else:
+            col.prop(data, field, index=index, text='' if layout.use_property_split else text)
+
+    if layout.use_property_split and layout.use_property_decorate:
+        row = main.row()
+        row.prop_decorator(data, field, index=index)
+
+
+def draw_prop_pointer(layout, search_data, data, prop_name, label='', icon=''):
     search_data_verify = False
 
     search_id_bl = search_data.id_data
@@ -447,7 +552,7 @@ def draw_pointer_prop(layout, search_data, data, prop_name, label='', icon=''):
     main.use_property_split = False
 
     if label:
-        split = main.split(factor=0.4)
+        split = main.split(factor=0.4, align=True)
         row = split.row(align=True)
         row.alignment = 'RIGHT'
         row.label(text=label)
@@ -481,11 +586,11 @@ def draw_pointer_prop(layout, search_data, data, prop_name, label='', icon=''):
     if layout.use_property_split and layout.use_property_decorate:
         row = main.row()
         row.alignment = 'RIGHT'
-        row.separator(factor=3.6)
+        row.separator(factor=3.625)
 
 
 def draw_volume_props(volume, layout):
-    draw_pointer_prop(layout, volume.id_data.data.bones, volume, 'bone', label='Bone', icon='BONE_DATA')
+    draw_prop_pointer(layout, volume.id_data.data.bones, volume, 'bone', label='Bone', icon='BONE_DATA')
     sub = layout.column(align=True)
     sub.prop(volume, 'shape', text='Shape Type')
     if volume.shape == 'CUBE':
@@ -603,6 +708,7 @@ classes = (
     M3CollectionOpDuplicate,
     M3HandleListOpAdd,
     M3HandleListOpRemove,
+    M3EditAnimHeader,
     M3PropHandleUnlink,
     M3PropHandleSearch,
 )

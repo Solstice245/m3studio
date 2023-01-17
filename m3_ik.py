@@ -32,7 +32,7 @@ def update_collection_index(self, context):
 
 
 def draw_props(joint, layout):
-    shared.draw_pointer_prop(layout, joint.id_data.data.bones, joint, 'bone', label='Target Bone', icon='BONE_DATA')
+    shared.draw_prop_pointer(layout, joint.id_data.data.bones, joint, 'bone', label='Target Bone', icon='BONE_DATA')
     col = layout.column(align=True)
     col.prop(joint, 'joint_length', text='Joint Length')
     col.separator()

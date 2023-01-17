@@ -35,14 +35,14 @@ def update_collection_index(self, context):
 def draw_props(joint, layout):
     col = layout.column()
 
-    shared.draw_pointer_prop(col, joint.id_data.m3_rigidbodies, joint, 'rigidbody1', label='Joint Start', icon='LINKED')
+    shared.draw_prop_pointer(col, joint.id_data.m3_rigidbodies, joint, 'rigidbody1', label='Joint Start', icon='LINKED')
     if shared.m3_pointer_get(joint.id_data.m3_rigidbodies, joint.rigidbody1):
         col.prop(joint, 'location1', text='Location')
         col.prop(joint, 'rotation1', text='Rotation')
 
     col = layout.column()
 
-    shared.draw_pointer_prop(col, joint.id_data.m3_rigidbodies, joint, 'rigidbody2', label='Joint End', icon='LINKED')
+    shared.draw_prop_pointer(col, joint.id_data.m3_rigidbodies, joint, 'rigidbody2', label='Joint End', icon='LINKED')
     if shared.m3_pointer_get(joint.id_data.m3_rigidbodies, joint.rigidbody2):
         col.prop(joint, 'location2', text='Location')
         col.prop(joint, 'rotation2', text='Rotation')

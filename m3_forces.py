@@ -33,20 +33,21 @@ def update_collection_index(self, context):
 
 
 def draw_props(force, layout):
-    shared.draw_pointer_prop(layout, force.id_data.data.bones, force, 'bone', label='Bone', icon='BONE_DATA')
+    shared.draw_prop_pointer(layout, force.id_data.data.bones, force, 'bone', label='Bone', icon='BONE_DATA')
     col = layout.column()
     col.prop(force, 'force_type', text='Type')
     col = layout.column(align=True)
     col.prop(force, 'shape', text='Shape')
     # TODO display dimension props only relevent to current shape
-    col.prop(force, 'width', text='Width')
-    col.prop(force, 'height', text='Height')
-    col.prop(force, 'length', text='Length')
+    shared.draw_prop_anim(col, force, 'width', text='Width')
+    shared.draw_prop_anim(col, force, 'height', text='Height')
+    shared.draw_prop_anim(col, force, 'length', text='Length')
     col = layout.column()
     col.use_property_split = False
     col.prop(force, 'channels', text='Force Channels')
+    col.separator()
     col = layout.column(align=True)
-    col.prop(force, 'strength', text='Strength')
+    shared.draw_prop_anim(col, force, 'strength', text='Strength')
     col = layout.column_flow(align=True)
     col.prop(force, 'falloff', text='Falloff')
     col.prop(force, 'height_gradient', text='Height Gradient')

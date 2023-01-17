@@ -49,9 +49,9 @@ def draw_props(layer, layout):
         col.prop(layer, 'color_value', text='Color Value')
     col.prop(layer, 'color_channels', text='Color Channels')
     col = layout.column()
-    col.prop(layer, 'color_add', text='Add')
-    col.prop(layer, 'color_multiply', text='Multiply')
-    col.prop(layer, 'color_brightness', text='Brightness')
+    shared.draw_prop_anim(col, layer, 'color_add', text='Add')
+    shared.draw_prop_anim(col, layer, 'color_multiply', text='Multiply')
+    shared.draw_prop_anim(col, layer, 'color_brightness', text='Brightness')
     row = layout.row()
     row.prop(layer, 'color_invert', text='Invert')
     row.prop(layer, 'color_clamp', text='Clamp')
@@ -63,14 +63,14 @@ def draw_props(layer, layout):
         row = layout.row(heading='Wrap')
         row.prop(layer, 'uv_wrap_x', text='X')
         row.prop(layer, 'uv_wrap_y', text='Y')
-        layout.prop(layer, 'uv_offset', text='Offset')
-        layout.prop(layer, 'uv_angle', text='Angle')
-        layout.prop(layer, 'uv_tiling', text='Tiling')
+        shared.draw_prop_anim(layout, layer, 'uv_offset', text='Offset')
+        shared.draw_prop_anim(layout, layer, 'uv_angle', text='Angle')
+        shared.draw_prop_anim(layout, layer, 'uv_tiling', text='Tiling')
         col = layout.column()
         sub = col.column(align=True)
         sub.prop(layer, 'uv_flipbook_rows', text='Flipbook Rows')
         sub.prop(layer, 'uv_flipbook_cols', text='Columns')
-        col.prop(layer, 'uv_flipbook_frame', text='Frame')
+        shared.draw_prop_anim(col, layer, 'uv_flipbook_frame', text='Frame')
 
         if version >= 24 and 'TRIPLANAR' in layer.uv_source:
             layout.prop(layer, 'uv_triplanar_offset', text='Triplanar Offset')
@@ -113,8 +113,8 @@ def draw_props(layer, layout):
             col.prop(layer, 'video_frame_start', text='Frame Start')
             col.prop(layer, 'video_frame_end', text='Frame End')
             layout.prop(layer, 'video_sync_timing', text='Sync Timing')
-            layout.prop(layer, 'video_play', text='Play')
-            layout.prop(layer, 'video_restart', text='Restart')
+            shared.draw_prop_anim(layout, layer, 'video_play', text='Play')
+            shared.draw_prop_anim(layout, layer, 'video_restart', text='Restart')
 
 
 class Properties(shared.M3PropertyGroup):

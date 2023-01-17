@@ -32,11 +32,11 @@ def update_collection_index(self, context):
 
 
 def draw_props(shbx, layout):
-    shared.draw_pointer_prop(layout, shbx.id_data.data.bones, shbx, 'bone', label='Bone', icon='BONE_DATA')
+    shared.draw_prop_pointer(layout, shbx.id_data.data.bones, shbx, 'bone', label='Bone', icon='BONE_DATA')
     col = layout.column(align=True)
-    col.prop(shbx, 'length', text='Length')
-    col.prop(shbx, 'width', text='Width')
-    col.prop(shbx, 'height', text='Height')
+    shared.draw_prop_anim(col, shbx, 'length', text='Length')
+    shared.draw_prop_anim(col, shbx, 'width', text='Width')
+    shared.draw_prop_anim(col, shbx, 'height', text='Height')
 
 
 class Properties(shared.M3BoneUserPropertyGroup):

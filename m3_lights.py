@@ -33,18 +33,18 @@ def update_collection_index(self, context):
 
 
 def draw_props(light, layout):
-    shared.draw_pointer_prop(layout, light.id_data.data.bones, light, 'bone', label='Bone', icon='BONE_DATA')
+    shared.draw_prop_pointer(layout, light.id_data.data.bones, light, 'bone', label='Bone', icon='BONE_DATA')
     col = layout.column(align=True)
     col.prop(light, 'shape', text='Shape')
-    col.prop(light, 'attenuation_near', text='Attenuation Near')
-    col.prop(light, 'attenuation_far', text='Far')
+    shared.draw_prop_anim(col, light, 'attenuation_near', text='Attenuation Near')
+    shared.draw_prop_anim(col, light, 'attenuation_far', text='Far')
     if light.shape == 'SPOT':
-        col.prop(light, 'hotspot', text='Hotspot')
-        col.prop(light, 'falloff', text='Falloff')
-    col = layout.column(align=True)
-    col.prop(light, 'intensity', text='Intensity')
-    col.prop(light, 'color', text='Color')
-    col = layout.column(align=True)
+        shared.draw_prop_anim(col, light, 'hotspot', text='Hotspot')
+        shared.draw_prop_anim(col, light, 'falloff', text='Falloff')
+    col.separator()
+    shared.draw_prop_anim(col, light, 'intensity', text='Intensity')
+    shared.draw_prop_anim(col, light, 'color', text='Color')
+    col.separator()
     col.prop(light, 'unknown148', text='Unknown At 148')
     col = layout.column_flow(columns=2)
     col.use_property_split = False
