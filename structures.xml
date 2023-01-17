@@ -395,14 +395,10 @@
         </versions>
         <fields>
             <field name="value" type="uint64"/>
-            <!--<field name="val0" type="uint8"/>
-            <field name="val1" type="uint8"/>
-            <field name="val2" type="uint8"/>
-            <field name="val3" type="uint8"/>
-            <field name="val4" type="uint8"/>
-            <field name="val5" type="uint8"/>
-            <field name="val6" type="uint8"/>
-            <field name="val7" type="uint8"/>-->
+            <!--<field name="val0" type="uint16"/>
+            <field name="val1" type="uint16"/>
+            <field name="val2" type="uint16"/>
+            <field name="val3" type="uint16"/>-->
         </fields>
     </structure>
     <structure name="VertexFormat0x182027d">
@@ -2175,8 +2171,8 @@
         </versions>
         <fields>
             <field name="matrix" type="Matrix44"/>
-            <field name="height" type="float"/>
             <field name="radius" type="float"/>
+            <field name="height" type="float"/>
             <field name="bone" type="uint32"/>
         </fields>
     </structure>

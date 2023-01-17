@@ -32,7 +32,7 @@ def register_props():
 
 
 def anim_update(self, context):
-    if context.object.m3_options.update_action:
+    if context.object.m3_options.update_anim_data:
         anim = None
         if context.object.m3_animations_index in range(len(context.object.m3_animations)):
             anim = context.object.m3_animations[context.object.m3_animations_index]

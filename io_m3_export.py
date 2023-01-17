@@ -1912,8 +1912,8 @@ class Exporter:
 
             # set flags for regions used by the cloth behavior
             regn_inf.bit_set('flags', 'hidden', True)
-            regn_inf.bit_set('flags', 'placeholder', True)
-            regn_inf.bit_set('flags', 'cloth_influenced', True)
+            # regn_inf.bit_set('flags', 'placeholder', True)
+            # regn_inf.bit_set('flags', 'cloth_influenced', True)
 
             regn_sim.bit_set('flags', 'hidden', True)
             regn_sim.bit_set('flags', 'cloth_simulated', True)

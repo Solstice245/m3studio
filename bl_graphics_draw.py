@@ -464,6 +464,8 @@ def draw():
                     if not opts.draw_clothconstraints and not (pb_select[pb] and opts.draw_selected):
                         continue
 
+                    # TODO something is wrong with this matrix
+
                     pb_matrix = get_pb_world_matrix(ob, pb, pb_to_world_matrix)
                     col = blgd.cloth_color_normal if not pb_select[pb] else blgd.cloth_color_select
                     final_matrix = pb_matrix @ bone_to_inv_bind_scale_matrix[bone] @ mathutils.Matrix.LocRotScale(item.location, item.rotation, item.scale)
