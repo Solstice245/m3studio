@@ -65,7 +65,7 @@ def m3_import_id_names(self, context):
 
 
 class M3ImportOperator(bpy.types.Operator):
-    ''' Imports M3 data from an M3 file to a new armature object or the selected armature object '''
+    '''Load an M3 file into a new armature or an existing armature'''
     bl_idname = 'm3.import'
     bl_label = 'Import M3'
     bl_options = {'UNDO'}
@@ -85,7 +85,7 @@ class M3ImportOperator(bpy.types.Operator):
 
 
 class M3ExportOperator(bpy.types.Operator):
-    ''' Exports M3 data from the selected armature object to an M3 file '''
+    '''Saves an M3 file from an armature'''
     bl_idname = 'm3.export'
     bl_label = 'Export M3'
 

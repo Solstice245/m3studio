@@ -16,20 +16,10 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-options_bone_display = (
-    ('NONE', 'None', ''),
-    ('ATT_', 'Attachment Points', ''),
-    ('SHBX', 'Shadow Boxes', ''),
-    ('CAM_', 'Cameras', ''),
-    ('FOR_', 'Forces', ''),
-    ('FTHT', 'Hit Test Volumes', ''),
-    ('LITE', 'Lights', ''),
-    ('PAR_', 'Particles', ''),
-    ('PROJ', 'Projections', ''),
-    ('RIB_', 'Ribbons', ''),
-    ('PHRB', 'Physics Rigid Bodies', ''),
-    ('PHCL', 'Physics Cloths', ''),
-    ('WRP_', 'Vertex Warpers', ''),
+anim_header_interp = (
+    ('CONSTANT', 'Constant', ''),
+    ('LINEAR', 'Linear', ''),
+    ('AUTO', 'Automatic', 'The exporter will determine this value based on the conventional configuration of this property'),
 )
 
 attachmentpoint_keys = (

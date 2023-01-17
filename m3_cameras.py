@@ -61,13 +61,21 @@ def draw_props(camera, layout):
 
 class Properties(shared.M3BoneUserPropertyGroup):
     field_of_view: bpy.props.FloatProperty(name='M3 Camera Field Of View', default=0.5)
+    field_of_view_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     far_clip: bpy.props.FloatProperty(name='M3 Camera Far Clip', default=10)
+    far_clip_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     near_clip: bpy.props.FloatProperty(name='M3 Camera Near Clip', default=0.1)
+    near_clip_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     clip2: bpy.props.FloatProperty(name='M3 Camera Clip 2', default=10)
+    clip2_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     focal_depth: bpy.props.FloatProperty(name='M3 Camera Focal Depth', default=2)
+    focal_depth_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     falloff_start: bpy.props.FloatProperty(name='M3 Camera Falloff Start', default=1)
+    falloff_start_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     falloff_end: bpy.props.FloatProperty(name='M3 Camera Falloff End', default=2)
+    falloff_end_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     depth_of_field: bpy.props.FloatProperty(name='M3 Camera Depth Of Field', default=0.5)
+    depth_of_field_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     depth_of_field_type: bpy.props.EnumProperty(options=set(), items=bl_enum.camera_dof)
     use_vertical_fov: bpy.props.BoolProperty(options=set())
 

@@ -140,10 +140,7 @@ class M3InputProcessor:
         value = self.bl.bl_rna.properties[field].enum_items[getattr(self.m3, field)].identifier
         setattr(self.bl, field, value)
 
-    def anim_boolean_based_on_SDU3(self, field):
-        self.anim_integer(field)
-
-    def anim_boolean_based_on_SDFG(self, field):
+    def anim_boolean_flag(self, field):
         self.anim_integer(field)
 
     def anim_integer(self, field):
@@ -353,8 +350,16 @@ class Importer:
         set_default_value(bl.id_data.m3_animations_default, path, 0, ref.default)
         anim_id_data = self.stc_id_data.get(ref.header.id)
 
+        bl_header = getattr(bl, field + '_header')
+        bl_header.hex_id = hex(ref.header.id)[2:]
+
         if not anim_id_data:
+            bl_header.interpolation = 'AUTO'
+            bl_header.flags = -1
             return
+
+        bl_header.interpolation = 'LINEAR' if ref.header.interpolation else 'CONSTANT'
+        bl_header.flags = ref.header.flags if ref.header.flags else -1
 
         for action_name in anim_id_data.keys():
             anim_id_action_data = anim_id_data[action_name]
@@ -381,8 +386,16 @@ class Importer:
 
         anim_id_data = self.stc_id_data.get(ref.header.id)
 
+        bl_header = getattr(bl, field + '_header')
+        bl_header.hex_id = hex(ref.header.id)[2:]
+
         if not anim_id_data:
+            bl_header.interpolation = 'AUTO'
+            bl_header.flags = -1
             return
+
+        bl_header.interpolation = 'LINEAR' if ref.header.interpolation else 'CONSTANT'
+        bl_header.flags = ref.header.flags if ref.header.flags else -1
 
         for action_name in anim_id_data.keys():
             anim_id_action_data = anim_id_data[action_name]

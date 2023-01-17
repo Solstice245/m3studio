@@ -41,8 +41,11 @@ def draw_props(shbx, layout):
 
 class Properties(shared.M3BoneUserPropertyGroup):
     length: bpy.props.FloatProperty(name='M3 Shadow Box Length', min=0, default=1)
+    length_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     width: bpy.props.FloatProperty(name='M3 Shadow Box Width', min=0, default=1)
+    width_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     height: bpy.props.FloatProperty(name='M3 Shadow Box Height', min=0, default=1)
+    height_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
 
 
 class Menu(bpy.types.Menu):

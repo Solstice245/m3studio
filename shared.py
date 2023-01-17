@@ -199,6 +199,12 @@ class ArmatureObjectPanel(bpy.types.Panel):
         return context.object.type == 'ARMATURE'
 
 
+class M3AnimHeaderProp(bpy.types.PropertyGroup):
+    hex_id: bpy.props.StringProperty(options=set(), maxlen=8)  # TODO ensure that this is a proper hex string
+    interpolation: bpy.props.EnumProperty(options=set(), items=bl_enum.anim_header_interp, default='AUTO')
+    flags: bpy.props.IntProperty(options=set(), min=-1, default=-1)  # -1 means automatic
+
+
 class M3PropertyGroup(bpy.types.PropertyGroup):
     bl_handle: bpy.props.StringProperty(options=set())
     m3_export: bpy.props.BoolProperty(options=set(), default=True)
@@ -585,6 +591,7 @@ def swap_m3_action_keyframes(ob, prefix, old, new):
 
 
 classes = (
+    M3AnimHeaderProp,
     M3PropertyGroup,
     M3VolumePropertyGroup,
     M3BoneUserPropertyGroup,

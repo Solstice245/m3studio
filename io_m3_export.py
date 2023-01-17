@@ -381,13 +381,7 @@ class M3OutputProcessor:
                 setattr(self.m3, field, ii)
                 break
 
-    def anim_boolean_based_on_SDU3(self, field):
-        anim_ref = self.exporter.init_anim_ref_uint32()
-        anim_ref.default = int(getattr(self.bl, field))
-        setattr(self.m3, field, anim_ref)
-        self.collect_anim_data_single(field, anim_ref, 'SDU3')
-
-    def anim_boolean_based_on_SDFG(self, field):
+    def anim_boolean_flag(self, field):
         anim_ref = self.exporter.init_anim_ref_uint32()
         anim_ref.default = int(getattr(self.bl, field))
         setattr(self.m3, field, anim_ref)

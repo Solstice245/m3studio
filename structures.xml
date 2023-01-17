@@ -173,8 +173,8 @@
             The header of a reference to an animation entry
 
             interpolationType: 0=constant, 1=linear
-            animFlags seems to be 6 if the animation reference is valid and 0 otherwise
-            animId seem to be random but unique numbers
+            flags seems to be 6 if the animation reference is valid and 0 otherwise
+            id seem to be random but unique numbers
         </description>
         <versions>
             <version number="0" size="8"/>
@@ -1108,7 +1108,7 @@
             <field name="location" type="Vector3AnimationReferenceV0"/>
             <field name="rotation" type="QuaternionAnimationReferenceV0"/>
             <field name="scale" type="Vector3AnimationReferenceV0"/>
-            <field name="batching" type="UInt32AnimationReferenceV0"/> <!-- BAT_ instances which point to bone are toggled by this property -->
+            <field name="batching" type="FlagAnimationReferenceV0"/> <!-- BAT_ instances which point to bone are toggled by this property -->
         </fields>
     </structure>
 
@@ -1480,8 +1480,8 @@
             <field name="video_frame_end" type="int32" default_value="0"/> <!-- -1 means till the end of the video -->
             <field name="video_mode" type="uint32" default_value="0"/> <!-- 0 is loop, 1 is hold-->
             <field name="video_sync_timing" type="uint32" default_value="0"/> <!-- boolean -->
-            <field name="video_play" type="UInt32AnimationReferenceV0"/> <!-- SDU3 is used for aniamtion-->
-            <field name="video_restart" type="UInt32AnimationReferenceV0"/> <!-- SDFG is used for aniamtion-->
+            <field name="video_play" type="UInt32AnimationReferenceV0"/>
+            <field name="video_restart" type="FlagAnimationReferenceV0"/>
             <field name="uv_flipbook_rows" type="uint32" default_value="0"/>
             <field name="uv_flipbook_cols" type="uint32" default_value="0"/>
             <field name="uv_flipbook_frame" type="UInt16AnimationReferenceV0"/>
@@ -1532,13 +1532,13 @@
             <field name="flags" type="uint32" default_value="0" >
                 <bits>
                     <!-- if useVertexColor is set, the following flags need also to be set:
-                      * vertex_color of the additionaFlags field
-                      * hasVertexColors of the vFlags field of the model
+                      * vertex_color of the additional_flags field
+                      * hasVertexColors of the vertex_flags field of the model
                     -->
                     <bit mask="0x1" name="vertex_color"/>
                     <!-- if useVertexAlpha is set, the following flags need also to be set:
-                      * vertex_alpha of the additionaFlags field
-                      * hasVertexColors of the vFlags field of the model
+                      * vertex_alpha of the additional_flags field
+                      * hasVertexColors of the vertex_flags field of the model
                     -->
                     <bit mask="0x2" name="vertex_alpha"/>
                     <bit mask="0x4" name="unfogged"/>
@@ -1587,7 +1587,7 @@
                </bits>
             </field>
             <field name="specularity" type="float"/>
-            <field name="depth_blend_falloff" type="float" default_value="0.0"/> <!-- Only used if the bit useDepthBlendFalloff of additionalFlags is set, typically set for particle systems -->
+            <field name="depth_blend_falloff" type="float" default_value="0.0"/> <!-- Only used if the bit depth_blend_falloff of additional_flags is set, typically set for particle systems -->
             <field name="cutout_threshold" type="uint32" default_value="0"/>
             <field name="spec_multiply" type="float" default_value="1.0"/>
             <field name="emis_multiply" type="float" default_value="1.0"/>

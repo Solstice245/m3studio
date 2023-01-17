@@ -104,7 +104,9 @@ class StandardProperties(shared.M3PropertyGroup):
     envi_diff_multiply: bpy.props.FloatProperty(options=set(), min=0, default=0)
     envi_spec_multiply: bpy.props.FloatProperty(options=set(), min=0, default=0)
     parallax_height: bpy.props.FloatProperty(name='Parallax Height', default=0)  # no UI
+    parallax_height_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     unknown_animation_ref: bpy.props.IntProperty(name='Unknown', min=0, default=0)  # no UI
+    unknown_animation_ref_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
 
     vertex_color: bpy.props.BoolProperty(options=set())
     vertex_alpha: bpy.props.BoolProperty(options=set())
@@ -146,12 +148,14 @@ class DisplacementProperties(shared.M3PropertyGroup):
     layer_strength: bpy.props.StringProperty(options=set())
     priority: bpy.props.IntProperty(options=set())
     strength_factor: bpy.props.FloatProperty(name='Distortion Factor')
+    strength_factor_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
 
 
 class CompositeSectionProperties(shared.M3PropertyGroup):
     name: bpy.props.StringProperty(options=set())
     matref: bpy.props.StringProperty(options=set())
     alpha_factor: bpy.props.FloatProperty(name='Alpha Factor', default=1)
+    alpha_factor_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
 
 
 class CompositeProperties(shared.M3PropertyGroup):
@@ -172,6 +176,7 @@ class VolumeProperties(shared.M3PropertyGroup):
     layer_unknown1: bpy.props.StringProperty(options=set())
     layer_unknown2: bpy.props.StringProperty(options=set())
     density: bpy.props.FloatProperty(name='Density')
+    density_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
 
 
 class VolumeNoiseProperties(shared.M3PropertyGroup):
@@ -180,12 +185,19 @@ class VolumeNoiseProperties(shared.M3PropertyGroup):
     layer_noise1: bpy.props.StringProperty(options=set())
     layer_noise2: bpy.props.StringProperty(options=set())
     density: bpy.props.FloatProperty(name='Density')
+    density_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     near_plane: bpy.props.FloatProperty(name='Near Plane')
+    near_plane_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     falloff: bpy.props.FloatProperty(name='Falloff')
+    falloff_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     scroll_rate: bpy.props.FloatVectorProperty(name='Scroll Rate', size=3, subtype='XYZ')
+    scroll_rate_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     translation: bpy.props.FloatVectorProperty(name='Translation', size=3, subtype='XYZ')
+    translation_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     rotation: bpy.props.FloatVectorProperty(name='Rotations', size=3, subtype='XYZ')
+    rotation_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     scale: bpy.props.FloatVectorProperty(name='Scale', size=3, subtype='XYZ')
+    scale_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     alpha_threshold: bpy.props.IntProperty(options=set())
     draw_after_transparency: bpy.props.BoolProperty(options=set())
 
@@ -208,10 +220,15 @@ class ReflectionProperties(shared.M3PropertyGroup):
     layer_strength: bpy.props.StringProperty(options=set())
     layer_blur: bpy.props.StringProperty(options=set())
     blur_angle: bpy.props.FloatProperty(name='Blur Angle')
+    blur_angle_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     blur_distance: bpy.props.FloatProperty(name='Blur Distance', default=2)
+    blur_distance_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     reflection_offset: bpy.props.FloatProperty(name='Reflection Offset')
+    reflection_offset_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     reflection_strength: bpy.props.FloatProperty(name='Reflection Strength', default=1)
+    reflection_strength_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     displacement_strength: bpy.props.FloatProperty(name='Displacement Strength', default=1)
+    displacement_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     use_layer_norm: bpy.props.BoolProperty(options=set())
     use_layer_strength: bpy.props.BoolProperty(options=set())
     blurring: bpy.props.BoolProperty(options=set())
@@ -243,9 +260,13 @@ class LensFlareProperties(shared.M3PropertyGroup):
     uv_rows: bpy.props.IntProperty(options=set(), min=0)
     render_distance: bpy.props.FloatProperty(options=set(), min=0)
     intensity: bpy.props.FloatProperty(name='Intensity', min=0)
+    intensity_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     intensity2: bpy.props.FloatProperty(name='Intensity 2', min=0)
+    intensity2_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     uniform_scale: bpy.props.FloatProperty(name='Uniform Scale', min=0, default=1)
+    uniform_scale_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     color: bpy.props.FloatVectorProperty(name='Color', subtype='COLOR', size=4, min=0, max=1, default=(1, 1, 1, 1))
+    color_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
 
 
 def m3_material_get(ob, matref):

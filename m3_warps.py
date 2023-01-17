@@ -40,7 +40,9 @@ def draw_props(warp, layout):
 
 class Properties(shared.M3BoneUserPropertyGroup):
     radius: bpy.props.FloatProperty(name='M3 Warp Radius', min=0, default=1)
+    radius_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     strength: bpy.props.FloatProperty(name='M3 Warp Strength', min=0, default=1)
+    strength_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
 
 
 class Menu(bpy.types.Menu):
