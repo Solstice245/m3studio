@@ -65,7 +65,11 @@ def m3_handle_gen():
 
 
 def m3_anim_id_gen():
-    return '%08x' % random.getrandbits(256)
+    # anim ids in list reserved for events and bounds
+    while (num := random.randint(1, 2 ** 32 - 1)) in (0x001f9bd2, 0x65bd3215):
+        num = random.randint(1, 2 ** 32 - 1)
+
+    return hex(num)[2:]
 
 
 def m3_item_get_name(collection, prefix='', suggest=True):
@@ -350,7 +354,7 @@ def m3_data_handles_verify(self, context):
         handles = set()
         for item in self.search_data:
             if not item.bl_handle or item.bl_handle in handles:
-                item.bl_handle = m3_hangle_get()
+                item.bl_handle = m3_handle_get()
             handles.add(item.bl_handle)
 
 

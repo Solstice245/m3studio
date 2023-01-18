@@ -241,7 +241,9 @@ class M3OutputProcessor:
         self.m3 = m3
         self.version = m3.desc.version
 
-    def collect_anim_data_single(self, field, anim_ref, anim_data_tag):
+    def collect_anim_data_single(self, field, anim_data_tag):
+        head = getattr(self.bl, field + '_header')
+        is_animated = False
         for action in self.exporter.action_to_anim_data:
             fcurve = action.fcurves.find(self.bl.path_from_id(field))
             frames = get_fcurve_anim_frames(fcurve)
@@ -249,10 +251,16 @@ class M3OutputProcessor:
             if not frames:
                 continue
 
-            values = [int(fcurve.evaluate(frame)) for frame in frames]
-            self.exporter.action_to_anim_data[action][anim_data_tag][anim_ref.header.id] = (frames, values)
+            is_animated = True
 
-    def collect_anim_data_vector(self, field, anim_ref, anim_data_tag):
+            values = [int(fcurve.evaluate(frame)) for frame in frames]
+            self.exporter.action_to_anim_data[action][anim_data_tag][int(head.hex_id, 16)] = (frames, values)
+
+        return is_animated
+
+    def collect_anim_data_vector(self, field, anim_data_tag):
+        head = getattr(self.bl, field + '_header')
+        is_animated = False
         vec_data_settings = ANIM_VEC_DATA_SETTINGS[anim_data_tag]
         for action in self.exporter.action_to_anim_data:
             animated = False
@@ -283,6 +291,8 @@ class M3OutputProcessor:
             if not frames:
                 continue
 
+            is_animated = True
+
             values = []
             for frame in frames:
                 vec_comps = []
@@ -295,7 +305,9 @@ class M3OutputProcessor:
 
                 values.append(vec_data_settings['convert'](vec_comps))
 
-            self.exporter.action_to_anim_data[action][anim_data_tag][anim_ref.header.id] = (frames, values)
+            self.exporter.action_to_anim_data[action][anim_data_tag][int(head.hex_id, 16)] = (frames, values)
+
+        return is_animated
 
     def boolean(self, field, since_version=None, till_version=None):
         if (since_version is not None) and (self.version < since_version):
@@ -382,64 +394,89 @@ class M3OutputProcessor:
                 break
 
     def anim_boolean_flag(self, field):
-        anim_ref = self.exporter.init_anim_ref_uint32()
-        anim_ref.default = int(getattr(self.bl, field))
-        setattr(self.m3, field, anim_ref)
-        self.collect_anim_data_single(field, anim_ref, 'SDFG')
+        head = getattr(self.bl, field + '_header')
+        is_valid_id = self.exporter.validate_header_id(head)
+        if self.collect_anim_data_single(field, 'SDFG'):
+            interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
+            setattr(self.m3, field, self.exporter.init_anim_ref_flag(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
+        else:
+            setattr(self.m3, field, self.exporter.init_anim_ref_flag(getattr(self.bl, field), 0, 0, int(head.hex_id, 16)))
 
     def anim_int16(self, field):
-        anim_ref = self.exporter.init_anim_ref_int16()
-        anim_ref.default = getattr(self.bl, field)
-        setattr(self.m3, field, anim_ref)
-        self.collect_anim_data_single(field, anim_ref, 'SDS6')
+        head = getattr(self.bl, field + '_header')
+        is_valid_id = self.exporter.validate_header_id(head)
+        if self.collect_anim_data_single(field, 'SDS6'):
+            interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
+            setattr(self.m3, field, self.exporter.init_anim_ref_int16(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
+        else:
+            setattr(self.m3, field, self.exporter.init_anim_ref_int16(getattr(self.bl, field), 0, 0, int(head.hex_id, 16)))
 
     def anim_uint16(self, field):
-        anim_ref = self.exporter.init_anim_ref_uint16()
-        anim_ref.default = getattr(self.bl, field)
-        setattr(self.m3, field, anim_ref)
-        self.collect_anim_data_single(field, anim_ref, 'SDU6')
+        head = getattr(self.bl, field + '_header')
+        is_valid_id = self.exporter.validate_header_id(head)
+        if self.collect_anim_data_single(field, 'SDU6'):
+            interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
+            setattr(self.m3, field, self.exporter.init_anim_ref_uint16(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
+        else:
+            setattr(self.m3, field, self.exporter.init_anim_ref_uint16(getattr(self.bl, field), 0, 0, int(head.hex_id, 16)))
 
     def anim_uint32(self, field):
-        anim_ref = self.exporter.init_anim_ref_uint32()
-        anim_ref.default = int(getattr(self.bl, field))  # casting to int because sometimes bools use this
-        setattr(self.m3, field, anim_ref)
-        self.collect_anim_data_single(field, anim_ref, 'SDU3')
+        head = getattr(self.bl, field + '_header')
+        is_valid_id = self.exporter.validate_header_id(head)
+        # casting val to int because sometimes bools use this
+        if self.collect_anim_data_single(field, 'SDU3'):
+            interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
+            setattr(self.m3, field, self.exporter.init_anim_ref_uint32(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
+        else:
+            setattr(self.m3, field, self.exporter.init_anim_ref_uint32(getattr(self.bl, field), 0, 0, int(head.hex_id, 16)))
 
     def anim_float(self, field, since_version=None, till_version=None):
         if (since_version is not None) and (self.version < since_version):
             return
         if (till_version is not None) and (self.version > till_version):
             return
-        anim_ref = self.exporter.init_anim_ref_float()
-        anim_ref.default = getattr(self.bl, field)
-        setattr(self.m3, field, anim_ref)
-        self.collect_anim_data_single(field, anim_ref, 'SDR3')
+        head = getattr(self.bl, field + '_header')
+        is_valid_id = self.exporter.validate_header_id(head)
+        if self.collect_anim_data_single(field, 'SDR3'):
+            interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
+            setattr(self.m3, field, self.exporter.init_anim_ref_float(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
+        else:
+            setattr(self.m3, field, self.exporter.init_anim_ref_float(getattr(self.bl, field), 0, 0, int(head.hex_id, 16)))
 
     def anim_vec2(self, field):
-        anim_ref = self.exporter.init_anim_ref_vec2()
-        anim_ref.default = to_m3_vec2(getattr(self.bl, field))
-        setattr(self.m3, field, anim_ref)
-        self.collect_anim_data_vector(field, anim_ref, 'SD2V')
+        head = getattr(self.bl, field + '_header')
+        is_valid_id = self.exporter.validate_header_id(head)
+        if self.collect_anim_data_vector(field, 'SD2V'):
+            interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
+            setattr(self.m3, field, self.exporter.init_anim_ref_vec2(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
+        else:
+            setattr(self.m3, field, self.exporter.init_anim_ref_vec2(getattr(self.bl, field), 0, 0, int(head.hex_id, 16)))
 
     def anim_vec3(self, field, since_version=None, till_version=None):
         if (since_version is not None) and (self.version < since_version):
             return
         if (till_version is not None) and (self.version > till_version):
             return
-        anim_ref = self.exporter.init_anim_ref_vec3()
-        anim_ref.default = to_m3_vec3(getattr(self.bl, field))
-        setattr(self.m3, field, anim_ref)
-        self.collect_anim_data_vector(field, anim_ref, 'SD3V')
+        head = getattr(self.bl, field + '_header')
+        is_valid_id = self.exporter.validate_header_id(head)
+        if self.collect_anim_data_vector(field, 'SD3V'):
+            interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
+            setattr(self.m3, field, self.exporter.init_anim_ref_vec3(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
+        else:
+            setattr(self.m3, field, self.exporter.init_anim_ref_vec3(getattr(self.bl, field), 0, 0, int(head.hex_id, 16)))
 
     def anim_color(self, field, since_version=None, till_version=None):
         if (since_version is not None) and (self.version < since_version):
             return
         if (till_version is not None) and (self.version > till_version):
             return
-        anim_ref = self.exporter.init_anim_ref_color()
-        anim_ref.default = to_m3_color(getattr(self.bl, field))
-        setattr(self.m3, field, anim_ref)
-        self.collect_anim_data_vector(field, anim_ref, 'SDCC')
+        head = getattr(self.bl, field + '_header')
+        is_valid_id = self.exporter.validate_header_id(head)
+        if self.collect_anim_data_vector(field, 'SDCC'):
+            interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
+            setattr(self.m3, field, self.exporter.init_anim_ref_color(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
+        else:
+            setattr(self.m3, field, self.exporter.init_anim_ref_color(getattr(self.bl, field), 0, 0, int(head.hex_id, 16)))
 
 
 class Exporter:
@@ -791,7 +828,8 @@ class Exporter:
                 if modifier.type == 'ARMATURE':
                     assert arm_mod is None
                     arm_mod = modifier
-                    assert arm_mod.object == self.ob
+                    if arm_mod.object:
+                        assert arm_mod.object == self.ob
                     arm_mod.object = None
 
         self.depsgraph = bpy.context.evaluated_depsgraph_get()
@@ -1064,12 +1102,18 @@ class Exporter:
             m3_bone.bit_set('flags', 'ik', bone in self.ik_bones)
             m3_bone.bit_set('flags', 'batch1', not pose_bone.m3_batching or m3_bone_parent.bit_get('flags', 'batch1') if m3_bone_parent else False)
             m3_bone.bit_set('flags', 'batch2', not pose_bone.m3_batching)
-            m3_bone.location = self.init_anim_ref_vec3()
-            m3_bone.rotation = self.init_anim_ref_quat()
+
+            self.validate_header_id(pose_bone.m3_location_header)
+            self.validate_header_id(pose_bone.m3_rotation_header)
+            self.validate_header_id(pose_bone.m3_scale_header)
+            self.validate_header_id(pose_bone.m3_batching_header)
+
+            m3_bone.location = self.init_anim_ref_vec3(anim_id=int(pose_bone.m3_location_header.hex_id, 16))
+            m3_bone.rotation = self.init_anim_ref_quat(anim_id=int(pose_bone.m3_rotation_header.hex_id, 16))
             m3_bone.rotation.null.w = 1.0
-            m3_bone.scale = self.init_anim_ref_vec3()
+            m3_bone.scale = self.init_anim_ref_vec3(anim_id=int(pose_bone.m3_scale_header.hex_id, 16))
             m3_bone.scale.null = to_m3_vec3((1.0, 1.0, 1.0))
-            m3_bone.batching = self.init_anim_ref_uint32(int(pose_bone.m3_batching))
+            m3_bone.batching = self.init_anim_ref_uint32(pose_bone.m3_batching, anim_id=int(pose_bone.m3_batching_header.hex_id, 16))
             m3_bone.batching.null = 1
 
             bone_to_m3_bone[bone] = m3_bone
@@ -2197,85 +2241,86 @@ class Exporter:
             loop_section.references.append(m3.loops)
             polygon_section.references.append(m3.polygons)
 
-    def new_anim_id(self):
-        self.anim_id_count += 1  # increase first since we don't want to use 0
-        if self.anim_id_count == BNDS_ANIM_ID:
-            self.anim_id_count += 1
-        return self.anim_id_count
+    def validate_header_id(self, head):
+        int_id = int(head.hex_id, 16)
+        if not int_id:
+            head.hex_id = shared.m3_anim_id_gen()
+        return True
+        # TODO return False if this id has already been keyframed
 
-    def init_anim_header(self, interpolation, flags=0, anim_id=None):
+    def init_anim_header(self, interpolation, flags, anim_id):
         anim_ref_header = io_m3.structures['AnimationReferenceHeader'].get_version(0).instance()
+        anim_ref_header.id = anim_id
         anim_ref_header.interpolation = interpolation
         anim_ref_header.flags = flags
-        anim_ref_header.id = anim_id if anim_id else self.new_anim_id()
         return anim_ref_header
 
-    def init_anim_ref_int16(self, val=0, interpolation=1):
+    def init_anim_ref_int16(self, val=0, interpolation=-1, flags=-1, anim_id=1):
         anim_ref = io_m3.structures['Int16AnimationReference'].get_version(0).instance()
-        anim_ref.header = self.init_anim_header(interpolation=interpolation)
+        anim_ref.header = self.init_anim_header(1 if interpolation == -1 else interpolation, 0x0 if flags == -1 else flags, anim_id)
         anim_ref.default = val
         anim_ref.null = 0
         return anim_ref
 
-    def init_anim_ref_uint16(self, val=0, interpolation=0):
+    def init_anim_ref_uint16(self, val=0, interpolation=-1, flags=-1, anim_id=1):
         anim_ref = io_m3.structures['UInt16AnimationReference'].get_version(0).instance()
-        anim_ref.header = self.init_anim_header(interpolation=interpolation)
+        anim_ref.header = self.init_anim_header(0 if interpolation == -1 else interpolation, 0x0 if flags == -1 else flags, anim_id)
         anim_ref.default = val
         anim_ref.null = 0
         return anim_ref
 
-    def init_anim_ref_uint32(self, val=0, interpolation=0):
+    def init_anim_ref_uint32(self, val=0, interpolation=-1, flags=-1, anim_id=1):
         anim_ref = io_m3.structures['UInt32AnimationReference'].get_version(0).instance()
-        anim_ref.header = self.init_anim_header(interpolation=interpolation)
-        anim_ref.default = val
+        anim_ref.header = self.init_anim_header(0 if interpolation == -1 else interpolation, 0x0 if flags == -1 else flags, anim_id)
+        anim_ref.default = int(val)  # casting to int because sometimes bools use this
         anim_ref.null = 0
         return anim_ref
 
-    def init_anim_ref_flag(self, val=0, interpolation=1):
+    def init_anim_ref_flag(self, val=0, interpolation=-1, flags=-1, anim_id=1):
         anim_ref = io_m3.structures['FlagAnimationReference'].get_version(0).instance()
-        anim_ref.header = self.init_anim_header(interpolation=interpolation)
-        anim_ref.default = val
+        anim_ref.header = self.init_anim_header(1 if interpolation == -1 else interpolation, 0x0 if flags == -1 else flags, anim_id)
+        anim_ref.default = int(val)
         anim_ref.null = 0
         return anim_ref
 
-    def init_anim_ref_float(self, val=0.0, null_is_init=False, interpolation=1):
+    def init_anim_ref_float(self, val=0.0, interpolation=-1, flags=-1, anim_id=1):
         anim_ref = io_m3.structures['FloatAnimationReference'].get_version(0).instance()
-        anim_ref.header = self.init_anim_header(interpolation=interpolation)
+        anim_ref.header = self.init_anim_header(1 if interpolation == -1 else interpolation, 0x0 if flags == -1 else flags, anim_id)
         anim_ref.default = val
         anim_ref.null = 0.0
         return anim_ref
 
-    def init_anim_ref_vec2(self, val=None, interpolation=1):
+    def init_anim_ref_vec2(self, val=None, interpolation=-1, flags=-1, anim_id=1):
         anim_ref = io_m3.structures['Vector2AnimationReference'].get_version(0).instance()
-        anim_ref.header = self.init_anim_header(interpolation=interpolation, flags=0x6)
+        anim_ref.header = self.init_anim_header(1 if interpolation == -1 else interpolation, 0x6 if flags == -1 else flags, anim_id)
         anim_ref.default = to_m3_vec2(val)
         anim_ref.null = to_m3_vec2()
         return anim_ref
 
-    def init_anim_ref_vec3(self, val=None, interpolation=1):
+    def init_anim_ref_vec3(self, val=None, interpolation=-1, flags=-1, anim_id=1):
         anim_ref = io_m3.structures['Vector3AnimationReference'].get_version(0).instance()
-        anim_ref.header = self.init_anim_header(interpolation=interpolation, flags=0x6)
+        anim_ref.header = self.init_anim_header(1 if interpolation == -1 else interpolation, 0x6 if flags == -1 else flags, anim_id)
         anim_ref.default = to_m3_vec3(val)
         anim_ref.null = to_m3_vec3()
         return anim_ref
 
-    def init_anim_ref_quat(self, val=None, interpolation=1):
+    def init_anim_ref_quat(self, val=None, interpolation=-1, flags=-1, anim_id=1):
         anim_ref = io_m3.structures['QuaternionAnimationReference'].get_version(0).instance()
-        anim_ref.header = self.init_anim_header(interpolation=interpolation, flags=0x6)
+        anim_ref.header = self.init_anim_header(1 if interpolation == -1 else interpolation, 0x6 if flags == -1 else flags, anim_id)
         anim_ref.default = to_m3_quat(val)
         anim_ref.null = to_m3_quat()
         return anim_ref
 
-    def init_anim_ref_color(self, val=None, interpolation=1):
+    def init_anim_ref_color(self, val=None, interpolation=-1, flags=-1, anim_id=1):
         anim_ref = io_m3.structures['ColorAnimationReference'].get_version(0).instance()
-        anim_ref.header = self.init_anim_header(interpolation=interpolation, flags=0x6)
+        anim_ref.header = self.init_anim_header(1 if interpolation == -1 else interpolation, 0x6 if flags == -1 else flags, anim_id)
         anim_ref.default = to_m3_color(val)
         anim_ref.null = to_m3_color()
         return anim_ref
 
-    def init_anim_ref_bnds(self, val=None, interpolation=1):
+    def init_anim_ref_bnds(self, val=None, interpolation=-1, flags=-1, anim_id=BNDS_ANIM_ID):
         anim_ref = io_m3.structures['BNDSAnimationReference'].get_version(0).instance()
-        anim_ref.header = self.init_anim_header(interpolation=interpolation, flags=0x6, anim_id=BNDS_ANIM_ID)
+        anim_ref.header = self.init_anim_header(1 if interpolation == -1 else interpolation, 0x6 if flags == -1 else flags, anim_id)
         anim_ref.default = to_m3_bnds(val)
         anim_ref.null = to_m3_bnds()
         return anim_ref

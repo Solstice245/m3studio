@@ -593,6 +593,12 @@ class Importer:
                 pose_bone = self.ob.pose.bones.get(self.m3_get_bone_name(ii))
                 pose_bone.matrix_basis = left_mat @ bone_mat @ right_mat
                 pose_bone.m3_batching = bool(m3_bone.batching.default)
+
+                pose_bone.m3_location_header.hex_id = hex(m3_bone.location.header.id)[2:]
+                pose_bone.m3_rotation_header.hex_id = hex(m3_bone.rotation.header.id)[2:]
+                pose_bone.m3_scale_header.hex_id = hex(m3_bone.scale.header.id)[2:]
+                pose_bone.m3_batching_header.hex_id = hex(m3_bone.batching.header.id)[2:]
+
                 set_default_value(self.ob.m3_animations_default, pose_bone.path_from_id('location'), 0, pose_bone.location[0])
                 set_default_value(self.ob.m3_animations_default, pose_bone.path_from_id('location'), 1, pose_bone.location[1])
                 set_default_value(self.ob.m3_animations_default, pose_bone.path_from_id('location'), 2, pose_bone.location[2])
@@ -714,22 +720,34 @@ class Importer:
                     fcurve = fcurves_loc[index]
                     if anim_data_loc_none:
                         fcurves.remove(fcurve)
+                        pose_bone.m3_location_header.interpolation = 'AUTO'
+                        pose_bone.m3_location_header.flags = -1
                     else:
                         fcurve.keyframe_points.foreach_set('co', index_data)
+                        pose_bone.m3_location_header.interpolation = 'LINEAR' if m3_bone.location.header.interpolation else 'CONSTANT'
+                        pose_bone.m3_location_header.flags = m3_bone.location.header.flags if m3_bone.location.header.flags else -1
 
                 for index, index_data in enumerate(new_anim_data_rot):
                     fcurve = fcurves_rot[index]
                     if anim_data_rot_none:
                         fcurves.remove(fcurve)
+                        pose_bone.m3_rotation_header.interpolation = 'AUTO'
+                        pose_bone.m3_rotation_header.flags = -1
                     else:
                         fcurve.keyframe_points.foreach_set('co', index_data)
+                        pose_bone.m3_rotation_header.interpolation = 'LINEAR' if m3_bone.rotation.header.interpolation else 'CONSTANT'
+                        pose_bone.m3_rotation_header.flags = m3_bone.rotation.header.flags if m3_bone.rotation.header.flags else -1
 
                 for index, index_data in enumerate(new_anim_data_scl):
                     fcurve = fcurves_scl[index]
                     if anim_data_scl_none:
                         fcurves.remove(fcurve)
+                        pose_bone.m3_scale_header.interpolation = 'AUTO'
+                        pose_bone.m3_scale_header.flags = -1
                     else:
                         fcurve.keyframe_points.foreach_set('co', index_data)
+                        pose_bone.m3_scale_header.interpolation = 'LINEAR' if m3_bone.scale.header.interpolation else 'CONSTANT'
+                        pose_bone.m3_scale_header.flags = m3_bone.scale.header.flags if m3_bone.scale.header.flags else -1
 
             # import bone batching flag
             id_data_render = self.stc_id_data.get(m3_bone.batching.header.id, {})
@@ -744,6 +762,13 @@ class Importer:
                     fcurve.keyframe_points.add(key_frame_points_len)
                     fcurve.keyframe_points.foreach_set('co', id_data_render[action_name])
                     fcurve.keyframe_points.foreach_set('interpolation', [m3_bone.batching.header.interpolation] * key_frame_points_len)
+
+                pose_bone.m3_batching_header.interpolation = 'LINEAR' if m3_bone.batching.header.interpolation else 'CONSTANT'
+                pose_bone.m3_batching_header.flags = m3_bone.batching.header.flags if m3_bone.batching.header.flags else -1
+
+            else:
+                pose_bone.m3_batching_header.interpolation = 'AUTO'
+                pose_bone.m3_batching_header.flags = -1
 
         bpy.context.view_layer.objects.active = self.ob
 

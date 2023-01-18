@@ -17,6 +17,7 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import bpy
+from . import shared
 
 
 desc_export_cull = 'This bone will not be exported to the M3 file if it\'s not used by any M3 data'
@@ -31,7 +32,11 @@ def register_props():
     bpy.types.EditBone.m3_bind_scale = bpy.props.FloatVectorProperty(options=set(), size=3, subtype='XYZ', default=(1,) * 3)
     bpy.types.EditBone.m3_export_cull = bpy.props.BoolProperty(options=set(), default=True, description=desc_export_cull)
 
+    bpy.types.PoseBone.m3_location_header = bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
+    bpy.types.PoseBone.m3_rotation_header = bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
+    bpy.types.PoseBone.m3_scale_header = bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     bpy.types.PoseBone.m3_batching = bpy.props.BoolProperty(name='M3 Bone Render', default=True, description=desc_batching)
+    bpy.types.PoseBone.m3_batching_header = bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
 
 
 class ToolPanel(bpy.types.Panel):
@@ -46,12 +51,17 @@ class ToolPanel(bpy.types.Panel):
         return context.active_pose_bone
 
     def draw(self, context):
-        self.layout.prop(context.active_pose_bone, 'm3_batching', text='Batching')
+        shared.draw_prop_anim(self.layout, context.active_pose_bone, 'm3_batching', text='Batching')
+        # self.layout.prop(context.active_pose_bone, 'm3_batching', text='Batching')
         col = self.layout.column(align=True)
         col.label(text='Bind Scale:')
         col.prop(context.active_bone, 'm3_bind_scale', index=0, text='X')
         col.prop(context.active_bone, 'm3_bind_scale', index=1, text='Y')
         col.prop(context.active_bone, 'm3_bind_scale', index=2, text='Z')
+        col = self.layout.column()
+        col.prop(context.active_pose_bone.m3_location_header, 'hex_id')
+        col.prop(context.active_pose_bone.m3_rotation_header, 'hex_id')
+        col.prop(context.active_pose_bone.m3_scale_header, 'hex_id')
 
 
 class Panel(bpy.types.Panel):
