@@ -238,7 +238,7 @@ class Panel(bpy.types.Panel):
                 row = sub_box.row()
                 col = row.column()
                 shared.draw_prop_pointer(col, parent.m3_materialrefs, batch, 'material', label='Material Reference', icon='MATERIAL')
-                shared.draw_prop_pointer(col, parent.data.bones, batch, 'bone', label='Batching Toggle Bone', icon='BONE_DATA')
+                shared.draw_prop_pointer(col, parent.pose.bones, batch, 'bone', label='Batching Toggle Bone', icon='BONE_DATA')
                 op = row.operator('m3.handle_remove', text='', icon='X')
                 op.collection = ob.m3_mesh_batches.path_from_id()
                 op.index = ii

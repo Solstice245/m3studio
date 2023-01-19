@@ -109,7 +109,7 @@ def to_m3_bnds(bl_vecs=None):
 
 
 def bind_scale_to_matrix(vec3):
-    return mathutils.Matrix.LocRotScale(None, None, (vec3[1], vec3[0], vec3[2]))
+    return mathutils.Matrix.LocRotScale(None, None, vec3.yxz)
 
 
 ANIM_VEC_DATA_SETTINGS = {
@@ -243,6 +243,10 @@ class M3OutputProcessor:
 
     def collect_anim_data_single(self, field, anim_data_tag):
         head = getattr(self.bl, field + '_header')
+
+        if head.bl_user_mark_as_dup:
+            return True  # TODO improve this so that it returns false if no animation whatsover is to be associated with this ID
+
         is_animated = False
         for action in self.exporter.action_to_anim_data:
             fcurve = action.fcurves.find(self.bl.path_from_id(field))
@@ -260,6 +264,10 @@ class M3OutputProcessor:
 
     def collect_anim_data_vector(self, field, anim_data_tag):
         head = getattr(self.bl, field + '_header')
+
+        if head.bl_user_mark_as_dup:
+            return True  # TODO improve this so that it returns false if no animation whatsover is to be associated with this ID
+
         is_animated = False
         vec_data_settings = ANIM_VEC_DATA_SETTINGS[anim_data_tag]
         for action in self.exporter.action_to_anim_data:
@@ -395,7 +403,6 @@ class M3OutputProcessor:
 
     def anim_boolean_flag(self, field):
         head = getattr(self.bl, field + '_header')
-        is_valid_id = self.exporter.validate_header_id(head)
         if self.collect_anim_data_single(field, 'SDFG'):
             interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
             setattr(self.m3, field, self.exporter.init_anim_ref_flag(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
@@ -404,7 +411,6 @@ class M3OutputProcessor:
 
     def anim_int16(self, field):
         head = getattr(self.bl, field + '_header')
-        is_valid_id = self.exporter.validate_header_id(head)
         if self.collect_anim_data_single(field, 'SDS6'):
             interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
             setattr(self.m3, field, self.exporter.init_anim_ref_int16(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
@@ -413,7 +419,6 @@ class M3OutputProcessor:
 
     def anim_uint16(self, field):
         head = getattr(self.bl, field + '_header')
-        is_valid_id = self.exporter.validate_header_id(head)
         if self.collect_anim_data_single(field, 'SDU6'):
             interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
             setattr(self.m3, field, self.exporter.init_anim_ref_uint16(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
@@ -422,7 +427,6 @@ class M3OutputProcessor:
 
     def anim_uint32(self, field):
         head = getattr(self.bl, field + '_header')
-        is_valid_id = self.exporter.validate_header_id(head)
         # casting val to int because sometimes bools use this
         if self.collect_anim_data_single(field, 'SDU3'):
             interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
@@ -436,7 +440,6 @@ class M3OutputProcessor:
         if (till_version is not None) and (self.version > till_version):
             return
         head = getattr(self.bl, field + '_header')
-        is_valid_id = self.exporter.validate_header_id(head)
         if self.collect_anim_data_single(field, 'SDR3'):
             interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
             setattr(self.m3, field, self.exporter.init_anim_ref_float(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
@@ -445,7 +448,6 @@ class M3OutputProcessor:
 
     def anim_vec2(self, field):
         head = getattr(self.bl, field + '_header')
-        is_valid_id = self.exporter.validate_header_id(head)
         if self.collect_anim_data_vector(field, 'SD2V'):
             interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
             setattr(self.m3, field, self.exporter.init_anim_ref_vec2(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
@@ -458,7 +460,6 @@ class M3OutputProcessor:
         if (till_version is not None) and (self.version > till_version):
             return
         head = getattr(self.bl, field + '_header')
-        is_valid_id = self.exporter.validate_header_id(head)
         if self.collect_anim_data_vector(field, 'SD3V'):
             interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
             setattr(self.m3, field, self.exporter.init_anim_ref_vec3(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
@@ -471,7 +472,6 @@ class M3OutputProcessor:
         if (till_version is not None) and (self.version > till_version):
             return
         head = getattr(self.bl, field + '_header')
-        is_valid_id = self.exporter.validate_header_id(head)
         if self.collect_anim_data_vector(field, 'SDCC'):
             interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
             setattr(self.m3, field, self.exporter.init_anim_ref_color(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
@@ -530,7 +530,7 @@ class Exporter:
                 if not item.m3_export:
                     continue
                 if hasattr(item, 'bone'):
-                    bone = shared.m3_pointer_get(ob.data.bones, item.bone)
+                    bone = shared.m3_pointer_get(ob.pose.bones, item.bone)
                     if bone:
                         item_bones.add(bone)
                     else:
@@ -589,7 +589,7 @@ class Exporter:
         for copy in ob.m3_particle_copies:
             if not copy.m3_export:
                 continue
-            copy_bone = shared.m3_pointer_get(ob.data.bones, copy.bone)
+            copy_bone = shared.m3_pointer_get(ob.pose.bones, copy.bone)
             if len(copy.systems) and copy_bone and copy.m3_export:
                 self.export_required_bones.add(copy_bone)
                 export_particle_copies.append(copy)
@@ -597,7 +597,7 @@ class Exporter:
         for spline in ob.m3_ribbonsplines:
             export_spline_points = []
             for point in spline.points:
-                point_bone = shared.m3_pointer_get(ob.data.bones, point.bone)
+                point_bone = shared.m3_pointer_get(ob.pose.bones, point.bone)
                 if point_bone:
                     self.export_required_bones.add(point_bone)
                     export_spline_points.append(point)
@@ -612,7 +612,7 @@ class Exporter:
         for physics_body in ob.m3_rigidbodies:
             if not physics_body.m3_export:
                 continue
-            bone = shared.m3_pointer_get(ob.data.bones, physics_body.bone)
+            bone = shared.m3_pointer_get(ob.pose.bones, physics_body.bone)
             if bone and bone not in physics_shape_used_bones:
                 physics_shape_used_bones.append(bone)
                 physics_shape = shared.m3_pointer_get(ob.m3_physicsshapes, physics_body.physics_shape)
@@ -657,7 +657,7 @@ class Exporter:
                     constraint_set = shared.m3_pointer_get(ob.m3_clothconstraintsets, physics_cloth.constraint_set)
                     valid_volumes = []
                     for constraint in constraint_set.constraints:
-                        bone = shared.m3_pointer_get(ob.data.bones, constraint.bone)
+                        bone = shared.m3_pointer_get(ob.pose.bones, constraint.bone)
                         if constraint.m3_export and bone:
                             self.export_required_bones.add(bone)
                             valid_volumes.append(constraint)
@@ -669,7 +669,7 @@ class Exporter:
         for ik_joint in ob.m3_ikjoints:
             if not ik_joint.m3_export:
                 continue
-            bone = shared.m3_pointer_get(ob.data.bones, ik_joint.bone)
+            bone = shared.m3_pointer_get(ob.pose.bones, ik_joint.bone)
             if bone:
                 bone_parent = bone
 
@@ -694,7 +694,7 @@ class Exporter:
                 continue
             turret_parts = []
             for part in turret.parts:
-                part_bone = shared.m3_pointer_get(ob.data.bones, part.bone)
+                part_bone = shared.m3_pointer_get(ob.pose.bones, part.bone)
                 if part_bone:  # TODO warning if parts have invalid bones
                     self.export_required_bones.add(part_bone)
                     turret_parts.append([part, part_bone])
@@ -702,15 +702,15 @@ class Exporter:
             self.export_turret_data.append(turret_parts)
 
         # TODO warning if hittest bone is none
-        hittest_bone = shared.m3_pointer_get(ob.data.bones, ob.m3_hittest_tight.bone)
+        hittest_bone = shared.m3_pointer_get(ob.pose.bones, ob.m3_hittest_tight.bone)
         if hittest_bone:
             self.export_required_bones.add(hittest_bone)
 
         self.attachment_bones = []
         for attachment in export_attachment_points:
-            attachment_point_bone = shared.m3_pointer_get(ob.data.bones, attachment.bone)
+            attachment_point_bone = shared.m3_pointer_get(ob.pose.bones, attachment.bone)
             for volume in attachment.volumes:
-                volume_bone = shared.m3_pointer_get(ob.data.bones, volume.bone)
+                volume_bone = shared.m3_pointer_get(ob.pose.bones, volume.bone)
                 if volume_bone:
                     self.export_required_bones.add(volume_bone)
                     export_attachment_volumes.append(volume)
@@ -763,19 +763,20 @@ class Exporter:
 
         def export_bone_bool(bone):
             result = False
-            if not bone.m3_export_cull:
+            if bone.m3_export_cull:
                 result = True
             elif bone in self.export_required_bones:
                 result = True
 
-            if result is True:
-                assert bone.use_inherit_rotation and bone.use_inherit_scale
+            # if result is True:
+            #     db = ob.data.bones.get(bone.name)
+            #     assert db.use_inherit_location and db.use_inherit_rotation and db.use_inherit_scale
 
             return result
 
         self.bones = []
         # TODO see if this can be optimized. all these loops will be expensive for large skeletons.
-        for bone in ob.data.bones:
+        for bone in ob.pose.bones:
             if export_bone_bool(bone):
                 self.bones.append(bone)
                 continue
@@ -788,7 +789,7 @@ class Exporter:
         self.billboard_bones = []
         # billboards will not require bones, instead the billboard will be culled if the bone is not required
         for billboard in ob.m3_billboards:
-            billboard_bone = shared.m3_pointer_get(ob.data.bones, billboard.bone)
+            billboard_bone = shared.m3_pointer_get(ob.pose.bones, billboard.bone)
             if billboard.m3_export and billboard_bone and billboard_bone in self.bones and billboard_bone not in billboard_bones:
                 self.billboard_bones.append(billboard_bone)
                 export_billboards.append[billboard]
@@ -1089,54 +1090,50 @@ class Exporter:
 
         bone_to_m3_bone = {}
 
-        for bone in self.bones:
-            pose_bone = self.ob.pose.bones.get(bone.name)
-            m3_bone_parent = bone_to_m3_bone.get(bone.parent, None) if bone.parent else None
+        for pose_bone in self.bones:
+            data_bone = self.ob.data.bones.get(pose_bone.name)
+            m3_bone_parent = bone_to_m3_bone.get(pose_bone.parent, None) if pose_bone.parent else None
             m3_bone = bone_section.content_add()
             m3_bone_name_section = self.m3.section_for_reference(m3_bone, 'name')
-            m3_bone_name_section.content_from_bytes(bone.name)
-            m3_bone.parent = self.bone_name_indices.get(bone.parent.name) if bone.parent else -1
+            m3_bone_name_section.content_from_bytes(pose_bone.name)
+            m3_bone.parent = self.bone_name_indices.get(pose_bone.parent.name) if pose_bone.parent else -1
             m3_bone.flags = 0
             m3_bone.bit_set('flags', 'real', True)  # TODO is not always true for blizzard models, figure out when this is applicable
-            m3_bone.bit_set('flags', 'skinned', bone in self.skinned_bones)
-            m3_bone.bit_set('flags', 'ik', bone in self.ik_bones)
+            m3_bone.bit_set('flags', 'skinned', pose_bone in self.skinned_bones)
+            m3_bone.bit_set('flags', 'ik', pose_bone in self.ik_bones)
             m3_bone.bit_set('flags', 'batch1', not pose_bone.m3_batching or m3_bone_parent.bit_get('flags', 'batch1') if m3_bone_parent else False)
             m3_bone.bit_set('flags', 'batch2', not pose_bone.m3_batching)
 
-            self.validate_header_id(pose_bone.m3_location_header)
-            self.validate_header_id(pose_bone.m3_rotation_header)
-            self.validate_header_id(pose_bone.m3_scale_header)
-            self.validate_header_id(pose_bone.m3_batching_header)
+            # using set function of bone anim id prop to validate
+            pose_bone.m3_location_hex_id = pose_bone.m3_location_hex_id
 
-            m3_bone.location = self.init_anim_ref_vec3(anim_id=int(pose_bone.m3_location_header.hex_id, 16))
-            m3_bone.rotation = self.init_anim_ref_quat(anim_id=int(pose_bone.m3_rotation_header.hex_id, 16))
+            m3_bone.location = self.init_anim_ref_vec3(anim_id=int(pose_bone.m3_location_hex_id, 16))
+            m3_bone.rotation = self.init_anim_ref_quat(anim_id=int(pose_bone.m3_rotation_hex_id, 16))
             m3_bone.rotation.null.w = 1.0
-            m3_bone.scale = self.init_anim_ref_vec3(anim_id=int(pose_bone.m3_scale_header.hex_id, 16))
+            m3_bone.scale = self.init_anim_ref_vec3(anim_id=int(pose_bone.m3_scale_hex_id, 16))
             m3_bone.scale.null = to_m3_vec3((1.0, 1.0, 1.0))
-            m3_bone.batching = self.init_anim_ref_uint32(pose_bone.m3_batching, anim_id=int(pose_bone.m3_batching_header.hex_id, 16))
+            m3_bone.batching = self.init_anim_ref_uint32(pose_bone.m3_batching, anim_id=int(pose_bone.m3_batching_hex_id, 16))
             m3_bone.batching.null = 1
 
-            bone_to_m3_bone[bone] = m3_bone
+            bone_to_m3_bone[pose_bone] = m3_bone
 
-            bone_local_inv_matrix = (bone.matrix_local @ io_shared.rot_fix_matrix_transpose).inverted()
-            self.bone_to_iref[bone] = bind_scale_to_matrix(bone.m3_bind_scale) @ bone_local_inv_matrix
+            bone_local_inv_matrix = (data_bone.matrix_local @ io_shared.rot_fix_matrix_transpose).inverted()
+            self.bone_to_iref[pose_bone] = bind_scale_to_matrix(pose_bone.m3_bind_scale) @ bone_local_inv_matrix
 
-            bind_scale_inv = mathutils.Vector((1.0 / bone.m3_bind_scale[ii] for ii in range(3)))
+            bind_scale_inv = mathutils.Vector((1.0 / pose_bone.m3_bind_scale[ii] for ii in range(3)))
             bind_scale_inv_matrix = bind_scale_to_matrix(bind_scale_inv)
 
-            if bone.parent:
-                parent_bind_matrix = bind_scale_to_matrix(bone.parent.m3_bind_scale)
-                left_correction_matrix = parent_bind_matrix @ io_shared.rot_fix_matrix @ bone.parent.matrix_local.inverted() @ bone.matrix_local
+            if pose_bone.parent:
+                parent_bind_matrix = bind_scale_to_matrix(pose_bone.parent.m3_bind_scale)
+                left_correction_matrix = parent_bind_matrix @ io_shared.rot_fix_matrix @ data_bone.parent.matrix_local.inverted() @ data_bone.matrix_local
             else:
-                left_correction_matrix = bone.matrix_local
+                left_correction_matrix = data_bone.matrix_local
 
             right_correction_matrix = io_shared.rot_fix_matrix_transpose @ bind_scale_inv_matrix
 
-            self.bone_to_correction_matrices[bone] = (left_correction_matrix, right_correction_matrix)
+            self.bone_to_correction_matrices[pose_bone] = (left_correction_matrix, right_correction_matrix)
 
-            pose_bone = self.ob.pose.bones[bone.name]
             pose_matrix = self.ob.convert_space(pose_bone=pose_bone, matrix=pose_bone.matrix, from_space='POSE', to_space='LOCAL')
-
             m3_pose_matrix = left_correction_matrix @ pose_matrix @ right_correction_matrix
 
             m3_bone_loc, m3_bone_rot, m3_bone_scl = m3_bone_defaults[m3_bone] = m3_pose_matrix.decompose()
@@ -1144,12 +1141,12 @@ class Exporter:
             m3_bone.rotation.default = to_m3_quat(m3_bone_rot)
             m3_bone.location.default = to_m3_vec3(m3_bone_loc)
 
-            if bone.parent:
-                abs_pose_matrix = self.bone_to_abs_pose_matrix[bone.parent] @ self.bone_to_iref[bone.parent].inverted() @ m3_pose_matrix
+            if pose_bone.parent:
+                abs_pose_matrix = self.bone_to_abs_pose_matrix[pose_bone.parent] @ self.bone_to_iref[pose_bone.parent].inverted() @ m3_pose_matrix
             else:
                 abs_pose_matrix = m3_pose_matrix
 
-            self.bone_to_abs_pose_matrix[bone] = abs_pose_matrix @ self.bone_to_iref[bone]
+            self.bone_to_abs_pose_matrix[pose_bone] = abs_pose_matrix @ self.bone_to_iref[pose_bone]
 
         calc_actions = []
         for anim in self.exported_anims:
@@ -1175,15 +1172,15 @@ class Exporter:
             for frame in frames:
                 self.scene.frame_set(frame)
 
-                for bone in self.bones:
-                    pose_bone = self.ob.pose.bones[bone.name]
-                    bone_to_pose_matrices[bone].append(self.ob.convert_space(pose_bone=pose_bone, matrix=pose_bone.matrix, from_space='POSE', to_space='LOCAL'))
+                for pb in self.bones:
+                    bone_to_pose_matrices[pb].append(self.ob.convert_space(pose_bone=pb, matrix=pb.matrix, from_space='POSE', to_space='LOCAL'))
 
             bone_m3_pose_matrices = {bone: [] for bone in self.bones}
 
-            for bone in self.bones:
-                m3_bone = bone_to_m3_bone[bone]
-                left_correction_matrix, right_correction_matrix = self.bone_to_correction_matrices[bone]
+            for pose_bone in self.bones:
+                data_bone = self.ob.data.bones.get(pose_bone.name)
+                m3_bone = bone_to_m3_bone[pose_bone]
+                left_correction_matrix, right_correction_matrix = self.bone_to_correction_matrices[pose_bone]
 
                 anim_locs = []
                 anim_rots = []
@@ -1191,10 +1188,10 @@ class Exporter:
 
                 frame_start = self.action_frame_range[anim.action][0]
 
-                for pose_matrix in bone_to_pose_matrices[bone]:
+                for pose_matrix in bone_to_pose_matrices[pose_bone]:
                     m3_pose_matrix = left_correction_matrix @ pose_matrix @ right_correction_matrix
                     # storing these and operating on them later if boundings are needed
-                    bone_m3_pose_matrices[bone].append(m3_pose_matrix)
+                    bone_m3_pose_matrices[pose_bone].append(m3_pose_matrix)
                     m3_pose = m3_pose_matrix.decompose()
                     anim_locs.append(m3_pose[0])
                     anim_rots.append(m3_pose[1])
@@ -1220,7 +1217,6 @@ class Exporter:
                     m3_bone.bit_set('flags', 'animated', True)
 
                 # export animated batching property
-                pose_bone = self.ob.pose.bones.get(bone.name)
                 m3_batching_fcurve = anim.action.fcurves.find(pose_bone.path_from_id('m3_batching'))
                 m3_batching_frames = get_fcurve_anim_frames(m3_batching_fcurve)
 
@@ -1421,7 +1417,7 @@ class Exporter:
                 m3_batch.region_index = len(region_section) - 1
                 m3_batch.material_reference_index = self.matref_handle_indices[batch.material]
 
-                bone = shared.m3_pointer_get(self.ob.data.bones, batch.bone)
+                bone = shared.m3_pointer_get(self.ob.pose.bones, batch.bone)
                 m3_batch.bone = self.bone_name_indices[bone.name] if bone else -1
 
         # TODO more testing on when this is applicable is needed
@@ -1473,7 +1469,7 @@ class Exporter:
         attachment_point_addon_section = self.m3.section_for_reference(model, 'attachment_points_addon', pos=None)
 
         for attachment in attachments:
-            attachment_bone = shared.m3_pointer_get(self.ob.data.bones, attachment.bone)
+            attachment_bone = shared.m3_pointer_get(self.ob.pose.bones, attachment.bone)
 
             m3_attachment = attachment_point_section.content_add()
             m3_attachment_name_section = self.m3.section_for_reference(m3_attachment, 'name')
@@ -1491,7 +1487,7 @@ class Exporter:
         light_section = self.m3.section_for_reference(model, 'lights', version=7)
 
         for light in lights:
-            light_bone = shared.m3_pointer_get(self.ob.data.bones, light.bone)
+            light_bone = shared.m3_pointer_get(self.ob.pose.bones, light.bone)
 
             m3_light = light_section.content_add()
             m3_light.bone = self.bone_name_indices[light_bone.name]
@@ -1505,7 +1501,7 @@ class Exporter:
         shadow_box_section = self.m3.section_for_reference(model, 'shadow_boxes', version=3)
 
         for shadow_box in shadow_boxes:
-            shadow_box_bone = shared.m3_pointer_get(self.ob.data.bones, shadow_box.bone)
+            shadow_box_bone = shared.m3_pointer_get(self.ob.pose.bones, shadow_box.bone)
             m3_shadow_box = shadow_box_section.content_add()
             m3_shadow_box.bone = self.bone_name_indices[shadow_box_bone.name]
             processor = M3OutputProcessor(self, shadow_box, m3_shadow_box)
@@ -1518,7 +1514,7 @@ class Exporter:
         camera_section = self.m3.section_for_reference(model, 'cameras', version=3)
 
         for camera in cameras:
-            camera_bone = shared.m3_pointer_get(self.ob.data.bones, camera.bone)
+            camera_bone = shared.m3_pointer_get(self.ob.pose.bones, camera.bone)
             m3_camera = camera_section.content_add()
             m3_camera_name_section = self.m3.section_for_reference(m3_camera, 'name')
             m3_camera_name_section.content_from_bytes(camera.name)
@@ -1627,19 +1623,16 @@ class Exporter:
                             m3_layer.unknownbc0c14e5 = self.init_anim_ref_uint32(0)
                             m3_layer.unknowne740df12 = self.init_anim_ref_float(0.0)
                             m3_layer.unknown39ade219 = self.init_anim_ref_uint16(0)
-                            m3_layer.unknowna4ec0796 = self.init_anim_ref_uint32(0, interpolation=1)
+                            m3_layer.unknowna4ec0796 = self.init_anim_ref_uint32(0)
                             m3_layer.unknowna44bf452 = self.init_anim_ref_float(1.0)
                             m3_layer.unknowna44bf452.null = 1.0
-
-                            m3_layer.video_play.interpolation = 1
-                            m3_layer.video_restart.interpolation = 1
-                            m3_layer.uv_flipbook_frame.interpolation = 1
 
                 if type_ii == 1:  # standard material
                     m3_mat.bit_set('additional_flags', 'depth_blend_falloff', mat.depth_blend_falloff != 0.0)
                     m3_mat.bit_set('additional_flags', 'vertex_color', mat.vertex_color or matref.bl_handle in self.vertex_color_mats)
                     m3_mat.bit_set('additional_flags', 'vertex_alpha', mat.vertex_alpha or matref.bl_handle in self.vertex_alpha_mats)
-                    m3_mat.parallax_height.header.flags = 0x8
+                    if mat.parallax_height_header.flags == -1:
+                        m3_mat.parallax_height.header.flags = 0x8
                 elif type_ii == 3:  # composite material
                     valid_sections = []
                     for section in mat.sections:
@@ -1683,7 +1676,7 @@ class Exporter:
         particle_system_section = self.m3.section_for_reference(model, 'particle_systems', version=version)
 
         for system in systems:
-            system_bone = shared.m3_pointer_get(self.ob.data.bones, system.bone)
+            system_bone = shared.m3_pointer_get(self.ob.pose.bones, system.bone)
 
             m3_system = particle_system_section.content_add()
             m3_system.bone = self.bone_name_indices[system_bone.name]
@@ -1692,8 +1685,8 @@ class Exporter:
             processor = M3OutputProcessor(self, system, m3_system)
             io_shared.io_particle_system(processor)
 
-            m3_system.emit_count.header.interpolation = 0
-            m3_system.emit_count.header.flags = 0x6
+            if system.emit_count_header.flags == -1:
+                m3_system.emit_count.header.flags = 0x6
 
             trail_particle = shared.m3_pointer_get(systems, system.trail_particle)
             if trail_particle:
@@ -1764,7 +1757,7 @@ class Exporter:
         if len(copies):
             particle_copy_section = self.m3.section_for_reference(model, 'particle_copies', version=0)
         for copy in copies:
-            copy_bone = shared.m3_pointer_get(self.ob.data.bones, copy.bone)
+            copy_bone = shared.m3_pointer_get(self.ob.pose.bones, copy.bone)
             m3_copy = particle_copy_section.content_add()
             m3_copy.bone = self.bone_name_indices[copy_bone.name]
             processor = M3OutputProcessor(self, copy, m3_copy)
@@ -1778,7 +1771,7 @@ class Exporter:
 
         handle_to_spline_sections = {}
         for ribbon in ribbons:
-            ribbon_bone = shared.m3_pointer_get(self.ob.data.bones, ribbon.bone)
+            ribbon_bone = shared.m3_pointer_get(self.ob.pose.bones, ribbon.bone)
 
             m3_ribbon = ribbon_section.content_add()
             m3_ribbon.bone = self.bone_name_indices[ribbon_bone.name]
@@ -1798,7 +1791,7 @@ class Exporter:
                     handle_to_spline_sections[ribbon.spline] = spline_section
 
                     for point in splines[splines.index(spline)].points:
-                        point_bone = shared.m3_pointer_get(self.ob.data.bones, point.bone)
+                        point_bone = shared.m3_pointer_get(self.ob.pose.bones, point.bone)
 
                         if not point_bone:
                             continue
@@ -1820,7 +1813,7 @@ class Exporter:
         projection_section = self.m3.section_for_reference(model, 'projections', version=5)
 
         for projection in projections:
-            projection_bone = shared.m3_pointer_get(self.ob.data.bones, projection.bone)
+            projection_bone = shared.m3_pointer_get(self.ob.pose.bones, projection.bone)
             m3_projection = projection_section.content_add()
             m3_projection.bone = self.bone_name_indices[projection_bone.name]
             m3_projection.material_reference_index = self.matref_handle_indices[projection.material]
@@ -1839,7 +1832,7 @@ class Exporter:
         force_section = self.m3.section_for_reference(model, 'forces', version=2)
 
         for force in forces:
-            force_bone = shared.m3_pointer_get(self.ob.data.bones, force.bone)
+            force_bone = shared.m3_pointer_get(self.ob.pose.bones, force.bone)
             m3_force = force_section.content_add()
             m3_force.bone = self.bone_name_indices[force_bone.name]
             processor = M3OutputProcessor(self, force, m3_force)
@@ -1852,7 +1845,7 @@ class Exporter:
         warp_section = self.m3.section_for_reference(model, 'warps', version=1)
 
         for warp in warps:
-            warp_bone = shared.m3_pointer_get(self.ob.data.bones, warp.bone)
+            warp_bone = shared.m3_pointer_get(self.ob.pose.bones, warp.bone)
             m3_warp = warp_section.content_add()
             m3_warp.bone = self.bone_name_indices[warp_bone.name]
             processor = M3OutputProcessor(self, warp, m3_warp)
@@ -1866,7 +1859,7 @@ class Exporter:
 
         shape_to_section = {}
         for physics_body in physics_bodies:
-            physics_body_bone = shared.m3_pointer_get(self.ob.data.bones, physics_body.bone)
+            physics_body_bone = shared.m3_pointer_get(self.ob.pose.bones, physics_body.bone)
 
             m3_physics_body = physics_body_section.content_add()
             m3_physics_body.bone = self.bone_name_indices[physics_body_bone.name]
@@ -1903,8 +1896,8 @@ class Exporter:
         for physics_joint in physics_joints:
             body1 = shared.m3_pointer_get(physics_bodies, physics_joint.rigidbody1)
             body2 = shared.m3_pointer_get(physics_bodies, physics_joint.rigidbody2)
-            bone1 = shared.m3_pointer_get(self.ob.data.bones, body1.bone)
-            bone2 = shared.m3_pointer_get(self.ob.data.bones, body2.bone)
+            bone1 = shared.m3_pointer_get(self.ob.pose.bones, body1.bone)
+            bone2 = shared.m3_pointer_get(self.ob.pose.bones, body2.bone)
 
             # bone1_head = bone1.matrix_local.translation
             # bone1_vec = bone1.matrix_local.col[1].to_3d().normalized()
@@ -1973,7 +1966,7 @@ class Exporter:
                 constraints_section = self.m3.section_for_reference(m3_physics_cloth, 'constraints', version=0)
                 constraints_sections[physics_cloth.constraint_set] = constraints_section
                 for volume in self.physics_cloth_constraint_handle_to_volumes[physics_cloth.constraint_set]:
-                    volume_bone = shared.m3_pointer_get(self.ob.data.bones, volume.bone)
+                    volume_bone = shared.m3_pointer_get(self.ob.pose.bones, volume.bone)
                     skin_bones.add(self.bone_name_indices[volume_bone.name])
                     m3_volume = constraints_section.content_add()
                     m3_volume.bone = self.bone_name_indices[volume_bone.name]
@@ -2111,7 +2104,7 @@ class Exporter:
         hittests_section = self.m3.section_for_reference(model, 'hittests', version=1)
 
         ht_tight = self.ob.m3_hittest_tight
-        ht_tight_bone = shared.m3_pointer_get(self.ob.data.bones, ht_tight.bone)
+        ht_tight_bone = shared.m3_pointer_get(self.ob.pose.bones, ht_tight.bone)
 
         m3_ht_tight = model.hittest_tight
         m3_ht_tight.bone = self.bone_name_indices[ht_tight_bone.name]
@@ -2128,7 +2121,7 @@ class Exporter:
             self.get_basic_volume_object(ht_tight.mesh_object, m3_ht_tight)
 
         for hittest in hittests:
-            hittest_bone = shared.m3_pointer_get(self.ob.data.bones, hittest.bone)
+            hittest_bone = shared.m3_pointer_get(self.ob.pose.bones, hittest.bone)
 
             m3_hittest = hittests_section.content_add()
             m3_hittest.bone = self.bone_name_indices[hittest_bone.name]
@@ -2240,13 +2233,6 @@ class Exporter:
             # polygon_related_section.references.append(m3.polygons_related)
             loop_section.references.append(m3.loops)
             polygon_section.references.append(m3.polygons)
-
-    def validate_header_id(self, head):
-        int_id = int(head.hex_id, 16)
-        if not int_id:
-            head.hex_id = shared.m3_anim_id_gen()
-        return True
-        # TODO return False if this id has already been keyframed
 
     def init_anim_header(self, interpolation, flags, anim_id):
         anim_ref_header = io_m3.structures['AnimationReferenceHeader'].get_version(0).instance()

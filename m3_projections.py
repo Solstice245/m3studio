@@ -33,7 +33,7 @@ def update_collection_index(self, context):
 
 def draw_props(projection, layout):
     col = layout.column()
-    shared.draw_prop_pointer(col, projection.id_data.data.bones, projection, 'bone', label='Bone', icon='BONE_DATA')
+    shared.draw_prop_pointer(col, projection.id_data.pose.bones, projection, 'bone', label='Bone', icon='BONE_DATA')
     shared.draw_prop_pointer(col, projection.id_data.m3_materialrefs, projection, 'material', label='Material', icon='MATERIAL')
     col.prop(projection, 'projection_type', text='Type')
     col.prop(projection, 'layer', text='Layer')

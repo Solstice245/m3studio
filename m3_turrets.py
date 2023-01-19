@@ -47,7 +47,7 @@ def update_parts_collection_index(self, context):
 def draw_part_props(part, layout):
     version = int(part.id_data.m3_turrets_part_version)
 
-    shared.draw_prop_pointer(layout, part.id_data.data.bones, part, 'bone', label='Bone', icon='BONE_DATA')
+    shared.draw_prop_pointer(layout, part.id_data.pose.bones, part, 'bone', label='Bone', icon='BONE_DATA')
     col = layout.column()
     col.prop(part, 'group_id', text='Part Group')
     col.prop(part, 'main_part', text='Main Part')
@@ -93,7 +93,6 @@ def draw_props(turret, layout):
 
 
 class PartProperties(shared.M3BoneUserPropertyGroup):
-    matrix: bpy.props.FloatVectorProperty(options=set(), size=(4, 4), subtype='MATRIX')
     forward_x: bpy.props.FloatVectorProperty(options=set(), size=4, default=(0, -1, 0, 0))
     forward_y: bpy.props.FloatVectorProperty(options=set(), size=4, default=(1, 0, 0, 0))
     forward_z: bpy.props.FloatVectorProperty(options=set(), size=4, default=(0, 0, 1, 0))

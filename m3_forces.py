@@ -33,7 +33,7 @@ def update_collection_index(self, context):
 
 
 def draw_props(force, layout):
-    shared.draw_prop_pointer(layout, force.id_data.data.bones, force, 'bone', label='Bone', icon='BONE_DATA')
+    shared.draw_prop_pointer(layout, force.id_data.pose.bones, force, 'bone', label='Bone', icon='BONE_DATA')
     col = layout.column()
     col.prop(force, 'force_type', text='Type')
     col = layout.column(align=True)

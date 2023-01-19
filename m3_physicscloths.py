@@ -41,7 +41,7 @@ def update_constraints_collection_index(self, context):
 
 
 def draw_constraint_props(constraint, layout):
-    shared.draw_prop_pointer(layout, constraint.id_data.data.bones, constraint, 'bone', label='Bone', icon='BONE_DATA')
+    shared.draw_prop_pointer(layout, constraint.id_data.pose.bones, constraint, 'bone', label='Bone', icon='BONE_DATA')
     col = layout.column()
     col.prop(constraint, 'radius', text='Radius')
     col.prop(constraint, 'height', text='Height')

@@ -25,12 +25,13 @@ from . import bl_graphics_data as blgd
 from .io_shared import rot_fix_matrix_transpose
 
 
-def get_bone_from_handle(ob, bone_handle, handle_bone_dict):
+def get_pb_from_handle(ob, bone_handle, handle_bone_dict):
+
     bone_from_handle = handle_bone_dict.get(bone_handle, False)
     if bone_from_handle is False:
-        bone_from_handle = shared.m3_pointer_get(ob.data.bones, bone_handle)
+        bone_from_handle = shared.m3_pointer_get(ob.pose.bones, bone_handle)
         handle_bone_dict[bone_handle] = bone_from_handle
-    if bone_from_handle and bone_from_handle.hide:
+    if bone_from_handle and ob.data.bones.get(bone_from_handle.name).hide:
         return None
     return bone_from_handle
 
@@ -94,7 +95,7 @@ def draw():
         pb_select = {pose_bone: pose_bone in selected_pbs for pose_bone in ob.pose.bones}
 
         pb_to_world_matrix = {}
-        handle_to_bone = {}
+        pb_handles = {}
         bone_to_inv_bind_scale_matrix = {}
 
         opts = ob.m3_options
@@ -114,29 +115,25 @@ def draw():
             coords = get_transformed_coords(coords, ob.matrix_world)
             batch_uni_polyline(coords, indices, (1, 1, 1))
 
-        for bone in ob.data.bones:
-            bs = bone.m3_bind_scale
-            bone_to_inv_bind_scale_matrix[bone] = mathutils.Matrix.LocRotScale(None, None, (1 / bs[0], 1 / bs[1], 1 / bs[2]))
+        for pb in ob.pose.bones:
+            bs = pb.m3_bind_scale
+            bone_to_inv_bind_scale_matrix[pb] = mathutils.Matrix.LocRotScale(None, None, (1 / bs[0], 1 / bs[1], 1 / bs[2]))
 
         for item in ob.m3_attachmentpoints:
-            bone = get_bone_from_handle(ob, item.bone, handle_to_bone)
-            if bone:
-                pb = ob.pose.bones.get(bone.name)
-
+            pb = get_pb_from_handle(ob, item.bone, pb_handles)
+            if pb:
                 if opts.draw_attach_points or (pb_select[pb] and opts.draw_selected):
                     pb_matrix = get_pb_world_matrix(ob, pb, pb_to_world_matrix)
                     col = blgd.att_point_color_normal if not pb_select[pb] else blgd.att_point_color_select
                     coords, indices = blgd.point
-                    coords = get_transformed_coords(coords, pb_matrix @ bone_to_inv_bind_scale_matrix[bone])
+                    coords = get_transformed_coords(coords, pb_matrix @ bone_to_inv_bind_scale_matrix[pb])
                     batch_uni_polyline(coords, indices, col)
 
             for ii, vol in enumerate(item.volumes):
                 attach = item
                 item = vol
-                vol_bone = get_bone_from_handle(ob, item.bone, handle_to_bone)
-                if vol_bone:
-                    vol_pb = ob.pose.bones.get(bone.name)
-
+                vol_pb = get_pb_from_handle(ob, item.bone, pb_handles)
+                if vol_pb:
                     if opts.draw_attach_volumes or (pb_select[vol_pb] and opts.draw_selected):
                         vol_pb_matrix = get_pb_world_matrix(ob, vol_pb, pb_to_world_matrix)
                         col = blgd.att_point_color_normal if not pb_select[vol_pb] or ii != attach.volumes_index else blgd.att_point_color_select
@@ -161,16 +158,14 @@ def draw():
                             coords = [vert.co for vert in item.mesh_object.data.vertices]
                             indices = [edge.vertices for edge in item.mesh_object.data.edges]
 
-                        vol_final_matrix @= bone_to_inv_bind_scale_matrix[vol_bone] @ vol_post_matrix
+                        vol_final_matrix @= bone_to_inv_bind_scale_matrix[vol_pb] @ vol_post_matrix
 
                         coords = get_transformed_coords(coords, vol_final_matrix)
                         batch_uni_polyline(coords, indices, col)
 
         for item in [item for item in ob.m3_hittests] + [ob.m3_hittest_tight]:
-            bone = get_bone_from_handle(ob, item.bone, handle_to_bone)
-            if bone:
-                pb = ob.pose.bones.get(bone.name)
-
+            pb = get_pb_from_handle(ob, item.bone, pb_handles)
+            if pb:
                 if not opts.draw_hittests and not (pb_select[pb] and opts.draw_selected):
                     continue
 
@@ -195,15 +190,13 @@ def draw():
                     coords = [vert.co for vert in item.mesh_object.data.vertices]
                     indices = [edge.vertices for edge in item.mesh_object.data.edges]
 
-                final_matrix @= bone_to_inv_bind_scale_matrix[bone] @ mathutils.Matrix.LocRotScale(item.location, item.rotation, item.scale)
+                final_matrix @= bone_to_inv_bind_scale_matrix[pb] @ mathutils.Matrix.LocRotScale(item.location, item.rotation, item.scale)
                 coords = get_transformed_coords(coords, final_matrix)
                 batch_uni_polyline(coords, indices, col)
 
         for item in ob.m3_lights:
-            bone = get_bone_from_handle(ob, item.bone, handle_to_bone)
-            if bone:
-                pb = ob.pose.bones.get(bone.name)
-
+            pb = get_pb_from_handle(ob, item.bone, pb_handles)
+            if pb:
                 if not opts.draw_lights and not (pb_select[pb] and opts.draw_selected):
                     continue
 
@@ -216,16 +209,15 @@ def draw():
                     final_matrix @= mathutils.Matrix.LocRotScale(None, None, (item.attenuation_far, item.attenuation_far, item.falloff))
                     coords, indices = blgd.cone
 
-                final_matrix @= bone_to_inv_bind_scale_matrix[bone]
+                final_matrix @= bone_to_inv_bind_scale_matrix[pb]
                 coords = get_transformed_coords(coords, final_matrix)
                 batch_uni_polyline(coords, indices, col)
 
         handle_to_par_data = {}
 
         for item in ob.m3_particle_systems:
-            bone = get_bone_from_handle(ob, item.bone, handle_to_bone)
-            if bone:
-                pb = ob.pose.bones.get(bone.name)
+            pb = get_pb_from_handle(ob, item.bone, pb_handles)
+            if pb:
                 pb_matrix = get_pb_world_matrix(ob, pb, pb_to_world_matrix)
 
                 if not opts.draw_particles and not (pb_select[pb] and opts.draw_selected):
@@ -287,28 +279,26 @@ def draw():
                 handle_to_par_data[item.bl_handle] = [coords, indices, par_matrix, par_cutout_matrix]
 
                 if par_matrix:
-                    final_matrix = pb_matrix @ bone_to_inv_bind_scale_matrix[bone] @ par_matrix
+                    final_matrix = pb_matrix @ bone_to_inv_bind_scale_matrix[pb] @ par_matrix
                 else:
-                    final_matrix = pb_matrix @ bone_to_inv_bind_scale_matrix[bone]
+                    final_matrix = pb_matrix @ bone_to_inv_bind_scale_matrix[pb]
 
                 par_coords = get_transformed_coords(coords, final_matrix)
                 batch_uni_polyline(par_coords, indices, col)
 
                 if par_cutout_matrix:
-                    final_matrix = pb_matrix @ bone_to_inv_bind_scale_matrix[bone] @ par_matrix
+                    final_matrix = pb_matrix @ bone_to_inv_bind_scale_matrix[pb] @ par_matrix
                     par_cutout_coords = get_transformed_coords(coords, final_matrix)
                     batch_uni_polyline(par_cutout_coords, indices, col)
 
         for item in ob.m3_particle_copies:
-            bone = get_bone_from_handle(ob, item.bone, handle_to_bone)
-            if bone and len(item.systems):
-                pb = ob.pose.bones.get(bone.name)
-
+            pb = get_pb_from_handle(ob, item.bone, pb_handles)
+            if pb and len(item.systems):
                 if not opts.draw_particles and not (pb_select[pb] and opts.draw_selected):
                     continue
 
                 pb_matrix = get_pb_world_matrix(ob, pb, pb_to_world_matrix)
-                inv_bind_scale = bone_to_inv_bind_scale_matrix[bone]
+                inv_bind_scale = bone_to_inv_bind_scale_matrix[pb]
 
                 col = blgd.particle_color_normal if not pb_select[pb] else blgd.particle_color_select
                 for system in item.systems:
@@ -332,28 +322,24 @@ def draw():
         # TODO RIB_
 
         for item in ob.m3_projections:
-            bone = get_bone_from_handle(ob, item.bone, handle_to_bone)
-            if bone:
-                pb = ob.pose.bones.get(bone.name)
-
+            pb = get_pb_from_handle(ob, item.bone, pb_handles)
+            if pb:
                 if not opts.draw_projections and not (pb_select[pb] and opts.draw_selected):
                     continue
 
-                pb_matrix = get_pb_world_matrix(ob, pb, handle_to_bone)
+                pb_matrix = get_pb_world_matrix(ob, pb, pb_handles)
                 col = blgd.projector_color_normal if not pb_select[pb] else blgd.projector_color_select
                 vec_min = mathutils.Vector((item.box_offset_x_left, item.box_offset_y_front, item.box_offset_z_top))
                 vec_max = mathutils.Vector((item.box_offset_x_right, item.box_offset_y_back, item.box_offset_z_bottom))
                 proj_matrix = mathutils.Matrix.LocRotScale(vec_max + vec_min, None, vec_max - vec_min)
                 coords, indices = blgd.cube
-                final_matrix = pb_matrix @ bone_to_inv_bind_scale_matrix[bone] @ proj_matrix
+                final_matrix = pb_matrix @ bone_to_inv_bind_scale_matrix[pb] @ proj_matrix
                 coords = get_transformed_coords(coords, final_matrix)
                 batch_uni_polyline(coords, indices, col)
 
         for item in ob.m3_forces:
-            bone = get_bone_from_handle(ob, item.bone, handle_to_bone)
-            if bone:
-                pb = ob.pose.bones.get(bone.name)
-
+            pb = get_pb_from_handle(ob, item.bone, pb_handles)
+            if pb:
                 if not opts.draw_forces and not (pb_select[pb] and opts.draw_selected):
                     continue
 
@@ -375,15 +361,13 @@ def draw():
                 elif item.shape == 'CONEDOME':
                     coords, indices = blgd.init_cone_dome(item.width, item.height)
 
-                final_matrix @= bone_to_inv_bind_scale_matrix[bone]
+                final_matrix @= bone_to_inv_bind_scale_matrix[pb]
                 coords = get_transformed_coords(coords, final_matrix)
                 batch_uni_polyline(coords, indices, col)
 
         for item in ob.m3_cameras:
-            bone = get_bone_from_handle(ob, item.bone, handle_to_bone)
-            if bone:
-                pb = ob.pose.bones.get(bone.name)
-
+            pb = get_pb_from_handle(ob, item.bone, pb_handles)
+            if pb:
                 if not opts.draw_cameras and not (pb_select[pb] and opts.draw_selected):
                     continue
 
@@ -397,11 +381,9 @@ def draw():
         handle_to_physics_shape_data = {}
 
         for rigid_body in ob.m3_rigidbodies:
-            bone = get_bone_from_handle(ob, rigid_body.bone, handle_to_bone)
+            pb = get_pb_from_handle(ob, rigid_body.bone, pb_handles)
             physics_shape = shared.m3_pointer_get(ob.m3_physicsshapes, rigid_body.physics_shape)
-            if bone and physics_shape:
-                pb = ob.pose.bones.get(bone.name)
-
+            if pb and physics_shape:
                 if not opts.draw_rigidbodies and not (pb_select[pb] and opts.draw_selected):
                     continue
 
@@ -440,7 +422,7 @@ def draw():
 
                         handle_to_physics_shape_data[physics_shape.bl_handle][ii] = (coords, indices, vol_matrix)
 
-                        final_matrix = pb_matrix @ bone_to_inv_bind_scale_matrix[bone] @ vol_matrix
+                        final_matrix = pb_matrix @ bone_to_inv_bind_scale_matrix[pb] @ vol_matrix
                         coords = get_transformed_coords(coords, final_matrix)
                         batch_uni_polyline(coords, indices, col)
                 else:
@@ -448,7 +430,7 @@ def draw():
                         if not item:
                             continue
                         col = blgd.physics_color_normal if not pb_select[pb] or ii != shape.volumes_index else blgd.physics_color_select
-                        final_matrix = pb_matrix @ bone_to_inv_bind_scale_matrix[bone] @ item[2]
+                        final_matrix = pb_matrix @ bone_to_inv_bind_scale_matrix[pb] @ item[2]
                         coords = get_transformed_coords(item[0], final_matrix)
                         batch_uni_polyline(coords, item[1], col)
 
@@ -457,10 +439,8 @@ def draw():
         for constraint_set in ob.m3_clothconstraintsets:
             # TODO only procede if the constraint set is used
             for item in constraint_set.constraints:
-                bone = get_bone_from_handle(ob, item.bone, handle_to_bone)
-                if bone:
-                    pb = ob.pose.bones.get(bone.name)
-
+                pb = get_pb_from_handle(ob, item.bone, pb_handles)
+                if pb:
                     if not opts.draw_clothconstraints and not (pb_select[pb] and opts.draw_selected):
                         continue
 
@@ -468,16 +448,14 @@ def draw():
 
                     pb_matrix = get_pb_world_matrix(ob, pb, pb_to_world_matrix)
                     col = blgd.cloth_color_normal if not pb_select[pb] else blgd.cloth_color_select
-                    final_matrix = pb_matrix @ bone_to_inv_bind_scale_matrix[bone] @ mathutils.Matrix.LocRotScale(item.location, item.rotation, item.scale)
+                    final_matrix = pb_matrix @ bone_to_inv_bind_scale_matrix[pb] @ mathutils.Matrix.LocRotScale(item.location, item.rotation, item.scale)
                     coords, indices = blgd.init_capsule(item.radius, item.height)
                     coords = get_transformed_coords(coords, final_matrix)
                     batch_uni_polyline(coords, indices, col)
 
         for ii, item in enumerate(ob.m3_ikjoints):
-            bone = get_bone_from_handle(ob, item.bone, handle_to_bone)
-            if bone:
-                pb = ob.pose.bones.get(bone.name)
-
+            pb = get_pb_from_handle(ob, item.bone, pb_handles)
+            if pb:
                 if not opts.draw_ikjoints and not (pb_select[pb] and opts.draw_selected):
                     continue
 
@@ -494,10 +472,8 @@ def draw():
                     batch_uni_polyline(coords, indices, col)
 
         for item in ob.m3_shadowboxes:
-            bone = get_bone_from_handle(ob, item.bone, handle_to_bone)
-            if bone:
-                pb = ob.pose.bones.get(bone.name)
-
+            pb = get_pb_from_handle(ob, item.bone, pb_handles)
+            if pb:
                 if not opts.draw_shadowboxes and not (pb_select[pb] and opts.draw_selected):
                     continue
 
@@ -509,10 +485,8 @@ def draw():
                 batch_uni_polyline(coords, indices, col)
 
         for item in ob.m3_warps:
-            bone = get_bone_from_handle(ob, item.bone, handle_to_bone)
-            if bone:
-                pb = ob.pose.bones.get(bone.name)
-
+            pb = get_pb_from_handle(ob, item.bone, pb_handles)
+            if pb:
                 if not opts.draw_warps and not (pb_select[pb] and opts.draw_selected):
                     continue
 

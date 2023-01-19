@@ -67,7 +67,7 @@ def draw_shape_props(shape, layout):
 
 
 def draw_body_props(rigidbody, layout):
-    shared.draw_prop_pointer(layout, rigidbody.id_data.data.bones, rigidbody, 'bone', label='Bone', icon='BONE_DATA')
+    shared.draw_prop_pointer(layout, rigidbody.id_data.pose.bones, rigidbody, 'bone', label='Bone', icon='BONE_DATA')
     shared.draw_prop_pointer(layout, rigidbody.id_data.m3_physicsshapes, rigidbody, 'physics_shape', label='Physics Body Shape', icon='LINKED')
     col = layout.column()
     col.prop(rigidbody, 'physical_material', text='Physical Material')

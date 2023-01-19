@@ -32,7 +32,7 @@ def update_collection_index(self, context):
 
 
 def draw_props(shbx, layout):
-    shared.draw_prop_pointer(layout, shbx.id_data.data.bones, shbx, 'bone', label='Bone', icon='BONE_DATA')
+    shared.draw_prop_pointer(layout, shbx.id_data.pose.bones, shbx, 'bone', label='Bone', icon='BONE_DATA')
     col = layout.column(align=True)
     shared.draw_prop_anim(col, shbx, 'length', text='Length')
     shared.draw_prop_anim(col, shbx, 'width', text='Width')

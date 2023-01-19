@@ -200,11 +200,12 @@ def m3_pointer_get(search_data, handle):
 
 def select_bones_handles(ob, bl_handles):
     if ob.m3_options.update_bone_selection and bl_handles:
-        for bone in ob.data.bones:
-            bone.select = bone.bl_handle in bl_handles
-            bone.select_tail = bone.select
-            if bone.bl_handle == bl_handles[0]:
-                ob.data.bones.active = bone
+        for pb in ob.pose.bones:
+            db = ob.data.bones.get(pb.name)
+            db.select = pb.bl_handle in bl_handles
+            db.select_tail = db.select
+            if pb.bl_handle == bl_handles[0]:
+                ob.data.bones.active = db
 
 
 class ArmatureObjectPanel(bpy.types.Panel):
@@ -218,9 +219,20 @@ class ArmatureObjectPanel(bpy.types.Panel):
         return context.object.type == 'ARMATURE'
 
 
+def hex_id_get(self):
+    return self['hex_id']
+
+
+def hex_id_set(self, value):
+    try:
+        self['hex_id'] = hex(int(value, 16))[2:]
+    except ValueError:
+        self['hex_id'] = shared.m3_anim_id_get()
+
+
 class M3AnimHeaderProp(bpy.types.PropertyGroup):
     bl_user_mark_as_dup: bpy.props.BoolProperty(options=set())
-    hex_id: bpy.props.StringProperty(options=set(), maxlen=8)  # TODO ensure that this is a proper hex string
+    hex_id: bpy.props.StringProperty(options=set(), maxlen=8, get=hex_id_get, set=hex_id_set)
     interpolation: bpy.props.EnumProperty(options=set(), items=bl_enum.anim_header_interp, default='AUTO')
     flags: bpy.props.IntProperty(options=set(), min=-1, default=-1)  # -1 means automatic
 
@@ -414,28 +426,6 @@ class M3PropHandleUnlink(bpy.types.Operator):
         return {'FINISHED'}
 
 
-def draw_popup_anim_header(self, context):
-    global m3_anim_header
-    self.layout.label(text='M3 Animation Header')
-    main = self.layout.row(align=True)
-    split = main.split(factor=0.275)
-    row = split.row()
-    col = row.column()
-    col.alignment = 'RIGHT'
-    col.label(text='Animation ID')
-    col.label(text='Interpolation')
-    col.label(text='Flags')
-    row = split.row()
-    col = row.column()
-    col.prop(m3_anim_header, 'hex_id', text='')
-    col.prop(m3_anim_header, 'interpolation', text='')
-    col.prop(m3_anim_header, 'flags', text='')
-    subrow = col.row(align=True)
-    subrow.alignment = 'LEFT'
-    subrow.prop(m3_anim_header, 'bl_user_mark_as_dup', text='')
-    subrow.label(text='Mark Property As Duplicate ID User')
-
-
 class M3EditAnimHeader(bpy.types.Operator):
     bl_idname = 'm3.edit_anim_header'
     bl_label = 'Edit M3 Animation Header'
@@ -445,11 +435,31 @@ class M3EditAnimHeader(bpy.types.Operator):
     prop_path: bpy.props.StringProperty()
     prop_name: bpy.props.StringProperty()
 
-    def invoke(self, context, event):
-        global m3_anim_header
-        m3_anim_header = getattr(bpy.data.objects.get(self.prop_id_name).path_resolve(self.prop_path), self.prop_name + '_header')
-        context.window_manager.popover(draw_popup_anim_header, ui_units_x=16)
+    def execute(self, context):
         return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self, width=300)
+
+    def draw(self, context):
+        m3_anim_header = getattr(bpy.data.objects.get(self.prop_id_name).path_resolve(self.prop_path), self.prop_name + '_header')
+        main = self.layout.row(align=True)
+        split = main.split(factor=0.275)
+        row = split.row()
+        col = row.column()
+        col.alignment = 'RIGHT'
+        col.label(text='Animation ID')
+        col.label(text='Interpolation')
+        col.label(text='Flags')
+        row = split.row()
+        col = row.column()
+        col.prop(m3_anim_header, 'hex_id', text='')
+        col.prop(m3_anim_header, 'interpolation', text='')
+        col.prop(m3_anim_header, 'flags', text='')
+        subrow = col.row(align=True)
+        subrow.alignment = 'LEFT'
+        subrow.prop(m3_anim_header, 'bl_user_mark_as_dup', text='')
+        subrow.label(text='Mark Property As Duplicate ID User')
 
 
 def draw_menu_duplicate(layout, collection, dup_keyframes_opt=False):
@@ -552,6 +562,9 @@ def draw_prop_pointer(layout, search_data, data, prop_name, label='', icon=''):
             if search_id_bl.is_editmode:
                 search_data = search_id_bl.edit_bones
 
+    if search_data_verify is False and type(search_data) == bpy.types.Pose:
+        search_data_verify = True
+
     main = layout.row(align=True)
     main.use_property_split = False
 
@@ -594,7 +607,7 @@ def draw_prop_pointer(layout, search_data, data, prop_name, label='', icon=''):
 
 
 def draw_volume_props(volume, layout):
-    draw_prop_pointer(layout, volume.id_data.data.bones, volume, 'bone', label='Bone', icon='BONE_DATA')
+    draw_prop_pointer(layout, volume.id_data.pose.bones, volume, 'bone', label='Bone', icon='BONE_DATA')
     sub = layout.column(align=True)
     sub.prop(volume, 'shape', text='Shape Type')
     if volume.shape == 'CUBE':

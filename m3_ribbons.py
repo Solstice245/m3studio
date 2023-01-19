@@ -53,6 +53,7 @@ def update_splines_collection_index(self, context):
 
 
 def draw_point_props(point, layout):
+    shared.draw_prop_pointer(layout, point.id_data.pose.bones, point, 'bone', label='Bone', icon='BONE_DATA')
     col = layout.column(align=True)
     shared.draw_prop_anim(col, point, 'length', text='Length')
     shared.draw_prop_anim(col, point, 'yaw', text='Yaw')
@@ -82,7 +83,7 @@ def draw_spline_props(spline, layout):
 
 
 def draw_ribbon_props(ribbon, layout):
-    shared.draw_prop_pointer(layout, ribbon.id_data.data.bones, ribbon, 'bone', label='Bone', icon='BONE_DATA')
+    shared.draw_prop_pointer(layout, ribbon.id_data.pose.bones, ribbon, 'bone', label='Bone', icon='BONE_DATA')
     shared.draw_prop_pointer(layout, ribbon.id_data.m3_materialrefs, ribbon, 'material', label='Material', icon='MATERIAL')
     shared.draw_prop_pointer(layout, ribbon.id_data.m3_ribbonsplines, ribbon, 'spline', label='Ribbon Spline', icon='LINKED')
 
