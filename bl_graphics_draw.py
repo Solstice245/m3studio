@@ -276,7 +276,7 @@ def draw():
                         indices.append((ii, ii + 1))
                     del indices[-1]
 
-                handle_to_par_data[item.bl_handle] = [coords, indices, par_matrix, par_cutout_matrix]
+                handle_to_par_data[item.bl_handle] = (coords, indices, par_matrix, par_cutout_matrix)
 
                 if par_matrix:
                     final_matrix = pb_matrix @ bone_to_inv_bind_scale_matrix[pb] @ par_matrix
@@ -302,7 +302,7 @@ def draw():
 
                 col = blgd.particle_color_normal if not pb_select[pb] else blgd.particle_color_select
                 for system in item.systems:
-                    system_data = handle_to_par_data.get(system)
+                    system_data = handle_to_par_data.get(system.bl_handle)
                     if not system_data:
                         continue
                     coords, indices, par_matrix, par_cutout_matrix = system_data

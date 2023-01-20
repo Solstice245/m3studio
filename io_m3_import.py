@@ -906,7 +906,6 @@ class Importer:
             regn_m3_vert_ids = {}
             regn_m3_vert_to_id = {}
             regn_m3_verts_new = []
-            regn_m3_faces_new = []
 
             dups = 0
             for ii, v in enumerate(regn_m3_verts):
@@ -917,20 +916,6 @@ class Importer:
                     regn_m3_verts_new.append(v)
                 else:
                     dups += 1
-
-            # i would be checking in the bm face generation loop, but that caused problems in vertex normal calculation for some reason
-            regn_m3_faces_copy = regn_m3_faces.copy()
-            culled_face_indices = 0
-            for ii in range(0, len(regn_m3_faces_copy), 3):
-                f0 = regn_m3_vert_ids.get(regn_m3_vert_to_id[regn_m3_faces_copy[ii]])
-                f1 = regn_m3_vert_ids.get(regn_m3_vert_to_id[regn_m3_faces_copy[ii + 1]])
-                f2 = regn_m3_vert_ids.get(regn_m3_vert_to_id[regn_m3_faces_copy[ii + 2]])
-                f = (f0, f1, f2)
-                if len(set(f)) == 3:
-                    regn_m3_faces_new.extend(f)
-                else:
-                    del regn_m3_faces[ii - culled_face_indices:ii - culled_face_indices + 3]
-                    culled_face_indices += 3
 
             mesh = bpy.data.meshes.new('Mesh')
             mesh_ob = bpy.data.objects.new('Mesh', mesh)
@@ -987,7 +972,10 @@ class Importer:
             for ii in range(0, len(regn_m3_faces), 3):
 
                 try:
-                    face = bm.faces.new((bm.verts[regn_m3_faces_new[ii]], bm.verts[regn_m3_faces_new[ii + 1]], bm.verts[regn_m3_faces_new[ii + 2]]))
+                    v0 = bm.verts[regn_m3_vert_ids.get(regn_m3_vert_to_id[regn_m3_faces[ii]])]
+                    v1 = bm.verts[regn_m3_vert_ids.get(regn_m3_vert_to_id[regn_m3_faces[ii + 1]])]
+                    v2 = bm.verts[regn_m3_vert_ids.get(regn_m3_vert_to_id[regn_m3_faces[ii + 2]])]
+                    face = bm.faces.new((v0, v1, v2))
                     face.smooth = True
 
                     for jj in range(3):
@@ -1001,7 +989,7 @@ class Importer:
                             loop[layer_color] = (m3v.col.r / 255, m3v.col.g / 255, m3v.col.b / 255, 1)
                             loop[layer_alpha] = (m3v.col.a / 255, m3v.col.a / 255, m3v.col.a / 255, 1)
                 except ValueError:
-                    pass  # most likely to be duplicate face
+                    pass  # most likely to be duplicate or degenerate face
 
             bm.faces.ensure_lookup_table()
 

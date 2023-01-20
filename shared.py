@@ -419,10 +419,9 @@ class M3PropHandleUnlink(bpy.types.Operator):
     prop_name: bpy.props.StringProperty()
 
     def invoke(self, context, event):
-        # TODO op for generating new hex id
-        self.prop_id = getattr(bpy.data, self.prop_id_collection_name).get(self.prop_id_name)
-        self.prop_owner = prop_id.path_resolve(self.prop_path)
-        setattr(self.prop_owner, self.prop_name, '')
+        prop_id = getattr(bpy.data, self.prop_id_collection_name).get(self.prop_id_name)
+        prop_owner = prop_id.path_resolve(self.prop_path)
+        setattr(prop_owner, self.prop_name, '')
         return {'FINISHED'}
 
 
