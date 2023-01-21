@@ -342,9 +342,9 @@ class Importer:
         self.is_new_object = not ob
         self.ob = ob or armature_object_new()
 
-        anim_len = len(self.ob.m3_animations)
+        anims_len = len(self.ob.m3_animations)
         matref_len = len(self.ob.m3_materialrefs)
-        self.anim_index = lambda x: anim_len + x
+        self.anim_index = lambda x: anims_len + x
         self.matref_index = lambda x: matref_len + x
 
         self.m3_set_struct_version('m3_model_version', self.m3_model.desc.version)
@@ -425,8 +425,8 @@ class Importer:
         self.m3_model = self.m3[self.m3[0][0].model][0]
         self.stc_id_data = {}
 
-        anim_len = len(self.ob.m3_animations)
-        self.anim_index = lambda x: anim_len + x
+        anims_len = len(self.ob.m3_animations)
+        self.anim_index = lambda x: anims_len + x
         self.create_animations()
 
         m3_id_prop_paths = get_m3_id_props()
@@ -683,9 +683,9 @@ class Importer:
         for ii, m3_stc_group in enumerate(m3_stgs):
             m3_stc_indices = self.m3[m3_stc_group.stc_indices]
             for stc_index in m3_stc_indices:
-                anim_group = ob.m3_animation_groups[self.anim_index(-len(m3_stgs) + ii)]
-                anim_index = anim_group.animations.add()
-                anim_index.bl_handle = ob.m3_animations[stc_index].bl_handle
+                anim_group = ob.m3_animation_groups[-len(m3_stgs) + ii]
+                anim_indice = anim_group.animations.add()
+                anim_indice.bl_handle = ob.m3_animations[self.anim_index(stc_index)].bl_handle
 
     def create_bones(self):
 
