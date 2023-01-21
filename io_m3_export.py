@@ -735,11 +735,15 @@ class Exporter:
                     assert valid_mesh_batches != 0
                     # TODO improve invalidation so that a list of all warnings and exceptions can be made
 
+                    skin_vertex_groups = 0
                     for vertex_group in child.vertex_groups:
                         group_bone = ob.data.bones.get(vertex_group.name)
                         if group_bone:
+                            skin_vertex_groups += 1
                             self.export_required_bones.add(group_bone)
                             self.skinned_bones.append(group_bone)
+
+                    assert skin_vertex_groups != 0
 
                     self.uv_count = max(self.uv_count, len(me.uv_layers))
 

@@ -146,7 +146,7 @@ class M3InputProcessor:
     def anim_integer(self, field):
         anim_ref = getattr(self.m3, field)
         setattr(self.bl, field, anim_ref.default)
-        self.importer.key_base(self.bl, field, anim_ref)
+        key_fcurves(self.importer.stc_id_data, self.bl, field, anim_ref.header, (anim_ref.default,))
 
     def anim_int16(self, field):
         self.anim_integer(field)
@@ -162,13 +162,13 @@ class M3InputProcessor:
             return
         anim_ref = getattr(self.m3, field)
         setattr(self.bl, field, anim_ref.default)
-        self.importer.key_base(self.bl, field, anim_ref)
+        key_fcurves(self.importer.stc_id_data, self.bl, field, anim_ref.header, (anim_ref.default,))
 
     def anim_vec2(self, field):
         anim_ref = getattr(self.m3, field)
         default = to_bl_vec2(anim_ref.default)
         setattr(self.bl, field, default)
-        self.importer.key_vec(self.bl, field, anim_ref, default)
+        key_fcurves(self.importer.stc_id_data, self.bl, field, anim_ref.header, default)
 
     def anim_vec3(self, field, since_version=None):
         if (since_version is not None) and (self.version < since_version):
@@ -176,7 +176,7 @@ class M3InputProcessor:
         anim_ref = getattr(self.m3, field)
         default = to_bl_vec3(anim_ref.default)
         setattr(self.bl, field, default)
-        self.importer.key_vec(self.bl, field, anim_ref, default)
+        key_fcurves(self.importer.stc_id_data, self.bl, field, anim_ref.header, default)
 
     def anim_color(self, field, since_version=None):
         if (since_version is not None) and (self.version < since_version):
@@ -184,15 +184,24 @@ class M3InputProcessor:
         anim_ref = getattr(self.m3, field)
         default = to_bl_color(anim_ref.default)
         setattr(self.bl, field, default)
-        self.importer.key_vec(self.bl, field, anim_ref, default)
+        key_fcurves(self.importer.stc_id_data, self.bl, field, anim_ref.header, default)
 
 
 def m3_key_collect_evnt(key_frames, key_values):
     pass  # handle these specially
 
 
+def m3_key_collect_real(key_frames, key_values):
+    ll = ([],)
+
+    for key_frame, key_value in zip(key_frames, key_values):
+        ll[0].extend((key_frame, key_value))
+
+    return ll
+
+
 def m3_key_collect_vec2(key_frames, key_values):
-    ll = [[], []]
+    ll = ([], [])
 
     for key_frame, key_value in zip(key_frames, key_values):
         ll[0].extend((key_frame, key_value.x))
@@ -202,7 +211,7 @@ def m3_key_collect_vec2(key_frames, key_values):
 
 
 def m3_key_collect_vec3(key_frames, key_values):
-    ll = [[], [], []]
+    ll = ([], [], [])
 
     for key_frame, key_value in zip(key_frames, key_values):
         ll[0].extend((key_frame, key_value.x))
@@ -213,7 +222,7 @@ def m3_key_collect_vec3(key_frames, key_values):
 
 
 def m3_key_collect_quat(key_frames, key_values):
-    ll = [[], [], [], []]
+    ll = ([], [], [], [])
 
     for key_frame, key_value in zip(key_frames, key_values):
         ll[0].extend((key_frame, key_value.w))
@@ -225,7 +234,7 @@ def m3_key_collect_quat(key_frames, key_values):
 
 
 def m3_key_collect_colo(key_frames, key_values):
-    ll = [[], [], [], []]
+    ll = ([], [], [], [])
 
     for key_frame, key_value in zip(key_frames, key_values):
         ll[0].append(key_frame)
@@ -236,16 +245,6 @@ def m3_key_collect_colo(key_frames, key_values):
         ll[2].append(key_value.b / 255)
         ll[3].append(key_frame)
         ll[3].append(key_value.a / 255)
-
-    return ll
-
-
-def m3_key_collect_real(key_frames, key_values):
-    ll = []
-
-    for key_frame, key_value in zip(key_frames, key_values):
-        ll.append(key_frame)
-        ll.append(key_value)
 
     return ll
 
@@ -264,6 +263,57 @@ m3_key_type_collection_method = [
 ]
 
 
+def key_fcurves(stc_dict, bl, field, header, default):
+
+    if not hasattr(bl, field):
+        return
+
+    path = bl.path_from_id(field)
+
+    for ii, val in enumerate(default):
+        set_default_value(bl.id_data.m3_animations_default, path, ii, val)
+
+    if type(header) == shared.M3AnimHeaderProp:
+        anim_id_data = stc_dict.get(int(header.hex_id, 16))
+    else:
+        anim_id_data = stc_dict.get(header.id)
+
+        bl_header = getattr(bl, field + '_header')
+        bl_header.hex_id = hex(header.id)[2:]
+
+        if not anim_id_data:
+            bl_header.interpolation = 'AUTO'
+            bl_header.flags = -1
+            return
+
+        bl_header.interpolation = 'LINEAR' if header.interpolation else 'CONSTANT'
+        bl_header.flags = header.flags if header.flags else -1
+
+    if not anim_id_data:
+        return
+
+    for action_name in anim_id_data.keys():
+        anim_id_action_data = anim_id_data[action_name]
+        points_len = len(anim_id_action_data[0]) // 2
+
+        if type(header) == shared.M3AnimHeaderProp:
+            interp_seq = [0 if header.interpolation == 'CONSTANT' else 1] * points_len  # TODO calculate AUTO based on field name
+        else:
+            interp_seq = [header.interpolation] * points_len
+
+        key_sel_seq = [False] * points_len
+        for index, index_data in enumerate(anim_id_action_data):
+            fcurves = bpy.data.actions.get(action_name).fcurves
+            fcurve = fcurves.new(path, index=index)
+            fcurve.select = False
+            fcurve.keyframe_points.add(points_len)
+            fcurve.keyframe_points.foreach_set('co', index_data)
+            fcurve.keyframe_points.foreach_set('interpolation', interp_seq)
+            fcurve.keyframe_points.foreach_set('select_control_point', key_sel_seq)
+            fcurve.keyframe_points.foreach_set('select_left_handle', key_sel_seq)
+            fcurve.keyframe_points.foreach_set('select_right_handle', key_sel_seq)
+
+
 def armature_object_new():
     scene = bpy.context.scene
     arm = bpy.data.armatures.new(name='Armature')
@@ -276,149 +326,302 @@ def armature_object_new():
 
 class Importer:
 
+    def m3_import(self, filename, ob=None, anims=True, rig=True, effects=True, mesh=True):
+        # TODO make fps an import option
+        bpy.context.scene.render.fps = FRAME_RATE
+
+        self.m3 = io_m3.section_list_load(filename)
+        self.m3_model = self.m3[self.m3[0][0].model][0]
+        self.m3_division = self.m3[self.m3_model.divisions][0]
+
+        self.m3_bl_ref = {}
+        self.bl_ref_objects = []
+        self.stc_id_data = {}
+        self.final_bone_names = {}
+
+        self.is_new_object = not ob
+        self.ob = ob or armature_object_new()
+
+        anim_len = len(self.ob.m3_animations)
+        matref_len = len(self.ob.m3_materialrefs)
+        self.anim_index = lambda x: anim_len + x
+        self.matref_index = lambda x: matref_len + x
+
+        self.m3_set_struct_version('m3_model_version', self.m3_model.desc.version)
+
+        if rig:
+            if anims:
+                self.create_animations()
+
+            self.create_bones()
+            self.create_attachments()
+            self.create_hittests()
+            self.create_rigid_bodies()
+            self.create_rigid_body_joints()
+            self.create_cameras()
+            self.create_billboards()
+            self.create_ik_joints()
+            self.create_turrets()
+            self.create_shadow_boxes()
+
+        if mesh or effects:
+            self.create_materials()
+
+        if mesh:
+            self.create_mesh()
+            self.create_cloths()
+            self.create_bounding()
+
+        if effects:
+            self.create_lights()
+            self.create_particles()
+            self.create_ribbons()
+            self.create_projections()
+            self.create_forces()
+            self.create_warps()
+
+        if self.is_new_object:
+            anim_set(bpy.context.scene, self.ob, None)
+            bpy.context.view_layer.objects.active = self.ob
+            self.ob.select_set(True)
+
+    def m3a_import(self, filename, ob):
+
+        def get_m3_id_props():
+            hex_id_to_props = {}
+
+            collections = [
+                ob.m3_cameras, ob.m3_forces, ob.m3_lights, ob.m3_materiallayers, ob.m3_materials_standard, ob.m3_materials_displacement,
+                ob.m3_materials_composite, ob.m3_materials_volume, ob.m3_materials_volumenoise, ob.m3_materials_reflection, ob.m3_materials_lensflare,
+                ob.m3_particle_systems, ob.m3_particle_copies, ob.m3_projections, ob.m3_ribbons, ob.m3_ribbonsplines, ob.m3_shadowboxes, ob.m3_warps,
+            ]
+
+            def get_anim_ids(collection):
+                for item in collection:
+                    for key in type(item).__annotations__.keys():
+                        prop = getattr(item, key)
+                        if type(prop) == shared.M3AnimHeaderProp:
+                            prop_path = prop.path_from_id()[:-7]  # removing the _header suffix
+                            prop_id_int = int(prop.hex_id, 16)
+                            try:
+                                hex_id_to_props[prop_id_int].append(prop_path)
+                            except KeyError:
+                                hex_id_to_props[prop_id_int] = [prop_path]
+                        elif str(type(prop)) == '<class \'bpy_prop_collection_idprop\'>':
+                            get_anim_ids(prop)
+
+            for collection in collections:
+                get_anim_ids(collection)
+
+            return hex_id_to_props
+
+        # TODO make fps an import options
+        bpy.context.scene.render.fps = FRAME_RATE
+        anim_set(bpy.context.scene, ob, None)
+
+        self.is_new_object = False
+        self.ob = ob
+        self.m3 = io_m3.section_list_load(filename)
+        self.m3_model = self.m3[self.m3[0][0].model][0]
+        self.stc_id_data = {}
+
+        anim_len = len(self.ob.m3_animations)
+        self.anim_index = lambda x: anim_len + x
+        self.create_animations()
+
+        m3_id_prop_paths = get_m3_id_props()
+
+        for anim_id_data, paths in m3_id_prop_paths.items():
+            rs = paths[0].rsplit('.', 1)
+            prop = ob.path_resolve(paths[0])
+            try:  # put prop in a tuple if it is not already
+                key_fcurves(self.stc_id_data, ob.path_resolve(rs[0]), rs[1], ob.path_resolve(paths[0] + '_header'), prop)
+            except TypeError:
+                key_fcurves(self.stc_id_data, ob.path_resolve(rs[0]), rs[1], ob.path_resolve(paths[0] + '_header'), (prop,))
+            # TODO mark other props as duplicate ID
+
+        bind_mats = {}
+        for pb in ob.pose.bones:
+            db = ob.data.bones.get(pb.name)
+
+            # "exporting" bone matrix to get default bone pose in m3 terms
+            bind_scale_inv = mathutils.Vector((1.0 / pb.m3_bind_scale[ii] for ii in range(3)))
+            bind_scale_inv_matrix = mathutils.Matrix.LocRotScale(None, None, bind_scale_inv.yxz)
+
+            if pb.parent:
+                parent_bind_mat = mathutils.Matrix.LocRotScale(None, None, pb.parent.m3_bind_scale.yxz)
+                left_out_mat = parent_bind_mat @ io_shared.rot_fix_matrix @ db.parent.matrix_local.inverted() @ db.matrix_local
+            else:
+                left_out_mat = db.matrix_local
+            right_out_mat = io_shared.rot_fix_matrix_transpose @ bind_scale_inv_matrix
+            pose_mat = ob.convert_space(pose_bone=pb, matrix=pb.matrix, from_space='LOCAL', to_space='POSE')
+
+            defaults = (left_out_mat @ pose_mat @ right_out_mat).decompose()
+
+            # now importing with the m3 defaults of the current pose
+            rel_mat = db.matrix_local.inverted() if not pb.parent else (db.parent.matrix_local.inverted() @ db.matrix_local).inverted()
+            bind_mats[pb] = (bind_mat := mathutils.Matrix.LocRotScale(None, None, pb.m3_bind_scale.yxz))
+
+            anim_ids = (int(pb.m3_location_hex_id, 16), int(pb.m3_rotation_hex_id, 16), int(pb.m3_scale_hex_id, 16), int(pb.m3_batching_hex_id, 16))
+
+            left_in_mat = rel_mat if not pb.parent else rel_mat @ io_shared.rot_fix_matrix_transpose @ bind_mats[pb.parent].inverted()
+            right_in_mat = bind_mat @ io_shared.rot_fix_matrix
+
+            self.animate_pose_bone(anim_ids, defaults, pb, left_in_mat, right_in_mat)
+
     def m3_set_struct_version(self, version_attr, version_val):
-        if self.opt_mesh_only:
+        if not self.is_new_object:
             setattr(self.ob, version_attr, str(max(int(getattr(self.ob, version_attr)), version_val)))
         else:
             setattr(self.ob, version_attr, str(version_val))
 
     def m3_get_bone_name(self, bone_index):
-        m3_bone_name = self.m3[self.m3_bones[bone_index].name].content
+        m3_bone_name = self.m3[self.m3[self.m3_model.bones][bone_index].name].content
         final_bone_name = self.final_bone_names.get(m3_bone_name)
         return final_bone_name or m3_bone_name
 
-    def m3_import(self, filename, ob=None, anims=True):
-        # TODO make fps an import option
-        bpy.context.scene.render.fps = FRAME_RATE
+    def animate_pose_bone(self, anim_ids, defaults, pose_bone, left_mat, right_mat):
+        id_data_loc = self.stc_id_data.get(anim_ids[0], {})
+        id_data_rot = self.stc_id_data.get(anim_ids[1], {})
+        id_data_scl = self.stc_id_data.get(anim_ids[2], {})
+        action_name_set = set().union(id_data_loc.keys(), id_data_rot.keys(), id_data_scl.keys())
 
-        self.m3 = io_m3.section_list_load(filename)
+        default_loc, default_rot, default_scl = defaults
 
-        self.m3_bl_ref = {}
-        self.bl_ref_objects = []
+        for action_name in action_name_set:
+            anim_data_loc = id_data_loc.get(action_name, None)
+            anim_data_rot = id_data_rot.get(action_name, None)
+            anim_data_scl = id_data_scl.get(action_name, None)
 
-        self.m3_model = self.m3[self.m3[0][0].model][0]
-        self.m3_division = self.m3[self.m3_model.divisions][0]
-        self.m3_bones = self.m3[self.m3_model.bones]
+            anim_data_loc_none = not anim_data_loc
+            if anim_data_loc_none:
+                anim_data_loc = [[0, default_loc.x], [0, default_loc.y], [0, default_loc.z]]
 
-        self.stc_id_data = {}
-        self.final_bone_names = {}
+            anim_data_rot_none = not anim_data_rot
+            if anim_data_rot_none:
+                anim_data_rot = [[0, default_rot.w], [0, default_rot.x], [0, default_rot.y], [0, default_rot.z]]
 
-        if ob:
-            self.opt_mesh_only = True
-            self.ob = ob
-        else:
-            self.opt_mesh_only = not anims
-            self.ob = armature_object_new()
+            anim_data_scl_none = not anim_data_scl
+            if anim_data_scl_none:
+                anim_data_scl = [[0, default_scl.x], [0, default_scl.y], [0, default_scl.z]]
 
-        matref_offset = len(self.ob.m3_materialrefs)
-        self.matref_index = lambda x: matref_offset + x
+            anim_frames = [anim_data_loc[0][::2], anim_data_rot[0][::2], anim_data_scl[0][::2]]
+            anim_frames_set = set().union(*anim_frames)
 
-        self.create_animations()
-        self.create_bones()
-        self.create_materials()
-        self.create_mesh()
-        self.create_bounding()
-        self.create_attachments()
-        self.create_lights()
-        self.create_shadow_boxes()
-        self.create_cameras()
-        self.create_particles()
-        self.create_ribbons()
-        self.create_projections()
-        self.create_forces()
-        self.create_warps()
-        self.create_hittests()
-        self.create_rigid_bodies()
-        self.create_rigid_body_joints()
-        self.create_cloths()
-        self.create_ik_joints()
-        self.create_turrets()
-        self.create_billboards()
+            if not anim_frames_set:
+                return
 
-        self.m3_set_struct_version('m3_model_version', self.m3_model.desc.version)
-
-        anim_set(bpy.context.scene, self.ob, None)
-        bpy.context.view_layer.objects.active = self.ob
-        self.ob.select_set(True)
-
-    def key_base(self, bl, field, ref):
-
-        if not hasattr(bl, field):
-            return
-
-        path = bl.path_from_id(field)
-        set_default_value(bl.id_data.m3_animations_default, path, 0, ref.default)
-        anim_id_data = self.stc_id_data.get(ref.header.id)
-
-        bl_header = getattr(bl, field + '_header')
-        bl_header.hex_id = hex(ref.header.id)[2:]
-
-        if not anim_id_data:
-            bl_header.interpolation = 'AUTO'
-            bl_header.flags = -1
-            return
-
-        bl_header.interpolation = 'LINEAR' if ref.header.interpolation else 'CONSTANT'
-        bl_header.flags = ref.header.flags if ref.header.flags else -1
-
-        for action_name in anim_id_data.keys():
-            anim_id_action_data = anim_id_data[action_name]
-            points_len = len(anim_id_action_data) // 2
+            # we put in original data first so that we can evaluate the fcurves.
+            # blender interpolates the data we need to apply the correction matrices for us.
+            # * can we interpolate based on interpolation of m3 anim header?
             fcurves = bpy.data.actions.get(action_name).fcurves
-            fcurve = fcurves.new(path, index=0)
-            fcurve.select = False
-            fcurve.keyframe_points.add(points_len)
-            fcurve.keyframe_points.foreach_set('co', anim_id_action_data)
-            fcurve.keyframe_points.foreach_set('interpolation', [ref.header.interpolation] * points_len)
-            fcurve.keyframe_points.foreach_set('select_control_point', key_sel := [False] * points_len)
-            fcurve.keyframe_points.foreach_set('select_left_handle', key_sel)
-            fcurve.keyframe_points.foreach_set('select_right_handle', key_sel)
-
-    def key_vec(self, bl, field, ref, default):
-
-        if not hasattr(bl, field):
-            return
-
-        path = bl.path_from_id(field)
-
-        for ii, val in enumerate(default):
-            set_default_value(bl.id_data.m3_animations_default, path, ii, val)
-
-        anim_id_data = self.stc_id_data.get(ref.header.id)
-
-        bl_header = getattr(bl, field + '_header')
-        bl_header.hex_id = hex(ref.header.id)[2:]
-
-        if not anim_id_data:
-            bl_header.interpolation = 'AUTO'
-            bl_header.flags = -1
-            return
-
-        bl_header.interpolation = 'LINEAR' if ref.header.interpolation else 'CONSTANT'
-        bl_header.flags = ref.header.flags if ref.header.flags else -1
-
-        for action_name in anim_id_data.keys():
-            anim_id_action_data = anim_id_data[action_name]
-            for index, index_data in enumerate(anim_id_action_data):
+            # store fcurve references so that we don't have to find them later
+            fcurves_loc = []
+            for index, index_data in enumerate(anim_data_loc):
                 points_len = len(index_data) // 2
-                fcurves = bpy.data.actions.get(action_name).fcurves
-                fcurve = fcurves.new(path, index=index)
+                fcurve = fcurves.new(pose_bone.path_from_id('location'), index=index, action_group=pose_bone.name)
                 fcurve.select = False
                 fcurve.keyframe_points.add(points_len)
                 fcurve.keyframe_points.foreach_set('co', index_data)
-                fcurve.keyframe_points.foreach_set('interpolation', [ref.header.interpolation] * points_len)
+                fcurve.keyframe_points.foreach_set('interpolation', [1] * points_len)
                 fcurve.keyframe_points.foreach_set('select_control_point', key_sel := [False] * points_len)
                 fcurve.keyframe_points.foreach_set('select_left_handle', key_sel)
                 fcurve.keyframe_points.foreach_set('select_right_handle', key_sel)
+                fcurves_loc.append(fcurve)
+
+            fcurves_rot = []
+            for index, index_data in enumerate(anim_data_rot):
+                points_len = len(index_data) // 2
+                fcurve = fcurves.new(pose_bone.path_from_id('rotation_quaternion'), index=index, action_group=pose_bone.name)
+                fcurve.select = False
+                fcurve.keyframe_points.add(points_len)
+                fcurve.keyframe_points.foreach_set('co', index_data)
+                fcurve.keyframe_points.foreach_set('interpolation', [1] * points_len)
+                fcurve.keyframe_points.foreach_set('select_control_point', key_sel := [False] * points_len)
+                fcurve.keyframe_points.foreach_set('select_left_handle', key_sel)
+                fcurve.keyframe_points.foreach_set('select_right_handle', key_sel)
+                fcurves_rot.append(fcurve)
+
+            fcurves_scl = []
+            for index, index_data in enumerate(anim_data_scl):
+                points_len = len(index_data) // 2
+                fcurve = fcurves.new(pose_bone.path_from_id('scale'), index=index, action_group=pose_bone.name)
+                fcurve.select = False
+                fcurve.keyframe_points.add(points_len)
+                fcurve.keyframe_points.foreach_set('co', index_data)
+                fcurve.keyframe_points.foreach_set('interpolation', [1] * points_len)
+                fcurve.keyframe_points.foreach_set('select_control_point', key_sel := [False] * points_len)
+                fcurve.keyframe_points.foreach_set('select_left_handle', key_sel)
+                fcurve.keyframe_points.foreach_set('select_right_handle', key_sel)
+                fcurves_scl.append(fcurve)
+
+            new_anim_data = [[], [], []]
+            pre_rot = None
+            for frame in sorted(list(anim_frames_set)):
+                eval_loc = mathutils.Vector([fcurve.evaluate(frame) for fcurve in fcurves_loc])
+                eval_rot = mathutils.Quaternion([fcurve.evaluate(frame) for fcurve in fcurves_rot])
+                eval_scl = mathutils.Vector([fcurve.evaluate(frame) for fcurve in fcurves_scl])
+
+                loc, rot, scl = (left_mat @ mathutils.Matrix.LocRotScale(eval_loc, eval_rot, eval_scl) @ right_mat).decompose()
+
+                if pre_rot:
+                    rot.make_compatible(pre_rot)
+                pre_rot = rot
+
+                if frame in anim_frames[0]:
+                    new_anim_data[0].append(loc)
+
+                if frame in anim_frames[1]:
+                    new_anim_data[1].append(rot)
+
+                if frame in anim_frames[2]:
+                    new_anim_data[2].append(scl)
+
+            # second pass animation data, after evaluation
+            new_anim_data_loc = m3_key_collect_vec3(anim_frames[0], new_anim_data[0])
+            new_anim_data_rot = m3_key_collect_quat(anim_frames[1], new_anim_data[1])
+            new_anim_data_scl = m3_key_collect_vec3(anim_frames[2], new_anim_data[2])
+
+            for index, index_data in enumerate(new_anim_data_loc):
+                fcurve = fcurves_loc[index]
+                if anim_data_loc_none:
+                    fcurves.remove(fcurve)
+                else:
+                    fcurve.keyframe_points.foreach_set('co', index_data)
+
+            for index, index_data in enumerate(new_anim_data_rot):
+                fcurve = fcurves_rot[index]
+                if anim_data_rot_none:
+                    fcurves.remove(fcurve)
+                else:
+                    fcurve.keyframe_points.foreach_set('co', index_data)
+
+            for index, index_data in enumerate(new_anim_data_scl):
+                fcurve = fcurves_scl[index]
+                if anim_data_scl_none:
+                    fcurves.remove(fcurve)
+                else:
+                    fcurve.keyframe_points.foreach_set('co', index_data)
+
+        # import bone batching flag
+        id_data_render = self.stc_id_data.get(anim_ids[3], {})
+
+        if id_data_render:
+            for action_name in id_data_render.keys():
+                action = bpy.data.actions.get(action_name)
+                key_frame_points_len = len(id_data_render[action_name]) // 2
+
+                fcurve = action.fcurves.new(pose_bone.path_from_id('m3_batching'), action_group=pose_bone.name)
+                fcurve.select = False
+                fcurve.keyframe_points.add(key_frame_points_len)
+                fcurve.keyframe_points.foreach_set('co', id_data_render[action_name])
+                fcurve.keyframe_points.foreach_set('interpolation', [0] * key_frame_points_len)
 
     def create_animations(self):
-
-        if self.opt_mesh_only:
-            return
-
         ob = self.ob
 
-        ob.m3_animations_default = bpy.data.actions.new(ob.name + '_DEFAULTS')
+        if self.is_new_object:
+            ob.m3_animations_default = bpy.data.actions.new(ob.name + '_DEFAULTS')
 
         for m3_anim_group in self.m3[self.m3_model.sequences]:
             anim_group_name = self.m3[m3_anim_group.name].content
@@ -429,16 +632,14 @@ class Importer:
             anim_group['frame_start'] = to_bl_frame(m3_anim_group.anim_ms_start)
             anim_group['frame_end'] = to_bl_frame(m3_anim_group.anim_ms_end)
 
-        m3_stcs = self.m3[self.m3_model.sequence_transformation_collections]
-        for m3_anim in m3_stcs:
+        for m3_anim in self.m3[self.m3_model.sequence_transformation_collections]:
             if not m3_anim.name.index:
                 continue
 
-            anim_name = self.m3[m3_anim.name].content
-            anim = shared.m3_item_add(ob.m3_animations, anim_name)
+            anim = shared.m3_item_add(ob.m3_animations, self.m3[m3_anim.name].content)
             anim['concurrent'] = m3_anim.concurrent
             anim['priority'] = m3_anim.priority
-            anim['action'] = bpy.data.actions.new(ob.name + '_' + anim_name)
+            anim['action'] = bpy.data.actions.new(ob.name + '_' + anim.name)
 
             m3_key_type_collection_list = [
                 m3_anim.sdev, m3_anim.sd2v, m3_anim.sd3v, m3_anim.sd4q, m3_anim.sdcc, m3_anim.sdr3, m3_anim.sd08,
@@ -450,9 +651,6 @@ class Importer:
                 anim_index = stc_ref & 0xffff
                 m3_key_type_collection = m3_key_type_collection_list[anim_type]
                 m3_key_entries = self.m3[m3_key_type_collection][anim_index]
-
-                if not self.stc_id_data.get(stc_id):
-                    self.stc_id_data[stc_id] = {}
 
                 frames = []
                 ignored_indices = []
@@ -466,7 +664,11 @@ class Importer:
                 m3_keys = self.m3[m3_key_entries.keys]
                 keys = [m3_keys[ii] for ii in range(len(m3_keys)) if ii not in ignored_indices]
 
-                self.stc_id_data[stc_id][anim.action.name] = m3_key_type_collection_method[anim_type](frames, keys)
+                try:
+                    self.stc_id_data[stc_id][anim.action.name] = m3_key_type_collection_method[anim_type](frames, keys)
+                except KeyError:
+                    self.stc_id_data[stc_id] = {}
+                    self.stc_id_data[stc_id][anim.action.name] = m3_key_type_collection_method[anim_type](frames, keys)
 
                 # consider making a dedicated property type and collection list for events
                 if m3_key_type_collection == m3_anim.sdev:
@@ -481,24 +683,21 @@ class Importer:
         for ii, m3_stc_group in enumerate(m3_stgs):
             m3_stc_indices = self.m3[m3_stc_group.stc_indices]
             for stc_index in m3_stc_indices:
-                anim_group = ob.m3_animation_groups[-len(m3_stgs) + ii]
+                anim_group = ob.m3_animation_groups[self.anim_index(-len(m3_stgs) + ii)]
                 anim_index = anim_group.animations.add()
                 anim_index.bl_handle = ob.m3_animations[stc_index].bl_handle
 
     def create_bones(self):
 
-        if self.opt_mesh_only:
-            return
-
         def get_bone_tails(bone_heads, bone_vectors):
-            child_bone_indices = [[] for ii in self.m3_bones]
-            for bone_index, bone_entry in enumerate(self.m3_bones):
+            child_bone_indices = [[] for ii in self.m3[self.m3_model.bones]]
+            for bone_index, bone_entry in enumerate(self.m3[self.m3_model.bones]):
                 if bone_entry.parent != -1:
                     child_bone_indices[bone_entry.parent].append(bone_index)
 
             tails = []
 
-            for m3_bone, child_indices, head, vector in zip(self.m3_bones, child_bone_indices, bone_heads, bone_vectors):
+            for m3_bone, child_indices, head, vector in zip(self.m3[self.m3_model.bones], child_bone_indices, bone_heads, bone_vectors):
                 length = 0.1
                 for child_index in child_indices:
                     head_to_child_head = bone_heads[child_index] - head
@@ -546,7 +745,7 @@ class Importer:
 
         def get_edit_bones(bone_heads, bone_tails, bone_rolls):
             edit_bones = []
-            for index, m3_bone in enumerate(self.m3_bones):
+            for index, m3_bone in enumerate(self.m3[self.m3_model.bones]):
                 m3_bone_name = self.m3[m3_bone.name.index].content
                 edit_bone = self.ob.data.edit_bones.new(m3_bone_name)
                 self.final_bone_names[m3_bone_name] = edit_bone.name
@@ -568,7 +767,7 @@ class Importer:
 
         def get_edit_bone_relations(edit_bones):
             rel_mats = []
-            for m3_bone, edit_bone in zip(self.m3_bones, edit_bones):
+            for m3_bone, edit_bone in zip(self.m3[self.m3_model.bones], edit_bones):
                 if m3_bone.parent != -1:
                     parent_edit_bone = self.ob.data.edit_bones.get(self.m3_get_bone_name(m3_bone.parent))
                     rel_mats.append((parent_edit_bone.matrix.inverted() @ edit_bone.matrix).inverted())
@@ -578,7 +777,7 @@ class Importer:
             return rel_mats
 
         def adjust_pose_bones(edit_bone_relations, bind_scales, bind_matrices):
-            for ii, m3_bone, rel_mat, bind_scl, bind_mat in zip(range(len(self.m3_bones)), self.m3_bones, edit_bone_relations, bind_scales, bind_matrices):
+            for ii, m3_bone, rel_mat, bind_scl, bind_mat in zip(range(len(self.m3[self.m3_model.bones])), self.m3[self.m3_model.bones], edit_bone_relations, bind_scales, bind_matrices):
                 # TODO incorrect scale values with large non-uniform bind scales
 
                 if m3_bone.parent != -1:
@@ -603,6 +802,9 @@ class Importer:
                 pose_bone.m3_scale_hex_id = hex(m3_bone.scale.header.id)[2:]
                 pose_bone.m3_batching_hex_id = hex(m3_bone.batching.header.id)[2:]
 
+                m3_anim_ids = (m3_bone.location.header.id, m3_bone.rotation.header.id, m3_bone.scale.header.id, m3_bone.batching.header.id)
+                m3_defaults = (m3_bone.location.default, m3_bone.rotation.default, m3_bone.scale.default)
+
                 set_default_value(self.ob.m3_animations_default, pose_bone.path_from_id('location'), 0, pose_bone.location[0])
                 set_default_value(self.ob.m3_animations_default, pose_bone.path_from_id('location'), 1, pose_bone.location[1])
                 set_default_value(self.ob.m3_animations_default, pose_bone.path_from_id('location'), 2, pose_bone.location[2])
@@ -614,146 +816,7 @@ class Importer:
                 set_default_value(self.ob.m3_animations_default, pose_bone.path_from_id('scale'), 1, pose_bone.scale[1])
                 set_default_value(self.ob.m3_animations_default, pose_bone.path_from_id('scale'), 2, pose_bone.scale[2])
                 set_default_value(self.ob.m3_animations_default, pose_bone.path_from_id('m3_batching'), 0, pose_bone.m3_batching)
-                animate_pose_bone(m3_bone, pose_bone, left_mat, right_mat)
-
-        def animate_pose_bone(m3_bone, pose_bone, left_mat, right_mat):
-            id_data_loc = self.stc_id_data.get(m3_bone.location.header.id, {})
-            id_data_rot = self.stc_id_data.get(m3_bone.rotation.header.id, {})
-            id_data_scl = self.stc_id_data.get(m3_bone.scale.header.id, {})
-            action_name_set = set().union(id_data_loc.keys(), id_data_rot.keys(), id_data_scl.keys())
-
-            default_loc = m3_bone.location.default
-            default_rot = m3_bone.rotation.default
-            default_scl = m3_bone.scale.default
-
-            for action_name in action_name_set:
-                anim_data_loc = id_data_loc.get(action_name, None)
-                anim_data_rot = id_data_rot.get(action_name, None)
-                anim_data_scl = id_data_scl.get(action_name, None)
-
-                anim_data_loc_none = not anim_data_loc
-                if anim_data_loc_none:
-                    anim_data_loc = [[0, default_loc.x], [0, default_loc.y], [0, default_loc.z]]
-
-                anim_data_rot_none = not anim_data_rot
-                if anim_data_rot_none:
-                    anim_data_rot = [[0, default_rot.w], [0, default_rot.x], [0, default_rot.y], [0, default_rot.z]]
-
-                anim_data_scl_none = not anim_data_scl
-                if anim_data_scl_none:
-                    anim_data_scl = [[0, default_scl.x], [0, default_scl.y], [0, default_scl.z]]
-
-                anim_frames = [anim_data_loc[0][::2], anim_data_rot[0][::2], anim_data_scl[0][::2]]
-                anim_frames_set = set().union(*anim_frames)
-
-                if not anim_frames_set:
-                    return
-
-                # we put in original data first so that we can evaluate the fcurves.
-                # blender interpolates the data we need to apply the correction matrices for us.
-                # * can we interpolate based on interpolation of m3 anim header?
-                fcurves = bpy.data.actions.get(action_name).fcurves
-                # store fcurve references so that we don't have to find them later
-                fcurves_loc = []
-                for index, index_data in enumerate(anim_data_loc):
-                    points_len = len(index_data) // 2
-                    fcurve = fcurves.new(pose_bone.path_from_id('location'), index=index, action_group=pose_bone.name)
-                    fcurve.select = False
-                    fcurve.keyframe_points.add(points_len)
-                    fcurve.keyframe_points.foreach_set('co', index_data)
-                    fcurve.keyframe_points.foreach_set('interpolation', [1] * points_len)
-                    fcurve.keyframe_points.foreach_set('select_control_point', key_sel := [False] * points_len)
-                    fcurve.keyframe_points.foreach_set('select_left_handle', key_sel)
-                    fcurve.keyframe_points.foreach_set('select_right_handle', key_sel)
-                    fcurves_loc.append(fcurve)
-
-                fcurves_rot = []
-                for index, index_data in enumerate(anim_data_rot):
-                    points_len = len(index_data) // 2
-                    fcurve = fcurves.new(pose_bone.path_from_id('rotation_quaternion'), index=index, action_group=pose_bone.name)
-                    fcurve.select = False
-                    fcurve.keyframe_points.add(points_len)
-                    fcurve.keyframe_points.foreach_set('co', index_data)
-                    fcurve.keyframe_points.foreach_set('interpolation', [1] * points_len)
-                    fcurve.keyframe_points.foreach_set('select_control_point', key_sel := [False] * points_len)
-                    fcurve.keyframe_points.foreach_set('select_left_handle', key_sel)
-                    fcurve.keyframe_points.foreach_set('select_right_handle', key_sel)
-                    fcurves_rot.append(fcurve)
-
-                fcurves_scl = []
-                for index, index_data in enumerate(anim_data_scl):
-                    points_len = len(index_data) // 2
-                    fcurve = fcurves.new(pose_bone.path_from_id('scale'), index=index, action_group=pose_bone.name)
-                    fcurve.select = False
-                    fcurve.keyframe_points.add(points_len)
-                    fcurve.keyframe_points.foreach_set('co', index_data)
-                    fcurve.keyframe_points.foreach_set('interpolation', [1] * points_len)
-                    fcurve.keyframe_points.foreach_set('select_control_point', key_sel := [False] * points_len)
-                    fcurve.keyframe_points.foreach_set('select_left_handle', key_sel)
-                    fcurve.keyframe_points.foreach_set('select_right_handle', key_sel)
-                    fcurves_scl.append(fcurve)
-
-                new_anim_data = [[], [], []]
-                pre_rot = None
-                for frame in sorted(list(anim_frames_set)):
-                    eval_loc = mathutils.Vector([fcurve.evaluate(frame) for fcurve in fcurves_loc])
-                    eval_rot = mathutils.Quaternion([fcurve.evaluate(frame) for fcurve in fcurves_rot])
-                    eval_scl = mathutils.Vector([fcurve.evaluate(frame) for fcurve in fcurves_scl])
-
-                    loc, rot, scl = (left_mat @ mathutils.Matrix.LocRotScale(eval_loc, eval_rot, eval_scl) @ right_mat).decompose()
-
-                    if pre_rot:
-                        rot.make_compatible(pre_rot)
-                    pre_rot = rot
-
-                    if frame in anim_frames[0]:
-                        new_anim_data[0].append(loc)
-
-                    if frame in anim_frames[1]:
-                        new_anim_data[1].append(rot)
-
-                    if frame in anim_frames[2]:
-                        new_anim_data[2].append(scl)
-
-                # second pass animation data, after evaluation
-                new_anim_data_loc = m3_key_collect_vec3(anim_frames[0], new_anim_data[0])
-                new_anim_data_rot = m3_key_collect_quat(anim_frames[1], new_anim_data[1])
-                new_anim_data_scl = m3_key_collect_vec3(anim_frames[2], new_anim_data[2])
-
-                for index, index_data in enumerate(new_anim_data_loc):
-                    fcurve = fcurves_loc[index]
-                    if anim_data_loc_none:
-                        fcurves.remove(fcurve)
-                    else:
-                        fcurve.keyframe_points.foreach_set('co', index_data)
-
-                for index, index_data in enumerate(new_anim_data_rot):
-                    fcurve = fcurves_rot[index]
-                    if anim_data_rot_none:
-                        fcurves.remove(fcurve)
-                    else:
-                        fcurve.keyframe_points.foreach_set('co', index_data)
-
-                for index, index_data in enumerate(new_anim_data_scl):
-                    fcurve = fcurves_scl[index]
-                    if anim_data_scl_none:
-                        fcurves.remove(fcurve)
-                    else:
-                        fcurve.keyframe_points.foreach_set('co', index_data)
-
-            # import bone batching flag
-            id_data_render = self.stc_id_data.get(m3_bone.batching.header.id, {})
-
-            if id_data_render:
-                for action_name in id_data_render.keys():
-                    action = bpy.data.actions.get(action_name)
-                    key_frame_points_len = len(id_data_render[action_name]) // 2
-
-                    fcurve = action.fcurves.new(pose_bone.path_from_id('m3_batching'), action_group=pose_bone.name)
-                    fcurve.select = False
-                    fcurve.keyframe_points.add(key_frame_points_len)
-                    fcurve.keyframe_points.foreach_set('co', id_data_render[action_name])
-                    fcurve.keyframe_points.foreach_set('interpolation', [m3_bone.batching.header.interpolation] * key_frame_points_len)
+                self.animate_pose_bone(m3_anim_ids, m3_defaults, pose_bone, left_mat, right_mat)
 
         bpy.context.view_layer.objects.active = self.ob
 
@@ -763,7 +826,7 @@ class Importer:
         bone_heads = []
         bone_vectors = []
 
-        for iref, m3_bone in zip(self.m3[self.m3_model.bone_rests], self.m3_bones):
+        for iref, m3_bone in zip(self.m3[self.m3_model.bone_rests], self.m3[self.m3_model.bones]):
             orig_mat = to_bl_matrix(iref.matrix)
             mat = orig_mat.copy()
 
@@ -1020,10 +1083,6 @@ class Importer:
             self.m3_bl_ref[self.m3_division.regions.index][region_ii] = mesh_ob
 
     def create_bounding(self):
-
-        if self.opt_mesh_only:
-            return
-
         ob = self.ob
         bounds = ob.m3_bounds
         bounds.left, bounds.back, bounds.bottom = to_bl_vec3(self.m3_model.boundings.min)
@@ -1031,10 +1090,6 @@ class Importer:
         # TODO animate boundings?
 
     def create_attachments(self):
-
-        if self.opt_mesh_only:
-            return
-
         ob = self.ob
 
         m3_volumes = self.m3[self.m3_model.attachment_volumes]
@@ -1057,7 +1112,7 @@ class Importer:
                     vol.location = md[0]
                     vol.rotation = md[1].to_euler('XYZ')
                     vol.scale = md[2]
-                    vol.mesh_object = self.generate_basic_volume_object('{}_{}'.format(point.name, vol.name), m3_volume.vertices, m3_volume.face_data)
+                    vol.mesh_object = self.gen_basic_volume_object('{}_{}'.format(point.name, vol.name), m3_volume.vertices, m3_volume.face_data)
 
     def create_lights(self):
         ob = self.ob
@@ -1200,10 +1255,6 @@ class Importer:
             io_shared.io_warp(processor)
 
     def create_hittests(self):
-
-        if self.opt_mesh_only:
-            return
-
         ob = self.ob
 
         m3_hittest_tight = self.m3_model.hittest_tight
@@ -1216,7 +1267,7 @@ class Importer:
         ob.m3_hittest_tight.location = md[0]
         ob.m3_hittest_tight.rotation = md[1].to_euler('XYZ')
         ob.m3_hittest_tight.scale = md[2]
-        ob.m3_hittest_tight.mesh_object = self.generate_basic_volume_object(ob.m3_hittest_tight.name, m3_hittest_tight.vertices, m3_hittest_tight.face_data)
+        ob.m3_hittest_tight.mesh_object = self.gen_basic_volume_object(ob.m3_hittest_tight.name, m3_hittest_tight.vertices, m3_hittest_tight.face_data)
 
         for m3_hittest in self.m3[self.m3_model.hittests]:
             pose_bone_name = self.m3_get_bone_name(m3_hittest.bone)
@@ -1229,13 +1280,9 @@ class Importer:
             hittest.location = md[0]
             hittest.rotation = md[1].to_euler('XYZ')
             hittest.scale = md[2]
-            hittest.mesh_object = self.generate_basic_volume_object(hittest.name, m3_hittest.vertices, m3_hittest.face_data)
+            hittest.mesh_object = self.gen_basic_volume_object(hittest.name, m3_hittest.vertices, m3_hittest.face_data)
 
     def create_rigid_bodies(self):
-
-        if self.opt_mesh_only:
-            return
-
         ob = self.ob
 
         if self.m3_model.physics_rigidbodies.index:
@@ -1267,18 +1314,14 @@ class Importer:
                     volume.size = (m3_volume.size0, m3_volume.size1, m3_volume.size2)
 
                     if m3_volume.desc.version == 1:
-                        volume['mesh_object'] = self.generate_basic_volume_object(physics_shape.name, m3_volume.vertices, m3_volume.face_data)
+                        volume['mesh_object'] = self.gen_basic_volume_object(physics_shape.name, m3_volume.vertices, m3_volume.face_data)
                     else:
                         args = (physics_shape.name, m3_volume.vertices, m3_volume.polygons_related, m3_volume.loops, m3_volume.polygons)
-                        volume['mesh_object'] = self.generate_rigidbody_volume_object(*args)
+                        volume['mesh_object'] = self.gen_rigidbody_volume_object(*args)
 
                 self.m3_bl_ref[m3_rigidbody.physics_shape.index] = physics_shape
 
     def create_rigid_body_joints(self):
-
-        if self.opt_mesh_only:
-            return
-
         ob = self.ob
 
         for m3_joint in self.m3[self.m3_model.physics_joints]:
@@ -1364,10 +1407,6 @@ class Importer:
             bpy.ops.object.mode_set(mode='OBJECT')
 
     def create_ik_joints(self):
-
-        if self.opt_mesh_only:
-            return
-
         ob = self.ob
         for m3_ik in self.m3[self.m3_model.ik_joints]:
             pose_bone_base_name = self.m3_get_bone_name(m3_ik.bone_base)
@@ -1389,10 +1428,6 @@ class Importer:
             io_shared.io_ik(processor)
 
     def create_turrets(self):
-
-        if self.opt_mesh_only:
-            return
-
         ob = self.ob
 
         if self.m3_model.turret_parts.index:
@@ -1413,10 +1448,6 @@ class Importer:
                     part.matrix = to_bl_matrix(m3_part.matrix)
 
     def create_billboards(self):
-
-        if self.opt_mesh_only:
-            return
-
         ob = self.ob
         for m3_billboard in self.m3[self.m3_model.billboards]:
             pose_bone_name = self.m3_get_bone_name(m3_billboard.bone)
@@ -1426,7 +1457,7 @@ class Importer:
             processor = M3InputProcessor(self, billboard, m3_billboard)
             io_shared.io_billboard(processor)
 
-    def generate_basic_volume_object(self, name, m3_vert_ref, m3_face_ref):
+    def gen_basic_volume_object(self, name, m3_vert_ref, m3_face_ref):
 
         if not m3_vert_ref.index or not m3_face_ref.index:
             return
@@ -1468,7 +1499,7 @@ class Importer:
 
         return me_ob
 
-    def generate_rigidbody_volume_object(self, name, m3_vert_ref, m3_poly_related_ref, m3_loop_ref, m3_poly_ref):
+    def gen_rigidbody_volume_object(self, name, m3_vert_ref, m3_poly_related_ref, m3_loop_ref, m3_poly_ref):
 
         if not m3_vert_ref.index or not m3_loop_ref.index or not m3_poly_ref.index:
             return
@@ -1528,4 +1559,10 @@ class Importer:
 
 def m3_import(filename, ob=None):
     importer = Importer()
-    importer.m3_import(filename, ob)
+    if filename.endswith('.m3a'):
+        assert ob
+        importer.m3a_import(filename, ob)
+    elif ob:
+        importer.m3_import(filename, ob, anims=False, rig=False)  # TODO options
+    else:
+        importer.m3_import(filename, ob)

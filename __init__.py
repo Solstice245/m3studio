@@ -71,7 +71,7 @@ class M3ImportOperator(bpy.types.Operator):
     bl_options = {'UNDO'}
 
     filename_ext = '.m3'
-    filter_glob: bpy.props.StringProperty(options={'HIDDEN'}, default='*.m3')  # TODO .m3a
+    filter_glob: bpy.props.StringProperty(options={'HIDDEN'}, default='*.m3;*.m3a')
     filepath: bpy.props.StringProperty(name='File Path', description='File path for import operation', maxlen=1023, default='')
     id_name: bpy.props.EnumProperty(items=m3_import_id_names, name='Armature Object')
 
