@@ -227,12 +227,12 @@ def hex_id_set(self, value):
     try:
         self['hex_id'] = hex(int(value, 16))[2:]
     except ValueError:
-        self['hex_id'] = shared.m3_anim_id_get()
+        self['hex_id'] = m3_anim_id_gen()
 
 
 class M3AnimHeaderProp(bpy.types.PropertyGroup):
-    bl_user_mark_as_dup: bpy.props.BoolProperty(options=set())
-    hex_id: bpy.props.StringProperty(options=set(), maxlen=8, get=hex_id_get, set=hex_id_set)
+    bl_user_mark_as_dup: bpy.props.BoolProperty(options=set(), default=False)
+    hex_id: bpy.props.StringProperty(options=set(), maxlen=8, get=hex_id_get, set=hex_id_set, default='')
     interpolation: bpy.props.EnumProperty(options=set(), items=bl_enum.anim_header_interp, default='AUTO')
     flags: bpy.props.IntProperty(options=set(), min=-1, default=-1)  # -1 means automatic
 

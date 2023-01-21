@@ -403,6 +403,7 @@ class M3OutputProcessor:
 
     def anim_boolean_flag(self, field):
         head = getattr(self.bl, field + '_header')
+        head.hex_id = head.hex_id  # set to itself to verify that the hex id is valid
         if self.collect_anim_data_single(field, 'SDFG'):
             interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
             setattr(self.m3, field, self.exporter.init_anim_ref_flag(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
@@ -411,6 +412,7 @@ class M3OutputProcessor:
 
     def anim_int16(self, field):
         head = getattr(self.bl, field + '_header')
+        head.hex_id = head.hex_id  # set to itself to verify that the hex id is valid
         if self.collect_anim_data_single(field, 'SDS6'):
             interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
             setattr(self.m3, field, self.exporter.init_anim_ref_int16(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
@@ -419,6 +421,7 @@ class M3OutputProcessor:
 
     def anim_uint16(self, field):
         head = getattr(self.bl, field + '_header')
+        head.hex_id = head.hex_id  # set to itself to verify that the hex id is valid
         if self.collect_anim_data_single(field, 'SDU6'):
             interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
             setattr(self.m3, field, self.exporter.init_anim_ref_uint16(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
@@ -427,6 +430,7 @@ class M3OutputProcessor:
 
     def anim_uint32(self, field):
         head = getattr(self.bl, field + '_header')
+        head.hex_id = head.hex_id  # set to itself to verify that the hex id is valid
         # casting val to int because sometimes bools use this
         if self.collect_anim_data_single(field, 'SDU3'):
             interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
@@ -440,6 +444,7 @@ class M3OutputProcessor:
         if (till_version is not None) and (self.version > till_version):
             return
         head = getattr(self.bl, field + '_header')
+        head.hex_id = head.hex_id  # set to itself to verify that the hex id is valid
         if self.collect_anim_data_single(field, 'SDR3'):
             interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
             setattr(self.m3, field, self.exporter.init_anim_ref_float(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
@@ -448,6 +453,7 @@ class M3OutputProcessor:
 
     def anim_vec2(self, field):
         head = getattr(self.bl, field + '_header')
+        head.hex_id = head.hex_id  # set to itself to verify that the hex id is valid
         if self.collect_anim_data_vector(field, 'SD2V'):
             interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
             setattr(self.m3, field, self.exporter.init_anim_ref_vec2(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
@@ -460,6 +466,7 @@ class M3OutputProcessor:
         if (till_version is not None) and (self.version > till_version):
             return
         head = getattr(self.bl, field + '_header')
+        head.hex_id = head.hex_id  # set to itself to verify that the hex id is valid
         if self.collect_anim_data_vector(field, 'SD3V'):
             interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
             setattr(self.m3, field, self.exporter.init_anim_ref_vec3(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
@@ -472,6 +479,7 @@ class M3OutputProcessor:
         if (till_version is not None) and (self.version > till_version):
             return
         head = getattr(self.bl, field + '_header')
+        head.hex_id = head.hex_id  # set to itself to verify that the hex id is valid
         if self.collect_anim_data_vector(field, 'SDCC'):
             interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
             setattr(self.m3, field, self.exporter.init_anim_ref_color(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
@@ -1301,7 +1309,7 @@ class Exporter:
             bm.from_object(ob, self.depsgraph)
             bmesh.ops.triangulate(bm, faces=bm.faces)
 
-            layer_deform = bm.verts.layers.deform.get('m3lookup')
+            layer_deform = bm.verts.layers.deform.verify()
             layer_color = bm.loops.layers.color.get('m3color')
             layer_alpha = bm.loops.layers.color.get('m3alpha')
             layers_uv = bm.loops.layers.uv.values()
@@ -1358,7 +1366,7 @@ class Exporter:
 
                     for ii in range(0, 4):
                         uv_layer = layers_uv[ii] if ii < len(layers_uv) else None
-                        setattr(m3_vert, 'uv' + str(ii), to_m3_uv(loop[uv_layer].uv) if uv_layer else (0, 0))
+                        setattr(m3_vert, 'uv' + str(ii), to_m3_uv(loop[uv_layer].uv) if uv_layer else to_m3_uv((0, 0)))
 
                     if vertex_rgba:
                         m3_vert.col = to_m3_color((*loop[layer_color][0:3], (loop[layer_alpha][0] + loop[layer_alpha][1] + loop[layer_alpha][2]) / 3))

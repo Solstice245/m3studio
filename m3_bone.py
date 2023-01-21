@@ -29,10 +29,10 @@ def register_props():
     bpy.types.PoseBone.bl_handle = bpy.props.StringProperty(options=set())
     bpy.types.PoseBone.m3_export_cull = bpy.props.BoolProperty(options=set(), default=True, description=desc_export_cull)
     bpy.types.PoseBone.m3_bind_scale = bpy.props.FloatVectorProperty(options=set(), size=3, subtype='XYZ', default=(1,) * 3)  # setter to prevent == 0?
-    bpy.types.PoseBone.m3_location_hex_id = bpy.props.StringProperty(options=set(), maxlen=8, get=get_bone_loc_id, set=set_bone_loc_id)
-    bpy.types.PoseBone.m3_rotation_hex_id = bpy.props.StringProperty(options=set(), maxlen=8, get=get_bone_rot_id, set=set_bone_rot_id)
-    bpy.types.PoseBone.m3_scale_hex_id = bpy.props.StringProperty(options=set(), maxlen=8, get=get_bone_scl_id, set=set_bone_scl_id)
-    bpy.types.PoseBone.m3_batching_hex_id = bpy.props.StringProperty(options=set(), maxlen=8, get=get_bone_bat_id, set=set_bone_bat_id)
+    bpy.types.PoseBone.m3_location_hex_id = bpy.props.StringProperty(options=set(), maxlen=8, get=get_bone_loc_id, set=set_bone_loc_id, default='')
+    bpy.types.PoseBone.m3_rotation_hex_id = bpy.props.StringProperty(options=set(), maxlen=8, get=get_bone_rot_id, set=set_bone_rot_id, default='')
+    bpy.types.PoseBone.m3_scale_hex_id = bpy.props.StringProperty(options=set(), maxlen=8, get=get_bone_scl_id, set=set_bone_scl_id, default='')
+    bpy.types.PoseBone.m3_batching_hex_id = bpy.props.StringProperty(options=set(), maxlen=8, get=get_bone_bat_id, set=set_bone_bat_id, default='')
     bpy.types.PoseBone.m3_batching = bpy.props.BoolProperty(name='M3 Bone Render', default=True, description=desc_batching)
 
 
