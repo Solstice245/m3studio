@@ -623,9 +623,9 @@ def io_ik(processor):
 
 
 def io_turret_part(processor):
-    processor.vec4('forward_x', since_version=4)
-    processor.vec4('forward_y', since_version=4)
-    processor.vec4('forward_z', since_version=4)
+    # processor.vec4('forward_x', since_version=4)  # ! handled manually
+    # processor.vec4('forward_y', since_version=4)  # ! handled manually
+    # processor.vec4('forward_z', since_version=4)  # ! handled manually
     # processor.vec4('up_x', since_version=4)  # ! handled manually
     # processor.vec4('up_y', since_version=4)  # ! handled manually
     # processor.vec4('up_z', since_version=4)  # ! handled manually

@@ -1447,8 +1447,11 @@ class Importer:
                 part['main_part'] = m3_part.bit_get('flags', 'main_part')
                 part['group_id'] = m3_part.group_id
 
-                if self.m3[self.m3_model.turret_parts].desc.version < 4:
-                    part.matrix = to_bl_matrix(m3_part.matrix)
+                forward_matrix = mathutils.Matrix.LocRotScale(None, None, None)
+                forward_matrix.col[0] = to_bl_vec4(m3_part.forward_x).wyzx
+                forward_matrix.col[1] = to_bl_vec4(m3_part.forward_y).wyzx
+                forward_matrix.col[2] = to_bl_vec4(m3_part.forward_z).wyzx
+                part.forward = forward_matrix.to_euler()
 
     def create_billboards(self):
         ob = self.ob

@@ -45,37 +45,28 @@ def update_parts_collection_index(self, context):
 
 
 def draw_part_props(part, layout):
-    version = int(part.id_data.m3_turrets_part_version)
-
     shared.draw_prop_pointer(layout, part.id_data.pose.bones, part, 'bone', label='Bone', icon='BONE_DATA')
     col = layout.column()
     col.prop(part, 'group_id', text='Part Group')
     col.prop(part, 'main_part', text='Main Part')
-
-    if version >= 4:
-        col.prop(part, 'forward_x', text='Forward Vector X')
-        col.prop(part, 'forward_y', text='Forward Vector Y')
-        col.prop(part, 'forward_z', text='Forward Vector Z')
-    else:
-        col.prop(part, 'matrix', text='Matrix')
-
-    col = layout.column()
+    col.prop(part, 'forward', text='Turret Forward')
     col.separator()
+    col = layout.column(align=True)
     col.prop(part, 'yaw_weight', text='Yaw Weight')
     col.prop(part, 'yaw_limited', text='Limit Yaw')
-    sub = col.column()
+    sub = col.column(align=True)
     sub.active = part.yaw_limited
     sub.prop(part, 'yaw_min', text='Yaw Minimum')
-    sub.prop(part, 'yaw_max', text='Yaw Maximum')
-    col = layout.column()
+    sub.prop(part, 'yaw_max', text='Maximum')
     col.separator()
+    col = layout.column(align=True)
     col.prop(part, 'pitch_weight', text='Pitch Weight')
     col.prop(part, 'pitch_limited', text='Limit Pitch')
-    sub = col.column()
+    sub = col.column(align=True)
     sub.active = part.pitch_limited
     sub.prop(part, 'pitch_min', text='Pitch Minimum')
-    sub.prop(part, 'pitch_max', text='Pitch Maximum')
-    col = layout.column(align=True)
+    sub.prop(part, 'pitch_max', text='Maximum')
+    col = layout.column()
     col.separator()
     col.prop(part, 'unknown132')
     col.prop(part, 'unknown136')
@@ -116,10 +107,9 @@ def turret_part_group_id_set(self, value):
     self['group_id'] = value
 
 
+# TODO one main part per group in all turrets, rather than per group in turret
 class PartProperties(shared.M3BoneUserPropertyGroup):
-    forward_x: bpy.props.FloatVectorProperty(options=set(), size=4, default=(0, -1, 0, 0))
-    forward_y: bpy.props.FloatVectorProperty(options=set(), size=4, default=(1, 0, 0, 0))
-    forward_z: bpy.props.FloatVectorProperty(options=set(), size=4, default=(0, 0, 1, 0))
+    forward: bpy.props.FloatVectorProperty(options=set(), size=3, subtype='EULER', unit='ROTATION', default=(0, 0, 0))
     main_part: bpy.props.BoolProperty(options=set(), get=turret_part_main_get, set=turret_part_main_set)
     group_id: bpy.props.IntProperty(options=set(), get=turret_part_group_id_get, set=turret_part_group_id_set, subtype='UNSIGNED', min=1, max=255)
     yaw_weight: bpy.props.FloatProperty(options=set(), min=0, max=1, default=1, subtype='FACTOR')
