@@ -223,7 +223,7 @@ def init_cone(radius=1, height=1, sides=10):
         angle = 2 * pi * ii / sides
         x = cos(angle) * radius
         y = sin(angle) * radius
-        coords.append(V((x, y, height)))
+        coords.append(V((x, y, -height)))
         indices.append((ii, side_list[ii - 1]))
         indices.append((ii, sides))
 

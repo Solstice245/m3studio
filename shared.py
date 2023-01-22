@@ -199,6 +199,7 @@ def m3_pointer_get(search_data, handle):
 
 
 def select_bones_handles(ob, bl_handles):
+    m3_data_handles_verify(ob.pose.bones)
     if ob.m3_options.update_bone_selection and bl_handles:
         for pb in ob.pose.bones:
             db = ob.data.bones.get(pb.name)
@@ -361,13 +362,12 @@ class M3HandleListOpRemove(M3CollectionOpBase):
         return {'FINISHED'}
 
 
-def m3_data_handles_verify(self, context):
-    if self.search_data_verify:
-        handles = set()
-        for item in self.search_data:
-            if not item.bl_handle or item.bl_handle in handles:
-                item.bl_handle = m3_handle_get()
-            handles.add(item.bl_handle)
+def m3_data_handles_verify(data):
+    handles = set()
+    for item in data:
+        if not item.bl_handle or item.bl_handle in handles:
+            item.bl_handle = m3_handle_gen()
+        handles.add(item.bl_handle)
 
 
 def m3_data_handles_enum(self, context):
@@ -395,8 +395,8 @@ class M3PropHandleSearch(bpy.types.Operator):
 
     def invoke(self, context, event):
         self.search_data_id = getattr(bpy.data, self.search_data_id_collection_name).get(self.search_data_id_name)
-        self.search_data = self.search_data_id.path_resolve(self.search_data_path)
-        m3_data_handles_verify(self, context)
+        if self.search_data_verify:
+            m3_data_handles_verify(self.search_data_id.path_resolve(self.search_data_path))
         context.window_manager.invoke_search_popup(self)
         return {'RUNNING_MODAL'}
 

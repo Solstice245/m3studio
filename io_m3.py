@@ -443,6 +443,17 @@ class SectionList(list):
 
         return section
 
+    def validate(self):
+        culled_sections = 0
+        for ii in range(len(self)):
+            section = self[ii - culled_sections]
+            if len(section):
+                for instance in section:
+                    section.desc.instance_validate(instance, section.desc.name)
+            else:
+                del self[ii - culled_sections]
+                culled_sections += 1
+
     def resolve(self):
         aggregate_references = set()
         for ii, section in enumerate(self):
@@ -451,11 +462,6 @@ class SectionList(list):
                 aggregate_references.add(reference)
                 reference.index = ii
                 reference.entries = section.desc.instances_count(section.content)
-
-    def validate(self):
-        for ii, section in enumerate(self):
-            for instance in section:
-                section.desc.instance_validate(instance, section.desc.name)
 
     def to_index(self):
         header_section = self[0]

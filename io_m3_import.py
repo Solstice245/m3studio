@@ -1444,6 +1444,9 @@ class Importer:
                 processor = M3InputProcessor(self, part, m3_part)
                 io_shared.io_turret_part(processor)
 
+                part['main_part'] = m3_part.bit_get('flags', 'main_part')
+                part['group_id'] = m3_part.group_id
+
                 if self.m3[self.m3_model.turret_parts].desc.version < 4:
                     part.matrix = to_bl_matrix(m3_part.matrix)
 

@@ -72,12 +72,7 @@ def set_bone_bat_id(self, value):
 
 
 def set_bone_hex_id(self, value, prop):
-    # verify bone handles
-    handles = set()
-    for item in self.id_data.pose.bones:
-        if not item.bl_handle or item.bl_handle in handles:
-            item.bl_handle = shared.m3_handle_gen()
-        handles.add(item.bl_handle)
+    shared.m3_data_handles_verify(self.id_data.pose.bones)
 
     if self.bl_handle in (locker.bone for locker in self.id_data.m3_bone_id_lockers):
         try:

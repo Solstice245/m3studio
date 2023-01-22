@@ -1391,11 +1391,9 @@
             <field name="pitch_min" type="float" default_value="0.0"/>
             <field name="pitch_max" type="float" default_value="0.0"/>
             <field name="pitch_weight" type="float" default_value="0.0" since_version="4"/>
-            <field name="unknown132" type="float" default_value="0.0"/>
-            <field name="unknown136" type="float" default_value="0.0"/>
-            <field name="unknown140" type="float" default_value="0.0" since_version="4"/>
-            <field name="unknown144" type="float" default_value="0.0" since_version="4"/>
-            <field name="unknown148" type="float" default_value="0.0" since_version="4"/>
+            <field name="unknown132" type="float" default_value="1.0"/>
+            <field name="unknown136" type="float" default_value="1.0"/>
+            <field name="main_bone_offset" type="VEC3V0" since_version="4"/>
         </fields>
     </structure>
 

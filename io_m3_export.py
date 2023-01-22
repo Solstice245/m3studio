@@ -72,6 +72,15 @@ def to_m3_vec4(bl_vec=None):
     return m3_vec
 
 
+def to_m3_vec4_quat(bl_vec=None):
+    m3_vec = io_m3.structures['VEC4'].get_version(0).instance()
+    m3_vec.w = bl_vec.w if bl_vec else 1.0
+    m3_vec.x = bl_vec.x if bl_vec else 0.0
+    m3_vec.y = bl_vec.y if bl_vec else 0.0
+    m3_vec.z = bl_vec.z if bl_vec else 0.0
+    return m3_vec
+
+
 def to_m3_quat(bl_quat=None):
     m3_quat = io_m3.structures['QUAT'].get_version(0).instance()
     m3_quat.w, m3_quat.x, m3_quat.y, m3_quat.z = bl_quat or (1.0, 0.0, 0.0, 0.0)
@@ -120,7 +129,7 @@ ANIM_VEC_DATA_SETTINGS = {
 
 
 def get_fcurve_anim_frames(fcurve, interpolation='LINEAR'):
-    if fcurve is None:
+    if fcurve is None or not len(fcurve.keyframe_points):
         return
 
     frames = []
@@ -243,6 +252,7 @@ class M3OutputProcessor:
 
     def collect_anim_data_single(self, field, anim_data_tag):
         head = getattr(self.bl, field + '_header')
+        head.hex_id = head.hex_id  # set hex_id to itself to verify
 
         if head.bl_user_mark_as_dup:
             return True  # TODO improve this so that it returns false if no animation whatsover is to be associated with this ID
@@ -264,6 +274,7 @@ class M3OutputProcessor:
 
     def collect_anim_data_vector(self, field, anim_data_tag):
         head = getattr(self.bl, field + '_header')
+        head.hex_id = head.hex_id  # set hex_id to itself to verify
 
         if head.bl_user_mark_as_dup:
             return True  # TODO improve this so that it returns false if no animation whatsover is to be associated with this ID
@@ -403,7 +414,6 @@ class M3OutputProcessor:
 
     def anim_boolean_flag(self, field):
         head = getattr(self.bl, field + '_header')
-        head.hex_id = head.hex_id  # set to itself to verify that the hex id is valid
         if self.collect_anim_data_single(field, 'SDFG'):
             interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
             setattr(self.m3, field, self.exporter.init_anim_ref_flag(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
@@ -412,7 +422,6 @@ class M3OutputProcessor:
 
     def anim_int16(self, field):
         head = getattr(self.bl, field + '_header')
-        head.hex_id = head.hex_id  # set to itself to verify that the hex id is valid
         if self.collect_anim_data_single(field, 'SDS6'):
             interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
             setattr(self.m3, field, self.exporter.init_anim_ref_int16(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
@@ -421,7 +430,6 @@ class M3OutputProcessor:
 
     def anim_uint16(self, field):
         head = getattr(self.bl, field + '_header')
-        head.hex_id = head.hex_id  # set to itself to verify that the hex id is valid
         if self.collect_anim_data_single(field, 'SDU6'):
             interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
             setattr(self.m3, field, self.exporter.init_anim_ref_uint16(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
@@ -430,7 +438,6 @@ class M3OutputProcessor:
 
     def anim_uint32(self, field):
         head = getattr(self.bl, field + '_header')
-        head.hex_id = head.hex_id  # set to itself to verify that the hex id is valid
         # casting val to int because sometimes bools use this
         if self.collect_anim_data_single(field, 'SDU3'):
             interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
@@ -444,7 +451,6 @@ class M3OutputProcessor:
         if (till_version is not None) and (self.version > till_version):
             return
         head = getattr(self.bl, field + '_header')
-        head.hex_id = head.hex_id  # set to itself to verify that the hex id is valid
         if self.collect_anim_data_single(field, 'SDR3'):
             interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
             setattr(self.m3, field, self.exporter.init_anim_ref_float(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
@@ -453,7 +459,6 @@ class M3OutputProcessor:
 
     def anim_vec2(self, field):
         head = getattr(self.bl, field + '_header')
-        head.hex_id = head.hex_id  # set to itself to verify that the hex id is valid
         if self.collect_anim_data_vector(field, 'SD2V'):
             interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
             setattr(self.m3, field, self.exporter.init_anim_ref_vec2(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
@@ -466,7 +471,6 @@ class M3OutputProcessor:
         if (till_version is not None) and (self.version > till_version):
             return
         head = getattr(self.bl, field + '_header')
-        head.hex_id = head.hex_id  # set to itself to verify that the hex id is valid
         if self.collect_anim_data_vector(field, 'SD3V'):
             interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
             setattr(self.m3, field, self.exporter.init_anim_ref_vec3(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
@@ -479,7 +483,6 @@ class M3OutputProcessor:
         if (till_version is not None) and (self.version > till_version):
             return
         head = getattr(self.bl, field + '_header')
-        head.hex_id = head.hex_id  # set to itself to verify that the hex id is valid
         if self.collect_anim_data_vector(field, 'SDCC'):
             interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
             setattr(self.m3, field, self.exporter.init_anim_ref_color(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
@@ -883,8 +886,8 @@ class Exporter:
 
         self.finalize_anim_data(model)
 
-        self.m3.resolve()
         self.m3.validate()
+        self.m3.resolve()
         self.m3.to_index()
 
         # place armature back into the pose that it was before
@@ -1472,9 +1475,6 @@ class Exporter:
         bone_lookup_section.content_iter_add(m3_lookup)
 
     def create_attachment_points(self, model, attachments):
-        if not attachments:
-            return
-
         attachment_point_section = self.m3.section_for_reference(model, 'attachment_points', version=1)
 
         # manually add into section list *after* name sections are added to conform with original exporting conventions
@@ -1493,9 +1493,6 @@ class Exporter:
         self.m3.append(attachment_point_addon_section)
 
     def create_lights(self, model, lights):
-        if not lights:
-            return
-
         light_section = self.m3.section_for_reference(model, 'lights', version=7)
 
         for light in lights:
@@ -1507,10 +1504,10 @@ class Exporter:
             io_shared.io_light(processor)
 
     def create_shadow_boxes(self, model, shadow_boxes):
-        if not shadow_boxes and int(self.ob.m3_model_version) >= 21:
+        if int(self.ob.m3_model_version) < 21:
             return
 
-        shadow_box_section = self.m3.section_for_reference(model, 'shadow_boxes', version=3)
+        shadow_box_section = self.m3.section_for_reference(model, 'shadow_boxes', version=0)
 
         for shadow_box in shadow_boxes:
             shadow_box_bone = shared.m3_pointer_get(self.ob.pose.bones, shadow_box.bone)
@@ -1520,9 +1517,6 @@ class Exporter:
             io_shared.io_shadow_box(processor)
 
     def create_cameras(self, model, cameras):
-        if not cameras:
-            return
-
         camera_section = self.m3.section_for_reference(model, 'cameras', version=3)
 
         for camera in cameras:
@@ -1534,13 +1528,10 @@ class Exporter:
             processor = M3OutputProcessor(self, camera, m3_camera)
             io_shared.io_camera(processor)
 
-        cameras_addon_section = self.m3.section_for_reference(model, 'camera_addons')
+        cameras_addon_section = self.m3.section_for_reference(model, 'cameras_addon')
         cameras_addon_section.content_iter_add([0xffff for camera in cameras])
 
     def create_materials(self, model, matrefs, versions):
-        if not matrefs:
-            return
-
         matref_section = self.m3.section_for_reference(model, 'material_references')
 
         layer_desc = io_m3.structures['LAYR'].get_version(self.ob.m3_materiallayers_version)
@@ -1682,9 +1673,6 @@ class Exporter:
             m3_layer.unknowna44bf452.null = 1.0
 
     def create_particle_systems(self, model, systems, copies, version):
-        if not systems:
-            return
-
         particle_system_section = self.m3.section_for_reference(model, 'particle_systems', version=version)
 
         for system in systems:
@@ -1776,9 +1764,6 @@ class Exporter:
             io_shared.io_particle_copy(processor)
 
     def create_ribbons(self, model, ribbons, splines, version):
-        if not ribbons:
-            return
-
         ribbon_section = self.m3.section_for_reference(model, 'ribbons', version=version)
 
         handle_to_spline_sections = {}
@@ -1819,9 +1804,6 @@ class Exporter:
                 handle_to_spline_sections[ribbon.spline].references.append(m3_ribbon.spline)
 
     def create_projections(self, model, projections):
-        if not projections:
-            return
-
         projection_section = self.m3.section_for_reference(model, 'projections', version=5)
 
         for projection in projections:
@@ -1838,9 +1820,6 @@ class Exporter:
             m3_projection.unknown80d8189b = self.init_anim_ref_float()
 
     def create_forces(self, model, forces):
-        if not forces:
-            return
-
         force_section = self.m3.section_for_reference(model, 'forces', version=2)
 
         for force in forces:
@@ -1851,9 +1830,6 @@ class Exporter:
             io_shared.io_force(processor)
 
     def create_warps(self, model, warps):
-        if not warps:
-            return
-
         warp_section = self.m3.section_for_reference(model, 'warps', version=1)
 
         for warp in warps:
@@ -1864,9 +1840,6 @@ class Exporter:
             io_shared.io_warp(processor)
 
     def create_physics_bodies(self, model, physics_bodies, body_version, shape_version):
-        if not physics_bodies:
-            return
-
         physics_body_section = self.m3.section_for_reference(model, 'physics_rigidbodies', version=body_version)
 
         shape_to_section = {}
@@ -1900,9 +1873,6 @@ class Exporter:
                     shape_section.references.append(m3_physics_body.physics_shape)
 
     def create_physics_joints(self, model, physics_bodies, physics_joints):
-        if not physics_joints:
-            return
-
         physics_joint_section = self.m3.section_for_reference(model, 'physics_joints', version=0)
 
         for physics_joint in physics_joints:
@@ -1940,7 +1910,7 @@ class Exporter:
             io_shared.io_rigid_body_joint(processor)
 
     def create_physics_cloths(self, model, physics_cloths, version):
-        if not physics_cloths or int(self.ob.m3_model_version) < 28:
+        if int(self.ob.m3_model_version) < 28:
             return
 
         physics_cloth_section = self.m3.section_for_reference(model, 'physics_cloths', version=version)
@@ -2063,9 +2033,6 @@ class Exporter:
                 simulation_vertex_weights_section.content_add(sim_weights)
 
     def create_ik_joints(self, model, ik_joints):
-        if not ik_joints:
-            return
-
         ik_joint_section = self.m3.section_for_reference(model, 'ik_joints', version=0)
 
         for ik_joint, bones in zip(ik_joints, self.export_ik_joint_bones):
@@ -2076,33 +2043,74 @@ class Exporter:
             io_shared.io_ik(processor)
 
     def create_turrets(self, model, turrets, part_version):
-        if not turrets:
-            return
-
         turret_part_section = self.m3.section_for_reference(model, 'turret_parts', version=part_version)
         turret_section = self.m3.section_for_reference(model, 'turrets', version=0)
 
-        part_index = 0
+        base_quat = mathutils.Quaternion((0.0, 0.0, -1.0), 1.5707961320877075)
+
         for turret, turret_data in zip(turrets, self.export_turret_data):
             m3_turret = turret_section.content_add()
             m3_turret_part_index_section = self.m3.section_for_reference(m3_turret, 'parts')
             m3_turret_name_section = self.m3.section_for_reference(m3_turret, 'name')
             m3_turret_name_section.content_from_bytes(turret.name)
 
+            main_bone = None
+            part_index = 0
+            for part, bone in turret_data:
+                if part.main_part:
+                    assert main_bone is None
+                    main_bone = bone
+
+                    m3_part = turret_part_section.content_add()
+                    m3_part.bone = self.bone_name_indices[bone.name]
+                    processor = M3OutputProcessor(self, part, m3_part)
+                    io_shared.io_turret_part(processor)
+
+                    db = self.ob.data.bones.get(bone.name)
+
+                    m3_part.forward_x = to_m3_vec4_quat(mathutils.Quaternion(part.forward_x))
+                    m3_part.forward_y = to_m3_vec4_quat(mathutils.Quaternion(part.forward_y))
+                    m3_part.forward_z = to_m3_vec4_quat(mathutils.Quaternion(part.forward_z))
+
+                    m3_part.up_x = to_m3_vec4_quat()
+                    m3_part.up_y = to_m3_vec4_quat(db.matrix_local.to_quaternion().rotation_difference(base_quat))
+                    m3_part.up_z = to_m3_vec4_quat()
+
             # TODO transfer matrix if part_version == 1
             for part, bone in turret_data:
-                m3_part = turret_part_section.content_add()
-                m3_part.bone = self.bone_name_indices[bone.name]
-                processor = M3OutputProcessor(self, part, m3_part)
-                io_shared.io_turret_part(processor)
+                if not part.main_part:
+                    m3_part = turret_part_section.content_add()
+                    m3_part.bone = self.bone_name_indices[bone.name]
+                    processor = M3OutputProcessor(self, part, m3_part)
+                    io_shared.io_turret_part(processor)
+
+                    db = self.ob.data.bones.get(bone.name)
+
+                    m3_part.forward_x = to_m3_vec4_quat(mathutils.Quaternion(part.forward_x))
+                    m3_part.forward_y = to_m3_vec4_quat(mathutils.Quaternion(part.forward_y))
+                    m3_part.forward_z = to_m3_vec4_quat(mathutils.Quaternion(part.forward_z))
+
+                    # test_matrix = mathutils.Matrix.LocRotScale(None, None, None)
+                    # test_matrix.col[0] = mathutils.Vector(part.forward_y).yxzw
+                    # test_matrix.col[1] = mathutils.Vector(part.forward_x).yxzw
+                    # test_matrix.col[2] = mathutils.Vector(part.forward_z).yxzw
+                    # print(test_matrix)
+                    # print(test_matrix.to_quaternion())
+                    # print(test_matrix.to_quaternion().to_euler())
+                    # print()
+
+                    m3_part.up_x = to_m3_vec4_quat()
+                    m3_part.up_y = to_m3_vec4_quat(db.matrix_local.to_quaternion().rotation_difference(base_quat))
+                    m3_part.up_z = to_m3_vec4_quat()
+
+                    if main_bone and not part.main_part:
+                        mdb = self.ob.data.bones.get(main_bone.name)
+                        m3_part.main_bone_offset = to_m3_vec3(db.matrix_local.translation - mdb.matrix_local.translation)
 
                 m3_turret_part_index_section.content_add(part_index)
                 part_index += 1
 
     def create_irefs(self, model):
-        if not self.bones:
-            return
-
         iref_section = self.m3.section_for_reference(model, 'bone_rests')
 
         for bone in self.bones:
@@ -2110,9 +2118,6 @@ class Exporter:
             iref.matrix = to_m3_matrix(self.bone_to_iref[bone])
 
     def create_hittests(self, model, hittests):
-        if not hittests:
-            return
-
         hittests_section = self.m3.section_for_reference(model, 'hittests', version=1)
 
         ht_tight = self.ob.m3_hittest_tight
@@ -2146,9 +2151,6 @@ class Exporter:
                 self.get_basic_volume_object(hittest.mesh_object, m3_hittest)
 
     def create_attachment_volumes(self, model, volumes):
-        if not volumes:
-            return
-
         attachment_volume_section = self.m3.section_for_reference(model, 'attachment_volumes', version=0)
 
         if int(self.ob.m3_model_version) >= 23:
@@ -2170,9 +2172,6 @@ class Exporter:
                 self.get_basic_volume_object(volume.mesh_object, m3_volume)
 
     def create_billboards(self, model, billboards):
-        if not billboards:
-            return
-
         billboard_section = self.m3.section_for_reference(model, 'billboards')
 
         for billboard, bone in zip(billboards, self.billboard_bones):
