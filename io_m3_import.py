@@ -1448,9 +1448,9 @@ class Importer:
                 part['group_id'] = m3_part.group_id
 
                 forward_matrix = mathutils.Matrix.LocRotScale(None, None, None)
-                forward_matrix.col[0] = to_bl_vec4(m3_part.forward_x).wyzx
-                forward_matrix.col[1] = to_bl_vec4(m3_part.forward_y).wyzx
-                forward_matrix.col[2] = to_bl_vec4(m3_part.forward_z).wyzx
+                forward_matrix.col[0] = to_bl_vec4(m3_part.matrix_forward.x).wyzx
+                forward_matrix.col[1] = to_bl_vec4(m3_part.matrix_forward.y).wyzx
+                forward_matrix.col[2] = to_bl_vec4(m3_part.matrix_forward.z).wyzx
                 part.forward = forward_matrix.to_euler()
 
     def create_billboards(self):

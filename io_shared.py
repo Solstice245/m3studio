@@ -629,8 +629,8 @@ def io_turret_part(processor):
     # processor.vec4('up_x', since_version=4)  # ! handled manually
     # processor.vec4('up_y', since_version=4)  # ! handled manually
     # processor.vec4('up_z', since_version=4)  # ! handled manually
-    # processor.bit('flags', 'main_part') # ! handled manually
-    # processor.integer('group_id') # ! handled manually
+    # processor.bit('flags', 'main_part')  # ! handled manually
+    # processor.integer('group_id')  # ! handled manually
     processor.bit('yaw_flags', 'yaw_limited')
     processor.float('yaw_min')
     processor.float('yaw_max')
@@ -639,8 +639,8 @@ def io_turret_part(processor):
     processor.float('pitch_min')
     processor.float('pitch_max')
     processor.float('pitch_weight', since_version=4)
-    processor.integer('unknown132')
-    processor.integer('unknown136')
+    # processor.integer('unknown132')  # seem to havve no perceptible effect
+    # processor.integer('unknown136')  # seem to havve no perceptible effect
 
 
 def io_billboard(processor):

@@ -47,8 +47,11 @@ def update_parts_collection_index(self, context):
 def draw_part_props(part, layout):
     shared.draw_prop_pointer(layout, part.id_data.pose.bones, part, 'bone', label='Bone', icon='BONE_DATA')
     col = layout.column()
-    col.prop(part, 'group_id', text='Part Group')
-    col.prop(part, 'main_part', text='Main Part')
+    row = col.row()
+    row.prop(part, 'group_id', text='Part Group')
+    row.separator()
+    row.prop(part, 'main_part', text='Main Part')
+    col.separator()
     col.prop(part, 'forward', text='Turret Forward')
     col.separator()
     col = layout.column(align=True)
@@ -56,20 +59,17 @@ def draw_part_props(part, layout):
     col.prop(part, 'yaw_limited', text='Limit Yaw')
     sub = col.column(align=True)
     sub.active = part.yaw_limited
-    sub.prop(part, 'yaw_min', text='Yaw Minimum')
+    sub.prop(part, 'yaw_min', text='Minimum')
     sub.prop(part, 'yaw_max', text='Maximum')
+    col.separator()
     col.separator()
     col = layout.column(align=True)
     col.prop(part, 'pitch_weight', text='Pitch Weight')
     col.prop(part, 'pitch_limited', text='Limit Pitch')
     sub = col.column(align=True)
     sub.active = part.pitch_limited
-    sub.prop(part, 'pitch_min', text='Pitch Minimum')
+    sub.prop(part, 'pitch_min', text='Minimum')
     sub.prop(part, 'pitch_max', text='Maximum')
-    col = layout.column()
-    col.separator()
-    col.prop(part, 'unknown132')
-    col.prop(part, 'unknown136')
 
 
 def draw_props(turret, layout):
@@ -85,9 +85,10 @@ def turret_part_main_get(self):
 
 def turret_part_main_set(self, value):
     if value:
-        for part in self.id_data.path_resolve(self.path_from_id().rsplit('[', 1)[0]):
-            if part.group_id == self.group_id:
-                part['main_part'] = False
+        for turret in self.id_data.path_resolve(self.path_from_id().rsplit('[', 2)[0]):
+            for part in turret.parts:
+                if part.group_id == self.group_id:
+                    part['main_part'] = False
     self['main_part'] = value
 
 
@@ -101,27 +102,25 @@ def turret_part_group_id_get(self):
 def turret_part_group_id_set(self, value):
     if self.get('main_part'):
         if self.main_part:
-            for part in self.id_data.path_resolve(self.path_from_id().rsplit('[', 1)[0]):
-                if part.group_id == value:
-                    part['main_part'] = False
+            for turret in self.id_data.path_resolve(self.path_from_id().rsplit('[', 2)[0]):
+                for part in turret.parts:
+                    if part.group_id == value:
+                        part['main_part'] = False
     self['group_id'] = value
 
 
-# TODO one main part per group in all turrets, rather than per group in turret
 class PartProperties(shared.M3BoneUserPropertyGroup):
     forward: bpy.props.FloatVectorProperty(options=set(), size=3, subtype='EULER', unit='ROTATION', default=(0, 0, 0))
     main_part: bpy.props.BoolProperty(options=set(), get=turret_part_main_get, set=turret_part_main_set)
     group_id: bpy.props.IntProperty(options=set(), get=turret_part_group_id_get, set=turret_part_group_id_set, subtype='UNSIGNED', min=1, max=255)
     yaw_weight: bpy.props.FloatProperty(options=set(), min=0, max=1, default=1, subtype='FACTOR')
     yaw_limited: bpy.props.BoolProperty(options=set())
-    yaw_min: bpy.props.FloatProperty(options=set(), subtype='ANGLE')
-    yaw_max: bpy.props.FloatProperty(options=set(), subtype='ANGLE')
+    yaw_min: bpy.props.FloatProperty(options=set(), subtype='ANGLE', min=-3.141592741, max=3.141592741, default=-3.141592741)
+    yaw_max: bpy.props.FloatProperty(options=set(), subtype='ANGLE', min=-3.141592741, max=3.141592741, default=3.141592741)
     pitch_weight: bpy.props.FloatProperty(options=set(), min=0, max=1, default=1, subtype='FACTOR')
     pitch_limited: bpy.props.BoolProperty(options=set())
-    pitch_min: bpy.props.FloatProperty(options=set(), subtype='ANGLE')
-    pitch_max: bpy.props.FloatProperty(options=set(), subtype='ANGLE')
-    unknown132: bpy.props.FloatProperty(options=set())
-    unknown136: bpy.props.FloatProperty(options=set())
+    pitch_min: bpy.props.FloatProperty(options=set(), subtype='ANGLE', min=-1.570796132, max=1.570796132, default=-1.570796132)
+    pitch_max: bpy.props.FloatProperty(options=set(), subtype='ANGLE', min=-1.570796132, max=1.570796132, default=1.570796132)
 
 
 class Properties(shared.M3PropertyGroup):

@@ -16,6 +16,7 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
+import math
 import bpy
 import mathutils
 import gpu
@@ -496,4 +497,40 @@ def draw():
                 coords = get_transformed_coords(coords, final_matrix)
                 batch_uni_polyline(coords, indices, col)
 
-        # TODO PATU
+        yaw_rot = mathutils.Euler((0.0, 0.0, -1.570796132))
+        pitch_rot = mathutils.Euler((-1.570796132, 3.141592741, 1.570796132))
+
+        for turret in ob.m3_turrets:
+            for item in turret.parts:
+                pb = get_pb_from_handle(ob, item.bone, pb_handles)
+                if pb:
+                    if not opts.draw_turrets and not (pb_select[pb] and opts.draw_selected):
+                        continue
+
+                    if item.yaw_weight:
+                        col = blgd.turret_yaw_color_normal if not pb_select[pb] else blgd.turret_yaw_color_select
+                        final_matrix = mathutils.Matrix.LocRotScale(get_pb_world_matrix(ob, pb, pb_to_world_matrix).translation, yaw_rot, (0.5, 0.5, 0.5))
+                        if item.yaw_limited:
+                            yaw_limit_arc = -item.yaw_min + item.yaw_max
+                            yaw_limit_arc_med = (item.yaw_min + item.yaw_max) / 2
+                            coords, indices = blgd.get_arc_wire_data(yaw_limit_arc)
+                            final_matrix @= mathutils.Euler((0.0, 0.0, yaw_limit_arc_med)).to_matrix().to_4x4()
+                        else:
+                            coords, indices = blgd.arc360
+
+                        coords = get_transformed_coords(coords, final_matrix)
+                        batch_uni_polyline(coords, indices, col, line_width=1.0)
+
+                    if item.pitch_weight:
+                        col = blgd.turret_pitch_color_normal if not pb_select[pb] else blgd.turret_pitch_color_select
+                        final_matrix = mathutils.Matrix.LocRotScale(get_pb_world_matrix(ob, pb, pb_to_world_matrix).translation, pitch_rot, (0.5, 0.5, 0.5))
+                        if item.pitch_limited:
+                            pitch_limit_arc = -item.pitch_min + item.pitch_max
+                            pitch_limit_arc_med = (item.pitch_min + item.pitch_max) / 2
+                            coords, indices = blgd.get_arc_wire_data(pitch_limit_arc)
+                            final_matrix @= mathutils.Euler((0.0, 0.0, pitch_limit_arc_med)).to_matrix().to_4x4()
+                        else:
+                            coords, indices = blgd.arc180
+
+                        coords = get_transformed_coords(coords, final_matrix)
+                        batch_uni_polyline(coords, indices, col, line_width=1.0)

@@ -1361,13 +1361,9 @@
             <version number="4" size="152"/>
         </versions>
         <fields>
-            <field name="matrix" type="Matrix44" till_version="1"/>
-            <field name="forward_x" type="VEC4V0" since_version="4"/>
-            <field name="forward_y" type="VEC4V0" since_version="4"/>
-            <field name="forward_z" type="VEC4V0" since_version="4"/>
-            <field name="up_x" type="VEC4V0" since_version="4"/>
-            <field name="up_y" type="VEC4V0" since_version="4"/>
-            <field name="up_z" type="VEC4V0" since_version="4"/>
+            <field name="matrix_forward" type="Matrix44"/>
+            <field name="quat_up0" type="VEC4V0" since_version="4"/>
+            <field name="quat_up1" type="VEC4V0" since_version="4"/>
             <field name="bone" type="uint16"/>
             <field name="flags" type="uint8" default_value="0x0">
                 <bits>

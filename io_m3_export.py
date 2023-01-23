@@ -698,19 +698,23 @@ class Exporter:
                     self.export_required_bones.add(bone)
                     self.export_required_bones.add(bone_parent)
 
-        self.export_turret_data = []
+        self.export_turret_parts = []
         # TODO assert that for each group ID, only one main bone exists
         for turret in ob.m3_turrets:
             if not turret.m3_export:
                 continue
-            turret_parts = []
+            turret_has_parts = False
             for part in turret.parts:
                 part_bone = shared.m3_pointer_get(ob.pose.bones, part.bone)
                 if part_bone:  # TODO warning if parts have invalid bones
+                    turret_has_parts = True
                     self.export_required_bones.add(part_bone)
-                    turret_parts.append([part, part_bone])
-            export_turrets.append(turret)
-            self.export_turret_data.append(turret_parts)
+                    if part.main_part:
+                        self.export_turret_parts.insert(0, part)
+                    else:
+                        self.export_turret_parts.append(part)
+            if turret_has_parts:
+                export_turrets.append(turret)
 
         # TODO warning if hittest bone is none
         hittest_bone = shared.m3_pointer_get(ob.pose.bones, ob.m3_hittest_tight.bone)
@@ -2048,52 +2052,53 @@ class Exporter:
 
         base_quat = mathutils.Quaternion((0.0, 0.0, -1.0), 1.5707961320877075)
 
-        # TODO sort turret parts by group_id and allow for main part of each group only, rather than per/group/turret
-        for turret, turret_data in zip(turrets, self.export_turret_data):
+        group_id_to_parts = {}
+        group_id_to_parts_flat = []
+        group_id_to_main_bone = {}
+
+        for part in self.export_turret_parts:
+            try:
+                group_id_to_parts[part.group_id].append(part)
+            except KeyError:
+                group_id_to_parts[part.group_id] = [part]
+            if part.main_part:
+                group_id_to_main_bone[part.group_id] = shared.m3_pointer_get(self.ob.pose.bones, part.bone)
+
+        for group_id in group_id_to_parts:
+            for part in group_id_to_parts[group_id]:
+                group_id_to_parts_flat.append(part)
+
+                bone = shared.m3_pointer_get(self.ob.pose.bones, part.bone)
+                m3_part = turret_part_section.content_add()
+                m3_part.bone = self.bone_name_indices[bone.name]
+                processor = M3OutputProcessor(self, part, m3_part)
+                io_shared.io_turret_part(processor)
+
+                forward_mat = mathutils.Euler(part.forward).to_quaternion().to_matrix().to_4x4()
+                m3_part.matrix_forward.x = to_m3_vec4(forward_mat.col[0].yzxw)
+                m3_part.matrix_forward.y = to_m3_vec4(forward_mat.col[1].yzxw)
+                m3_part.matrix_forward.z = to_m3_vec4(forward_mat.col[2].yzxw)
+                m3_part.matrix_forward.w = to_m3_vec4((0.0, 0.0, 0.0, 1.0))
+
+                db = self.ob.data.bones.get(bone.name)
+                m3_part.quat_up0 = to_m3_vec4_quat(db.matrix_local.to_quaternion().rotation_difference(base_quat))
+                m3_part.quat_up1 = to_m3_vec4_quat()
+
+                if group_id_to_main_bone.get(part.group_id) and not part.main_part:
+                    mdb = self.ob.data.bones.get(group_id_to_main_bone[part.group_id].name)
+                    m3_part.main_bone_offset = to_m3_vec3(db.matrix_local.translation - mdb.matrix_local.translation)
+
+        for turret in turrets:
             m3_turret = turret_section.content_add()
             m3_turret_part_index_section = self.m3.section_for_reference(m3_turret, 'parts')
             m3_turret_name_section = self.m3.section_for_reference(m3_turret, 'name')
             m3_turret_name_section.content_from_bytes(turret.name)
 
-            main_bone = None
-            main_part_index = 0
-            part_index = 0
-            for part, bone in turret_data:
-                if part.main_part:
-                    assert main_bone is None
-                    main_bone = bone
-                    main_part_index = len(turret_part_section)
-                    m3_part = turret_part_section.content_add()
-
-            for part, bone in turret_data:
-                if not part.main_part:
-                    m3_part = turret_part_section.content_add()
-                else:
-                    m3_part = turret_part_section[main_part_index]
-
-                m3_part.bone = self.bone_name_indices[bone.name]
-                processor = M3OutputProcessor(self, part, m3_part)
-                io_shared.io_turret_part(processor)
-
-                db = self.ob.data.bones.get(bone.name)
-
-                test_euler = mathutils.Euler(part.forward)
-                test_mat = test_euler.to_quaternion().to_matrix().to_4x4()
-
-                m3_part.forward_x = to_m3_vec4(test_mat.col[0].yzxw)
-                m3_part.forward_y = to_m3_vec4(test_mat.col[1].yzxw)
-                m3_part.forward_z = to_m3_vec4(test_mat.col[2].yzxw)
-
-                m3_part.up_x = to_m3_vec4_quat()
-                m3_part.up_y = to_m3_vec4_quat(db.matrix_local.to_quaternion().rotation_difference(base_quat))
-                m3_part.up_z = to_m3_vec4_quat()
-
-                if main_bone and not part.main_part:
-                    mdb = self.ob.data.bones.get(main_bone.name)
-                    m3_part.main_bone_offset = to_m3_vec3(db.matrix_local.translation - mdb.matrix_local.translation)
-
-                m3_turret_part_index_section.content_add(part_index)
-                part_index += 1
+            for part in turret.parts:
+                try:
+                    m3_turret_part_index_section.content_add(group_id_to_parts_flat.index(part))
+                except ValueError:
+                    pass  # part is not in self.export_turret_parts
 
     def create_irefs(self, model):
         iref_section = self.m3.section_for_reference(model, 'bone_rests')

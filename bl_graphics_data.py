@@ -39,8 +39,8 @@ force_color_select = C((1.0, 0.6, 0.2))
 projector_color_normal = C((0.4, 0.0, 0.4))
 projector_color_select = C((0.8, 0.2, 0.8))
 
-physics_color_normal = C((0.3, 0.1, 0.6))
-physics_color_select = C((0.5, 0.3, 1.0))
+physics_color_normal = C((0.3, 0.1, 0.7))
+physics_color_select = C((0.6, 0.3, 1.0))
 
 cloth_color_normal = C((0.5, 0.0, 0.25))
 cloth_color_select = C((1.0, 0.1, 0.6))
@@ -56,6 +56,12 @@ shbx_color_select = C((0.25, 0.75, 1.0))
 
 warp_color_normal = C((0.1, 0.1, 0.5))
 warp_color_select = C((0.3, 0.3, 1.0))
+
+turret_yaw_color_normal = C((0.3, 0.1, 0.7))
+turret_yaw_color_select = C((0.6, 0.3, 1.0))
+
+turret_pitch_color_normal = C((0.5, 0.0, 0.25))
+turret_pitch_color_select = C((1.0, 0.1, 0.6))
 
 
 def get_circular_wire_data(index, radius, height, sides, circles):
@@ -75,6 +81,37 @@ def get_circular_wire_data(index, radius, height, sides, circles):
             i2 = next_index * sides + ii
             indices.append((i0, i1))
             indices.append((i0, i2))
+
+    return (coords, indices)
+
+
+def get_arc_wire_data(arc):
+    coords = []
+    indices = []
+
+    if arc == 0:
+        coords.append(V((0.0, 0.0, 0.0)))
+        coords.append(V((cos(0), sin(0), 0.0)))
+        indices.append((0, 1))
+        return (coords, indices)
+
+    sides = sorted((1, round(arc * 4)))[1]
+    for ii in range(sides, -1, -1):
+        angle = arc * ii / sides / 2
+        if angle >= 0:
+            coords.append(V((cos(angle), sin(angle), 0.0)))
+            coords.append(V((cos(-angle), sin(-angle), 0.0)))
+            i2 = ii * 2
+            indices.append((i2, i2 + 2))
+            indices.append((i2 + 1, i2 + 3))
+        else:
+            coords.append(V((cos(0), sin(0), 0.0)))
+            coords.append(V((cos(0), sin(0), 0.0)))
+
+    center_index = len(coords)
+    coords.append(V((0.0, 0.0, 0.0)))
+    indices[0] = (i2, center_index)
+    indices[1] = (i2 + 1, center_index)
 
     return (coords, indices)
 
@@ -269,4 +306,6 @@ sphere = init_sphere()
 hemisphere = init_hemisphere()
 cylinder = init_cylinder()
 cone = init_cone()
+arc180 = get_arc_wire_data(pi)
+arc360 = get_arc_wire_data(pi * 2)
 # no generic cache for capsule or cone_dome because a scale vector would distort their shape
