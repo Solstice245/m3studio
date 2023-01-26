@@ -393,7 +393,7 @@ class Importer:
             collections = [
                 ob.m3_cameras, ob.m3_forces, ob.m3_lights, ob.m3_materiallayers, ob.m3_materials_standard, ob.m3_materials_displacement,
                 ob.m3_materials_composite, ob.m3_materials_volume, ob.m3_materials_volumenoise, ob.m3_materials_reflection, ob.m3_materials_lensflare,
-                ob.m3_particle_systems, ob.m3_particle_copies, ob.m3_projections, ob.m3_ribbons, ob.m3_ribbonsplines, ob.m3_shadowboxes, ob.m3_warps,
+                ob.m3_particlesystems, ob.m3_particlecopies, ob.m3_projections, ob.m3_ribbons, ob.m3_ribbonsplines, ob.m3_shadowboxes, ob.m3_warps,
             ]
 
             def get_anim_ids(collection):
@@ -609,12 +609,12 @@ class Importer:
         if id_data_render:
             for action_name in id_data_render.keys():
                 action = bpy.data.actions.get(action_name)
-                key_frame_points_len = len(id_data_render[action_name]) // 2
+                key_frame_points_len = len(id_data_render[action_name][0]) // 2
 
                 fcurve = action.fcurves.new(pose_bone.path_from_id('m3_batching'), action_group=pose_bone.name)
                 fcurve.select = False
                 fcurve.keyframe_points.add(key_frame_points_len)
-                fcurve.keyframe_points.foreach_set('co', id_data_render[action_name])
+                fcurve.keyframe_points.foreach_set('co', id_data_render[action_name][0])
                 fcurve.keyframe_points.foreach_set('interpolation', [0] * key_frame_points_len)
 
     def create_animations(self):
@@ -1156,7 +1156,7 @@ class Importer:
         ob = self.ob
 
         if self.m3_model.particle_systems.index:
-            self.m3_set_struct_version('m3_particle_systems_version', self.m3[self.m3_model.particle_systems].desc.version)
+            self.m3_set_struct_version('m3_particlesystems_version', self.m3[self.m3_model.particle_systems].desc.version)
 
         m3_systems = self.m3[self.m3_model.particle_systems]
         m3_copies = self.m3[self.m3_model.particle_copies]
@@ -1164,7 +1164,7 @@ class Importer:
         for m3_copy in m3_copies:
             pose_bone_name = self.m3_get_bone_name(m3_copy.bone)
             pose_bone = ob.pose.bones.get(pose_bone_name)
-            copy = shared.m3_item_add(ob.m3_particle_copies, item_name=pose_bone_name)
+            copy = shared.m3_item_add(ob.m3_particlecopies, item_name=pose_bone_name)
             copy.bone = pose_bone.bl_handle if pose_bone else ''
             processor = M3InputProcessor(self, copy, m3_copy)
             io_shared.io_particle_copy(processor)
@@ -1172,7 +1172,7 @@ class Importer:
         for m3_system in m3_systems:
             pose_bone_name = self.m3_get_bone_name(m3_system.bone)
             pose_bone = ob.pose.bones.get(pose_bone_name)
-            system = shared.m3_item_add(ob.m3_particle_systems, item_name=pose_bone_name)
+            system = shared.m3_item_add(ob.m3_particlesystems, item_name=pose_bone_name)
             system.bone = pose_bone.bl_handle if pose_bone else ''
             system.material = ob.m3_materialrefs[self.matref_index(m3_system.material_reference_index)].bl_handle
             processor = M3InputProcessor(self, system, m3_system)
@@ -1189,7 +1189,7 @@ class Importer:
                 processor.anim_vec3('location')
 
             for m3_copy_index in self.m3[m3_system.copy_indices]:
-                copy = ob.m3_particle_copies[-len(m3_copies) + m3_copy_index]
+                copy = ob.m3_particlecopies[-len(m3_copies) + m3_copy_index]
                 system_user = copy.systems.add()
                 system_user.bl_handle = system.bl_handle
 
@@ -1348,6 +1348,27 @@ class Importer:
             joint.location2 = md[0]
             joint.rotation2 = md[1].to_euler('XYZ')
 
+            db1 = ob.data.bones.get(pose_bone1_name)
+            db2 = ob.data.bones.get(pose_bone2_name)
+
+            matrix1 = mathutils.Matrix.LocRotScale(None, None, None)
+            matrix1.col[0] = to_bl_vec4(m3_joint.matrix1.x).yzwx
+            matrix1.col[1] = to_bl_vec4(m3_joint.matrix1.y).yzwx
+            matrix1.col[2] = to_bl_vec4(m3_joint.matrix1.z).yzwx
+            matrix2 = mathutils.Matrix.LocRotScale(None, None, None)
+            matrix2.col[0] = to_bl_vec4(m3_joint.matrix2.x).yzwx
+            matrix2.col[1] = to_bl_vec4(m3_joint.matrix2.y).yzwx
+            matrix2.col[2] = to_bl_vec4(m3_joint.matrix2.z).yzwx
+            # print(matrix1)
+            # print(matrix2)
+            # print(matrix1.to_euler())
+            # print(matrix2.to_euler())
+            # print(db1.head, db2.head)
+            # print(db1.matrix_local.to_euler())
+            # print(db2.matrix_local.to_euler())
+            # print()
+            # print()
+
     def create_cloths(self):
         if not hasattr(self.m3_model, 'physics_cloths'):
             return
@@ -1430,6 +1451,20 @@ class Importer:
     def create_turrets(self):
         ob = self.ob
 
+        def to_m3_matrix(bl_matrix):
+
+            def to_m3_vec4(bl_vec=None):
+                m3_vec = io_m3.structures['VEC4'].get_version(0).instance()
+                m3_vec.x, m3_vec.y, m3_vec.z, m3_vec.w = bl_vec or (0.0, 0.0, 0.0, 0.0)
+                return m3_vec
+
+            m3_matrix = io_m3.structures['Matrix44'].get_version(0).instance()
+            m3_matrix.x = to_m3_vec4(bl_matrix.col[0])
+            m3_matrix.y = to_m3_vec4(bl_matrix.col[1])
+            m3_matrix.z = to_m3_vec4(bl_matrix.col[2])
+            m3_matrix.w = to_m3_vec4(bl_matrix.col[3])
+            return m3_matrix
+
         if self.m3_model.turret_parts.index:
             self.m3_set_struct_version('m3_turrets_part_version', self.m3[self.m3_model.turret_parts].desc.version)
 
@@ -1452,6 +1487,12 @@ class Importer:
                 forward_matrix.col[1] = to_bl_vec4(m3_part.matrix_forward.y).wyzx
                 forward_matrix.col[2] = to_bl_vec4(m3_part.matrix_forward.z).wyzx
                 part.forward = forward_matrix.to_euler()
+
+                # test_matrix = to_bl_matrix(m3_part.matrix_forward)
+                # db = self.ob.data.bones.get(pose_bone.name)
+                # print(db.matrix_local.to_quaternion())
+                # print(to_bl_quat(m3_part.quat_up0))
+                # print()
 
     def create_billboards(self):
         ob = self.ob

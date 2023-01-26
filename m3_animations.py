@@ -47,45 +47,42 @@ def anim_set(scene, ob, anim):
     if ob.m3_animations_default is None:
         ob.m3_animations_default = bpy.data.actions.new(ob.name + '_DEFAULTS')
 
-    if anim is None:
-        ob.animation_data.action = ob.m3_animations_default
-        scene.frame_set(0)
-    else:
-        old_action = ob.animation_data.action
-        old_props = set()
-        new_action = anim.action
-        new_props = set()
+    dft_action = ob.m3_animations_default
+    old_action = ob.animation_data.action  # can be None
+    new_action = anim.action if anim else None
 
-        if old_action is not None:
-            old_props = set([(fcurve.data_path, fcurve.array_index) for fcurve in old_action.fcurves])
+    dft_props = set([(fcurve.data_path, fcurve.array_index) for fcurve in dft_action.fcurves])
+    old_props = set([(fcurve.data_path, fcurve.array_index) for fcurve in old_action.fcurves]) if old_action else set()
+    new_props = set([(fcurve.data_path, fcurve.array_index) for fcurve in new_action.fcurves]) if new_action else set()
 
-        if new_action is not None:
-            new_props = set([(fcurve.data_path, fcurve.array_index) for fcurve in new_action.fcurves])
-
-        props = new_props.difference(old_props)
-
-        for prop in props:
+    for prop in new_props.difference(old_props):
+        try:
             val = ob.path_resolve(prop[0])
-            if type(val) not in [float, int, bool, None]:
+            if type(val) not in [float, int, bool]:
                 val = val[prop[1]]
-            if val is not None:
-                set_default_value(ob.m3_animations_default, prop[0], prop[1], val)
+            set_default_value(ob.m3_animations_default, prop[0], prop[1], val)
+        except ValueError:
+            pass  # fcurve data path is invalid
 
-        unanim_props = old_props.difference(new_props)
-        removed_default_props = set()
+    for prop in dft_props.difference(old_props, new_props):
+        try:
+            val = ob.path_resolve(prop[0])
+            if type(val) not in [float, int, bool]:
+                val = val[prop[1]]
+            set_default_value(ob.m3_animations_default, prop[0], prop[1], val)
+        except ValueError:
+            pass  # fcurve data path is invalid
 
-        for fcurve in ob.m3_animations_default.fcurves:
-            prop = (fcurve.data_path, fcurve.array_index)
-            if prop in unanim_props:
-                if ob.path_resolve(prop[0]) is None:
-                    removed_default_props.add(prop)
+    ob.animation_data.action = ob.m3_animations_default
 
-        for fcurve in [fcurve for fcurve in ob.m3_animations_default.fcurves if (fcurve.data_path, fcurve.array_index) in removed_default_props]:
-            ob.m3_animations_default.fcurves.remove(fcurve)
-
-        ob.animation_data.action = ob.m3_animations_default
+    if new_action:
         scene.frame_set(scene.frame_current)
         ob.animation_data.action = new_action
+    else:
+        if ob.m3_options.update_timeline:
+            scene.frame_start = 0
+            scene.frame_end = 1
+        scene.frame_set(0)
 
 
 # this function is exported to io_m3_import.py
@@ -106,10 +103,7 @@ def anim_group_update(self, context):
         else:
             ob.m3_animations_index = ob.m3_animations.find(shared.m3_pointer_get(ob.m3_animations, anim_group.animations[0].bl_handle).name)
 
-        if ob.m3_options.update_timeline:
-            bpy.context.scene.frame_start = anim_group.frame_start
-            bpy.context.scene.frame_current = anim_group.frame_start
-            bpy.context.scene.frame_end = anim_group.frame_end
+        anim_group_frame_update(self, context)
 
     else:
         ob.m3_animations_index = -1
@@ -123,7 +117,7 @@ def anim_group_frame_update(self, context):
         return
 
     bpy.context.scene.frame_start = anim_group.frame_start
-    bpy.context.scene.frame_end = anim_group.frame_end
+    bpy.context.scene.frame_end = anim_group.frame_end - 1
 
 
 def draw_animation_props(animation, layout):
@@ -210,7 +204,7 @@ class M3AnimationActionNewOp(bpy.types.Operator):
 
     def invoke(self, context, event):
         anim = context.object.m3_animations[context.object.m3_animations_index]
-        action = bpy.data.actions.new(name=anim.name)
+        action = bpy.data.actions.new(name='{} {}'.format(anim.id_data.name, anim.name))
         anim.action = action
         return {'FINISHED'}
 

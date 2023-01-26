@@ -133,35 +133,34 @@ def draw():
             for ii, vol in enumerate(item.volumes):
                 attach = item
                 item = vol
-                vol_pb = get_pb_from_handle(ob, item.bone, pb_handles)
-                if vol_pb:
-                    if opts.draw_attach_volumes or (pb_select[vol_pb] and opts.draw_selected):
-                        vol_pb_matrix = get_pb_world_matrix(ob, vol_pb, pb_to_world_matrix)
-                        col = blgd.att_point_color_normal if not pb_select[vol_pb] or ii != attach.volumes_index else blgd.att_point_color_select
-                        vol_post_matrix = mathutils.Matrix.LocRotScale(item.location, item.rotation, item.scale)
-                        vol_final_matrix = vol_pb_matrix.copy()
+                pb = get_pb_from_handle(ob, item.bone, pb_handles)
+                if pb:
+                    if opts.draw_attach_volumes or (pb_select[pb] and opts.draw_selected):
+                        col = blgd.att_point_color_normal if not pb_select[pb] or ii != attach.volumes_index else blgd.att_point_color_select
+                        pb_matrix = get_pb_world_matrix(ob, pb, pb_to_world_matrix)
+                        item_matrix = mathutils.Matrix.LocRotScale(item.location, item.rotation, item.scale)
                         if item.shape == 'CUBE':
-                            vol_final_matrix @= mathutils.Matrix.LocRotScale(None, None, (item.size[1], item.size[0], item.size[2]))
+                            volume_matrix = mathutils.Matrix.LocRotScale(None, None, (item.size[1], item.size[0], item.size[2]))
                             coords, indices = blgd.cube
                         elif item.shape == 'SPHERE':
-                            vol_final_matrix @= mathutils.Matrix.Scale(item.size[0], 4)
+                            volume_matrix = mathutils.Matrix.Scale(item.size[0], 4)
                             coords, indices = blgd.sphere
                         elif item.shape == 'CAPSULE':
+                            volume_matrix = mathutils.Matrix.Scale(1.0, 4)
                             coords, indices = blgd.init_capsule(item.size[0], item.size[1])
                         elif item.shape == 'CYLINDER':
-                            vol_final_matrix @= mathutils.Matrix.LocRotScale(None, None, (item.size[0], item.size[0], item.size[2]))
+                            volume_matrix = mathutils.Matrix.LocRotScale(None, None, (item.size[0], item.size[0], item.size[1]))
                             coords, indices = blgd.cylinder
                         elif item.shape == 'MESH':
                             # TODO cache coords and indices per object that is used as volume shape
                             if not item.mesh_object:
                                 continue
-                            vol_final_matrix @= rot_fix_matrix_transpose
+                            volume_matrix = rot_fix_matrix_transpose
                             coords = [vert.co for vert in item.mesh_object.data.vertices]
                             indices = [edge.vertices for edge in item.mesh_object.data.edges]
 
-                        vol_final_matrix @= bone_to_inv_bind_scale_matrix[vol_pb] @ vol_post_matrix
-
-                        coords = get_transformed_coords(coords, vol_final_matrix)
+                        final_matrix = pb_matrix @ item_matrix @ bone_to_inv_bind_scale_matrix[pb] @ volume_matrix
+                        coords = get_transformed_coords(coords, final_matrix)
                         batch_uni_polyline(coords, indices, col)
 
         for item in [item for item in ob.m3_hittests] + [ob.m3_hittest_tight]:
@@ -171,27 +170,28 @@ def draw():
                     continue
 
                 pb_matrix = get_pb_world_matrix(ob, pb, pb_to_world_matrix)
+                item_matrix = mathutils.Matrix.LocRotScale(item.location, item.rotation, item.scale)
                 col = blgd.hittest_color_normal if not pb_select[pb] else blgd.hittest_color_select
-                final_matrix = pb_matrix.copy()
                 if item.shape == 'CUBE':
-                    final_matrix @= mathutils.Matrix.LocRotScale(None, None, (item.size[1], item.size[0], item.size[2]))
+                    volume_matrix = mathutils.Matrix.LocRotScale(None, None, (item.size[1], item.size[0], item.size[2]))
                     coords, indices = blgd.cube
                 elif item.shape == 'SPHERE':
-                    final_matrix @= mathutils.Matrix.Scale(item.size[0], 4)
+                    volume_matrix = mathutils.Matrix.Scale(item.size[0], 4)
                     coords, indices = blgd.sphere
                 elif item.shape == 'CAPSULE':
+                    volume_matrix = mathutils.Matrix.Scale(1.0, 4)
                     coords, indices = blgd.init_capsule(item.size[0], item.size[1])
                 elif item.shape == 'CYLINDER':
-                    final_matrix @= mathutils.Matrix.LocRotScale(None, None, (item.size[0], item.size[0], item.size[2]))
+                    volume_matrix = mathutils.Matrix.LocRotScale(None, None, (item.size[0], item.size[0], item.size[1]))
                     coords, indices = blgd.cylinder
                 elif item.shape == 'MESH':
                     if not item.mesh_object:
                         continue
-                    final_matrix @= rot_fix_matrix_transpose
+                    volume_matrix = rot_fix_matrix_transpose
                     coords = [vert.co for vert in item.mesh_object.data.vertices]
                     indices = [edge.vertices for edge in item.mesh_object.data.edges]
 
-                final_matrix @= bone_to_inv_bind_scale_matrix[pb] @ mathutils.Matrix.LocRotScale(item.location, item.rotation, item.scale)
+                final_matrix = pb_matrix @ item_matrix @ bone_to_inv_bind_scale_matrix[pb] @ volume_matrix
                 coords = get_transformed_coords(coords, final_matrix)
                 batch_uni_polyline(coords, indices, col)
 
@@ -202,21 +202,21 @@ def draw():
                     continue
 
                 col = blgd.light_color_normal if not pb_select[pb] else blgd.light_color_select
-                final_matrix = get_pb_world_matrix(ob, pb, pb_to_world_matrix)
+                pb_matrix = get_pb_world_matrix(ob, pb, pb_to_world_matrix)
                 if item.shape == 'POINT':
-                    final_matrix @= mathutils.Matrix.Scale(item.attenuation_far, 4)
+                    volume_matrix = mathutils.Matrix.Scale(item.attenuation_far, 4)
                     coords, indices = blgd.sphere
                 elif item.shape == 'SPOT':
-                    final_matrix @= mathutils.Matrix.LocRotScale(None, None, (item.attenuation_far, item.attenuation_far, item.falloff))
+                    volume_matrix = mathutils.Matrix.LocRotScale(None, None, (item.attenuation_far, item.attenuation_far, item.falloff))
                     coords, indices = blgd.cone
 
-                final_matrix @= bone_to_inv_bind_scale_matrix[pb]
+                final_matrix = pb_matrix @ bone_to_inv_bind_scale_matrix[pb] @ volume_matrix
                 coords = get_transformed_coords(coords, final_matrix)
                 batch_uni_polyline(coords, indices, col)
 
         handle_to_par_data = {}
 
-        for item in ob.m3_particle_systems:
+        for item in ob.m3_particlesystems:
             pb = get_pb_from_handle(ob, item.bone, pb_handles)
             if pb:
                 pb_matrix = get_pb_world_matrix(ob, pb, pb_to_world_matrix)
@@ -260,7 +260,7 @@ def draw():
                         par_cutout_matrix = mathutils.Matrix.LocRotScale(None, None, (size_cutout[1], size_cutout[0], size_cutout[2]))
                 elif item.emit_shape == 'CYLINDER':
                     coords, indices = blgd.cylinder
-                    par_matrix = mathutils.Matrix.LocRotScale(None, None, (radius, radius, size[2]))
+                    par_matrix = mathutils.Matrix.LocRotScale(None, None, (radius, radius, size[1]))
                     if item.emit_shape_cutout:
                         par_cutout_matrix = mathutils.Matrix.LocRotScale(None, None, (radius_cutout, radius_cutout, size_cutout[2]))
                 elif item.emit_shape == 'DISC':
@@ -292,7 +292,7 @@ def draw():
                     par_cutout_coords = get_transformed_coords(coords, final_matrix)
                     batch_uni_polyline(par_cutout_coords, indices, col)
 
-        for item in ob.m3_particle_copies:
+        for item in ob.m3_particlecopies:
             pb = get_pb_from_handle(ob, item.bone, pb_handles)
             if pb and len(item.systems):
                 if not opts.draw_particles and not (pb_select[pb] and opts.draw_selected):
@@ -362,7 +362,7 @@ def draw():
                 elif item.shape == 'CONEDOME':
                     coords, indices = blgd.init_cone_dome(item.width, item.height)
 
-                final_matrix @= bone_to_inv_bind_scale_matrix[pb]
+                final_matrix = pb_matrix @ bone_to_inv_bind_scale_matrix[pb]
                 coords = get_transformed_coords(coords, final_matrix)
                 batch_uni_polyline(coords, indices, col)
 
@@ -396,34 +396,29 @@ def draw():
                     handle_to_physics_shape_data[physics_shape.bl_handle] = {}
                     for ii, item in enumerate(physics_shape.volumes):
                         col = blgd.physics_color_normal if not pb_select[pb] or ii != physics_shape.volumes_index else blgd.physics_color_select
-                        vol_matrix = None
+                        item_matrix = mathutils.Matrix.LocRotScale(item.location, item.rotation, item.scale)
                         if item.shape == 'CUBE':
-                            vol_matrix = mathutils.Matrix.LocRotScale(None, None, (item.size[1], item.size[0], item.size[2]))
+                            volume_matrix = mathutils.Matrix.LocRotScale(None, None, (item.size[1], item.size[0], item.size[2]))
                             coords, indices = blgd.cube
                         elif item.shape == 'SPHERE':
-                            vol_matrix = mathutils.Matrix.Scale(item.size[0], 4)
+                            volume_matrix = mathutils.Matrix.Scale(item.size[0], 4)
                             coords, indices = blgd.sphere
                         elif item.shape == 'CAPSULE':
                             coords, indices = blgd.init_capsule(item.size[0], item.size[1])
                         elif item.shape == 'CYLINDER':
-                            vol_matrix = mathutils.Matrix.LocRotScale(None, None, (item.size[0], item.size[0], item.size[2]))
+                            volume_matrix = mathutils.Matrix.LocRotScale(None, None, (item.size[0], item.size[0], item.size[1]))
                             coords, indices = blgd.cylinder
                         elif item.shape == 'MESH' or item.shape == 'CONVEXHULL':
                             # TODO display actual convex hull of mesh if it is not convex when shape is CONVEXHULL
                             if not item.mesh_object:
                                 continue
-                            vol_matrix = rot_fix_matrix_transpose
+                            volume_matrix = rot_fix_matrix_transpose
                             coords = [vert.co for vert in item.mesh_object.data.vertices]
                             indices = [edge.vertices for edge in item.mesh_object.data.edges]
 
-                        if vol_matrix:
-                            vol_matrix @= mathutils.Matrix.LocRotScale(item.location, item.rotation, item.scale)
-                        else:
-                            vol_matrix = mathutils.Matrix.LocRotScale(item.location, item.rotation, item.scale)
+                        handle_to_physics_shape_data[physics_shape.bl_handle][ii] = (coords, indices, item_matrix, volume_matrix)
 
-                        handle_to_physics_shape_data[physics_shape.bl_handle][ii] = (coords, indices, vol_matrix)
-
-                        final_matrix = pb_matrix @ bone_to_inv_bind_scale_matrix[pb] @ vol_matrix
+                        final_matrix = pb_matrix @ item_matrix @ bone_to_inv_bind_scale_matrix[pb] @ volume_matrix
                         coords = get_transformed_coords(coords, final_matrix)
                         batch_uni_polyline(coords, indices, col)
                 else:
@@ -431,7 +426,7 @@ def draw():
                         if not item:
                             continue
                         col = blgd.physics_color_normal if not pb_select[pb] or ii != shape.volumes_index else blgd.physics_color_select
-                        final_matrix = pb_matrix @ bone_to_inv_bind_scale_matrix[pb] @ item[2]
+                        final_matrix = pb_matrix @ item[2] @ bone_to_inv_bind_scale_matrix[pb] @ item[3]
                         coords = get_transformed_coords(item[0], final_matrix)
                         batch_uni_polyline(coords, item[1], col)
 
@@ -448,8 +443,9 @@ def draw():
                     # TODO something is wrong with this matrix
 
                     pb_matrix = get_pb_world_matrix(ob, pb, pb_to_world_matrix)
+                    item_matrix = mathutils.Matrix.LocRotScale(item.location, item.rotation, item.scale)
                     col = blgd.cloth_color_normal if not pb_select[pb] else blgd.cloth_color_select
-                    final_matrix = pb_matrix @ bone_to_inv_bind_scale_matrix[pb] @ mathutils.Matrix.LocRotScale(item.location, item.rotation, item.scale)
+                    final_matrix = pb_matrix @ item_matrix @ bone_to_inv_bind_scale_matrix[pb]
                     coords, indices = blgd.init_capsule(item.radius, item.height)
                     coords = get_transformed_coords(coords, final_matrix)
                     batch_uni_polyline(coords, indices, col)
@@ -479,8 +475,9 @@ def draw():
                     continue
 
                 col = blgd.shbx_color_normal if not pb_select[pb] else blgd.shbx_color_select
-                final_matrix = get_pb_world_matrix(ob, pb, pb_to_world_matrix)
-                final_matrix @= mathutils.Matrix.LocRotScale(None, None, (item.width, item.length, item.height))
+                pb_matrix = get_pb_world_matrix(ob, pb, pb_to_world_matrix)
+                volume_matrix = mathutils.Matrix.LocRotScale(None, None, (item.width, item.length, item.height))
+                final_matrix = pb_matrix @ bone_to_inv_bind_scale_matrix[pb] @ volume_matrix
                 coords, indices = blgd.cube
                 coords = get_transformed_coords(coords, final_matrix)
                 batch_uni_polyline(coords, indices, col)
@@ -497,15 +494,21 @@ def draw():
                 coords = get_transformed_coords(coords, final_matrix)
                 batch_uni_polyline(coords, indices, col)
 
-        yaw_rot = mathutils.Euler((0.0, 0.0, -1.570796132))
-        pitch_rot = mathutils.Euler((-1.570796132, 3.141592741, 1.570796132))
-
         for turret in ob.m3_turrets:
             for item in turret.parts:
                 pb = get_pb_from_handle(ob, item.bone, pb_handles)
                 if pb:
                     if not opts.draw_turrets and not (pb_select[pb] and opts.draw_selected):
                         continue
+
+                    yaw_rot = mathutils.Euler(item.forward)
+                    yaw_rot[1] -= 1.570796132
+                    yaw_rot[2] -= 1.570796132
+
+                    pitch_rot = mathutils.Euler(item.forward)
+                    pitch_rot[0] -= 1.570796132
+                    pitch_rot[1] += 1.570796132
+                    pitch_rot[2] += 1.570796132
 
                     if item.yaw_weight:
                         col = blgd.turret_yaw_color_normal if not pb_select[pb] else blgd.turret_yaw_color_select

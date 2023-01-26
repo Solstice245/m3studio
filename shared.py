@@ -40,8 +40,8 @@ m3_collections_suggested_names = {
     'm3_lights': ['Light'],
     'm3_materiallayers': ['Layer'],
     'm3_materialrefs': ['Material'],
-    'm3_particle_systems': ['Particle System'],
-    'm3_particle_copies': ['Particle Copy'],
+    'm3_particlesystems': ['Particle System'],
+    'm3_particlecopies': ['Particle Copy'],
     'm3_cloths': ['Cloth'],
     'm3_clothconstraintsets': ['Cloth Constraint Set'],
     'm3_physicsshapes': ['Physics Shape'],
@@ -141,7 +141,7 @@ def m3_item_duplicate(collection, src, dup_action_keyframes, dst_collection=None
         elif str(type(prop)) == '<class \'bpy_prop_collection_idprop\'>':
             for item in prop:
                 m3_item_duplicate(prop, item, dup_action_keyframes, dst_collection=getattr(dst, key))
-        else:
+        elif key != 'name':
             setattr(dst, key, prop)
 
             rna_props = src.bl_rna.properties[key]
@@ -170,8 +170,8 @@ def m3_item_duplicate(collection, src, dup_action_keyframes, dst_collection=None
                     dst_fcurve.keyframe_points.foreach_set('interpolation', src_interps)
                     dst_fcurve.keyframe_points.foreach_set('type', src_types)
 
-    dst.name = ''
-    dst.name = m3_item_get_name(dst_collection, src.name if not src.name.isdigit() else '', suggest=False)
+    dst['name'] = ''
+    dst['name'] = m3_item_get_name(dst_collection, src.name if not src.name.isdigit() else '', suggest=False)
 
     if dup_action_keyframes:
         # for some reason fcurve values are only properly displayed once animation view is updated manually

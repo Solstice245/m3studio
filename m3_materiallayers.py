@@ -159,7 +159,7 @@ class Properties(shared.M3PropertyGroup):
     fresnel_pitch: bpy.props.FloatProperty(subtype='ANGLE', options=set())
     fresnel_local_transform: bpy.props.BoolProperty(options=set(), default=False)
     fresnel_do_not_mirror: bpy.props.BoolProperty(options=set(), default=False)
-    video_channel: bpy.props.EnumProperty(items=bl_enum.rtt_channel, options=set())
+    video_channel: bpy.props.EnumProperty(items=bl_enum.rtt_channel, options=set(), default='NONE')
     video_frame_rate: bpy.props.IntProperty(options=set(), min=0, default=24)
     video_frame_start: bpy.props.IntProperty(options=set(), min=0, default=0)
     video_frame_end: bpy.props.IntProperty(options=set(), min=-1, default=-1)

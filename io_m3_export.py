@@ -562,7 +562,7 @@ class Exporter:
         export_shadow_boxes = valid_collections_and_requirements(ob.m3_shadowboxes)
         export_cameras = valid_collections_and_requirements(ob.m3_cameras)
         export_material_references = valid_collections_and_requirements(ob.m3_materialrefs)
-        export_particle_systems = valid_collections_and_requirements(ob.m3_particle_systems)
+        export_particle_systems = valid_collections_and_requirements(ob.m3_particlesystems)
         export_particle_copies = []  # handled specially
         export_ribbons = valid_collections_and_requirements(ob.m3_ribbons)
         export_ribbon_splines = []  # handled specially
@@ -597,7 +597,7 @@ class Exporter:
             if ribbon.vertex_alpha:
                 self.vertex_alpha_mats.add(ribbon.material)
 
-        for copy in ob.m3_particle_copies:
+        for copy in ob.m3_particlecopies:
             if not copy.m3_export:
                 continue
             copy_bone = shared.m3_pointer_get(ob.pose.bones, copy.bone)
@@ -872,7 +872,7 @@ class Exporter:
         self.create_shadow_boxes(model, export_shadow_boxes)
         self.create_cameras(model, export_cameras)
         self.create_materials(model, export_material_references, material_versions)  # TODO test volume, volume noise and stb material types
-        self.create_particle_systems(model, export_particle_systems, export_particle_copies, version=ob.m3_particle_systems_version)
+        self.create_particle_systems(model, export_particle_systems, export_particle_copies, version=ob.m3_particlesystems_version)
         self.create_ribbons(model, export_ribbons, export_ribbon_splines, version=ob.m3_ribbons_version)
         self.create_projections(model, export_projections)
         self.create_forces(model, export_forces)
@@ -895,7 +895,8 @@ class Exporter:
         self.m3.to_index()
 
         # place armature back into the pose that it was before
-        anim_set(self.scene, self.ob, self.ob.m3_animations[self.ob.m3_animations_index])
+        if len(self.ob.m3_animations):
+            anim_set(self.scene, self.ob, self.ob.m3_animations[self.ob.m3_animations_index])
         self.ob.animation_data.action = self.init_action
         self.scene.frame_current = self.init_frame
 
@@ -1088,13 +1089,14 @@ class Exporter:
                 sts = sts_section.content_add()
                 ids_section.references.append(getattr(sts, 'anim_ids'))
 
-        # offseting the position the given amount assuming model unknown reference is unused
-        section_pos = self.m3.index(self.stg_last_indice_section) + 1
-        self.m3.insert(section_pos, sts_section)
-        section_pos += 1
-        for ids_section in ids_sections:
-            self.m3.insert(section_pos, ids_section)
+        if self.action_to_stc:
+            # offseting the position the given amount assuming model unknown reference is unused
+            section_pos = self.m3.index(self.stg_last_indice_section) + 1
+            self.m3.insert(section_pos, sts_section)
             section_pos += 1
+            for ids_section in ids_sections:
+                self.m3.insert(section_pos, ids_section)
+                section_pos += 1
 
     def create_bones(self, model):
         if not self.bones:
@@ -1321,7 +1323,7 @@ class Exporter:
             layer_alpha = bm.loops.layers.color.get('m3alpha')
             layers_uv = bm.loops.layers.uv.values()
             layer_tan = layers_uv[0]
-            layer_sign = bm.faces.layers.int.get('m3sign') or bm.verts.layers.int.new('m3sign')
+            layer_sign = bm.faces.layers.int.get('m3sign') or bm.faces.layers.int.new('m3sign')
 
             first_vertex_index = len(m3_vertices)
             first_face_index = len(m3_faces)
@@ -1435,11 +1437,9 @@ class Exporter:
                 m3_batch = batch_section.content_add()
                 m3_batch.region_index = len(region_section) - 1
                 m3_batch.material_reference_index = self.matref_handle_indices[batch.material]
-
                 bone = shared.m3_pointer_get(self.ob.pose.bones, batch.bone)
                 m3_batch.bone = self.bone_name_indices[bone.name] if bone else -1
 
-        # TODO more testing on when this is applicable is needed
         # this prevents the multi-batch mesh hack from crashing the game
         if len(mesh_objects) == 1 and len(batch_section) > 1:
             vertices_len = len(m3_vertices)
@@ -1452,10 +1452,12 @@ class Exporter:
             extra_region.first_vertex_index = vertices_len
             extra_region.vertex_count = 3
             extra_region.first_face_index = faces_len
-            extra_region.face_count = 1
+            extra_region.face_count = 3
             extra_region.bone_lookup_count = 0
             extra_region.vertex_lookups_used = 0
             extra_region.root_bone = 0
+            m3_batch = batch_section.content_add()
+            m3_batch.region_index = len(region_section) - 1
 
         self.bone_bound_vecs = {}
 
@@ -2052,41 +2054,47 @@ class Exporter:
 
         base_quat = mathutils.Quaternion((0.0, 0.0, -1.0), 1.5707961320877075)
 
-        group_id_to_parts = {}
-        group_id_to_parts_flat = []
-        group_id_to_main_bone = {}
+        # sort parts by their bone index
+        part_to_bone_index = {self.bone_name_indices[shared.m3_pointer_get(self.ob.pose.bones, part.bone).name]: part for part in self.export_turret_parts}
+        turret_parts_index = []
+        group_id_main_bone = {}
 
         for part in self.export_turret_parts:
-            try:
-                group_id_to_parts[part.group_id].append(part)
-            except KeyError:
-                group_id_to_parts[part.group_id] = [part]
             if part.main_part:
-                group_id_to_main_bone[part.group_id] = shared.m3_pointer_get(self.ob.pose.bones, part.bone)
+                group_id_main_bone[part.group_id] = shared.m3_pointer_get(self.ob.pose.bones, part.bone)
 
-        for group_id in group_id_to_parts:
-            for part in group_id_to_parts[group_id]:
-                group_id_to_parts_flat.append(part)
+        for bone_index in sorted(list(part_to_bone_index.keys())):
+            part = part_to_bone_index[bone_index]
+            turret_parts_index.append(part)
 
-                bone = shared.m3_pointer_get(self.ob.pose.bones, part.bone)
-                m3_part = turret_part_section.content_add()
-                m3_part.bone = self.bone_name_indices[bone.name]
-                processor = M3OutputProcessor(self, part, m3_part)
-                io_shared.io_turret_part(processor)
+            bone = shared.m3_pointer_get(self.ob.pose.bones, part.bone)
+            m3_part = turret_part_section.content_add()
+            m3_part.bone = self.bone_name_indices[bone.name]
+            processor = M3OutputProcessor(self, part, m3_part)
+            io_shared.io_turret_part(processor)
 
-                forward_mat = mathutils.Euler(part.forward).to_quaternion().to_matrix().to_4x4()
-                m3_part.matrix_forward.x = to_m3_vec4(forward_mat.col[0].yzxw)
-                m3_part.matrix_forward.y = to_m3_vec4(forward_mat.col[1].yzxw)
-                m3_part.matrix_forward.z = to_m3_vec4(forward_mat.col[2].yzxw)
-                m3_part.matrix_forward.w = to_m3_vec4((0.0, 0.0, 0.0, 1.0))
+            forward_mat = mathutils.Euler(part.forward).to_quaternion().to_matrix().to_4x4()
+            # m3_part.matrix_forward.x = to_m3_vec4(forward_mat.col[0].yzxw)
+            # m3_part.matrix_forward.y = to_m3_vec4(forward_mat.col[1].yzxw)
+            # m3_part.matrix_forward.z = to_m3_vec4(forward_mat.col[2].yzxw)
+            # m3_part.matrix_forward.w = to_m3_vec4((0.0, 0.0, 0.0, 1.0))
 
-                db = self.ob.data.bones.get(bone.name)
-                m3_part.quat_up0 = to_m3_vec4_quat(db.matrix_local.to_quaternion().rotation_difference(base_quat))
-                m3_part.quat_up1 = to_m3_vec4_quat()
+            m3_part.matrix_forward = to_m3_matrix(forward_mat)
 
-                if group_id_to_main_bone.get(part.group_id) and not part.main_part:
-                    mdb = self.ob.data.bones.get(group_id_to_main_bone[part.group_id].name)
-                    m3_part.main_bone_offset = to_m3_vec3(db.matrix_local.translation - mdb.matrix_local.translation)
+            db = self.ob.data.bones.get(bone.name)
+
+            if db.parent:
+                upquat = to_m3_vec4_quat(db.matrix_local.to_quaternion().rotation_difference(db.parent.matrix_local.transposed().to_quaternion()))
+            # else:
+            #     m3_part.quat_up0 = to_m3_vec4_quat(db.matrix_local.to_quaternion().rotation_difference(base_quat))
+
+            m3_part.quat_up1 = to_m3_vec4_quat()
+
+            if group_id_main_bone.get(part.group_id) and not part.main_part:
+                mdb = self.ob.data.bones.get(group_id_main_bone[part.group_id].name)
+                m3_part.main_bone_offset = to_m3_vec3(db.matrix_local.translation - mdb.matrix_local.translation)
+            else:
+                m3_part.bit_set('flags', 'main_part', True)
 
         for turret in turrets:
             m3_turret = turret_section.content_add()
@@ -2096,7 +2104,7 @@ class Exporter:
 
             for part in turret.parts:
                 try:
-                    m3_turret_part_index_section.content_add(group_id_to_parts_flat.index(part))
+                    m3_turret_part_index_section.content_add(turret_parts_index.index(part))
                 except ValueError:
                     pass  # part is not in self.export_turret_parts
 

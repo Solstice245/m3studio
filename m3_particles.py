@@ -22,11 +22,11 @@ from . import bl_enum
 
 
 def register_props():
-    bpy.types.Object.m3_particle_systems = bpy.props.CollectionProperty(type=SystemProperties)
-    bpy.types.Object.m3_particle_systems_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
-    bpy.types.Object.m3_particle_systems_version = bpy.props.EnumProperty(options=set(), items=particle_system_versions, default='24')
-    bpy.types.Object.m3_particle_copies = bpy.props.CollectionProperty(type=CopyProperties)
-    bpy.types.Object.m3_particle_copies_index = bpy.props.IntProperty(options=set(), default=-1, update=update_copy_collection_index)
+    bpy.types.Object.m3_particlesystems = bpy.props.CollectionProperty(type=SystemProperties)
+    bpy.types.Object.m3_particlesystems_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
+    bpy.types.Object.m3_particlesystems_version = bpy.props.EnumProperty(options=set(), items=particle_system_versions, default='24')
+    bpy.types.Object.m3_particlecopies = bpy.props.CollectionProperty(type=CopyProperties)
+    bpy.types.Object.m3_particlecopies_index = bpy.props.IntProperty(options=set(), default=-1, update=update_copy_collection_index)
 
 
 # TODO UI stuff
@@ -45,14 +45,14 @@ particle_system_versions = (
 
 
 def update_collection_index(self, context):
-    if self.m3_particle_systems_index in range(len(self.m3_particle_systems)):
-        bl = self.m3_particle_systems[self.m3_particle_systems_index]
+    if self.m3_particlesystems_index in range(len(self.m3_particlesystems)):
+        bl = self.m3_particlesystems[self.m3_particlesystems_index]
         shared.select_bones_handles(context.object, [bl.bone])
 
 
 def update_copy_collection_index(self, context):
-    if self.m3_particle_copies_index in range(len(self.m3_particle_copies)):
-        bl = self.m3_particle_copies[self.m3_particle_copies_index]
+    if self.m3_particlecopies_index in range(len(self.m3_particlecopies)):
+        bl = self.m3_particlecopies[self.m3_particlecopies_index]
         shared.select_bones_handles(context.object, [bl.bone])
 
 
@@ -62,7 +62,7 @@ def draw_copy_props(copy, layout):
     shared.draw_prop_anim(col, copy, 'emit_rate', text='Emission Rate')
     shared.draw_prop_anim(col, copy, 'emit_count', text='Emission Amount')
     layout.separator()
-    shared.draw_handle_list(layout.box(), copy.id_data.m3_particle_systems, copy, 'systems', label='Particle System')
+    shared.draw_handle_list(layout.box(), copy.id_data.m3_particlesystems, copy, 'systems', label='Particle System')
 
 
 def draw_props(particle, layout):
@@ -253,7 +253,7 @@ def draw_props(particle, layout):
     sub.prop(particle, 'uv_flipbook_start_lifespan_factor', text='Phase 1 Length')
     col = layout.column(align=True)
     col.separator()
-    shared.draw_prop_pointer(col, particle.id_data.m3_particle_systems, particle, 'trail_particle', label='Trailing Particle', icon='LINKED')
+    shared.draw_prop_pointer(col, particle.id_data.m3_particlesystems, particle, 'trail_particle', label='Trailing Particle', icon='LINKED')
     col.prop(particle, 'trail_chance', text='Chance')
     shared.draw_prop_anim(col, particle, 'trail_rate', text='Rate')
     col = layout.column()
@@ -445,35 +445,35 @@ class SystemProperties(shared.M3BoneUserPropertyGroup):
 
 
 class SystemMenu(bpy.types.Menu):
-    bl_idname = 'OBJECT_MT_m3_particle_systems'
+    bl_idname = 'OBJECT_MT_m3_particlesystems'
     bl_label = 'Menu'
 
     def draw(self, context):
-        shared.draw_menu_duplicate(self.layout, context.object.m3_particle_systems, dup_keyframes_opt=True)
+        shared.draw_menu_duplicate(self.layout, context.object.m3_particlesystems, dup_keyframes_opt=True)
 
 
 class CopyMenu(bpy.types.Menu):
-    bl_idname = 'OBJECT_MT_m3_particle_copies'
+    bl_idname = 'OBJECT_MT_m3_particlecopies'
     bl_label = 'Menu'
 
     def draw(self, context):
-        shared.draw_menu_duplicate(self.layout, context.object.m3_particle_copies, dup_keyframes_opt=True)
+        shared.draw_menu_duplicate(self.layout, context.object.m3_particlecopies, dup_keyframes_opt=True)
 
 
 class CopyPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
-    bl_idname = 'OBJECT_PT_m3_particle_copies'
+    bl_idname = 'OBJECT_PT_m3_particlecopies'
     bl_label = 'M3 Particle Copies'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, context.object.m3_particle_copies, draw_copy_props, menu_id=CopyMenu.bl_idname)
+        shared.draw_collection_list(self.layout, context.object.m3_particlecopies, draw_copy_props, menu_id=CopyMenu.bl_idname)
 
 
 class SystemPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
-    bl_idname = 'OBJECT_PT_m3_particle_systems'
+    bl_idname = 'OBJECT_PT_m3_particlesystems'
     bl_label = 'M3 Particle Systems'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, context.object.m3_particle_systems, draw_props, menu_id=SystemMenu.bl_idname)
+        shared.draw_collection_list(self.layout, context.object.m3_particlesystems, draw_props, menu_id=SystemMenu.bl_idname)
 
 
 classes = (

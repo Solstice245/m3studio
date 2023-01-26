@@ -96,7 +96,7 @@ def io_material_displacement(processor):
 
 
 def io_material_composite(processor):
-    processor.integer('unknown00')
+    processor.integer('priority')
 
 
 def io_material_composite_section(processor):

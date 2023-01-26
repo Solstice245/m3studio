@@ -90,11 +90,11 @@ class StandardProperties(shared.M3PropertyGroup):
     layer_norm_blend2: bpy.props.StringProperty(options=set())
 
     priority: bpy.props.IntProperty(options=set())
-    blend_mode: bpy.props.EnumProperty(options=set(), items=bl_enum.mat_blend)
-    layr_blend_mode: bpy.props.EnumProperty(options=set(), items=bl_enum.mat_layer_blend)
-    emis_blend_mode: bpy.props.EnumProperty(options=set(), items=bl_enum.mat_layer_blend)
-    emis_mode: bpy.props.EnumProperty(options=set(), items=bl_enum.mat_layer_blend)
-    spec_mode: bpy.props.EnumProperty(options=set(), items=bl_enum.mat_spec)
+    blend_mode: bpy.props.EnumProperty(options=set(), items=bl_enum.mat_blend, default='OPAQUE')
+    layr_blend_mode: bpy.props.EnumProperty(options=set(), items=bl_enum.mat_layer_blend, default='ADD')
+    emis_blend_mode: bpy.props.EnumProperty(options=set(), items=bl_enum.mat_layer_blend, default='ADD')
+    emis_mode: bpy.props.EnumProperty(options=set(), items=bl_enum.mat_layer_blend, default='ADD')
+    spec_mode: bpy.props.EnumProperty(options=set(), items=bl_enum.mat_spec, default='RGB')
     specularity: bpy.props.FloatProperty(options=set(), min=0, default=20)
     depth_blend_falloff: bpy.props.FloatProperty(options=set())
     cutout_threshold: bpy.props.IntProperty(options=set(), subtype='FACTOR', min=0, max=255)
@@ -139,7 +139,7 @@ class StandardProperties(shared.M3PropertyGroup):
     depth_prepass_low_required: bpy.props.BoolProperty(options=set())
     no_highlighting: bpy.props.BoolProperty(options=set())
     clamp_output: bpy.props.BoolProperty(options=set())
-    geometry_visible: bpy.props.BoolProperty(options=set())
+    geometry_visible: bpy.props.BoolProperty(options=set(), default=True)
 
 
 class DisplacementProperties(shared.M3PropertyGroup):
@@ -162,7 +162,7 @@ class CompositeProperties(shared.M3PropertyGroup):
     name: bpy.props.StringProperty(options=set(), get=get_material_name)
     sections: bpy.props.CollectionProperty(type=CompositeSectionProperties)
     sections_index: bpy.props.IntProperty(options=set(), default=-1)
-    unknown00: bpy.props.IntProperty(options=set(), min=0)
+    priority: bpy.props.IntProperty(options=set(), min=0)
 
 
 class TerrainProperties(shared.M3PropertyGroup):
@@ -383,14 +383,13 @@ def draw_standard_props(context, material, layout):
     col.prop(material, 'transparent_local_lights', text='Transparent Local Lights')
     col.prop(material, 'disable_soft', text='Soft Lighting', invert_checkbox=True)
     col.prop(material, 'double_lambert', text='Double Lambert')
-    col.prop(material, 'hair_layer_sorting', text='Hair Layer Sorting')
+    # col.prop(material, 'hair_layer_sorting', text='Hair Layer Sorting')  # ? unsupported
     col.prop(material, 'accept_splats', text='Accept Splats')
     col.prop(material, 'accept_splats_only', text='Accept Splats Only')
     col.prop(material, 'background_object', text='Background Object')
     col.prop(material, 'no_highlighting', text='Highlightable', invert_checkbox=True)
     col.prop(material, 'clamp_output', text='Clamp Output')
     col.prop(material, 'geometry_visible', text='Geometry Visible')
-    col.prop(material, 'depth_prepass_low_required', text='Depth Prepass Low Required')
     layout.separator()
     layout.label(text='Required on low end:')
     row = layout.row()
@@ -398,10 +397,13 @@ def draw_standard_props(context, material, layout):
     split = row.split(factor=1/3)
     col = split.column()
     col.alignment = 'LEFT'
-    col.prop(material, 'decal_low_required', text='Decal')
+    col.prop(material, 'depth_prepass_low_required', text='Depth Prepass')
     col = split.column()
     col.alignment = 'LEFT'
-    col.prop(material, 'spec_low_required', text='Specular')
+    col.prop(material, 'decal_low_required', text='Decal')
+    # col = split.column()
+    # col.alignment = 'LEFT'
+    # col.prop(material, 'spec_low_required', text='Specular')  # ? unsupported
     col = split.column()
     col.alignment = 'LEFT'
     col.prop(material, 'emis_low_required', text='Emissive')
@@ -416,7 +418,7 @@ def draw_displacement_props(context, material, layout):
 
 
 def draw_composite_props(context, material, layout):
-    layout.prop(material, 'unknown00', text='Unknown Value')
+    layout.prop(material, 'priority', text='Priority')
     box = layout.box()
     box.use_property_split = False
     op = box.operator('m3.collection_add', text='Add Material Reference')

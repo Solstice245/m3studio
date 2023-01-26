@@ -78,7 +78,7 @@ def set_bone_hex_id(self, value, prop):
         try:
             self[prop] = hex(int(value, 16))[2:]
         except ValueError:
-            self[prop] = shared.m3_anim_id_get()
+            self[prop] = shared.m3_anim_id_gen()
     else:
         locker = self.id_data.m3_bone_id_lockers.add()
         locker.bone = self.bl_handle

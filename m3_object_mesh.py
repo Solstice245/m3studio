@@ -224,7 +224,7 @@ class Panel(bpy.types.Panel):
         layout = self.layout
         layout.use_property_split = True
         ob = context.object
-        parent = ob.parent if ob.parent.type == 'ARMATURE' else None
+        parent = ob.parent if ob.parent and ob.parent.type == 'ARMATURE' else None
 
         layout.prop(ob, 'm3_mesh_export', text='Export To M3')
 
