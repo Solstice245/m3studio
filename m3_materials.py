@@ -92,14 +92,14 @@ class StandardProperties(shared.M3PropertyGroup):
     priority: bpy.props.IntProperty(options=set())
     blend_mode: bpy.props.EnumProperty(options=set(), items=bl_enum.mat_blend, default='OPAQUE')
     layr_blend_mode: bpy.props.EnumProperty(options=set(), items=bl_enum.mat_layer_blend, default='ADD')
-    emis_blend_mode: bpy.props.EnumProperty(options=set(), items=bl_enum.mat_layer_blend, default='ADD')
-    emis_mode: bpy.props.EnumProperty(options=set(), items=bl_enum.mat_layer_blend, default='ADD')
+    emis1_blend_mode: bpy.props.EnumProperty(options=set(), items=bl_enum.mat_layer_blend, default='ADD')
+    emis2_blend_mode: bpy.props.EnumProperty(options=set(), items=bl_enum.mat_layer_blend, default='ADD')
     spec_mode: bpy.props.EnumProperty(options=set(), items=bl_enum.mat_spec, default='RGB')
     specularity: bpy.props.FloatProperty(options=set(), min=0, default=20)
     depth_blend_falloff: bpy.props.FloatProperty(options=set())
-    cutout_threshold: bpy.props.IntProperty(options=set(), subtype='FACTOR', min=0, max=255)
-    emis_multiply: bpy.props.FloatProperty(options=set(), min=0, default=1)
-    spec_multiply: bpy.props.FloatProperty(options=set(), min=0, default=1)
+    alpha_test_threshold: bpy.props.IntProperty(options=set(), subtype='FACTOR', min=0, max=255)
+    spec_hdr: bpy.props.FloatProperty(options=set(), min=0, default=1)
+    emis_hdr: bpy.props.FloatProperty(options=set(), min=0, default=1)
     envi_const_multiply: bpy.props.FloatProperty(options=set(), min=0, default=1)
     envi_diff_multiply: bpy.props.FloatProperty(options=set(), min=0, default=0)
     envi_spec_multiply: bpy.props.FloatProperty(options=set(), min=0, default=0)
@@ -147,7 +147,7 @@ class DisplacementProperties(shared.M3PropertyGroup):
     layer_norm: bpy.props.StringProperty(options=set())
     layer_strength: bpy.props.StringProperty(options=set())
     priority: bpy.props.IntProperty(options=set())
-    strength_factor: bpy.props.FloatProperty(name='Distortion Factor')
+    strength_factor: bpy.props.FloatProperty(name='Distortion Factor', default=1.0)
     strength_factor_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
 
 
@@ -340,23 +340,27 @@ def draw_standard_props(context, material, layout):
         draw_layer_pointer_prop(context.object, layout, material, 'layer_norm_blend2', 'Normal Blend 2')
 
     layout.separator()
-    col = layout.column()
-    col.prop(material, 'blend_mode', text='Blend Mode')
-    col.prop(material, 'layr_blend_mode', text='Layering Mode')
-    col.prop(material, 'cutout_threshold', text='Cutout Threshold')
-    col.prop(material, 'depth_blend_falloff', text='Depth Blend')
-    col.prop(material, 'priority', text='Priority')
+    col = layout.column(align=True)
+    col.prop(material, 'blend_mode', text='Material Blend')
+    if material.blend_mode == 'OPAQUE':
+        col.prop(material, 'alpha_test_threshold', text='Alpha Test Threshold')
+    else:
+        col.prop(material, 'priority', text='Priority')
+        col.prop(material, 'depth_blend_falloff', text='Depth Blend')
+
     col.separator()
-    col.prop(material, 'emis_blend_mode', text='Emissive Mode')
-    col.prop(material, 'emis_multiply', text='Multiplier')
+    col.prop(material, 'layr_blend_mode', text='Layer Blend')
+    col.prop(material, 'emis1_blend_mode', text='Emissive 1 Blend')
+    col.prop(material, 'emis2_blend_mode', text='Emissive 2 Blend')
     col.separator()
-    col.prop(material, 'spec_mode', text='Specular Mode Mode')
+    # col.prop(material, 'spec_mode', text='Specular Mode')  # * does this actually do anything?
     col.prop(material, 'specularity', text='Specularity')
-    col.prop(material, 'spec_multiply', text='Multiply')
+    col.separator()
+    col.prop(material, 'emis_hdr', text='Emissive HDR')
+    col.prop(material, 'spec_hdr', text='Specular HDR')
     col.separator()
 
     if version >= 20:
-        col = layout.column(align=True)
         col.prop(material, 'envi_const_multiply', text='Environment Multiply')
         col.prop(material, 'envi_diff_multiply', text='Diffuse')
         col.prop(material, 'envi_spec_multiply', text='Specular')
@@ -559,17 +563,23 @@ mat_type_dict = {
 }
 
 
-def draw_props(context, matref, layout):
-    mat = m3_material_get(context.object, matref)
-    col = layout.column()
-    col.alignment = 'RIGHT'
-    col.label(text='Material Type: ' + mat_type_dict[matref.mat_type]['name'])
-    mat_type_dict[matref.mat_type]['draw'](context, mat, layout)
-
-
 class ReferenceProperties(shared.M3PropertyGroup):
     mat_type: bpy.props.EnumProperty(options=set(), items=bl_enum.matref_type)
     mat_handle: bpy.props.StringProperty(options=set())
+
+
+class MaterialList(bpy.types.UIList):
+    bl_idname = 'UI_UL_M3_materials'
+
+    def draw_item(self, context, layout, data, item, icon, active_data, actuve_propname, index, flt_flag):
+
+        if self.layout_type in {'DEFAULT', 'COMPACT'}:
+            row = layout.row()
+            row.prop(item, 'name', text='', emboss=False, icon_value=icon)
+            split = row.row()
+            split.alignment = 'RIGHT'
+            split.label(text=mat_type_dict[item.mat_type]['name'])
+            split.separator(factor=0.05)
 
 
 class MaterialMenu(bpy.types.Menu):
@@ -596,7 +606,7 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
 
         row = layout.row()
         col = row.column()
-        col.template_list('UI_UL_list', 'm3_materialrefs', ob, 'm3_materialrefs', ob, 'm3_materialrefs_index', rows=rows)
+        col.template_list(MaterialList.bl_idname, 'm3_materialrefs', ob, 'm3_materialrefs', ob, 'm3_materialrefs_index', rows=rows)
         col = row.column()
         sub = col.column(align=True)
         op = sub.operator('m3.material_add_popup', icon='ADD', text='')
@@ -618,7 +628,7 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
 
         col = layout.column()
         col.use_property_split = True
-        draw_props(context, matref, col)
+        mat_type_dict[matref.mat_type]['draw'](context, m3_material_get(context.object, matref), col)
 
 
 class M3MaterialLayerOpAdd(bpy.types.Operator):
@@ -814,6 +824,7 @@ classes = (
     LensFlareStarburstProperties,
     LensFlareProperties,
     ReferenceProperties,
+    MaterialList,
     MaterialMenu,
     Panel,
     M3MaterialOpAddPopup,

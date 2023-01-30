@@ -20,6 +20,7 @@ import bpy
 import bmesh
 import mathutils
 import os
+import copy
 from . import io_m3
 from . import io_shared
 from . import shared
@@ -148,10 +149,6 @@ def get_fcurve_anim_frames(fcurve, interpolation='LINEAR'):
     return frames
 
 
-def sqr(val):
-    return val * val
-
-
 def quats_compatibility(quats):
     if len(quats) < 2:
         return
@@ -183,8 +180,8 @@ def quat_interp(left, right, factor):
 
 
 def quat_equal(val0, val1):
-    dist = sqr(val0.x - val1.x) + sqr(val0.y - val1.y) + sqr(val0.z - val1.z) + sqr(val0.w - val1.w)
-    return dist < sqr(0.0001)
+    dist = (val0.x - val1.x) ** 2 + (val0.y - val1.y) ** 2 + (val0.z - val1.z) ** 2 + (val0.w - val1.w) ** 2
+    return dist < 0.0001 ** 2
 
 
 def simplify_anim_data_with_interp(keys, vals, interp_func, equal_func):
@@ -231,15 +228,15 @@ def quat_list_contains_not_only(quat_list, quat):
 
 def bounding_vectors_from_bones(bone_rest_bounds, bone_to_matrix_dict):
     vals = ([], [], [])
-    for bone, bound_vecs in bone_rest_bounds.items():
+    for bone, coords in bone_rest_bounds.items():
         matrix = bone_to_matrix_dict[bone]
-        for co in bound_vecs:
+        for co in coords:
             mat_co = matrix @ co
             vals[0].append(mat_co.x)
             vals[1].append(mat_co.y)
             vals[2].append(mat_co.z)
 
-    return mathutils.Vector((min(vals[0]), min(vals[1]), min(vals[2]))), mathutils.Vector((max(vals[0]), max(vals[1]), max(vals[2])))
+    return mathutils.Vector(min(val) for val in vals), mathutils.Vector(max(val) for val in vals)
 
 
 class M3OutputProcessor:
@@ -253,9 +250,6 @@ class M3OutputProcessor:
     def collect_anim_data_single(self, field, anim_data_tag):
         head = getattr(self.bl, field + '_header')
         head.hex_id = head.hex_id  # set hex_id to itself to verify
-
-        if head.bl_user_mark_as_dup:
-            return True  # TODO improve this so that it returns false if no animation whatsover is to be associated with this ID
 
         is_animated = False
         for action in self.exporter.action_to_anim_data:
@@ -275,9 +269,6 @@ class M3OutputProcessor:
     def collect_anim_data_vector(self, field, anim_data_tag):
         head = getattr(self.bl, field + '_header')
         head.hex_id = head.hex_id  # set hex_id to itself to verify
-
-        if head.bl_user_mark_as_dup:
-            return True  # TODO improve this so that it returns false if no animation whatsover is to be associated with this ID
 
         is_animated = False
         vec_data_settings = ANIM_VEC_DATA_SETTINGS[anim_data_tag]
@@ -528,10 +519,13 @@ class Exporter:
         self.stg_last_indice_section = None  # defined in the sequence export
 
         # used for later reference such as setting region flags
+        self.use_batching_hack = False
         self.region_section = None  # defined in the mesh export code
 
         self.init_action = self.ob.animation_data.action
         self.init_frame = self.scene.frame_current
+
+        # TODO look for duplicate animation header ids and warn that they need to be resolved
 
         def valid_collections_and_requirements(collection):
             # TODO have second unexposed export custom prop for auto-culling such as invalid attachment point name
@@ -731,24 +725,32 @@ class Exporter:
                     export_attachment_volumes.append(volume)
                     self.attachment_bones.append([attachment_point_bone, volume_bone])
 
-        self.export_regions = []
+        # batch hack crashes can crash the game if there is not a single-batch region at the front, so we make sure multi-batch regions are at the end
+        self.reg_mesh_obs = []
+        self.bat_hack_obs = []
+
         for child in ob.children:
             if child.type == 'MESH' and (child.m3_mesh_export or child in self.export_required_regions):
                 me = child.data
                 me.calc_loop_triangles()
 
                 if len(me.loop_triangles) > 0:
-                    self.export_regions.append(child)
-
+                    non_standard_mat = False
                     valid_mesh_batches = 0
                     for mesh_batch in child.m3_mesh_batches:
                         matref = shared.m3_pointer_get(ob.m3_materialrefs, mesh_batch.material)
                         if matref:
                             self.export_required_material_references.add(matref)
                             valid_mesh_batches += 1
+                            if matref.mat_type != 'm3_materials_standard':
+                                non_standard_mat = True
 
                     assert valid_mesh_batches != 0
                     # TODO improve invalidation so that a list of all warnings and exceptions can be made
+
+                    # * MAT_V19+ will crash the game if multi-batching hack is used
+                    invalid_mesh_batching = valid_mesh_batches > 1 and (int(ob.m3_materials_standard_version) > 18)
+                    assert not invalid_mesh_batching
 
                     skin_vertex_groups = 0
                     for vertex_group in child.vertex_groups:
@@ -760,7 +762,17 @@ class Exporter:
 
                     assert skin_vertex_groups != 0
 
+                    if valid_mesh_batches > 1:
+                        self.use_batching_hack = True
+                        self.bat_hack_obs.append(child)
+                    else:
+                        self.reg_mesh_obs.append(child)
+
                     self.uv_count = max(self.uv_count, len(me.uv_layers))
+
+        self.export_regions = []
+        self.export_regions.extend(self.reg_mesh_obs)
+        self.export_regions.extend(self.bat_hack_obs)
 
         def recurse_composite_materials(matref, force_color, force_alpha):
             if force_color:
@@ -1021,9 +1033,9 @@ class Exporter:
                 bnds_data[0].append(init_frame)
                 bnds_data[1].append(to_m3_bnds((prev_min, prev_max)))
 
-                for frame in frame_list[0::2]:
+                for frame in frame_list[0::3]:
                     bnds_min, bnds_max = bounding_vectors_from_bones(self.bone_bound_vecs, self.action_abs_pose_matrices[action][frame])
-                    if (prev_min - bnds_min).length >= 0.025 or (prev_max - bnds_max).length >= 0.025:
+                    if (prev_min - bnds_min).length >= 0.03 or (prev_max - bnds_max).length >= 0.03:
                         bnds_data[0].append(frame)
                         bnds_data[1].append(to_m3_bnds((bnds_min, bnds_max)))
                         prev_min, prev_max = bnds_min, bnds_max
@@ -1311,9 +1323,47 @@ class Exporter:
         m3_faces = []
         m3_lookup = []
 
+        # extra_vertices = [m3_vertex_desc.instance()] * 3
+        # extra_face = (0, 1, 2)
+        # m3_vertices.extend(extra_vertices)
+        # m3_faces.extend(extra_face)
+        # bat_hack_region = region_section.content_add()
+        # bat_hack_region.first_vertex_index = 0
+        # bat_hack_region.vertex_count = 3
+        # bat_hack_region.first_face_index = 0
+        # bat_hack_region.face_count = 3
+        # bat_hack_region.bone_lookup_count = 0
+        # bat_hack_region.vertex_lookups_used = 0
+        # bat_hack_region.root_bone = 0
+        # m3_batch = batch_section.content_add()
+        # m3_batch.region_index = len(region_section) - 1
+
         bone_bounding_points = {bone: [] for bone in self.bones}
 
-        for ob in mesh_objects:
+        region_batch_columns = []
+
+        for ob_index, ob in enumerate(mesh_objects):
+
+            # bat_hack_region = None
+            # # this prevents the multi-batch mesh hack from crashing the game
+            # if ob in self.bat_hack_obs:
+            #     vertices_len = len(m3_vertices)
+            #     faces_len = len(m3_faces)
+            #     extra_vertices = [m3_vertex_desc.instance()] * 3
+            #     extra_face = (vertices_len, vertices_len + 1, vertices_len + 2)
+            #     m3_vertices.extend(extra_vertices)
+            #     m3_faces.extend(extra_face)
+            #     bat_hack_region = region_section.content_add()
+            #     bat_hack_region.first_vertex_index = vertices_len
+            #     bat_hack_region.vertex_count = 3
+            #     bat_hack_region.first_face_index = faces_len
+            #     bat_hack_region.face_count = 3
+            #     bat_hack_region.bone_lookup_count = 0
+            #     bat_hack_region.vertex_lookups_used = 0
+            #     bat_hack_region.root_bone = 0
+            #     m3_batch = batch_section.content_add()
+            #     m3_batch.region_index = len(region_section) - 1
+
             bm = bmesh.new(use_operators=True)
             bm.from_object(ob, self.depsgraph)
             bmesh.ops.triangulate(bm, faces=bm.faces)
@@ -1422,42 +1472,58 @@ class Exporter:
             m3_lookup.extend(region_lookup)
 
             # TODO mesh flags for versions 4+
-            region = region_section.content_add()
-            region.first_vertex_index = first_vertex_index
-            region.vertex_count = len(region_vertices)
-            region.first_face_index = first_face_index
-            region.face_count = len(region_faces)
-            region.bone_count = len(region_lookup)
-            region.first_bone_lookup_index = first_lookup_index
-            region.bone_lookup_count = len(region_lookup)
-            region.vertex_lookups_used = vertex_lookups_used
-            region.root_bone = region_lookup[0]
+            for ii, batch in enumerate(ob.m3_mesh_batches):
 
-            for batch in ob.m3_mesh_batches:
-                m3_batch = batch_section.content_add()
-                m3_batch.region_index = len(region_section) - 1
+                # if ii > 0 and bat_hack_region:
+                #     region_section.content_add(bat_hack_region)
+                #     m3_batch = batch_section.content_add()
+                #     m3_batch.region_index = len(region_section) - 1
+
+                region = region_section.desc.instance()
+                region.first_vertex_index = first_vertex_index
+                region.vertex_count = len(region_vertices)
+                region.first_face_index = first_face_index
+                region.face_count = len(region_faces)
+                region.bone_count = len(region_lookup)
+                region.first_bone_lookup_index = first_lookup_index
+                region.bone_lookup_count = len(region_lookup)
+                region.vertex_lookups_used = vertex_lookups_used
+                region.root_bone = region_lookup[0]
+                m3_batch = batch_section.desc.instance()
                 m3_batch.material_reference_index = self.matref_handle_indices[batch.material]
                 bone = shared.m3_pointer_get(self.ob.pose.bones, batch.bone)
                 m3_batch.bone = self.bone_name_indices[bone.name] if bone else -1
 
-        # this prevents the multi-batch mesh hack from crashing the game
-        if len(mesh_objects) == 1 and len(batch_section) > 1:
-            vertices_len = len(m3_vertices)
-            faces_len = len(m3_faces)
-            extra_vertices = [m3_vertex_desc.instance()] * 3
-            extra_face = [vertices_len, vertices_len + 1, vertices_len + 2]
-            m3_vertices.extend(extra_vertices)
-            m3_faces.extend(extra_face)
-            extra_region = region_section.content_add()
-            extra_region.first_vertex_index = vertices_len
-            extra_region.vertex_count = 3
-            extra_region.first_face_index = faces_len
-            extra_region.face_count = 3
-            extra_region.bone_lookup_count = 0
-            extra_region.vertex_lookups_used = 0
-            extra_region.root_bone = 0
-            m3_batch = batch_section.content_add()
-            m3_batch.region_index = len(region_section) - 1
+                try:
+                    region_batch_columns[ii].append((region, m3_batch))
+                except IndexError:
+                    region_batch_columns.append([])
+                    region_batch_columns[ii].append((region, m3_batch))
+
+        for col in region_batch_columns:
+            for region, batch in col:
+                batch.region_index = len(region_section)
+                region_section.content_add(region)
+                batch_section.content_add(batch)
+
+        # # this prevents the multi-batch mesh hack from crashing the game
+        # if len(self.bat_hack_obs):
+        #     vertices_len = len(m3_vertices)
+        #     faces_len = len(m3_faces)
+        #     extra_vertices = [m3_vertex_desc.instance()] * 3
+        #     extra_face = [vertices_len, vertices_len + 1, vertices_len + 2]
+        #     m3_vertices.extend(extra_vertices)
+        #     m3_faces.extend(extra_face)
+        #     extra_region = region_section.content_add()
+        #     extra_region.first_vertex_index = vertices_len
+        #     extra_region.vertex_count = 3
+        #     extra_region.first_face_index = faces_len
+        #     extra_region.face_count = 3
+        #     extra_region.bone_lookup_count = 0
+        #     extra_region.vertex_lookups_used = 0
+        #     extra_region.root_bone = 0
+        #     m3_batch = batch_section.content_add()
+        #     m3_batch.region_index = len(region_section) - 1
 
         self.bone_bound_vecs = {}
 
@@ -1568,7 +1634,6 @@ class Exporter:
 
                 for layer_name in io_shared.material_type_to_layers[type_ii]:
                     layer_name_full = 'layer_' + layer_name
-                    mat_layer_handle = getattr(mat, layer_name_full)
 
                     if not hasattr(m3_mat, layer_name_full):
                         continue
@@ -1578,6 +1643,12 @@ class Exporter:
                     layer = shared.m3_pointer_get(self.ob.m3_materiallayers, getattr(mat, layer_name_full))
 
                     if not layer or (layer.color_type == 'BITMAP' and not layer.color_bitmap):
+                        # * looking for a way to make multi-batching not crash with MAT_V19+
+                        # if 'norm_blend' in layer_name:
+                        #     unique_null_layer_section = self.m3.section_for_reference(m3_mat, layer_name_full, version=self.ob.m3_materiallayers_version)
+                        #     unique_null_layer_section.content_add()
+                        # else:
+                        #     null_layer_section.references.append(m3_layer_ref)
                         null_layer_section.references.append(m3_layer_ref)
                     else:
 
@@ -1585,10 +1656,11 @@ class Exporter:
                             # TODO warn if rtt channel collision (assigning to true while already true)
                             m3_mat.bit_set('rtt_channels_used', 'channel' + layer.video_channel, True)
 
-                        if mat_layer_handle in handle_to_layer_section.keys():
-                            handle_to_layer_section[mat_layer_handle].references.append(m3_layer_ref)
+                        if layer.bl_handle in handle_to_layer_section.keys():
+                            handle_to_layer_section[layer.bl_handle].references.append(m3_layer_ref)
                         else:
                             layer_section = self.m3.section_for_reference(m3_mat, layer_name_full, version=self.ob.m3_materiallayers_version)
+                            handle_to_layer_section[layer.bl_handle] = layer_section
                             m3_layer = layer_section.content_add()
 
                             if layer.color_type == 'BITMAP':
@@ -2119,21 +2191,23 @@ class Exporter:
         hittests_section = self.m3.section_for_reference(model, 'hittests', version=1)
 
         ht_tight = self.ob.m3_hittest_tight
+
         ht_tight_bone = shared.m3_pointer_get(self.ob.pose.bones, ht_tight.bone)
 
-        m3_ht_tight = model.hittest_tight
-        m3_ht_tight.bone = self.bone_name_indices[ht_tight_bone.name]
+        if ht_tight_bone:
+            m3_ht_tight = model.hittest_tight
+            m3_ht_tight.bone = self.bone_name_indices[ht_tight_bone.name]
 
-        for ii, item in enumerate(ht_tight.bl_rna.properties['shape'].enum_items):
-            if item.identifier == ht_tight.shape:
-                m3_ht_tight.shape = ii
-                break
+            for ii, item in enumerate(ht_tight.bl_rna.properties['shape'].enum_items):
+                if item.identifier == ht_tight.shape:
+                    m3_ht_tight.shape = ii
+                    break
 
-        m3_ht_tight.size0, m3_ht_tight.size1, m3_ht_tight.size2 = ht_tight.size
-        m3_ht_tight.matrix = to_m3_matrix(mathutils.Matrix.LocRotScale(ht_tight.location, ht_tight.rotation, ht_tight.scale))
+            m3_ht_tight.size0, m3_ht_tight.size1, m3_ht_tight.size2 = ht_tight.size
+            m3_ht_tight.matrix = to_m3_matrix(mathutils.Matrix.LocRotScale(ht_tight.location, ht_tight.rotation, ht_tight.scale))
 
-        if m3_ht_tight.shape == 4:
-            self.get_basic_volume_object(ht_tight.mesh_object, m3_ht_tight)
+            if m3_ht_tight.shape == 4:
+                self.get_basic_volume_object(ht_tight.mesh_object, m3_ht_tight)
 
         for hittest in hittests:
             hittest_bone = shared.m3_pointer_get(self.ob.pose.bones, hittest.bone)
@@ -2322,6 +2396,8 @@ class Exporter:
 
 
 def m3_export(ob, filename):
+    if not (filename.endswith('.m3') or filename.endswith('.m3a')):
+        filename = filename.rsplit('.', 1)[0] + '.m3'
     exporter = Exporter()
     sections = exporter.m3_export(ob, filename)
     io_m3.section_list_save(sections, filename)

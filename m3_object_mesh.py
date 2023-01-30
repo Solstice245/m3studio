@@ -218,7 +218,15 @@ class Panel(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        return context.object and context.object.type == 'MESH'
+        if not context.object:
+            return False
+        if not context.object.type == 'MESH':
+            return False
+        if not context.object.parent:
+            return False
+        if not context.object.parent.type == 'ARMATURE':
+            return False
+        return True
 
     def draw(self, context):
         layout = self.layout

@@ -1582,9 +1582,9 @@
             </field>
             <field name="specularity" type="float"/>
             <field name="depth_blend_falloff" type="float" default_value="0.0"/> <!-- Only used if the bit depth_blend_falloff of additional_flags is set, typically set for particle systems -->
-            <field name="cutout_threshold" type="uint32" default_value="0"/>
-            <field name="spec_multiply" type="float" default_value="1.0"/>
-            <field name="emis_multiply" type="float" default_value="1.0"/>
+            <field name="alpha_test_threshold" type="uint32" default_value="0"/>
+            <field name="spec_hdr" type="float" default_value="1.0"/>
+            <field name="emis_hdr" type="float" default_value="1.0"/>
             <field name="envi_const_multiply" type="float" since_version="20" default_value="1.0"/>
             <field name="envi_diff_multiply" type="float" since_version="20" default_value="0.0"/>
             <field name="envi_spec_multiply" type="float" since_version="20" default_value="0.0"/>
@@ -1608,8 +1608,8 @@
             <field name="layer_norm_blend2" type="Reference" ref_to="LAYR" since_version="19"/>
             <field name="unknown2481ae8a" type="uint32" default_value="0"/>
             <field name="layr_blend_mode" type="uint32"/>
-            <field name="emis_blend_mode" type="uint32"/>
-            <field name="emis_mode" type="uint32"/>
+            <field name="emis1_blend_mode" type="uint32"/>
+            <field name="emis2_blend_mode" type="uint32"/>
             <field name="spec_mode" type="uint32"/>
             <field name="parallax_height" type="FloatAnimationReferenceV0"/>
             <field name="unknown_animation_ref" type="UInt32AnimationReferenceV0"/>

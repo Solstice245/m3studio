@@ -21,13 +21,6 @@ import random
 from . import bl_enum
 
 
-bl_id_type_to_collection_name = {
-    bpy.types.Object: 'objects',
-    bpy.types.Mesh: 'meshes',
-    bpy.types.Armature: 'armatures',
-}
-
-
 m3_collections_suggested_names = {
     'm3_animations': ['Stand_full', 'Walk_full', 'Attack_full', 'Birth_full', 'Spell_full'],
     'm3_animation_groups': ['Stand', 'Walk', 'Attack', 'Birth', 'Spell'],
@@ -232,7 +225,6 @@ def hex_id_set(self, value):
 
 
 class M3AnimHeaderProp(bpy.types.PropertyGroup):
-    bl_user_mark_as_dup: bpy.props.BoolProperty(options=set(), default=False)
     hex_id: bpy.props.StringProperty(options=set(), maxlen=8, get=hex_id_get, set=hex_id_set, default='')
     interpolation: bpy.props.EnumProperty(options=set(), items=bl_enum.anim_header_interp, default='AUTO')
     flags: bpy.props.IntProperty(options=set(), min=-1, default=-1)  # -1 means automatic
@@ -371,7 +363,7 @@ def m3_data_handles_verify(data):
 
 
 def m3_data_handles_enum(self, context):
-    search_data_id = getattr(bpy.data, self.search_data_id_collection_name).get(self.search_data_id_name)
+    search_data_id = bpy.data.objects.get(self.search_data_id_name)
     search_data = search_data_id.path_resolve(self.search_data_path)
     for item in search_data:
         yield item.bl_handle, item.name, ''
@@ -384,24 +376,20 @@ class M3PropHandleSearch(bpy.types.Operator):
     bl_property = 'enum'
 
     prop_id_name: bpy.props.StringProperty()
-    prop_id_collection_name: bpy.props.StringProperty()
     prop_path: bpy.props.StringProperty()
     prop_name: bpy.props.StringProperty()
     search_data_id_name: bpy.props.StringProperty()
-    search_data_id_collection_name: bpy.props.StringProperty()
     search_data_path: bpy.props.StringProperty()
-    search_data_verify: bpy.props.BoolProperty()
     enum: bpy.props.EnumProperty(items=m3_data_handles_enum)
 
     def invoke(self, context, event):
-        self.search_data_id = getattr(bpy.data, self.search_data_id_collection_name).get(self.search_data_id_name)
-        if self.search_data_verify:
-            m3_data_handles_verify(self.search_data_id.path_resolve(self.search_data_path))
+        self.search_data_id = bpy.data.objects.get(self.search_data_id_name)
+        m3_data_handles_verify(self.search_data_id.path_resolve(self.search_data_path))
         context.window_manager.invoke_search_popup(self)
         return {'RUNNING_MODAL'}
 
     def execute(self, context):
-        self.prop_id = getattr(bpy.data, self.prop_id_collection_name).get(self.prop_id_name)
+        self.prop_id = bpy.data.objects.get(self.prop_id_name)
         self.prop_owner = self.prop_id.path_resolve(self.prop_path)
         setattr(self.prop_owner, self.prop_name, self.enum)
         return {'FINISHED'}
@@ -414,12 +402,11 @@ class M3PropHandleUnlink(bpy.types.Operator):
     bl_options = {'UNDO'}
 
     prop_id_name: bpy.props.StringProperty()
-    prop_id_collection_name: bpy.props.StringProperty()
     prop_path: bpy.props.StringProperty()
     prop_name: bpy.props.StringProperty()
 
     def invoke(self, context, event):
-        prop_id = getattr(bpy.data, self.prop_id_collection_name).get(self.prop_id_name)
+        prop_id = bpy.data.objects.get(self.prop_id_name)
         prop_owner = prop_id.path_resolve(self.prop_path)
         setattr(prop_owner, self.prop_name, '')
         return {'FINISHED'}
@@ -455,10 +442,6 @@ class M3EditAnimHeader(bpy.types.Operator):
         col.prop(m3_anim_header, 'hex_id', text='')
         col.prop(m3_anim_header, 'interpolation', text='')
         col.prop(m3_anim_header, 'flags', text='')
-        subrow = col.row(align=True)
-        subrow.alignment = 'LEFT'
-        subrow.prop(m3_anim_header, 'bl_user_mark_as_dup', text='')
-        subrow.label(text='Mark Property As Duplicate ID User')
 
 
 def draw_menu_duplicate(layout, collection, dup_keyframes_opt=False):
@@ -490,11 +473,9 @@ def draw_handle_list_item(layout, search_data, data, prop_name, label, item, ind
     row.use_property_split = False
     op = row.operator('m3.prophandle_search', text=pointer_ob.name if pointer_ob else 'Select ' + label, icon='VIEWZOOM')
     op.prop_id_name = data.id_data.name
-    op.prop_id_collection_name = bl_id_type_to_collection_name[type(data.id_data)]
     op.prop_path = item.path_from_id()
     op.prop_name = 'bl_handle'
     op.search_data_id_name = search_data.id_data.name
-    op.search_data_id_collection_name = bl_id_type_to_collection_name[type(search_data.id_data)]
     op.search_data_path = search_data.path_from_id()
     op = row.operator('m3.handle_remove', text='', icon='X')
     op.collection = data.path_from_id(prop_name)
@@ -505,7 +486,6 @@ def draw_prop_anim(layout, data, field, index=-1, text=''):
     main = layout.row(align=True)
     main.use_property_split = False
 
-    prop_header = getattr(data, field + '_header')
     rna_props = data.bl_rna.properties[field]
 
     vec_name_items = None
@@ -515,7 +495,7 @@ def draw_prop_anim(layout, data, field, index=-1, text=''):
     if layout.use_property_split:
         split = main.split(factor=0.4, align=True)
         row = split.row(align=True)
-        if vec_name_items and not prop_header.bl_user_mark_as_dup:
+        if vec_name_items:
             col = row.column(align=True)
             col.alignment = 'RIGHT'
             col.label(text=(text or rna_props.name or field) + ' ' + vec_name_items[0])
@@ -530,21 +510,19 @@ def draw_prop_anim(layout, data, field, index=-1, text=''):
         row = main
 
     if index < 1:
-        op = row.operator('m3.edit_anim_header', text='' if not prop_header.bl_user_mark_as_dup else 'User Marked As Duplicate ID', icon='PREFERENCES')
+        op = row.operator('m3.edit_anim_header', text='', icon='PREFERENCES')
         op.prop_id_name = data.id_data.name
         op.prop_path = data.path_from_id()
         op.prop_name = field
     else:
         row.separator(factor=3.6)
 
-    if not prop_header.bl_user_mark_as_dup:
-        col = row.column(align=True)
-
-        if vec_name_items:
-            for ii in range(max(1, rna_props.array_length)):
-                col.prop(data, field, index=ii, text='' if layout.use_property_split else text)
-        else:
-            col.prop(data, field, index=index, text='' if layout.use_property_split else text)
+    col = row.column(align=True)
+    if vec_name_items:
+        for ii in range(max(1, rna_props.array_length)):
+            col.prop(data, field, index=ii, text='' if layout.use_property_split else text)
+    else:
+        col.prop(data, field, index=index, text='' if layout.use_property_split else text)
 
     if layout.use_property_split and layout.use_property_decorate:
         row = main.row()
@@ -552,18 +530,6 @@ def draw_prop_anim(layout, data, field, index=-1, text=''):
 
 
 def draw_prop_pointer(layout, search_data, data, prop_name, label='', icon=''):
-    search_data_verify = False
-
-    search_id_bl = search_data.id_data
-    if type(search_id_bl) == bpy.types.Armature:
-        if search_data == search_id_bl.bones:
-            search_data_verify = True
-            if search_id_bl.is_editmode:
-                search_data = search_id_bl.edit_bones
-
-    if search_data_verify is False and type(search_data) == bpy.types.Pose:
-        search_data_verify = True
-
     main = layout.row(align=True)
     main.use_property_split = False
 
@@ -580,13 +546,10 @@ def draw_prop_pointer(layout, search_data, data, prop_name, label='', icon=''):
 
     op = row.operator('m3.prophandle_search', text='' if pointer_ob else 'Select', icon='VIEWZOOM')
     op.prop_id_name = data.id_data.name
-    op.prop_id_collection_name = bl_id_type_to_collection_name[type(data.id_data)]
     op.prop_path = data.path_from_id()
     op.prop_name = prop_name
-    op.search_data_id_name = search_id_bl.name
-    op.search_data_id_collection_name = bl_id_type_to_collection_name[type(search_data.id_data)]
+    op.search_data_id_name = search_data.id_data.name
     op.search_data_path = search_data.path_from_id()
-    op.search_data_verify = search_data_verify
 
     if pointer_ob:
         if icon:
@@ -595,7 +558,6 @@ def draw_prop_pointer(layout, search_data, data, prop_name, label='', icon=''):
             row.prop(pointer_ob, 'name', text='')
         op = row.operator('m3.prophandle_unlink', text='', icon='CANCEL')
         op.prop_id_name = data.id_data.name
-        op.prop_id_collection_name = bl_id_type_to_collection_name[type(data.id_data)]
         op.prop_path = data.path_from_id()
         op.prop_name = prop_name
 

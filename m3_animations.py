@@ -79,9 +79,6 @@ def anim_set(scene, ob, anim):
         scene.frame_set(scene.frame_current)
         ob.animation_data.action = new_action
     else:
-        if ob.m3_options.update_timeline:
-            scene.frame_start = 0
-            scene.frame_end = 1
         scene.frame_set(0)
 
 
@@ -204,7 +201,7 @@ class M3AnimationActionNewOp(bpy.types.Operator):
 
     def invoke(self, context, event):
         anim = context.object.m3_animations[context.object.m3_animations_index]
-        action = bpy.data.actions.new(name='{} {}'.format(anim.id_data.name, anim.name))
+        action = bpy.data.actions.new(name='{}_{}'.format(anim.id_data.name, anim.name))
         anim.action = action
         return {'FINISHED'}
 
