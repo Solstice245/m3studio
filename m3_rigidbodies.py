@@ -67,8 +67,7 @@ def draw_shape_props(shape, layout):
 
 
 def draw_body_props(rigidbody, layout):
-    shared.draw_prop_pointer(layout, rigidbody.id_data.pose.bones, rigidbody, 'bone', label='Bone', icon='BONE_DATA')
-    shared.draw_prop_pointer(layout, rigidbody.id_data.m3_physicsshapes, rigidbody, 'physics_shape', label='Physics Body Shape', icon='LINKED')
+    shared.draw_prop_pointer_search(layout, rigidbody.physics_shape, rigidbody.id_data, 'm3_physicsshapes', text='Physics Body Shape', icon='LINKED')
     col = layout.column()
     col.prop(rigidbody, 'physical_material', text='Physical Material')
     # col.prop(rigidbody, 'simulation_type', text='Simulation Type')  # unknown if effective
@@ -99,6 +98,11 @@ def draw_body_props(rigidbody, layout):
     col.prop(rigidbody, 'walkable', text='Walkable')
 
 
+class ShapePointerProp(bpy.types.PropertyGroup):
+    value: bpy.props.StringProperty(options=set(), get=shared.pointer_get_args('m3_physicsshapes'), set=shared.pointer_set_args('m3_physicsshapes', False))
+    handle: bpy.props.StringProperty(options=set())
+
+
 class VolumeProperties(shared.M3PropertyGroup):
     shape: bpy.props.EnumProperty(options=set(), items=bl_enum.physics_shape)
     size: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0, default=(1, 1, 1))
@@ -113,8 +117,10 @@ class ShapeProperties(shared.M3PropertyGroup):
     volumes_index: bpy.props.IntProperty(options=set(), default=-1)
 
 
-class BodyProperties(shared.M3BoneUserPropertyGroup):
-    physics_shape: bpy.props.StringProperty(options=set())
+class BodyProperties(shared.M3PropertyGroup):
+    name: bpy.props.StringProperty(options=set(), get=shared.get_bone_value)
+    bone: bpy.props.PointerProperty(type=shared.M3BonePointerPropExclusive)
+    physics_shape: bpy.props.PointerProperty(type=ShapePointerProp)
     simulation_type: bpy.props.IntProperty(options=set())
     physical_material: bpy.props.EnumProperty(options=set(), items=bl_enum.physics_materials)
     mass: bpy.props.FloatProperty(options=set(), default=2400)
@@ -156,10 +162,11 @@ class BodyPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Physics Rigid Bodies'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, context.object.m3_rigidbodies, draw_body_props, menu_id=BodyMenu.bl_idname)
+        shared.draw_collection_list(self.layout, context.object.m3_rigidbodies, draw_body_props, ui_list_id='UI_UL_M3_bone_user', menu_id=BodyMenu.bl_idname)
 
 
 classes = (
+    ShapePointerProp,
     VolumeProperties,
     ShapeProperties,
     BodyProperties,

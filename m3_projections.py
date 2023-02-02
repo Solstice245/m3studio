@@ -33,16 +33,15 @@ def update_collection_index(self, context):
 
 def draw_props(projection, layout):
     col = layout.column()
-    shared.draw_prop_pointer(col, projection.id_data.pose.bones, projection, 'bone', label='Bone', icon='BONE_DATA')
-    shared.draw_prop_pointer(col, projection.id_data.m3_materialrefs, projection, 'material', label='Material', icon='MATERIAL')
+    shared.draw_prop_pointer_search(col, projection.bone, projection.id_data.data, 'bones', text='Bone', icon='BONE_DATA')
+    shared.draw_prop_pointer_search(col, projection.material, projection.id_data, 'm3_materialrefs', text='Material', icon='MATERIAL')
     col.prop(projection, 'projection_type', text='Type')
     col.prop(projection, 'layer', text='Layer')
     col = layout.column()
     shared.draw_prop_anim(col, projection, 'active', text='Active')
-    col = layout.column()
+    col = layout.column(align=True)
     shared.draw_prop_anim(col, projection, 'field_of_view', text='Field of View')
     shared.draw_prop_anim(col, projection, 'aspect_ratio', text='Aspect Ratio')
-    col = layout.column()
     shared.draw_prop_anim(col, projection, 'near', text='Near')
     shared.draw_prop_anim(col, projection, 'far', text='Far')
     col = layout.column(align=True)
@@ -75,8 +74,9 @@ def draw_props(projection, layout):
     col.prop(projection, 'unknown_flag0x8', text='Unknown Flag 2')
 
 
-class Properties(shared.M3BoneUserPropertyGroup):
-    material: bpy.props.StringProperty(options=set())
+class Properties(shared.M3PropertyGroup):
+    bone: bpy.props.PointerProperty(type=shared.M3BonePointerProp)
+    material: bpy.props.PointerProperty(type=shared.M3MatRefPointerProp)
     projection_type: bpy.props.EnumProperty(options=set(), items=bl_enum.projection_type)
     field_of_view: bpy.props.FloatProperty(name='M3 Splat Field Of View', default=45)
     field_of_view_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)

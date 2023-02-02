@@ -33,7 +33,7 @@ def update_collection_index(self, context):
 
 
 def draw_props(force, layout):
-    shared.draw_prop_pointer(layout, force.id_data.pose.bones, force, 'bone', label='Bone', icon='BONE_DATA')
+    shared.draw_prop_pointer_search(layout, force.bone, force.id_data.data, 'bones', text='Bone', icon='BONE_DATA')
     col = layout.column()
     col.prop(force, 'force_type', text='Type')
     col = layout.column(align=True)
@@ -54,7 +54,8 @@ def draw_props(force, layout):
     col.prop(force, 'unbounded', text='Unbounded')
 
 
-class Properties(shared.M3BoneUserPropertyGroup):
+class Properties(shared.M3PropertyGroup):
+    bone: bpy.props.PointerProperty(type=shared.M3BonePointerProp)
     force_type: bpy.props.EnumProperty(options=set(), items=bl_enum.force_type)
     shape: bpy.props.EnumProperty(options=set(), items=bl_enum.force_shape)
     width: bpy.props.FloatProperty(name='M3 Force Width', min=0.001, default=1.0)

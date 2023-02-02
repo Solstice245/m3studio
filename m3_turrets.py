@@ -45,31 +45,33 @@ def update_parts_collection_index(self, context):
 
 
 def draw_part_props(part, layout):
-    shared.draw_prop_pointer(layout, part.id_data.pose.bones, part, 'bone', label='Bone', icon='BONE_DATA')
-    col = layout.column()
-    row = col.row()
+    shared.draw_prop_pointer_search(layout, part.bone, part.id_data.data, 'bones', text='Bone', icon='BONE_DATA')
+    row = layout.row()
     row.prop(part, 'group_id', text='Part Group')
     row.separator()
     row.prop(part, 'main_part', text='Main Part')
-    col.separator()
-    col.prop(part, 'forward', text='Turret Forward')
-    col.separator()
-    col = layout.column(align=True)
-    col.prop(part, 'yaw_weight', text='Yaw Weight')
-    col.prop(part, 'yaw_limited', text='Limit Yaw')
-    sub = col.column(align=True)
-    sub.active = part.yaw_limited
-    sub.prop(part, 'yaw_min', text='Minimum')
-    sub.prop(part, 'yaw_max', text='Maximum')
-    col.separator()
-    col.separator()
-    col = layout.column(align=True)
-    col.prop(part, 'pitch_weight', text='Pitch Weight')
-    col.prop(part, 'pitch_limited', text='Limit Pitch')
-    sub = col.column(align=True)
-    sub.active = part.pitch_limited
-    sub.prop(part, 'pitch_min', text='Minimum')
-    sub.prop(part, 'pitch_max', text='Maximum')
+    layout.separator()
+    layout.prop(part, 'forward', text='Turret Forward')
+    layout.separator()
+    layout.separator()
+    row = layout.row()
+    row.prop(part, 'yaw_weight', text='Yaw Weight')
+    row.separator()
+    row.prop(part, 'yaw_limited', text='Limit Yaw')
+    row = layout.row(align=True)
+    row.active = part.yaw_limited
+    row.prop(part, 'yaw_min', text='Range')
+    row.prop(part, 'yaw_max', text='')
+    layout.separator()
+    layout.separator()
+    row = layout.row()
+    row.prop(part, 'pitch_weight', text='Pitch Weight')
+    row.separator()
+    row.prop(part, 'pitch_limited', text='Limit Pitch')
+    row = layout.row(align=True)
+    row.active = part.pitch_limited
+    row.prop(part, 'pitch_min', text='Range')
+    row.prop(part, 'pitch_max', text='')
 
 
 def draw_props(turret, layout):
@@ -109,7 +111,8 @@ def turret_part_group_id_set(self, value):
     self['group_id'] = value
 
 
-class PartProperties(shared.M3BoneUserPropertyGroup):
+class PartProperties(shared.M3PropertyGroup):
+    bone: bpy.props.PointerProperty(type=shared.M3BonePointerPropExclusive)
     forward: bpy.props.FloatVectorProperty(options=set(), size=3, subtype='EULER', unit='ROTATION', default=(0, 0, 0))
     main_part: bpy.props.BoolProperty(options=set(), get=turret_part_main_get, set=turret_part_main_set)
     group_id: bpy.props.IntProperty(options=set(), get=turret_part_group_id_get, set=turret_part_group_id_set, subtype='UNSIGNED', min=1, max=255)

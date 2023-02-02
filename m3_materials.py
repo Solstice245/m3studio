@@ -152,8 +152,7 @@ class DisplacementProperties(shared.M3PropertyGroup):
 
 
 class CompositeSectionProperties(shared.M3PropertyGroup):
-    name: bpy.props.StringProperty(options=set())
-    matref: bpy.props.StringProperty(options=set())
+    material: bpy.props.PointerProperty(type=shared.M3MatRefPointerProp)
     alpha_factor: bpy.props.FloatProperty(name='Alpha Factor', default=1)
     alpha_factor_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
 
@@ -429,7 +428,7 @@ def draw_composite_props(context, material, layout):
     op.collection = material.sections.path_from_id()
     for ii, item in enumerate(material.sections):
         row = box.row()
-        shared.draw_prop_pointer(row, item.id_data.m3_materialrefs, item, 'matref', icon='MATERIAL')
+        shared.draw_prop_pointer_search(row, item.material, material.id_data, 'm3_materialrefs', icon='MATERIAL')
         shared.draw_prop_anim(row, item, 'alpha_factor', text='Alpha Factor')
         op = row.operator('m3.collection_remove', icon='X', text='')
         op.collection, op.index = (material.sections.path_from_id(), ii)
@@ -571,8 +570,7 @@ class ReferenceProperties(shared.M3PropertyGroup):
 class MaterialList(bpy.types.UIList):
     bl_idname = 'UI_UL_M3_materials'
 
-    def draw_item(self, context, layout, data, item, icon, active_data, actuve_propname, index, flt_flag):
-
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index, flt_flag):
         if self.layout_type in {'DEFAULT', 'COMPACT'}:
             row = layout.row()
             row.prop(item, 'name', text='', emboss=False, icon_value=icon)

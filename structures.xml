@@ -2057,7 +2057,7 @@
             <field name="lod_cut" type="uint32" default_value="1"/>
             <field name="unknown21ca0cea" type="FloatAnimationReferenceV0"/> <!-- Void_Narud_Beam.m3 -->
             <field name="unknown1e97145f" type="FloatAnimationReferenceV0"/> <!-- default 1.0 -->
-            <field name="trail_particle" type="int32" default_value="-1"/>
+            <field name="trail_system" type="int32" default_value="-1"/>
             <field name="trail_chance" type="float" default_value="0.0"/>
             <field name="trail_rate" type="FloatAnimationReferenceV0"/>
             <field name="unknownfdab7ff3" type="uint32" default_value="0xffffffff"/>

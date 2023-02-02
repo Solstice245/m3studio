@@ -32,14 +32,15 @@ def update_collection_index(self, context):
 
 
 def draw_props(shbx, layout):
-    shared.draw_prop_pointer(layout, shbx.id_data.pose.bones, shbx, 'bone', label='Bone', icon='BONE_DATA')
+    shared.draw_prop_pointer_search(layout, shbx.bone, shbx.id_data.data, 'bones', text='Bone', icon='BONE_DATA')
     col = layout.column(align=True)
     shared.draw_prop_anim(col, shbx, 'length', text='Length')
     shared.draw_prop_anim(col, shbx, 'width', text='Width')
     shared.draw_prop_anim(col, shbx, 'height', text='Height')
 
 
-class Properties(shared.M3BoneUserPropertyGroup):
+class Properties(shared.M3PropertyGroup):
+    bone: bpy.props.PointerProperty(type=shared.M3BonePointerProp)
     length: bpy.props.FloatProperty(name='M3 Shadow Box Length', min=0, default=1)
     length_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     width: bpy.props.FloatProperty(name='M3 Shadow Box Width', min=0, default=1)

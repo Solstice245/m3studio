@@ -32,7 +32,6 @@ def update_collection_index(self, context):
 
 
 def draw_props(joint, layout):
-    shared.draw_prop_pointer(layout, joint.id_data.pose.bones, joint, 'bone', label='Target Bone', icon='BONE_DATA')
     col = layout.column(align=True)
     col.prop(joint, 'joint_length', text='Joint Length')
     col.separator()
@@ -44,7 +43,7 @@ def draw_props(joint, layout):
 
 
 class Properties(shared.M3PropertyGroup):
-    bone: bpy.props.StringProperty(options=set())
+    bone: bpy.props.PointerProperty(type=shared.M3BonePointerPropExclusive)
     joint_length: bpy.props.IntProperty(options=set(), min=1)
     search_up: bpy.props.FloatProperty(options=set(), default=1)
     search_down: bpy.props.FloatProperty(options=set(), default=-2)
@@ -65,7 +64,7 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Inverse Kinematics'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, context.object.m3_ikjoints, draw_props, menu_id=Menu.bl_idname)
+        shared.draw_collection_list(self.layout, context.object.m3_ikjoints, draw_props, ui_list_id='UI_UL_M3_bone_user', menu_id=Menu.bl_idname)
 
 
 classes = (

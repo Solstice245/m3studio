@@ -20,7 +20,6 @@ import bpy
 import bmesh
 import mathutils
 import os
-import copy
 from . import io_m3
 from . import io_shared
 from . import shared
@@ -582,22 +581,22 @@ class Exporter:
                 export_sequences.append(anim_group)
 
         for system in export_particle_systems:
-            self.vertex_color_mats.add(system.material)
+            self.vertex_color_mats.add(system.material.handle)
             if system.vertex_alpha:
-                self.vertex_alpha_mats.add(system.material)
+                self.vertex_alpha_mats.add(system.material.handle)
 
         for ribbon in export_ribbons:
-            self.vertex_color_mats.add(ribbon.material)
+            self.vertex_color_mats.add(ribbon.material.handle)
             if ribbon.vertex_alpha:
-                self.vertex_alpha_mats.add(ribbon.material)
+                self.vertex_alpha_mats.add(ribbon.material.handle)
 
-        for copy in ob.m3_particlecopies:
-            if not copy.m3_export:
+        for particle_copy in ob.m3_particlecopies:
+            if not particle_copy.m3_export:
                 continue
-            copy_bone = shared.m3_pointer_get(ob.pose.bones, copy.bone)
-            if len(copy.systems) and copy_bone and copy.m3_export:
-                self.export_required_bones.add(copy_bone)
-                export_particle_copies.append(copy)
+            particle_copy_bone = shared.m3_pointer_get(ob.pose.bones, particle_copy.bone)
+            if len(particle_copy.systems) and particle_copy_bone and particle_copy.m3_export:
+                self.export_required_bones.add(particle_copy_bone)
+                export_particle_copies.append(particle_copy)
 
         for spline in ob.m3_ribbonsplines:
             export_spline_points = []
@@ -782,7 +781,7 @@ class Exporter:
             if matref.mat_type == 'm3_materials_composite':
                 mat = shared.m3_pointer_get(getattr(self.ob, matref.mat_type), matref.mat_handle)
                 for section in mat.sections:
-                    section_matref = shared.m3_pointer_get(ob.m3_materialrefs, section.matref)
+                    section_matref = shared.m3_pointer_get(ob.m3_materialrefs, section.material.handle)
                     if section_matref:
                         self.export_required_material_references.add(section_matref)
                         recurse_composite_materials(section_matref, matref.bl_handle in self.vertex_color_mats, matref.bl_handle in self.vertex_alpha_mats)
@@ -956,7 +955,7 @@ class Exporter:
             stg_indices_sections.append(m3_stg_col_indices_section)
 
             for anim in anim_group.animations:
-                anim = shared.m3_pointer_get(self.ob.m3_animations, anim.bl_handle)
+                anim = shared.m3_pointer_get(self.ob.m3_animations, anim)
                 if anim not in self.exported_anims:
                     # TODO ensure stc names are unique
                     self.exported_anims.append(anim)
@@ -1490,7 +1489,7 @@ class Exporter:
                 region.vertex_lookups_used = vertex_lookups_used
                 region.root_bone = region_lookup[0]
                 m3_batch = batch_section.desc.instance()
-                m3_batch.material_reference_index = self.matref_handle_indices[batch.material]
+                m3_batch.material_reference_index = self.matref_handle_indices[batch.material.handle]
                 bone = shared.m3_pointer_get(self.ob.pose.bones, batch.bone)
                 m3_batch.bone = self.bone_name_indices[bone.name] if bone else -1
 
@@ -1717,14 +1716,14 @@ class Exporter:
                 elif type_ii == 3:  # composite material
                     valid_sections = []
                     for section in mat.sections:
-                        matref = shared.m3_pointer_get(self.ob.m3_materialrefs, section.matref)
+                        matref = shared.m3_pointer_get(self.ob.m3_materialrefs, section.material.handle)
                         if matref:
                             valid_sections.append(section)
                     if len(valid_sections):
                         section_section = self.m3.section_for_reference(m3_mat, 'sections')
                         for section in valid_sections:
                             m3_section = section_section.content_add()
-                            m3_section.material_reference_index = self.matref_handle_indices[section.matref]
+                            m3_section.material_reference_index = self.matref_handle_indices[section.material.handle]
                             processor = M3OutputProcessor(self, section, m3_section)
                             processor.anim_float('alpha_factor')
                 elif type_ii == 11:  # lens flare material
@@ -1758,7 +1757,7 @@ class Exporter:
 
             m3_system = particle_system_section.content_add()
             m3_system.bone = self.bone_name_indices[system_bone.name]
-            m3_system.material_reference_index = self.matref_handle_indices[system.material]
+            m3_system.material_reference_index = self.matref_handle_indices[system.material.handle]
 
             processor = M3OutputProcessor(self, system, m3_system)
             io_shared.io_particle_system(processor)
@@ -1766,9 +1765,9 @@ class Exporter:
             if system.emit_count_header.flags == -1:
                 m3_system.emit_count.header.flags = 0x6
 
-            trail_particle = shared.m3_pointer_get(systems, system.trail_particle)
-            if trail_particle:
-                m3_system.trail_particle = systems.index(trail_particle)
+            trail_system = shared.m3_pointer_get(systems, system.trail_system)
+            if trail_system:
+                m3_system.trail_system = systems.index(trail_system)
 
             m3_system.unknowne0bd54c8 = self.init_anim_ref_float()
             m3_system.unknowna2d44d80 = self.init_anim_ref_float()
@@ -1823,9 +1822,9 @@ class Exporter:
                         processor.anim_vec3('location')
 
             copy_indices = []
-            for ii, copy in enumerate(copies):
-                for system_handle in copy.systems:
-                    if system_handle.bl_handle == system.bl_handle:
+            for ii, particle_copy in enumerate(copies):
+                for pointer in particle_copy.systems:
+                    if pointer.handle == system.bl_handle:
                         copy_indices.append(ii)
 
             if len(copy_indices):
@@ -1834,11 +1833,11 @@ class Exporter:
 
         if len(copies):
             particle_copy_section = self.m3.section_for_reference(model, 'particle_copies', version=0)
-        for copy in copies:
-            copy_bone = shared.m3_pointer_get(self.ob.pose.bones, copy.bone)
+        for particle_copy in copies:
+            particle_copy_bone = shared.m3_pointer_get(self.ob.pose.bones, particle_copy.bone)
             m3_copy = particle_copy_section.content_add()
-            m3_copy.bone = self.bone_name_indices[copy_bone.name]
-            processor = M3OutputProcessor(self, copy, m3_copy)
+            m3_copy.bone = self.bone_name_indices[particle_copy_bone.name]
+            processor = M3OutputProcessor(self, particle_copy, m3_copy)
             io_shared.io_particle_copy(processor)
 
     def create_ribbons(self, model, ribbons, splines, version):
@@ -1850,7 +1849,7 @@ class Exporter:
 
             m3_ribbon = ribbon_section.content_add()
             m3_ribbon.bone = self.bone_name_indices[ribbon_bone.name]
-            m3_ribbon.material_reference_index = self.matref_handle_indices[ribbon.material]
+            m3_ribbon.material_reference_index = self.matref_handle_indices[ribbon.material.handle]
             processor = M3OutputProcessor(self, ribbon, m3_ribbon)
             io_shared.io_ribbon(processor)
 
@@ -1859,11 +1858,11 @@ class Exporter:
             m3_ribbon.unknown1686c0b7 = self.init_anim_ref_float()
             m3_ribbon.unknown9eba8df8 = self.init_anim_ref_float()
 
-            if ribbon.spline not in handle_to_spline_sections.keys():
+            if ribbon.spline.handle not in handle_to_spline_sections.keys():
                 spline = shared.m3_pointer_get(self.ob.m3_ribbonsplines, ribbon.spline)
                 if spline in splines:
                     spline_section = self.m3.section_for_reference(m3_ribbon, 'spline', version=0)
-                    handle_to_spline_sections[ribbon.spline] = spline_section
+                    handle_to_spline_sections[ribbon.spline.handle] = spline_section
 
                     for point in splines[splines.index(spline)].points:
                         point_bone = shared.m3_pointer_get(self.ob.pose.bones, point.bone)
@@ -1879,7 +1878,7 @@ class Exporter:
                         m3_point.unknown3 = self.init_anim_ref_float(1.0)
                         m3_point.unknown4 = self.init_anim_ref_float(1.0)
             else:
-                handle_to_spline_sections[ribbon.spline].references.append(m3_ribbon.spline)
+                handle_to_spline_sections[ribbon.spline.handle].references.append(m3_ribbon.spline)
 
     def create_projections(self, model, projections):
         projection_section = self.m3.section_for_reference(model, 'projections', version=5)
@@ -1888,7 +1887,7 @@ class Exporter:
             projection_bone = shared.m3_pointer_get(self.ob.pose.bones, projection.bone)
             m3_projection = projection_section.content_add()
             m3_projection.bone = self.bone_name_indices[projection_bone.name]
-            m3_projection.material_reference_index = self.matref_handle_indices[projection.material]
+            m3_projection.material_reference_index = self.matref_handle_indices[projection.material.handle]
             processor = M3OutputProcessor(self, projection, m3_projection)
             io_shared.io_projection(processor)
 
@@ -1929,11 +1928,11 @@ class Exporter:
             processor = M3OutputProcessor(self, physics_body, m3_physics_body)
             io_shared.io_rigid_body(processor)
 
-            if physics_body.physics_shape in self.physics_shape_handle_to_volumes.keys():
-                if not shape_to_section.get(physics_body.physics_shape):
+            if physics_body.physics_shape.handle in self.physics_shape_handle_to_volumes.keys():
+                if not shape_to_section.get(physics_body.physics_shape.handle):
                     shape_section = self.m3.section_for_reference(m3_physics_body, 'physics_shape', version=shape_version)
 
-                    for volume in self.physics_shape_handle_to_volumes[physics_body.physics_shape]:
+                    for volume in self.physics_shape_handle_to_volumes[physics_body.physics_shape.handle]:
                         m3_volume = shape_section.content_add()
                         m3_volume.shape = volume.bl_rna.properties['shape'].enum_items.find(volume.shape)
                         m3_volume.size0, m3_volume.size1, m3_volume.size2 = volume.size
@@ -1947,7 +1946,7 @@ class Exporter:
                             else:
                                 self.get_physics_volume_object(volume.mesh_object, m3_volume)
                 else:
-                    shape_section = self.shape_to_section[physics_body.physics_shape]
+                    shape_section = self.shape_to_section[physics_body.physics_shape.handle]
                     shape_section.references.append(m3_physics_body.physics_shape)
 
     def create_physics_joints(self, model, physics_bodies, physics_joints):
@@ -2022,10 +2021,10 @@ class Exporter:
             vertex_bones_section = self.m3.section_for_reference(m3_physics_cloth, 'vertex_bones')
             vertex_weights_section = self.m3.section_for_reference(m3_physics_cloth, 'vertex_weights')
 
-            if physics_cloth.constraint_set not in constraints_sections.keys():
+            if physics_cloth.constraint_set.handle not in constraints_sections.keys():
                 constraints_section = self.m3.section_for_reference(m3_physics_cloth, 'constraints', version=0)
-                constraints_sections[physics_cloth.constraint_set] = constraints_section
-                for volume in self.physics_cloth_constraint_handle_to_volumes[physics_cloth.constraint_set]:
+                constraints_sections[physics_cloth.constraint_set.handle] = constraints_section
+                for volume in self.physics_cloth_constraint_handle_to_volumes[physics_cloth.constraint_set.handle]:
                     volume_bone = shared.m3_pointer_get(self.ob.pose.bones, volume.bone)
                     skin_bones.add(self.bone_name_indices[volume_bone.name])
                     m3_volume = constraints_section.content_add()
@@ -2034,7 +2033,7 @@ class Exporter:
                     m3_volume.height = volume.height
                     m3_volume.radius = volume.radius
             else:
-                constraints_section = constraints_sections[physics_cloth.constraint_set]
+                constraints_section = constraints_sections[physics_cloth.constraint_set.handle]
                 constraints_section.references.append(m3_physics_cloth.constraints)
 
             influence_map_section = self.m3.section_for_reference(m3_physics_cloth, 'influence_map', version=0)

@@ -53,26 +53,26 @@ def update_splines_collection_index(self, context):
 
 
 def draw_point_props(point, layout):
-    shared.draw_prop_pointer(layout, point.id_data.pose.bones, point, 'bone', label='Bone', icon='BONE_DATA')
+    shared.draw_prop_pointer_search(layout, point.bone, point.id_data.data, 'bones', text='Bone', icon='BONE_DATA')
     col = layout.column(align=True)
     shared.draw_prop_anim(col, point, 'length', text='Length')
     shared.draw_prop_anim(col, point, 'yaw', text='Yaw')
     shared.draw_prop_anim(col, point, 'pitch', text='Pitch')
     col = layout.column(align=True)
     col.prop(point, 'length_var_shape', text='Length Variation')
-    sub = layout.column(align=True)
+    sub = col.column(align=True)
     sub.active = point.length_var_shape != 'NONE'
     shared.draw_prop_anim(sub, point, 'length_var_frequency', text='Frequency')
     shared.draw_prop_anim(sub, point, 'length_var_amplitude', text='Amount')
     col = layout.column(align=True)
     col.prop(point, 'yaw_var_shape', text='Yaw Variation')
-    sub = layout.column(align=True)
+    sub = col.column(align=True)
     sub.active = point.yaw_var_shape != 'NONE'
     shared.draw_prop_anim(sub, point, 'yaw_var_frequency', text='Frequency')
     shared.draw_prop_anim(sub, point, 'yaw_var_amplitude', text='Amount')
     col = layout.column(align=True)
     col.prop(point, 'pitch_var_shape', text='Pitch Variation')
-    sub = layout.column(align=True)
+    sub = col.column(align=True)
     sub.active = point.pitch_var_shape != 'NONE'
     shared.draw_prop_anim(sub, point, 'pitch_var_frequency', text='Frequency')
     shared.draw_prop_anim(sub, point, 'pitch_var_amplitude', text='Amount')
@@ -83,9 +83,9 @@ def draw_spline_props(spline, layout):
 
 
 def draw_ribbon_props(ribbon, layout):
-    shared.draw_prop_pointer(layout, ribbon.id_data.pose.bones, ribbon, 'bone', label='Bone', icon='BONE_DATA')
-    shared.draw_prop_pointer(layout, ribbon.id_data.m3_materialrefs, ribbon, 'material', label='Material', icon='MATERIAL')
-    shared.draw_prop_pointer(layout, ribbon.id_data.m3_ribbonsplines, ribbon, 'spline', label='Ribbon Spline', icon='LINKED')
+    shared.draw_prop_pointer_search(layout, ribbon.bone, ribbon.id_data.data, 'bones', text='Bone', icon='BONE_DATA')
+    shared.draw_prop_pointer_search(layout, ribbon.material, ribbon.id_data, 'm3_materialrefs', text='Material', icon='MATERIAL')
+    shared.draw_prop_pointer_search(layout, ribbon.spline, ribbon.id_data, 'm3_ribbonsplines', text='Ribbon Spline', icon='LINKED')
 
     col = layout.column(align=True)
     col.prop(ribbon, 'ribbon_type', text='Ribbon Type')
@@ -195,7 +195,13 @@ def draw_ribbon_props(ribbon, layout):
     col.prop(ribbon, 'vertex_alpha', text='Vertex Alpha')
 
 
-class PointProperties(shared.M3BoneUserPropertyGroup):
+class RibbonPointerProp(bpy.types.PropertyGroup):
+    value: bpy.props.StringProperty(options=set(), get=shared.pointer_get_args('m3_ribbons'), set=shared.pointer_set_args('m3_ribbons', False))
+    handle: bpy.props.StringProperty(options=set())
+
+
+class PointProperties(shared.M3PropertyGroup):
+    bone: bpy.props.PointerProperty(type=shared.M3BonePointerProp)
     tan1: bpy.props.FloatProperty(options=set())  # TODO draw
     tan2: bpy.props.FloatProperty(options=set())  # TODO draw
     tan3: bpy.props.FloatProperty(options=set())  # TODO draw
@@ -227,9 +233,10 @@ class SplineProperties(shared.M3PropertyGroup):
     points_index: bpy.props.IntProperty(options=set(), default=-1, update=update_splines_collection_index)
 
 
-class RibbonProperties(shared.M3BoneUserPropertyGroup):
-    material: bpy.props.StringProperty(options=set())
-    spline: bpy.props.StringProperty(options=set())
+class RibbonProperties(shared.M3PropertyGroup):
+    bone: bpy.props.PointerProperty(type=shared.M3BonePointerProp)
+    material: bpy.props.PointerProperty(type=shared.M3MatRefPointerProp)
+    spline: bpy.props.PointerProperty(type=RibbonPointerProp)
     ribbon_type: bpy.props.EnumProperty(options=set(), items=bl_enum.ribbon_type)
     cull_method: bpy.props.EnumProperty(options=set(), items=bl_enum.ribbon_cull)
     lod_cut: bpy.props.EnumProperty(options=set(), items=bl_enum.lod)
@@ -368,6 +375,7 @@ class SplinePanel(shared.ArmatureObjectPanel, bpy.types.Panel):
 
 
 classes = (
+    RibbonPointerProp,
     PointProperties,
     SplineProperties,
     RibbonProperties,

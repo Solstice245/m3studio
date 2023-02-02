@@ -57,18 +57,18 @@ def update_copy_collection_index(self, context):
 
 
 def draw_copy_props(copy, layout):
-    shared.draw_prop_pointer(layout, copy.id_data.pose.bones, copy, 'bone', label='Bone', icon='BONE_DATA')
+    shared.draw_prop_pointer_search(layout, copy.bone, copy.id_data.data, 'bones', text='Bone', icon='BONE_DATA')
     col = layout.column(align=True)
     shared.draw_prop_anim(col, copy, 'emit_rate', text='Emission Rate')
     shared.draw_prop_anim(col, copy, 'emit_count', text='Emission Amount')
     layout.separator()
-    shared.draw_handle_list(layout.box(), copy.id_data.m3_particlesystems, copy, 'systems', label='Particle System')
+    shared.draw_pointer_list(layout.box(), copy, 'systems', copy.id_data, 'm3_particlesystems', text='Particle System')
 
 
 def draw_props(particle, layout):
     col = layout.column()
-    shared.draw_prop_pointer(col, particle.id_data.pose.bones, particle, 'bone', label='Bone', icon='BONE_DATA')
-    shared.draw_prop_pointer(col, particle.id_data.m3_materialrefs, particle, 'material', label='Material', icon='MATERIAL')
+    shared.draw_prop_pointer_search(col, particle.bone, particle.id_data.data, 'bones', text='Bone', icon='BONE_DATA')
+    shared.draw_prop_pointer_search(col, particle.material, particle.id_data, 'm3_materialrefs', text='Material', icon='MATERIAL')
     col.prop(particle, 'particle_type', text='Type')
 
     if particle.particle_type == 'RECT_BILLBOARD':
@@ -253,7 +253,7 @@ def draw_props(particle, layout):
     sub.prop(particle, 'uv_flipbook_start_lifespan_factor', text='Phase 1 Length')
     col = layout.column(align=True)
     col.separator()
-    shared.draw_prop_pointer(col, particle.id_data.m3_particlesystems, particle, 'trail_particle', label='Trailing Particle', icon='LINKED')
+    shared.draw_prop_pointer_search(col, particle.trail_system, particle.id_data, 'm3_particlesystems', text='Trailing Particle', icon='LINKED')
     col.prop(particle, 'trail_chance', text='Chance')
     shared.draw_prop_anim(col, particle, 'trail_rate', text='Rate')
     col = layout.column()
@@ -295,20 +295,32 @@ def draw_props(particle, layout):
     col.prop(particle, 'always_set', text='Always Set')
 
 
+class SystemPointerProp(bpy.types.PropertyGroup):
+    value: bpy.props.StringProperty(options=set(), get=shared.pointer_get_args('m3_particlesystems'), set=shared.pointer_set_args('m3_particlesystems', False))
+    handle: bpy.props.StringProperty(options=set())
+
+
+class CopySystemPointerProp(bpy.types.PropertyGroup):
+    value: bpy.props.StringProperty(options=set(), get=shared.pointer_get_args('m3_particlesystems'), set=shared.pointer_set_args('m3_particlesystems', True))
+    handle: bpy.props.StringProperty(options=set())
+
+
 class SplinePointProperties(shared.M3PropertyGroup):
     location: bpy.props.FloatVectorProperty(name='Location', subtype='XYZ', size=3)
 
 
-class CopyProperties(shared.M3BoneUserPropertyGroup):
-    systems: bpy.props.CollectionProperty(type=shared.M3PropertyGroup)
+class CopyProperties(shared.M3PropertyGroup):
+    bone: bpy.props.PointerProperty(type=shared.M3BonePointerProp)
+    systems: bpy.props.CollectionProperty(type=CopySystemPointerProp)
     emit_rate: bpy.props.FloatProperty(name='Particle Copy Emission Rate', min=0)
     emit_rate_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     emit_count: bpy.props.IntProperty(name='Particle Copy Emission Count', min=0)
     emit_count_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
 
 
-class SystemProperties(shared.M3BoneUserPropertyGroup):
-    material: bpy.props.StringProperty(options=set())
+class SystemProperties(shared.M3PropertyGroup):
+    bone: bpy.props.PointerProperty(type=shared.M3BonePointerProp)
+    material: bpy.props.PointerProperty(type=shared.M3MatRefPointerProp)
     particle_type: bpy.props.EnumProperty(options=set(), items=bl_enum.particle_type)
     length_width_ratio: bpy.props.FloatProperty(default=1)
     distance_limit: bpy.props.FloatProperty(options=set(), min=0)
@@ -371,9 +383,9 @@ class SystemProperties(shared.M3BoneUserPropertyGroup):
     color2_end: bpy.props.FloatVectorProperty(name='Final Color Random', subtype='COLOR', size=4, min=0, max=1, default=(1, 1, 1, 0))
     color2_end_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     color_randomize: bpy.props.BoolProperty(options=set())
-    rotation: bpy.props.FloatVectorProperty(name='Rotation', subtype='XYZ', size=3)
+    rotation: bpy.props.FloatVectorProperty(name='Rotation', subtype='EULER', size=3, unit='ROTATION')
     rotation_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
-    rotation2: bpy.props.FloatVectorProperty(name='Rotation Random', subtype='XYZ', size=3)
+    rotation2: bpy.props.FloatVectorProperty(name='Rotation Random', subtype='EULER', size=3, unit='ROTATION')
     rotation2_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     rotation_randomize: bpy.props.BoolProperty(options=set())
     size: bpy.props.FloatVectorProperty(name='Size', subtype='XYZ', size=3, default=(1, 1, 1))
@@ -396,7 +408,7 @@ class SystemProperties(shared.M3BoneUserPropertyGroup):
     noise_frequency: bpy.props.FloatProperty(options=set())
     noise_cohesion: bpy.props.FloatProperty(options=set())
     noise_edge: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0, max=0.5)
-    trail_particle: bpy.props.StringProperty(options=set())
+    trail_system: bpy.props.PointerProperty(type=SystemPointerProp)
     trail_chance: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0, max=1)
     trail_rate: bpy.props.FloatProperty(name='Particle Trail Rate', default=10)
     trail_rate_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
@@ -477,6 +489,8 @@ class SystemPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
 
 
 classes = (
+    SystemPointerProp,
+    CopySystemPointerProp,
     SplinePointProperties,
     CopyProperties,
     SystemProperties,

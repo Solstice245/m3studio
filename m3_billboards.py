@@ -33,12 +33,12 @@ def update_collection_index(self, context):
 
 
 def draw_props(billboard, layout):
-    shared.draw_prop_pointer(layout, billboard.id_data.pose.bones, billboard, 'bone', label='Bone', icon='BONE_DATA')
     layout.prop(billboard, 'billboard_type', text='Type')
     layout.prop(billboard, 'look', text='Look At Camera Center')
 
 
-class Properties(shared.M3BoneUserPropertyGroup):
+class Properties(shared.M3PropertyGroup):
+    bone: bpy.props.PointerProperty(type=shared.M3BonePointerPropExclusive)
     billboard_type: bpy.props.EnumProperty(options=set(), items=bl_enum.billboard_type, default='FULL')
     look: bpy.props.BoolProperty(options=set())
 
@@ -56,7 +56,7 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Billboards'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, context.object.m3_billboards, draw_props, menu_id=Menu.bl_idname)
+        shared.draw_collection_list(self.layout, context.object.m3_billboards, draw_props, ui_list_id='UI_UL_M3_bone_user', menu_id=Menu.bl_idname)
 
 
 classes = (

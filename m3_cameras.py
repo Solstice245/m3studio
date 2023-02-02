@@ -44,7 +44,7 @@ def update_collection_index(self, context):
 def draw_props(camera, layout):
     version = int(camera.id_data.m3_cameras_version)
 
-    shared.draw_prop_pointer(layout, camera.id_data.pose.bones, camera, 'bone', label='Bone', icon='BONE_DATA')
+    shared.draw_prop_pointer_search(layout, camera.bone, camera.id_data.data, 'bones', text='Bone', icon='BONE_DATA')
     col = layout.column(align=True)
     shared.draw_prop_anim(col, camera, 'field_of_view', text='Field Of View')
     shared.draw_prop_anim(col, camera, 'far_clip', text='Far Clip')
@@ -59,7 +59,8 @@ def draw_props(camera, layout):
     col.prop(camera, 'use_vertical_fov', text='Vertical FOV')
 
 
-class Properties(shared.M3BoneUserPropertyGroup):
+class Properties(shared.M3PropertyGroup):
+    bone: bpy.props.PointerProperty(type=shared.M3BonePointerProp)
     field_of_view: bpy.props.FloatProperty(name='M3 Camera Field Of View', default=0.5)
     field_of_view_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     far_clip: bpy.props.FloatProperty(name='M3 Camera Far Clip', default=10)

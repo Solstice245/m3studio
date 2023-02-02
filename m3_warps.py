@@ -32,13 +32,14 @@ def update_collection_index(self, context):
 
 
 def draw_props(warp, layout):
-    shared.draw_prop_pointer(layout, warp.id_data.pose.bones, warp, 'bone', label='Bone', icon='BONE_DATA')
+    shared.draw_prop_pointer_search(layout, warp.bone, warp.id_data.data, 'bones', text='Bone', icon='BONE_DATA')
     col = layout.column(align=True)
     shared.draw_prop_anim(col, warp, 'radius', text='Radius')
     shared.draw_prop_anim(col, warp, 'strength', text='Strength')
 
 
-class Properties(shared.M3BoneUserPropertyGroup):
+class Properties(shared.M3PropertyGroup):
+    bone: bpy.props.PointerProperty(type=shared.M3BonePointerProp)
     radius: bpy.props.FloatProperty(name='M3 Warp Radius', min=0, default=1)
     radius_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     strength: bpy.props.FloatProperty(name='M3 Warp Strength', min=0, default=1)

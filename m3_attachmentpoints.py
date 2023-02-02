@@ -32,7 +32,7 @@ def update_collection_index(self, context):
 
 
 def draw_props(point, layout):
-    shared.draw_prop_pointer(layout, point.id_data.pose.bones, point, 'bone', label='Bone', icon='BONE_DATA')
+    shared.draw_prop_pointer_search(layout, point.bone, point.id_data.data, 'bones', text='Bone', icon='BONE_DATA')
     shared.draw_collection_list(layout.box(), point.volumes, shared.draw_volume_props, menu_id=VolumeMenu.bl_idname, label='Volumes:')
 
 
@@ -53,7 +53,8 @@ class PointMenu(bpy.types.Menu):
         shared.draw_menu_duplicate(self.layout, context.object.m3_attachmentpoints, dup_keyframes_opt=False)
 
 
-class Properties(shared.M3BoneUserPropertyGroup):
+class Properties(shared.M3PropertyGroup):
+    bone: bpy.props.PointerProperty(type=shared.M3BonePointerProp)
     volumes: bpy.props.CollectionProperty(type=shared.M3VolumePropertyGroup)
     volumes_index: bpy.props.IntProperty(options=set(), default=-1)
 

@@ -89,21 +89,8 @@ def set_default_value(action, path, index, value):
 
 
 def anim_group_update(self, context):
-    ob = context.object
-    anim_group = ob.m3_animation_groups[ob.m3_animation_groups_index]
-
-    if ob.m3_animation_groups_index >= 0:
-        anim = ob.m3_animations[ob.m3_animations_index] if ob.m3_animations_index in range(len(ob.m3_animations)) else None
-        if anim:
-            if anim.bl_handle not in [item.bl_handle for item in anim_group.animations]:
-                ob.m3_animations_index = ob.m3_animations.find(shared.m3_pointer_get(ob.m3_animations, anim_group.animations[0].bl_handle).name)
-        else:
-            ob.m3_animations_index = ob.m3_animations.find(shared.m3_pointer_get(ob.m3_animations, anim_group.animations[0].bl_handle).name)
-
-        anim_group_frame_update(self, context)
-
-    else:
-        ob.m3_animations_index = -1
+    anim_group_frame_update(self, context)
+    anim_group_anim_update(self, context)
 
 
 def anim_group_frame_update(self, context):
@@ -115,6 +102,14 @@ def anim_group_frame_update(self, context):
 
     bpy.context.scene.frame_start = anim_group.frame_start
     bpy.context.scene.frame_end = anim_group.frame_end - 1
+
+
+def anim_group_anim_update(self, context):
+    ob = context.object
+    anim_group = ob.m3_animation_groups[ob.m3_animation_groups_index]
+
+    if ob.m3_options.update_anim_data and anim_group.animations_index >= 0:
+        ob.m3_animations_index = ob.m3_animations.find(anim_group.animations[anim_group.animations_index].value)
 
 
 def draw_animation_props(animation, layout):
@@ -139,7 +134,26 @@ def draw_group_props(anim_group, layout):
     col.prop(anim_group, 'not_looping', text='Does Not Loop')
     col.prop(anim_group, 'always_global', text='Always Global')
     col.prop(anim_group, 'global_in_previewer', text='Global In Previewer')
-    shared.draw_handle_list(layout.box(), anim_group.id_data.m3_animations, anim_group, 'animations', label='Animation')
+    shared.draw_collection_list(layout.box(), anim_group.animations, None, ui_list_id=AnimPointerList.bl_idname)
+
+
+class AnimPointerProp(bpy.types.PropertyGroup):
+    value: bpy.props.StringProperty(options=set(), get=shared.pointer_get_args('m3_animations'), set=shared.pointer_set_args('m3_animations', False))
+    handle: bpy.props.StringProperty(options=set())
+
+
+class AnimPointerList(bpy.types.UIList):
+    bl_idname = 'UI_UL_M3_animations'
+
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index, flt_flag):
+        if self.layout_type in {'DEFAULT', 'COMPACT'}:
+            anim = shared.m3_pointer_get(item.id_data.m3_animations, item)
+            row = layout.row()
+            row.prop(item, 'value', text='', emboss=False, icon='ANIM_DATA')
+            if not anim:
+                split = row.split()
+                split.alignment = 'RIGHT'
+                split.label(icon='ERROR', text='Invalid anim name')
 
 
 class AnimationProperties(shared.M3PropertyGroup):
@@ -158,7 +172,8 @@ class GroupProperties(shared.M3PropertyGroup):
     not_looping: bpy.props.BoolProperty(options=set())
     always_global: bpy.props.BoolProperty(options=set())
     global_in_previewer: bpy.props.BoolProperty(options=set())
-    animations: bpy.props.CollectionProperty(type=shared.M3PropertyGroup)
+    animations: bpy.props.CollectionProperty(type=AnimPointerProp)
+    animations_index: bpy.props.IntProperty(options=set(), default=-1, update=anim_group_anim_update)
 
 
 class SequenceMenu(bpy.types.Menu):
@@ -219,6 +234,8 @@ class M3AnimationActionUnlinkOp(bpy.types.Operator):
 
 
 classes = (
+    AnimPointerProp,
+    AnimPointerList,
     AnimationProperties,
     GroupProperties,
     SequenceMenu,

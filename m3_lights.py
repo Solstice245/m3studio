@@ -33,7 +33,7 @@ def update_collection_index(self, context):
 
 
 def draw_props(light, layout):
-    shared.draw_prop_pointer(layout, light.id_data.pose.bones, light, 'bone', label='Bone', icon='BONE_DATA')
+    shared.draw_prop_pointer_search(layout, light.bone, light.id_data.data, 'bones', text='Bone', icon='BONE_DATA')
     col = layout.column(align=True)
     col.prop(light, 'shape', text='Shape')
     shared.draw_prop_anim(col, light, 'attenuation_near', text='Attenuation Near')
@@ -56,7 +56,8 @@ def draw_props(light, layout):
     col.prop(light, 'ao', text='Ambient Occlusion')
 
 
-class Properties(shared.M3BoneUserPropertyGroup):
+class Properties(shared.M3PropertyGroup):
+    bone: bpy.props.PointerProperty(type=shared.M3BonePointerProp)
     shape: bpy.props.EnumProperty(options=set(), items=bl_enum.light_shape, default='POINT')
     color: bpy.props.FloatVectorProperty(name='M3 Light Color', subtype='COLOR', size=3, min=0, max=1, default=(1, 1, 1))
     color_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)

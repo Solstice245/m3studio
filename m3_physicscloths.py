@@ -41,8 +41,8 @@ def update_constraints_collection_index(self, context):
 
 
 def draw_constraint_props(constraint, layout):
-    shared.draw_prop_pointer(layout, constraint.id_data.pose.bones, constraint, 'bone', label='Bone', icon='BONE_DATA')
-    col = layout.column()
+    shared.draw_prop_pointer_search(layout, constraint.bone, constraint.id_data.data, 'bones', text='Bone', icon='BONE_DATA')
+    col = layout.column(align=True)
     col.prop(constraint, 'radius', text='Radius')
     col.prop(constraint, 'height', text='Height')
     col = layout.column()
@@ -61,7 +61,7 @@ def draw_cloth_props(cloth, layout):
     layout.prop(cloth, 'mesh_object', text='Mesh Object')
     layout.prop(cloth, 'simulator_object', text='Simulator Object')
     layout.separator()
-    shared.draw_prop_pointer(layout, cloth.id_data.m3_clothconstraintsets, cloth, 'constraint_set', label='Constraint Set', icon='LINKED')
+    shared.draw_prop_pointer_search(layout, cloth.constraint_set, cloth.id_data, 'm3_clothconstraintsets', text='Constraint Set', icon='LINKED')
     layout.separator()
     layout.prop(cloth, 'density', text='Cloth Density')
     layout.separator()
@@ -97,7 +97,13 @@ def draw_cloth_props(cloth, layout):
         layout.prop(cloth, 'local_wind', text='Local Wind')
 
 
-class ConstraintProperties(shared.M3BoneUserPropertyGroup):
+class ConstraintSetPointerProp(bpy.types.PropertyGroup):
+    value: bpy.props.StringProperty(options=set(), get=shared.pointer_get_args('m3_clothconstraintsets'), set=shared.pointer_set_args('m3_clothconstraintsets', False))
+    handle: bpy.props.StringProperty(options=set())
+
+
+class ConstraintProperties(shared.M3PropertyGroup):
+    bone: bpy.props.PointerProperty(type=shared.M3BonePointerProp)
     location: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3)
     rotation: bpy.props.FloatVectorProperty(options=set(), subtype='EULER', unit='ROTATION', size=3)
     scale: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0, default=(1, 1, 1))
@@ -113,7 +119,7 @@ class ConstraintSetProperties(shared.M3PropertyGroup):
 class ClothProperties(shared.M3PropertyGroup):
     mesh_object: bpy.props.PointerProperty(type=bpy.types.Object)
     simulator_object: bpy.props.PointerProperty(type=bpy.types.Object)
-    constraint_set: bpy.props.StringProperty(options=set())
+    constraint_set: bpy.props.PointerProperty(type=ConstraintSetPointerProp)
     density: bpy.props.FloatProperty(options=set(), min=0, default=10)
     tracking: bpy.props.FloatProperty(options=set(), min=0, default=0.25)
     stiffness_stretching: bpy.props.FloatProperty(options=set(), min=0, default=0.5)
@@ -195,6 +201,7 @@ class ClothConstraintsPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
 
 
 classes = (
+    ConstraintSetPointerProp,
     ConstraintProperties,
     ConstraintSetProperties,
     ClothMenu,

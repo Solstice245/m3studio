@@ -30,8 +30,9 @@ def register_props():
 
 
 class BatchPropertyGroup(bpy.types.PropertyGroup):
-    material: bpy.props.StringProperty(options=set())
-    bone: bpy.props.StringProperty(options=set(), description='The selected bone\'s "Batching" property will determine whether the material is rendered')
+    material: bpy.props.PointerProperty(type=shared.M3MatRefPointerProp)
+    # bone: bpy.props.StringProperty(options=set(), description='The selected bone\'s "Batching" property will determine whether the material is rendered')
+    bone: bpy.props.PointerProperty(type=shared.M3BonePointerProp)
 
 
 class SignOpSelect(bpy.types.Operator):
@@ -245,8 +246,8 @@ class Panel(bpy.types.Panel):
                 sub_box = box.box()
                 row = sub_box.row()
                 col = row.column()
-                shared.draw_prop_pointer(col, parent.m3_materialrefs, batch, 'material', label='Material Reference', icon='MATERIAL')
-                shared.draw_prop_pointer(col, parent.pose.bones, batch, 'bone', label='Batching Toggle Bone', icon='BONE_DATA')
+                shared.draw_prop_pointer_search(col, batch.material, parent, 'm3_materialrefs', text='Material', icon='MATERIAL')
+                shared.draw_prop_pointer_search(col, batch.bone, parent.data, 'bones', text='Batching Toggle Bone', icon='BONE_DATA')
                 op = row.operator('m3.handle_remove', text='', icon='X')
                 op.collection = ob.m3_mesh_batches.path_from_id()
                 op.index = ii

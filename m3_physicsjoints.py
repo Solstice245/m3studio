@@ -34,18 +34,11 @@ def update_collection_index(self, context):
 
 def draw_props(joint, layout):
     col = layout.column()
-
-    shared.draw_prop_pointer(col, joint.id_data.m3_rigidbodies, joint, 'rigidbody1', label='Joint Start', icon='LINKED')
-    if shared.m3_pointer_get(joint.id_data.m3_rigidbodies, joint.rigidbody1):
-        col.prop(joint, 'location1', text='Location')
-        col.prop(joint, 'rotation1', text='Rotation')
-
+    col.prop(joint, 'location1', text='Location')
+    col.prop(joint, 'rotation1', text='Rotation')
     col = layout.column()
-
-    shared.draw_prop_pointer(col, joint.id_data.m3_rigidbodies, joint, 'rigidbody2', label='Joint End', icon='LINKED')
-    if shared.m3_pointer_get(joint.id_data.m3_rigidbodies, joint.rigidbody2):
-        col.prop(joint, 'location2', text='Location')
-        col.prop(joint, 'rotation2', text='Rotation')
+    col.prop(joint, 'location2', text='Location')
+    col.prop(joint, 'rotation2', text='Rotation')
 
     col = layout.column(align=True)
     col.prop(joint, 'joint_type', text='Joint Type')
@@ -71,9 +64,14 @@ def draw_props(joint, layout):
         sub.prop(joint, 'friction', text='Amount')
 
 
+class RigidBodyPointerProp(bpy.types.PropertyGroup):
+    value: bpy.props.StringProperty(options=set(), get=shared.pointer_get_args('m3_rigidbodies'), set=shared.pointer_set_args('m3_rigidbodies', False))
+    handle: bpy.props.StringProperty(options=set())
+
+
 class Properties(shared.M3PropertyGroup):
-    rigidbody1: bpy.props.StringProperty(options=set())
-    rigidbody2: bpy.props.StringProperty(options=set())
+    rigidbody1: bpy.props.PointerProperty(type=RigidBodyPointerProp)
+    rigidbody2: bpy.props.PointerProperty(type=RigidBodyPointerProp)
     location1: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3)
     location2: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3)
     rotation1: bpy.props.FloatVectorProperty(options=set(), subtype='EULER', size=3)
@@ -89,6 +87,21 @@ class Properties(shared.M3PropertyGroup):
     angular_frequency: bpy.props.FloatProperty(options=set(), min=0, default=5)
 
 
+class PhysicsJointList(bpy.types.UIList):
+    bl_idname = 'UI_UL_M3_physicsjoints'
+
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index, flt_flag):
+        if self.layout_type in {'DEFAULT', 'COMPACT'}:
+            rb1 = shared.m3_pointer_get(item.id_data.m3_rigidbodies, item.rigidbody1)
+            rb2 = shared.m3_pointer_get(item.id_data.m3_rigidbodies, item.rigidbody2)
+            main = layout.row()
+            row = main.row()
+            row.prop(item.rigidbody1, 'value', text='', emboss=False, icon='BONE_DATA')
+            row.prop(item.rigidbody2, 'value', text='', emboss=False, icon='BONE_DATA')
+            if not rb1 or not rb2:
+                row.label(icon='ERROR', text='Invalid joint bone(s)')
+
+
 class Menu(bpy.types.Menu):
     bl_idname = 'OBJECT_MT_m3_physicsjoints'
     bl_label = 'Menu'
@@ -102,10 +115,12 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Physics Joints'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, context.object.m3_physicsjoints, draw_props, menu_id=Menu.bl_idname)
+        shared.draw_collection_list(self.layout, context.object.m3_physicsjoints, draw_props, ui_list_id=PhysicsJointList.bl_idname, menu_id=Menu.bl_idname)
 
 
 classes = (
+    RigidBodyPointerProp,
+    PhysicsJointList,
     Properties,
     Menu,
     Panel,

@@ -25,8 +25,10 @@ desc_batching = 'If a mesh material reference is bound to this bone, this proper
 
 
 def register_props():
-    bpy.types.Object.m3_bone_id_lockers = bpy.props.CollectionProperty(type=shared.M3BoneUserPropertyGroup)  # establish which bones own their ID
-    bpy.types.PoseBone.bl_handle = bpy.props.StringProperty(options=set())
+    bpy.types.Object.m3_bone_id_lockers = bpy.props.CollectionProperty(type=M3BoneHandlePropertyGroup)  # establishes which bones own their IDs
+    bpy.types.Bone.bl_handle = bpy.props.StringProperty(options=set())
+    bpy.types.EditBone.bl_handle = bpy.props.StringProperty(options=set())
+    bpy.types.PoseBone.bl_handle = bpy.props.StringProperty(options=set(), get=get_bone_handle, set=set_bone_handle)
     bpy.types.PoseBone.m3_export_cull = bpy.props.BoolProperty(options=set(), default=True, description=desc_export_cull)
     bpy.types.PoseBone.m3_bind_scale = bpy.props.FloatVectorProperty(options=set(), size=3, subtype='XYZ', default=(1,) * 3)  # setter to prevent == 0?
     bpy.types.PoseBone.m3_location_hex_id = bpy.props.StringProperty(options=set(), maxlen=8, get=get_bone_loc_id, set=set_bone_loc_id, default='')
@@ -34,6 +36,16 @@ def register_props():
     bpy.types.PoseBone.m3_scale_hex_id = bpy.props.StringProperty(options=set(), maxlen=8, get=get_bone_scl_id, set=set_bone_scl_id, default='')
     bpy.types.PoseBone.m3_batching_hex_id = bpy.props.StringProperty(options=set(), maxlen=8, get=get_bone_bat_id, set=set_bone_bat_id, default='')
     bpy.types.PoseBone.m3_batching = bpy.props.BoolProperty(name='M3 Bone Render', default=True, description=desc_batching)
+
+
+def get_bone_handle(self):
+    bone = self.id_data.data.bones.get(self.name)
+    return bone.get('bl_handle', '')
+
+
+def set_bone_handle(self, value):
+    bone = self.id_data.data.bones.get(self.name)
+    bone['bl_handle'] = value
 
 
 bone_anim_props = ['m3_location_hex_id', 'm3_rotation_hex_id', 'm3_scale_hex_id', 'm3_batching_hex_id']
@@ -84,6 +96,10 @@ def set_bone_hex_id(self, value, prop):
         locker.bone = self.bl_handle
         for all_prop in bone_anim_props:
             self[all_prop] = shared.m3_anim_id_gen()
+
+
+class M3BoneHandlePropertyGroup(bpy.types.PropertyGroup):
+    bone: bpy.props.StringProperty(options=set())
 
 
 class M3EditBoneAnimHeaders(bpy.types.Operator):
@@ -160,6 +176,7 @@ class Panel(bpy.types.Panel):
 
 
 classes = (
+    M3BoneHandlePropertyGroup,
     M3EditBoneAnimHeaders,
     ToolPanel,
     Panel,

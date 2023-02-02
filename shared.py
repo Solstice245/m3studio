@@ -53,6 +53,15 @@ m3_collections_suggested_names = {
 }
 
 
+def get_ob_bones(ob):
+    if ob.mode == 'EDIT':
+        return ob.data.edit_bones
+    elif ob.mode == 'POSE':
+        return ob.pose.bones
+    else:
+        return ob.data.bones
+
+
 def m3_handle_gen():
     return '%064x' % random.getrandbits(256)
 
@@ -182,7 +191,8 @@ def m3_collection_index_set(bl, value):
         setattr(ob.path_resolve(rsp[0]), rsp[1] + '_index', value)
 
 
-def m3_pointer_get(search_data, handle):
+def m3_pointer_get(search_data, pointer):
+    handle = pointer.handle if type(pointer) != str else pointer
     if not handle:
         return None
     for item in search_data:
@@ -213,6 +223,126 @@ class ArmatureObjectPanel(bpy.types.Panel):
         return context.object.type == 'ARMATURE'
 
 
+def get_armature_parent(ob):
+    while ob.type != 'ARMATURE' or ob.parent:
+        ob = ob.parent
+    return ob
+
+
+def get_bone_value(self):
+    return self.bone.value
+
+
+def infer_data_path(ob, data_path):
+    collections = data_path.split('[')
+    inferred_data_path = ''
+
+    for col in collections[:-1]:
+        inferred_data_path += col
+        inferred_data_path += ob.path_resolve(inferred_data_path + '_index')
+    inferred_data_path += collections[-1]
+
+    data = ob.path_resolve(inferred_data_path)
+
+    if type(data) == bpy.types.ArmatureBones or type(data) == bpy.types.ArmatureEditBones:
+        data = get_ob_bones(self.id_data)
+
+    return data
+
+
+def pointer_val_get(self, data_path, to_armature=True):
+    ob = get_armature_parent(self.id_data) if to_armature else self.id_data
+    datem = m3_pointer_get(infer_data_path(ob, data_path), self)
+    if datem:
+        self['value'] = datem.name
+    return self.get('value', '')
+
+
+def pointer_val_set(self, value, data_path, exclusive=False, to_armature=True):
+    ob = get_armature_parent(self.id_data) if to_armature else self.id_data
+
+    if value:
+        data = infer_data_path(ob, data_path)
+        if type(data) == bpy.types.ArmatureBones:
+            m3_data_handles_verify(get_ob_bones(ob))
+        else:
+            m3_data_handles_verify(data)
+
+        if exclusive:
+
+            collection = ob.path_resolve(self.path_from_id().rsplit('[', 1)[0])
+            test = collection[0]
+            for key in type(test).__annotations__.keys():
+                if type(getattr(test, key)) == type(self):
+                    self_propname = key
+                    break
+
+            used_values = {getattr(item, self_propname).value for item in collection if getattr(item, self_propname) != self}
+            # ensure unique value
+            if value in used_values:
+                rsplit = value.rsplit('.', 1)
+                prefix = rsplit[0] if rsplit[-1].isdigit() else value
+                value = prefix
+                num = 1
+                while True:
+                    if value not in used_values:
+                        break
+                    value = prefix + '.' + ('0' if num < 100 else '') + ('0' if num < 10 else '') + str(num)
+                    num += 1
+
+        for item in data:
+            if item.name == value:
+                self['handle'] = item.bl_handle
+                break
+        else:
+            self['handle'] = ''
+
+    else:
+        self['handle'] = ''
+
+    self['value'] = value
+
+
+def pointer_get_args(*args):
+    return lambda x: pointer_val_get(x, *args)
+
+
+def pointer_set_args(*args):
+    return lambda x, y: pointer_val_set(x, y, *args)
+
+
+class M3BonePointerProp(bpy.types.PropertyGroup):
+    value: bpy.props.StringProperty(options=set(), get=pointer_get_args('data.bones'), set=pointer_set_args('data.bones', False))
+    handle: bpy.props.StringProperty(options=set())
+
+
+class M3BonePointerPropExclusive(bpy.types.PropertyGroup):
+    value: bpy.props.StringProperty(options=set(), get=pointer_get_args('data.bones'), set=pointer_set_args('data.bones', True))
+    handle: bpy.props.StringProperty(options=set())
+
+
+class M3MatRefPointerProp(bpy.types.PropertyGroup):
+    value: bpy.props.StringProperty(options=set(), get=pointer_get_args('m3_materialrefs'), set=pointer_set_args('m3_materialrefs', False))
+    handle: bpy.props.StringProperty(options=set())
+
+
+def draw_prop_pointer_search(layout, data, search_data, search_prop, text='', icon=None):
+    search_prop = 'edit_bones' if search_prop == 'bones' and getattr(search_data, 'is_editmode') else search_prop
+    layout.prop_search(data, 'value', search_data, search_prop, text=text, icon=icon)
+
+
+class M3BonePointerList(bpy.types.UIList):
+    bl_idname = 'UI_UL_M3_bone_user'
+
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index, flt_flag):
+        if self.layout_type in {'DEFAULT', 'COMPACT'}:
+            bone = m3_pointer_get(get_ob_bones(item.id_data), item.bone)
+            row = layout.row()
+            row.prop(item.bone, 'value', text='', emboss=False, icon='BONE_DATA')
+            if not bone:
+                row.label(icon='ERROR', text='Invalid bone name')
+
+
 def hex_id_get(self):
     return self['hex_id']
 
@@ -236,11 +366,8 @@ class M3PropertyGroup(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(options=set())
 
 
-class M3BoneUserPropertyGroup(M3PropertyGroup):
-    bone: bpy.props.StringProperty(options=set())
-
-
-class M3VolumePropertyGroup(M3BoneUserPropertyGroup):
+class M3VolumePropertyGroup(M3PropertyGroup):
+    bone: bpy.props.PointerProperty(type=M3BonePointerProp)
     shape: bpy.props.EnumProperty(options=set(), items=bl_enum.volume_shape)
     size: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0, default=(1, 1, 1))
     location: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3)
@@ -458,28 +585,17 @@ def draw_menu_duplicate(layout, collection, dup_keyframes_opt=False):
         op.dup_action_keyframes = True
 
 
-# TODO Make it so that handle list items must be unique
-def draw_handle_list(layout, search_data, data, prop_name, label=''):
-    op = layout.operator('m3.handle_add', text=('Add ' + label) if label else None)
-    op.collection = data.path_from_id(prop_name)
-    for ii, item in enumerate(getattr(data, prop_name)):
-        draw_handle_list_item(layout, search_data, data, prop_name, label, item, ii)
+def draw_pointer_list(layout, data, prop, search_data, search_prop, text=''):
+    op = layout.operator('m3.handle_add', text=('Add ' + text) if text else None)
+    op.collection = data.path_from_id(prop)
 
-
-def draw_handle_list_item(layout, search_data, data, prop_name, label, item, index):
-    pointer_ob = m3_pointer_get(search_data, item.bl_handle)
-
-    row = layout.row(align=True)
-    row.use_property_split = False
-    op = row.operator('m3.prophandle_search', text=pointer_ob.name if pointer_ob else 'Select ' + label, icon='VIEWZOOM')
-    op.prop_id_name = data.id_data.name
-    op.prop_path = item.path_from_id()
-    op.prop_name = 'bl_handle'
-    op.search_data_id_name = search_data.id_data.name
-    op.search_data_path = search_data.path_from_id()
-    op = row.operator('m3.handle_remove', text='', icon='X')
-    op.collection = data.path_from_id(prop_name)
-    op.index = index
+    for ii, item in enumerate(getattr(data, prop)):
+        row = layout.row(align=True)
+        row.use_property_split = False
+        draw_prop_pointer_search(row, item.pointer, search_data, search_prop, icon='LINKED')
+        op = row.operator('m3.handle_remove', text='', icon='X')
+        op.collection = data.path_from_id(prop)
+        op.index = ii
 
 
 def draw_prop_anim(layout, data, field, index=-1, text=''):
@@ -529,46 +645,8 @@ def draw_prop_anim(layout, data, field, index=-1, text=''):
         row.prop_decorator(data, field, index=index)
 
 
-def draw_prop_pointer(layout, search_data, data, prop_name, label='', icon=''):
-    main = layout.row(align=True)
-    main.use_property_split = False
-
-    if label:
-        split = main.split(factor=0.4, align=True)
-        row = split.row(align=True)
-        row.alignment = 'RIGHT'
-        row.label(text=label)
-        row = split.row(align=True)
-    else:
-        row = main
-
-    pointer_ob = m3_pointer_get(search_data, getattr(data, prop_name))
-
-    op = row.operator('m3.prophandle_search', text='' if pointer_ob else 'Select', icon='VIEWZOOM')
-    op.prop_id_name = data.id_data.name
-    op.prop_path = data.path_from_id()
-    op.prop_name = prop_name
-    op.search_data_id_name = search_data.id_data.name
-    op.search_data_path = search_data.path_from_id()
-
-    if pointer_ob:
-        if icon:
-            row.prop(pointer_ob, 'name', text='', icon=icon)
-        else:
-            row.prop(pointer_ob, 'name', text='')
-        op = row.operator('m3.prophandle_unlink', text='', icon='CANCEL')
-        op.prop_id_name = data.id_data.name
-        op.prop_path = data.path_from_id()
-        op.prop_name = prop_name
-
-    if layout.use_property_split and layout.use_property_decorate:
-        row = main.row()
-        row.alignment = 'RIGHT'
-        row.separator(factor=3.625)
-
-
 def draw_volume_props(volume, layout):
-    draw_prop_pointer(layout, volume.id_data.pose.bones, volume, 'bone', label='Bone', icon='BONE_DATA')
+    draw_prop_pointer_search(layout, volume.bone, volume.id_data.data, 'bones', text='Bone', icon='BONE_DATA')
     sub = layout.column(align=True)
     sub.prop(volume, 'shape', text='Shape Type')
     if volume.shape == 'CUBE':
@@ -586,7 +664,7 @@ def draw_volume_props(volume, layout):
     col.prop(volume, 'scale', text='Scale')
 
 
-def draw_collection_list(layout, collection, draw_func, menu_id='', ops=[], label=''):
+def draw_collection_list(layout, collection, draw_func, ui_list_id='', menu_id='', ops=[], label=''):
     ob = collection.id_data
     collection_path = collection.path_from_id()
     index = ob.path_resolve(collection_path + '_index')
@@ -611,7 +689,7 @@ def draw_collection_list(layout, collection, draw_func, menu_id='', ops=[], labe
         row = layout.row()
 
     col = row.column()
-    col.template_list('UI_UL_list', list_str, list_obj, list_str, list_obj, list_str + '_index', rows=rows)
+    col.template_list(ui_list_id or 'UI_UL_list', list_str, list_obj, list_str, list_obj, list_str + '_index', rows=rows)
     col = row.column()
     sub = col.column(align=True)
     op = sub.operator(ops[0], icon='ADD', text='')
@@ -636,9 +714,10 @@ def draw_collection_list(layout, collection, draw_func, menu_id='', ops=[], labe
 
     if item_ii >= 0:
         item = collection[item_ii]
-        col = layout.column()
-        col.use_property_split = True
-        draw_func(item, col)
+        if item and draw_func:
+            col = layout.column()
+            col.use_property_split = True
+            draw_func(item, col)
 
 
 def remove_m3_action_keyframes(ob, prefix, index):
@@ -674,10 +753,13 @@ def swap_m3_action_keyframes(ob, prefix, old, new):
 
 
 classes = (
+    M3BonePointerProp,
+    M3BonePointerPropExclusive,
+    M3MatRefPointerProp,
+    M3BonePointerList,
     M3AnimHeaderProp,
     M3PropertyGroup,
     M3VolumePropertyGroup,
-    M3BoneUserPropertyGroup,
     M3ObjectPropertyGroup,
     M3CollectionOpBase,
     M3CollectionOpAdd,
