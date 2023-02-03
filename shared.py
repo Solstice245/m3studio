@@ -665,14 +665,28 @@ def draw_volume_props(volume, layout):
     col.prop(volume, 'scale', text='Scale')
 
 
-def draw_collection_list(layout, collection, draw_func, ui_list_id='', menu_id='', ops=[], label=''):
+def draw_gen_op_add(layout, collection_path, index):
+    op = layout.operator('m3.collection_add', icon='ADD', text='')
+    op.collection, op.index = collection_path, index
+
+
+def draw_gen_op_del(layout, collection_path, index):
+    op = layout.operator('m3.collection_remove', icon='REMOVE', text='')
+    op.collection, op.index = collection_path, index
+
+
+def draw_gen_op_mov(layout, collection_path, index):
+    op = layout.operator('m3.collection_move', icon='TRIA_UP', text='')
+    op.collection, op.index, op.shift = collection_path, index, -1
+    op = layout.operator('m3.collection_move', icon='TRIA_DOWN', text='')
+    op.collection, op.index, op.shift = collection_path, index, 1
+
+
+def draw_collection_list(layout, collection, draw_func, ui_list_id='', menu_id='', ops={}, label=''):
     ob = collection.id_data
     collection_path = collection.path_from_id()
     index = ob.path_resolve(collection_path + '_index')
     rows = 5 if len(collection) else 3
-
-    if not ops:
-        ops = ['m3.collection_add', 'm3.collection_remove', 'm3.collection_move', 'm3.collection_duplicate']
 
     rsp = collection_path.rsplit('.', 1)
     if len(rsp) == 1:
@@ -689,24 +703,29 @@ def draw_collection_list(layout, collection, draw_func, ui_list_id='', menu_id='
     else:
         row = layout.row()
 
-    col = row.column()
-    col.template_list(ui_list_id or 'UI_UL_list', list_str, list_obj, list_str, list_obj, list_str + '_index', rows=rows)
-    col = row.column()
-    sub = col.column(align=True)
-    op = sub.operator(ops[0], icon='ADD', text='')
-    op.collection, op.index = (collection_path, index)
-    op = sub.operator(ops[1], icon='REMOVE', text='')
-    op.collection, op.index = (collection_path, index)
+    row.template_list(ui_list_id or 'UI_UL_list', list_str, list_obj, list_str, list_obj, list_str + '_index', rows=rows)
+    col = row.column(align=True)
+
+    try:
+        ops['add'](col)
+    except KeyError:
+        draw_gen_op_add(col, collection_path, index)
+
+    try:
+        ops['del'](col)
+    except KeyError:
+        draw_gen_op_del(col, collection_path, index)
+
     if menu_id:
-        sub.separator()
-        sub.menu(menu_id, icon='DOWNARROW_HLT', text='')
+        col.separator(factor=1.666)
+        col.menu(menu_id, icon='DOWNARROW_HLT', text='')
 
     if len(collection):
-        sub.separator()
-        op = sub.operator(ops[2], icon='TRIA_UP', text='')
-        op.collection, op.index, op.shift = (collection_path, index, -1)
-        op = sub.operator(ops[2], icon='TRIA_DOWN', text='')
-        op.collection, op.index, op.shift = (collection_path, index, 1)
+        col.separator(factor=1.666)
+        try:
+            ops['mov'](col)
+        except KeyError:
+            draw_gen_op_mov(col, collection_path, index)
 
     if not len(collection):
         return

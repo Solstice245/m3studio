@@ -268,10 +268,10 @@ class LensFlareProperties(shared.M3PropertyGroup):
     color_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
 
 
-def m3_material_get(ob, matref):
+def m3_material_get(matref):
     mat = None
     if matref.mat_handle:
-        mat_col = getattr(ob, matref.mat_type)
+        mat_col = getattr(matref.id_data, matref.mat_type)
         for item in mat_col:
             if item.bl_handle == matref.mat_handle:
                 mat = item
@@ -289,7 +289,7 @@ def layer_enum(self, context):
     return [(layer.bl_handle, layer.name, '') for layer in context.object.m3_materiallayers]
 
 
-def draw_layer_pointer_prop(ob, layout, material, layer_name, label='test'):
+def draw_layer_pointer_prop(layout, material, layer_name, label='test'):
     col = layout.column(align=True)
     col.use_property_split = False
     split = col.split(factor=0.375, align=True)
@@ -299,7 +299,7 @@ def draw_layer_pointer_prop(ob, layout, material, layer_name, label='test'):
     row = split.row(align=True)
     op = row.operator('m3.material_layer_search', text='', icon='VIEWZOOM')
     op.layer_name = layer_name
-    layer = m3_material_layer_get(ob, getattr(material, layer_name))
+    layer = m3_material_layer_get(material.id_data, getattr(material, layer_name))
     if layer:
         row.prop(layer, 'name', text='', icon='NODE_COMPOSITING')
         op = row.operator('m3.material_layer_add', text='', icon='DUPLICATE')
@@ -311,32 +311,33 @@ def draw_layer_pointer_prop(ob, layout, material, layer_name, label='test'):
         op.layer_name = layer_name
 
 
-def draw_standard_props(context, material, layout):
+def draw_standard_props(matref, layout):
+    material = m3_material_get(matref)
     version = int(material.id_data.m3_materials_standard_version)
 
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_diff', 'Diffuse')
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_decal', 'Decal')
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_spec', 'Specular')
+    draw_layer_pointer_prop(layout, material, 'layer_diff', 'Diffuse')
+    draw_layer_pointer_prop(layout, material, 'layer_decal', 'Decal')
+    draw_layer_pointer_prop(layout, material, 'layer_spec', 'Specular')
 
     if version >= 16:
-        draw_layer_pointer_prop(context.object, layout, material, 'layer_gloss', 'Gloss')
+        draw_layer_pointer_prop(layout, material, 'layer_gloss', 'Gloss')
 
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_emis1', 'Emissive 1')
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_emis2', 'Emissive 2')
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_envi', 'Environment')
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_envi_mask', 'Environment Mask')
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_alpha1', 'Alpha Mask 1')
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_alpha2', 'Alpha Mask 2')
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_norm', 'Normal')
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_height', 'Height')
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_light', 'Light')
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_ao', 'Ambient Occlusion')
+    draw_layer_pointer_prop(layout, material, 'layer_emis1', 'Emissive 1')
+    draw_layer_pointer_prop(layout, material, 'layer_emis2', 'Emissive 2')
+    draw_layer_pointer_prop(layout, material, 'layer_envi', 'Environment')
+    draw_layer_pointer_prop(layout, material, 'layer_envi_mask', 'Environment Mask')
+    draw_layer_pointer_prop(layout, material, 'layer_alpha1', 'Alpha Mask 1')
+    draw_layer_pointer_prop(layout, material, 'layer_alpha2', 'Alpha Mask 2')
+    draw_layer_pointer_prop(layout, material, 'layer_norm', 'Normal')
+    draw_layer_pointer_prop(layout, material, 'layer_height', 'Height')
+    draw_layer_pointer_prop(layout, material, 'layer_light', 'Light')
+    draw_layer_pointer_prop(layout, material, 'layer_ao', 'Ambient Occlusion')
 
     if version >= 19:
-        draw_layer_pointer_prop(context.object, layout, material, 'layer_norm_blend1_mask', 'Normal Blend 1 Mask')
-        draw_layer_pointer_prop(context.object, layout, material, 'layer_norm_blend2_mask', 'Normal Blend 2 Mask')
-        draw_layer_pointer_prop(context.object, layout, material, 'layer_norm_blend1', 'Normal Blend 1')
-        draw_layer_pointer_prop(context.object, layout, material, 'layer_norm_blend2', 'Normal Blend 2')
+        draw_layer_pointer_prop(layout, material, 'layer_norm_blend1_mask', 'Normal Blend 1 Mask')
+        draw_layer_pointer_prop(layout, material, 'layer_norm_blend2_mask', 'Normal Blend 2 Mask')
+        draw_layer_pointer_prop(layout, material, 'layer_norm_blend1', 'Normal Blend 1')
+        draw_layer_pointer_prop(layout, material, 'layer_norm_blend2', 'Normal Blend 2')
 
     layout.separator()
     col = layout.column(align=True)
@@ -412,15 +413,17 @@ def draw_standard_props(context, material, layout):
     col.prop(material, 'emis_low_required', text='Emissive')
 
 
-def draw_displacement_props(context, material, layout):
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_norm', 'Normal')
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_strength', 'Strength')
+def draw_displacement_props(matref, layout):
+    material = m3_material_get(matref)
+    draw_layer_pointer_prop(layout, material, 'layer_norm', 'Normal')
+    draw_layer_pointer_prop(layout, material, 'layer_strength', 'Strength')
     layout.separator()
     layout.prop(material, 'priority', text='Priority')
     shared.draw_prop_anim(layout, material, 'strength_factor', text='Strength Multiplier')
 
 
-def draw_composite_props(context, material, layout):
+def draw_composite_props(matref, layout):
+    material = m3_material_get(matref)
     layout.prop(material, 'priority', text='Priority')
     box = layout.box()
     box.use_property_split = False
@@ -434,22 +437,25 @@ def draw_composite_props(context, material, layout):
         op.collection, op.index = (material.sections.path_from_id(), ii)
 
 
-def draw_terrain_props(context, material, layout):
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_terrain', 'Terrain')
+def draw_terrain_props(matref, layout):
+    material = m3_material_get(matref)
+    draw_layer_pointer_prop(layout, material, 'layer_terrain', 'Terrain')
 
 
-def draw_volume_props(context, material, layout):
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_color', 'Color')
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_unknown1', 'Unknown 1')
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_unknown2', 'Unknown 2')
+def draw_volume_props(matref, layout):
+    material = m3_material_get(matref)
+    draw_layer_pointer_prop(layout, material, 'layer_color', 'Color')
+    draw_layer_pointer_prop(layout, material, 'layer_unknown1', 'Unknown 1')
+    draw_layer_pointer_prop(layout, material, 'layer_unknown2', 'Unknown 2')
     layout.separator()
     shared.draw_prop_anim(layout, material, 'density', text='Density')
 
 
-def draw_volumenoise_props(context, material, layout):
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_color', 'Color')
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_noise1', 'Noise 1')
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_noise2', 'Noise 2')
+def draw_volumenoise_props(matref, layout):
+    material = m3_material_get(matref)
+    draw_layer_pointer_prop(layout, material, 'layer_color', 'Color')
+    draw_layer_pointer_prop(layout, material, 'layer_noise1', 'Noise 1')
+    draw_layer_pointer_prop(layout, material, 'layer_noise2', 'Noise 2')
     layout.separator()
     shared.draw_prop_anim(layout, material, 'density', text='Density')
     shared.draw_prop_anim(layout, material, 'near_plane', text='Near Plane')
@@ -464,24 +470,27 @@ def draw_volumenoise_props(context, material, layout):
     layout.prop(material, 'draw_after_transparency', text='Draw After Transparency')
 
 
-def draw_creep_props(context, material, layout):
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_creep', 'Creep')
+def draw_creep_props(matref, layout):
+    material = m3_material_get(matref)
+    draw_layer_pointer_prop(layout, material, 'layer_creep', 'Creep')
 
 
-def draw_stb_props(context, material, layout):
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_diff', 'Diffuse')
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_spec', 'Specular')
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_norm', 'Normal')
+def draw_stb_props(matref, layout):
+    material = m3_material_get(matref)
+    draw_layer_pointer_prop(layout, material, 'layer_diff', 'Diffuse')
+    draw_layer_pointer_prop(layout, material, 'layer_spec', 'Specular')
+    draw_layer_pointer_prop(layout, material, 'layer_norm', 'Normal')
 
 
-def draw_reflection_props(context, material, layout):
+def draw_reflection_props(matref, layout):
+    material = m3_material_get(matref)
     version = int(material.id_data.m3_materials_reflection_version)
 
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_norm', 'Normal')
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_strength', 'Strength')
+    draw_layer_pointer_prop(layout, material, 'layer_norm', 'Normal')
+    draw_layer_pointer_prop(layout, material, 'layer_strength', 'Strength')
 
     if version >= 2:
-        draw_layer_pointer_prop(context.object, layout, material, 'layer_blur', 'Blur')
+        draw_layer_pointer_prop(layout, material, 'layer_blur', 'Blur')
 
     layout.separator()
 
@@ -528,9 +537,10 @@ def draw_lensflare_starburst_props(starburst, layout):
     layout.prop(starburst, 'face_source', text='Face Source')
 
 
-def draw_lensflare_props(context, material, layout):
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_color', 'Color')
-    draw_layer_pointer_prop(context.object, layout, material, 'layer_unknown', 'Unknown')
+def draw_lensflare_props(matref, layout):
+    material = m3_material_get(matref)
+    draw_layer_pointer_prop(layout, material, 'layer_color', 'Color')
+    draw_layer_pointer_prop(layout, material, 'layer_unknown', 'Unknown')
     layout.separator()
     col = layout.column(align=True)
     col.prop(material, 'uv_cols', text='UV Columns')
@@ -592,41 +602,30 @@ class MaterialMenu(bpy.types.Menu):
         op.dup_action_keyframes = True
 
 
+def draw_ops_add(layout):
+    layout.operator('m3.material_add_popup', icon='ADD', text='')
+
+
+def draw_ops_del(layout):
+    layout.operator('m3.material_remove', icon='REMOVE', text='')
+
+
+def draw_ops_mov(layout):
+    op = layout.operator('m3.material_move', icon='TRIA_UP', text='')
+    op.shift = -1
+    op = layout.operator('m3.material_move', icon='TRIA_DOWN', text='')
+    op.shift = 1
+
+
 class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_idname = 'OBJECT_PT_M3_MATERIALS'
     bl_label = 'M3 Materials'
 
     def draw(self, context):
-        layout = self.layout
-        ob = context.object
-        index = ob.m3_materialrefs_index
-        rows = 5 if len(ob.m3_materialrefs) else 3
-
-        row = layout.row()
-        col = row.column()
-        col.template_list(MaterialList.bl_idname, 'm3_materialrefs', ob, 'm3_materialrefs', ob, 'm3_materialrefs_index', rows=rows)
-        col = row.column()
-        sub = col.column(align=True)
-        op = sub.operator('m3.material_add_popup', icon='ADD', text='')
-        op = sub.operator('m3.material_remove', icon='REMOVE', text='')
-        sub.separator()
-        sub.menu(MaterialMenu.bl_idname, icon='DOWNARROW_HLT', text='')
-
-        if len(ob.m3_materialrefs):
-            sub.separator()
-            op = sub.operator('m3.material_move', icon='TRIA_UP', text='')
-            op.shift = -1
-            op = sub.operator('m3.material_move', icon='TRIA_DOWN', text='')
-            op.shift = 1
-
-        if index < 0:
-            return
-
-        matref = ob.m3_materialrefs[index]
-
-        col = layout.column()
-        col.use_property_split = True
-        mat_type_dict[matref.mat_type]['draw'](context, m3_material_get(context.object, matref), col)
+        matref = context.object.m3_materialrefs[context.object.m3_materialrefs_index]
+        draw_func = mat_type_dict[matref.mat_type]['draw']
+        ops = {'add': draw_ops_add, 'del': draw_ops_del}
+        shared.draw_collection_list(self.layout, context.object.m3_materialrefs, draw_func, ops=ops, menu_id=MaterialMenu.bl_idname)
 
 
 class M3MaterialLayerOpAdd(bpy.types.Operator):
@@ -664,7 +663,7 @@ class M3MaterialLayerOpUnlink(bpy.types.Operator):
     def invoke(self, context, event):
         ob = context.object
         matref = ob.m3_materialrefs[ob.m3_materialrefs_index]
-        mat = m3_material_get(ob, matref)
+        mat = m3_material_get(matref)
         setattr(mat, self.layer_name, '')
 
         return {'FINISHED'}
@@ -687,7 +686,7 @@ class M3MaterialLayerOpSearch(bpy.types.Operator):
     def execute(self, context):
         ob = context.object
         matref = ob.m3_materialrefs[ob.m3_materialrefs_index]
-        mat = m3_material_get(ob, matref)
+        mat = m3_material_get(matref)
         setattr(mat, self.layer_name, self.enum)
 
         return {'FINISHED'}
@@ -747,15 +746,17 @@ class M3MaterialOpRemove(bpy.types.Operator):
         matref = matrefs[ob.m3_materialrefs_index]
 
         mat_col = getattr(ob, matref.mat_type)
+        mat_ii = None
         for ii, item in enumerate(mat_col):
             if item.bl_handle == matref.mat_handle:
                 mat_col.remove(ii)
+                mat_ii = ii
                 break
 
         ob.m3_materialrefs.remove(ob.m3_materialrefs_index)
 
-        shared.remove_m3_action_keyframes(ob, matref.mat_type, ob.m3_materialrefs_index)
-        for ii in range(ob.m3_materialrefs_index, len(matrefs)):
+        shared.remove_m3_action_keyframes(ob, matref.mat_type, mat_ii)
+        for ii in range(mat_ii, len(matrefs)):
             shared.shift_m3_action_keyframes(ob, matref.mat_type, ii + 1)
 
         ob.m3_materialrefs_index -= 1 if (ob.m3_materialrefs_index == 0 and len(matrefs) > 0) or ob.m3_materialrefs_index == len(matrefs) else 0
@@ -794,7 +795,7 @@ class M3MaterialOpDuplicate(bpy.types.Operator):
         matrefs = context.object.m3_materialrefs
         matref = matrefs[context.object.m3_materialrefs_index]
         mat_col = getattr(context.object, matref.mat_type)
-        mat = m3_material_get(context.object, matref)
+        mat = m3_material_get(matref)
 
         if context.object.m3_materialrefs_index == -1:
             return {'FINISHED'}
