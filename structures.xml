@@ -2518,14 +2518,13 @@
             <version number="0" size="272"/>
         </versions>
         <fields>
-            <field name="unknown1" type="uint32" default_value="0"/>
-            <field name="unknown2" size="16" default_value="0x00000000000000000000000000000000"/> <!-- PsiStorm.m3 -->
-            <field name="tan1" type="float"/>
+            <field name="emission_offset" type="VEC3V0"/>
+            <field name="emission_vector" type="VEC3V0"/>
             <field name="length" type="FloatAnimationReferenceV0"/>
-            <field name="unknowneee1a711" type="uint32"/>
+            <field name="unknowneee1a711" type="uint32" default="0"/>
             <field name="bone" type="uint32"/>
-            <field name="unknown3" type="FloatAnimationReferenceV0"/>
-            <field name="unknown4" type="FloatAnimationReferenceV0"/>
+            <field name="unknown00" type="FloatAnimationReferenceV0"/>
+            <field name="unknown01" type="FloatAnimationReferenceV0"/>
             <field name="yaw_var_shape" type="uint32"/>
             <field name="yaw_var_amplitude" type="FloatAnimationReferenceV0"/>
             <field name="yaw_var_frequency" type="FloatAnimationReferenceV0"/>
@@ -2537,8 +2536,8 @@
             <field name="length_var_frequency" type="FloatAnimationReferenceV0"/>
             <field name="yaw" type="FloatAnimationReferenceV0"/>
             <field name="pitch" type="FloatAnimationReferenceV0"/>
-            <field name="tan2" type="float"/>
-            <field name="tan3" type="float"/>
+            <field name="unknown02" type="float"/>
+            <field name="unknown03" type="float"/>
         </fields>
     </structure>
 

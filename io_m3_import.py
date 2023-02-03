@@ -1230,6 +1230,8 @@ class Importer:
                         pose_bone = ob.pose.bones.get(pose_bone_name)
                         point = shared.m3_item_add(spline.points, item_name=pose_bone_name)
                         point.bone.handle = pose_bone.bl_handle if pose_bone else ''
+                        processor = M3InputProcessor(self, point, m3_point)
+                        io_shared.io_ribbon_spline(processor)
                     self.m3_bl_ref[m3_ribbon.spline.index] = spline
 
     def create_projections(self):

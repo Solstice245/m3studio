@@ -538,9 +538,8 @@ def io_warp(processor):
 
 
 def io_ribbon_spline(processor):
-    processor.float('tan1')
-    processor.float('tan2')
-    processor.float('tan3')
+    processor.vec3('emission_offset')
+    processor.vec3('emission_vector')
     processor.anim_float('length')
     processor.enum('length_var_shape')
     processor.anim_float('length_var_amplitude')
@@ -553,10 +552,11 @@ def io_ribbon_spline(processor):
     processor.enum('pitch_var_shape')
     processor.anim_float('pitch_var_amplitude')
     processor.anim_float('pitch_var_frequency')
-    # processor.integer('unknown1')  # ! unknown
     # processor.integer('unknowneee1a711')  # ! unknown
-    # processor.anim_float('unknown3')  # ! unknown
-    # processor.anim_float('unknown4')  # ! unknown
+    # processor.anim_float('unknown01')  # ! unknown
+    # processor.anim_float('unknown02')  # ! unknown
+    # processor.float('unknown02')  # ! unknown
+    # processor.float('unknown03')  # ! unknown
 
 
 def io_rigid_body(processor):
