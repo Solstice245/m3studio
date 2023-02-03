@@ -55,6 +55,10 @@ def update_splines_collection_index(self, context):
 def draw_point_props(point, layout):
     shared.draw_prop_pointer_search(layout, point.bone, point.id_data.data, 'bones', text='Bone', icon='BONE_DATA')
     col = layout.column(align=True)
+    col.prop(point, 'tan1', text='Tangent 1')
+    col.prop(point, 'tan2', text='Tangent 2')
+    col.prop(point, 'tan3', text='Tangent 3')
+    col = layout.column(align=True)
     shared.draw_prop_anim(col, point, 'length', text='Length')
     shared.draw_prop_anim(col, point, 'yaw', text='Yaw')
     shared.draw_prop_anim(col, point, 'pitch', text='Pitch')
@@ -202,9 +206,9 @@ class RibbonPointerProp(bpy.types.PropertyGroup):
 
 class PointProperties(shared.M3PropertyGroup):
     bone: bpy.props.PointerProperty(type=shared.M3BonePointerProp)
-    tan1: bpy.props.FloatProperty(options=set())  # TODO draw
-    tan2: bpy.props.FloatProperty(options=set())  # TODO draw
-    tan3: bpy.props.FloatProperty(options=set())  # TODO draw
+    tan1: bpy.props.FloatProperty(options=set())
+    tan2: bpy.props.FloatProperty(options=set())
+    tan3: bpy.props.FloatProperty(options=set())
     yaw: bpy.props.FloatProperty(name='Spline Yaw')
     yaw_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     yaw_var_shape: bpy.props.EnumProperty(options=set(), items=bl_enum.ribbon_variation_shape)
