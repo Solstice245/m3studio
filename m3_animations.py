@@ -125,13 +125,16 @@ def draw_animation_props(animation, layout):
 
 
 def draw_group_props(anim_group, layout):
-    col = layout.column(align=True)
-    col.prop(anim_group, 'frame_start', text='Frame Start')
-    col.prop(anim_group, 'frame_end', text='End')
+    row = layout.row(align=True)
+    row.prop(anim_group, 'frame_start', text='Frame Range')
+    row.prop(anim_group, 'frame_end', text='')
     col = layout.column()
     col.prop(anim_group, 'frequency', text='Frequency')
     col.prop(anim_group, 'movement_speed', text='Movement Speed')
+    col = layout.column_flow(align=True, columns=2)
+    col.use_property_split = False
     col.prop(anim_group, 'not_looping', text='Does Not Loop')
+    col.prop(anim_group, 'unknown0x4', text='Unknown (0x4)')
     col.prop(anim_group, 'always_global', text='Always Global')
     col.prop(anim_group, 'global_in_previewer', text='Global In Previewer')
     shared.draw_collection_list(layout.box(), anim_group.animations, None, ui_list_id=AnimPointerList.bl_idname)
@@ -171,6 +174,7 @@ class GroupProperties(shared.M3PropertyGroup):
     frequency: bpy.props.IntProperty(options=set(), min=0, default=100)
     not_looping: bpy.props.BoolProperty(options=set())
     always_global: bpy.props.BoolProperty(options=set())
+    unknown0x4: bpy.props.BoolProperty(options=set())
     global_in_previewer: bpy.props.BoolProperty(options=set())
     animations: bpy.props.CollectionProperty(type=AnimPointerProp)
     animations_index: bpy.props.IntProperty(options=set(), default=-1, update=anim_group_anim_update)

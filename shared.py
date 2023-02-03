@@ -201,8 +201,9 @@ def m3_pointer_get(search_data, pointer):
     return None
 
 
-def select_bones_handles(ob, bl_handles):
+def select_bones_handles(ob, pointers):
     m3_data_handles_verify(ob.pose.bones)
+    bl_handles = [pointer.handle for pointer in pointers]
     if ob.m3_options.update_bone_selection and bl_handles:
         for pb in ob.pose.bones:
             db = ob.data.bones.get(pb.name)

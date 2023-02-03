@@ -34,6 +34,7 @@ def io_anim_group(processor):
     processor.integer('frequency')
     processor.bit('flags', 'not_looping')
     processor.bit('flags', 'always_global')
+    processor.bit('flags', 'unknown0x4')
     processor.bit('flags', 'global_in_previewer')
 
 
@@ -81,6 +82,7 @@ def io_material_standard(processor):
     processor.float('envi_diff_multiply', since_version=20)
     processor.float('envi_spec_multiply', since_version=20)
     # processor.integer('unknown2481ae8a')
+    processor.enum('layr_blend_mode')
     processor.enum('emis1_blend_mode')
     processor.enum('emis2_blend_mode')
     processor.enum('spec_mode')

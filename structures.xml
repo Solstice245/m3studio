@@ -1170,6 +1170,7 @@
                 <bits>
                     <bit mask="0x1" name="not_looping"/>
                     <bit mask="0x2" name="always_global"/>
+                    <bit mask="0x4" name="unknown0x4"/>
                     <bit mask="0x8" name="global_in_previewer"/>
                 </bits>
             </field>
