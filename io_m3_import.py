@@ -371,6 +371,7 @@ class Importer:
             self.create_mesh()
             self.create_cloths()
             self.create_bounding()
+            self.create_tmd()
 
         if effects:
             self.create_lights()
@@ -476,7 +477,7 @@ class Importer:
             setattr(self.ob, version_attr, str(version_val))
 
     def m3_get_bone_name(self, bone_index):
-        m3_bone_name = self.m3[self.m3[self.m3_model.bones][bone_index].name].content
+        m3_bone_name = ''.join(self.m3[self.m3[self.m3_model.bones][bone_index].name].content)
         final_bone_name = self.final_bone_names.get(m3_bone_name)
         return final_bone_name or m3_bone_name
 
@@ -624,7 +625,7 @@ class Importer:
             ob.m3_animations_default = bpy.data.actions.new(ob.name + '_DEFAULTS')
 
         for m3_anim_group in self.m3[self.m3_model.sequences]:
-            anim_group_name = self.m3[m3_anim_group.name].content
+            anim_group_name = ''.join(self.m3[m3_anim_group.name].content)
             anim_group = shared.m3_item_add(ob.m3_animation_groups, anim_group_name)
             processor = M3InputProcessor(self, anim_group, m3_anim_group)
             io_shared.io_anim_group(processor)
@@ -636,7 +637,7 @@ class Importer:
             if not m3_anim.name.index:
                 continue
 
-            anim = shared.m3_item_add(ob.m3_animations, self.m3[m3_anim.name].content)
+            anim = shared.m3_item_add(ob.m3_animations, ''.join(self.m3[m3_anim.name].content))
             anim['concurrent'] = m3_anim.concurrent
             anim['priority'] = m3_anim.priority
             anim['action'] = bpy.data.actions.new(ob.name + '_' + anim.name)
@@ -674,7 +675,7 @@ class Importer:
                 if m3_key_type_collection == m3_anim.sdev:
                     for ii, frame in enumerate(frames):
                         key = keys[ii]
-                        event_name = self.m3[key.name].content
+                        event_name = ''.join(self.m3[key.name].content)
                         if event_name == 'Evt_Simulate':
                             anim['simulate'] = True
                             anim['simulate_frame'] = frame
@@ -747,7 +748,7 @@ class Importer:
         def get_edit_bones(bone_heads, bone_tails, bone_rolls):
             edit_bones = []
             for index, m3_bone in enumerate(self.m3[self.m3_model.bones]):
-                m3_bone_name = self.m3[m3_bone.name.index].content
+                m3_bone_name = ''.join(self.m3[m3_bone.name.index].content)
                 edit_bone = self.ob.data.edit_bones.new(m3_bone_name)
                 self.final_bone_names[m3_bone_name] = edit_bone.name
                 edit_bone.head = bone_heads[index]
@@ -864,7 +865,7 @@ class Importer:
         for m3_matref in self.m3[self.m3_model.material_references]:
             m3_mat = self.m3[getattr(self.m3_model, io_shared.material_type_to_model_reference[m3_matref.type])][m3_matref.material_index]
 
-            matref = shared.m3_item_add(ob.m3_materialrefs, item_name=self.m3[m3_mat.name].content)
+            matref = shared.m3_item_add(ob.m3_materialrefs, item_name=''.join(self.m3[m3_mat.name].content))
             mat_col = getattr(ob, 'm3_' + io_shared.material_type_to_model_reference[m3_matref.type])
             mat = shared.m3_item_add(mat_col, item_name=matref.name)
 
@@ -897,7 +898,7 @@ class Importer:
                     continue
 
                 m3_layer = self.m3[m3_layer_field][0]
-                m3_layer_bitmap_str = self.m3[m3_layer.color_bitmap.index].content if m3_layer.color_bitmap.index else ''
+                m3_layer_bitmap_str = ''.join(self.m3[m3_layer.color_bitmap.index].content) if m3_layer.color_bitmap.index else ''
                 if not m3_layer_bitmap_str and not m3_layer.bit_get('flags', 'color'):
                     continue
 
@@ -940,7 +941,7 @@ class Importer:
 
         v_class_desc = io_m3.structures[v_class].get_version(0)
         v_count = len(m3_vertices) // v_class_desc.size
-        m3_vertices = v_class_desc.instances(buffer=m3_vertices.content, count=v_count)
+        m3_vertices = v_class_desc.instances(buffer=m3_vertices.raw_bytes, count=v_count)
         bone_lookup_full = self.m3[self.m3_model.bone_lookup]
 
         uv_props = []
@@ -1098,7 +1099,7 @@ class Importer:
         for m3_point in self.m3[self.m3_model.attachment_points]:
             bone_name = self.m3_get_bone_name(m3_point.bone)
             pose_bone = ob.pose.bones.get(bone_name)
-            point = shared.m3_item_add(ob.m3_attachmentpoints, item_name=self.m3[m3_point.name].content[4:])
+            point = shared.m3_item_add(ob.m3_attachmentpoints, item_name=''.join(self.m3[m3_point.name].content)[4:])
             point.bone.handle = pose_bone.bl_handle if pose_bone else ''
 
             for m3_volume in m3_volumes:
@@ -1480,8 +1481,8 @@ class Importer:
             self.m3_set_struct_version('m3_turrets_part_version', self.m3[self.m3_model.turret_parts].desc.version)
 
         for m3_turret in self.m3[self.m3_model.turrets]:
-            turret = shared.m3_item_add(ob.m3_turrets, item_name=self.m3[m3_turret.name].content)
-            for ii in self.m3[m3_turret.parts].content:
+            turret = shared.m3_item_add(ob.m3_turrets, item_name=''.join(self.m3[m3_turret.name].content))
+            for ii in self.m3[m3_turret.parts]:
                 m3_part = self.m3[self.m3_model.turret_parts][ii]
                 pose_bone_name = self.m3_get_bone_name(m3_part.bone)
                 pose_bone = ob.pose.bones.get(pose_bone_name)
@@ -1514,6 +1515,17 @@ class Importer:
             billboard.bone.handle = pose_bone.bl_handle if pose_bone else ''
             processor = M3InputProcessor(self, billboard, m3_billboard)
             io_shared.io_billboard(processor)
+
+    def create_tmd(self):
+        ob = self.ob
+        for m3_tmd in self.m3[self.m3_model.tmd_data]:
+            tmd = shared.m3_item_add(ob.m3_tmd, item_name='TMD')
+            processor = M3InputProcessor(self, tmd, m3_tmd)
+            io_shared.io_tmd(processor)
+
+            for m3_vec in self.m3[m3_tmd.vectors]:
+                vec_item = shared.m3_item_add(tmd.vectors, item_name='Vector')
+                vec_item.vector = to_bl_vec3(m3_vec)
 
     def gen_basic_volume_object(self, name, m3_vert_ref, m3_face_ref):
 

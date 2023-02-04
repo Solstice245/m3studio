@@ -26,7 +26,7 @@ def register_props():
     bpy.types.Object.m3_ribbons_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
     bpy.types.Object.m3_ribbons_version = bpy.props.EnumProperty(options=set(), items=ribbon_version, default='9')
     bpy.types.Object.m3_ribbonsplines = bpy.props.CollectionProperty(type=SplineProperties)
-    bpy.types.Object.m3_ribbonsplines_index = bpy.props.IntProperty(options=set(), default=-1)
+    bpy.types.Object.m3_ribbonsplines_index = bpy.props.IntProperty(options=set(), default=-1, update=update_spline_collection_index)
 
 
 # TODO UI stuff
@@ -46,7 +46,14 @@ def update_collection_index(self, context):
         shared.select_bones_handles(context.object, [bl.bone])
 
 
-def update_splines_collection_index(self, context):
+def update_spline_collection_index(self, context):
+    spline = self.m3_ribbonsplines[self.m3_ribbonsplines_index]
+    if spline.points_index in range(len(spline.points)):
+        bl = spline.points[spline.points_index]
+        shared.select_bones_handles(context.object, [bl.bone])
+
+
+def update_point_collection_index(self, context):
     if self.points_index in range(len(self.points)):
         bl = self.points[self.points_index]
         shared.select_bones_handles(context.object, [bl.bone])
@@ -232,7 +239,7 @@ class PointProperties(shared.M3PropertyGroup):
 
 class SplineProperties(shared.M3PropertyGroup):
     points: bpy.props.CollectionProperty(type=PointProperties)
-    points_index: bpy.props.IntProperty(options=set(), default=-1, update=update_splines_collection_index)
+    points_index: bpy.props.IntProperty(options=set(), default=-1, update=update_point_collection_index)
 
 
 class RibbonProperties(shared.M3PropertyGroup):

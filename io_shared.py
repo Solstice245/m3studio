@@ -644,6 +644,16 @@ def io_turret_part(processor):
     # processor.integer('unknown136')  # seem to havve no perceptible effect
 
 
+def io_tmd(processor):
+    processor.float('unknownd3f6c7b8')
+    processor.float('unknown74229b33')
+    processor.anim_float('unknownd4f91286')
+    processor.anim_float('unknown77f047c2')
+    processor.integer('unknownbc1e64c1')
+    processor.integer('unknown6cd3476c')
+    processor.integer('unknownccd5a5af')
+
+
 def io_billboard(processor):
     processor.enum('billboard_type')
     processor.integer('camera_look_at')

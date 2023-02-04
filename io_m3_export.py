@@ -570,6 +570,7 @@ class Exporter:
         export_hittests = valid_collections_and_requirements(ob.m3_hittests)
         export_attachment_volumes = []  # handled specially
         export_billboards = []  # handled specially
+        export_tmd_data = []  # handled specially
 
         self.vertex_color_mats = set()
         self.vertex_alpha_mats = set()
@@ -724,6 +725,10 @@ class Exporter:
                     export_attachment_volumes.append(volume)
                     self.attachment_bones.append([attachment_point_bone, volume_bone])
 
+        for m3_tmd in ob.m3_tmd:
+            if m3_tmd.m3_export:
+                export_tmd_data.append(m3_tmd)
+
         # batch hack crashes can crash the game if there is not a single-batch region at the front, so we make sure multi-batch regions are at the end
         self.reg_mesh_obs = []
         self.bat_hack_obs = []
@@ -869,7 +874,7 @@ class Exporter:
         model = model_section.content_add()
 
         model_name_section = self.m3.section_for_reference(model, 'model_name')
-        model_name_section.content_from_bytes(os.path.basename(filename))
+        model_name_section.content_add(*os.path.basename(filename))
 
         self.bounds_min = mathutils.Vector((self.ob.m3_bounds.left, self.ob.m3_bounds.back, self.ob.m3_bounds.bottom))
         self.bounds_max = mathutils.Vector((self.ob.m3_bounds.right, self.ob.m3_bounds.front, self.ob.m3_bounds.top))
@@ -897,7 +902,7 @@ class Exporter:
         self.create_hittests(model, export_hittests)
         self.create_attachment_volumes(model, export_attachment_volumes)
         self.create_billboards(model, export_billboards)
-        # ???? self.create_tmd_data(model, export_tmd_data)
+        # self.create_tmd_data(model, export_tmd_data)  # ! not supported in modern SC2 client
 
         self.finalize_anim_data(model)
 
@@ -941,7 +946,7 @@ class Exporter:
         for anim_group in anim_groups:
             m3_seq = seq_section.content_add()
             m3_seq_name_section = self.m3.section_for_reference(m3_seq, 'name')
-            m3_seq_name_section.content_from_bytes(anim_group.name)
+            m3_seq_name_section.content_add(*anim_group.name)
 
             processor = M3OutputProcessor(self, anim_group, m3_seq)
             io_shared.io_anim_group(processor)
@@ -962,7 +967,7 @@ class Exporter:
 
                     m3_stc = stc_section.content_add()
                     m3_stc_name_section = self.m3.section_for_reference(m3_stc, 'name', pos=None)
-                    m3_stc_name_section.content_from_bytes(anim.name)
+                    m3_stc_name_section.content_add(*anim.name)
                     self.stc_to_name_section[m3_stc] = m3_stc_name_section
                     stc_name_sections.append(m3_stc_name_section)
 
@@ -1006,7 +1011,7 @@ class Exporter:
 
             evnt_name_sections = []
             for stc in stc_list:
-                anim_index = self.ob.m3_animations.find(self.stc_to_name_section[stc].content)
+                anim_index = self.ob.m3_animations.find(''.join(self.stc_to_name_section[stc].content))
                 if anim_index is not None:
                     anim = self.ob.m3_animations[anim_index]
                 if anim and anim.simulate:
@@ -1015,7 +1020,7 @@ class Exporter:
                     evnt_data[0].append(anim.simulate_frame)
                     evnt = io_m3.structures['EVNT'].get_version(0).instance()
                     evnt_name_section = self.m3.section_for_reference(evnt, 'name', pos=None)
-                    evnt_name_section.content_from_bytes('Evt_Simulate')
+                    evnt_name_section.content_add(*'Evt_Simulate')
                     evnt_data[1].append(evnt)
                     evnt_name_sections.append(evnt_name_section)
 
@@ -1074,11 +1079,11 @@ class Exporter:
                     data_head.fend = to_m3_ms(action_data[id_num][0][-1])
 
                     frames_section = self.m3.section_for_reference(data_head, 'frames', pos=section_pos)
-                    frames_section.content_iter_add([to_m3_ms(frame) for frame in action_data[id_num][0]])
+                    frames_section.content_add(*(to_m3_ms(frame) for frame in action_data[id_num][0]))
                     section_pos += 1
 
                     values_section = self.m3.section_for_reference(data_head, 'keys', pos=section_pos)
-                    values_section.content_iter_add(action_data[id_num][1])
+                    values_section.content_add(*action_data[id_num][1])
                     section_pos += 1
 
                     if section_data_name == 'SDEV':
@@ -1127,7 +1132,7 @@ class Exporter:
             m3_bone_parent = bone_to_m3_bone.get(pose_bone.parent, None) if pose_bone.parent else None
             m3_bone = bone_section.content_add()
             m3_bone_name_section = self.m3.section_for_reference(m3_bone, 'name')
-            m3_bone_name_section.content_from_bytes(pose_bone.name)
+            m3_bone_name_section.content_add(*pose_bone.name)
             m3_bone.parent = self.bone_name_indices.get(pose_bone.parent.name) if pose_bone.parent else -1
             m3_bone.flags = 0
             m3_bone.bit_set('flags', 'real', True)  # TODO is not always true for blizzard models, figure out when this is applicable
@@ -1540,10 +1545,10 @@ class Exporter:
         msec = msec_section.content_add()
         msec.bounding = self.init_anim_ref_bnds(bounding_vectors_from_bones(self.bone_bound_vecs, self.bone_to_abs_pose_matrix))
 
-        vertex_section.content_from_bytes(m3_vertex_desc.instances_to_bytes(m3_vertices))
-        face_section.content_iter_add(m3_faces)
+        vertex_section.content_add(*list(m3_vertex_desc.instances_to_bytes(m3_vertices)))
+        face_section.content_add(*m3_faces)
         bone_lookup_section = self.m3.section_for_reference(model, 'bone_lookup')
-        bone_lookup_section.content_iter_add(m3_lookup)
+        bone_lookup_section.content_add(*m3_lookup)
 
     def create_attachment_points(self, model, attachments):
         attachment_point_section = self.m3.section_for_reference(model, 'attachment_points', version=1)
@@ -1556,7 +1561,7 @@ class Exporter:
 
             m3_attachment = attachment_point_section.content_add()
             m3_attachment_name_section = self.m3.section_for_reference(m3_attachment, 'name')
-            m3_attachment_name_section.content_from_bytes(('Ref_' if not attachment.name.startswith('Ref_') else '') + attachment.name)
+            m3_attachment_name_section.content_add(*('Ref_' if not attachment.name.startswith('Ref_') else '') + attachment.name)
             m3_attachment.bone = self.bone_name_indices[attachment_bone.name]
             attachment_point_addon_section.content_add(0xffff)
         # add volumes later so that sections are in order of the modl data
@@ -1594,13 +1599,13 @@ class Exporter:
             camera_bone = shared.m3_pointer_get(self.ob.pose.bones, camera.bone)
             m3_camera = camera_section.content_add()
             m3_camera_name_section = self.m3.section_for_reference(m3_camera, 'name')
-            m3_camera_name_section.content_from_bytes(camera.name)
+            m3_camera_name_section.content_add(*camera.name)
             m3_camera.bone = self.bone_name_indices[camera_bone.name]
             processor = M3OutputProcessor(self, camera, m3_camera)
             io_shared.io_camera(processor)
 
         cameras_addon_section = self.m3.section_for_reference(model, 'cameras_addon')
-        cameras_addon_section.content_iter_add([0xffff for camera in cameras])
+        cameras_addon_section.content_add(*(0xffff for camera in cameras))
 
     def create_materials(self, model, matrefs, versions):
         matref_section = self.m3.section_for_reference(model, 'material_references')
@@ -1627,7 +1632,7 @@ class Exporter:
                 mat = shared.m3_pointer_get(mat_collection, matref.mat_handle)
                 m3_mat = mat_section.content_add()
                 m3_mat_name_section = self.m3.section_for_reference(m3_mat, 'name')
-                m3_mat_name_section.content_from_bytes(matref.name)
+                m3_mat_name_section.content_add(*matref.name)
                 processor = M3OutputProcessor(self, mat, m3_mat)
                 io_shared.material_type_io_method[type_ii](processor)
 
@@ -1664,7 +1669,7 @@ class Exporter:
 
                             if layer.color_type == 'BITMAP':
                                 m3_layer_bitmap_section = self.m3.section_for_reference(m3_layer, 'color_bitmap')
-                                m3_layer_bitmap_section.content_from_bytes(layer.color_bitmap)
+                                m3_layer_bitmap_section.content_add(*layer.color_bitmap)
                             else:
                                 m3_layer.bit_set('flags', 'color', True)
 
@@ -1805,7 +1810,7 @@ class Exporter:
                             region_indices.add(self.export_regions.index(mesh_pointer.bl_object))
                     if len(region_indices):
                         region_indices_section = self.m3.section_for_reference(m3_system, 'emit_shape_regions')
-                        region_indices_section.content_iter_add(region_indices)
+                        region_indices_section.content_add(*region_indices)
             else:
                 if m3_system.emit_shape >= 7:
                     m3_system.shape = 0  # region emission invalid if version is below 17
@@ -1829,7 +1834,7 @@ class Exporter:
 
             if len(copy_indices):
                 copy_indices_section = self.m3.section_for_reference(m3_system, 'copy_indices')
-                copy_indices_section.content_iter_add(copy_indices)
+                copy_indices_section.content_add(*copy_indices)
 
         if len(copies):
             particle_copy_section = self.m3.section_for_reference(model, 'particle_copies', version=0)
@@ -2002,8 +2007,8 @@ class Exporter:
 
             # set flags for regions used by the cloth behavior
             regn_inf.bit_set('flags', 'hidden', True)
-            # regn_inf.bit_set('flags', 'placeholder', True)
-            # regn_inf.bit_set('flags', 'cloth_influenced', True)
+            regn_inf.bit_set('flags', 'placeholder', True)
+            regn_inf.bit_set('flags', 'cloth_influenced', True)
 
             regn_sim.bit_set('flags', 'hidden', True)
             regn_sim.bit_set('flags', 'cloth_simulated', True)
@@ -2068,11 +2073,11 @@ class Exporter:
                         break
 
                 vertex_simulated_list.append(vert[layer_clothsim])
-                vertex_bones_section.content_add(vertex_bones)
-                vertex_weights_section.content_add(vertex_weights)
+                vertex_bones_section.content_add(*vertex_bones)
+                vertex_weights_section.content_add(*vertex_weights)
 
-            skin_bones_section.content_iter_add(list(skin_bones))
-            vertex_simulated_section.content_from_bytes(vertex_simulated_list)
+            skin_bones_section.content_add(*list(skin_bones))
+            vertex_simulated_section.content_add(*vertex_simulated_list)
 
             simulation_vertex_lookups_section = self.m3.section_for_reference(m3_influence_map, 'simulation_vert_lookups')
             simulation_vertex_weights_section = self.m3.section_for_reference(m3_influence_map, 'simulation_vert_weights')
@@ -2171,7 +2176,7 @@ class Exporter:
             m3_turret = turret_section.content_add()
             m3_turret_part_index_section = self.m3.section_for_reference(m3_turret, 'parts')
             m3_turret_name_section = self.m3.section_for_reference(m3_turret, 'name')
-            m3_turret_name_section.content_from_bytes(turret.name)
+            m3_turret_name_section.content_add(*turret.name)
 
             for part in turret.parts:
                 try:
@@ -2226,9 +2231,9 @@ class Exporter:
 
         if int(self.ob.m3_model_version) >= 23:
             attachment_volume_addon0_section = self.m3.section_for_reference(model, 'attachment_volumes_addon0')
-            attachment_volume_addon0_section.content_iter_add([0 for volume in volumes])
+            attachment_volume_addon0_section.content_add(*(0 for volume in volumes))
             attachment_volume_addon1_section = self.m3.section_for_reference(model, 'attachment_volumes_addon1')
-            attachment_volume_addon1_section.content_iter_add([0 for volume in volumes])
+            attachment_volume_addon1_section.content_add(*(0 for volume in volumes))
 
         for volume, bones in zip(volumes, self.attachment_bones):
             m3_volume = attachment_volume_section.content_add()
@@ -2251,6 +2256,18 @@ class Exporter:
             processor = M3OutputProcessor(self, billboard, m3_billboard)
             io_shared.io_billboard(processor)
 
+    def create_tmd_data(self, model, tmd_data):
+        tmd_section = self.m3.section_for_reference(model, 'tmd_data', version=1)
+
+        for tmd in tmd_data:
+            m3_tmd = tmd_section.content_add()
+            processor = M3OutputProcessor(self, tmd, m3_tmd)
+            io_shared.io_tmd(processor)
+
+            tmd_vec_section = self.m3.section_for_reference(m3_tmd, 'vectors')
+            for vec_item in tmd.vectors:
+                tmd_vec_section.content_add(to_m3_vec3(vec_item.vector))
+
     def get_basic_volume_object(self, mesh_ob, m3):
         if mesh_ob.name not in self.mesh_to_basic_volume_sections.keys():
             bm = bmesh.new(use_operators=True)
@@ -2265,9 +2282,9 @@ class Exporter:
                     face_data.append(vert.index)
 
             vert_section = self.m3.section_for_reference(m3, 'vertices')
-            vert_section.content_iter_add(vert_data)
+            vert_section.content_add(*vert_data)
             face_section = self.m3.section_for_reference(m3, 'face_data')
-            face_section.content_iter_add(face_data)
+            face_section.content_add(*face_data)
             self.mesh_to_basic_volume_sections[mesh_ob.name] = [vert_section, face_section]
         else:
             vert_section, face_section = self.mesh_to_basic_volume_sections[mesh_ob.name]
@@ -2301,13 +2318,13 @@ class Exporter:
                 polygon_related_data.append(to_m3_vec4((0.0, 0.0, 0.0, 1.0)))
 
             vert_section = self.m3.section_for_reference(m3, 'vertices')
-            vert_section.content_iter_add(vert_data)
+            vert_section.content_add(*vert_data)
             polygon_related_section = self.m3.section_for_reference(m3, 'polygons_related')
-            polygon_related_section.content_iter_add(polygon_related_data)
+            polygon_related_section.content_add(*polygon_related_data)
             loop_section = self.m3.section_for_reference(m3, 'loops')
-            loop_section.content_iter_add(loop_data)
+            loop_section.content_add(*loop_data)
             polygon_section = self.m3.section_for_reference(m3, 'polygons')
-            polygon_section.content_from_bytes(polygon_data)
+            polygon_section.content_add(*polygon_data)
             self.mesh_to_physics_volume_sections[mesh_ob.name] = [vert_section, polygon_related_section, loop_section, polygon_section]
         else:
             vert_section, polygon_related_section, loop_section, polygon_section = self.mesh_to_physics_volume_sections[mesh_ob.name]

@@ -40,6 +40,7 @@ from . import m3_rigidbodies
 from . import m3_turrets
 from . import m3_warps
 from . import m3_shadowboxes
+from . import m3_tmd
 from . import io_m3_import
 from . import io_m3_export
 from . import bl_graphics_draw
@@ -140,6 +141,7 @@ m3_modules = (
     m3_ik,
     m3_warps,
     m3_shadowboxes,
+    m3_tmd,
 )
 
 

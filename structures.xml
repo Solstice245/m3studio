@@ -2499,7 +2499,7 @@
             <version number="1" size="72"/>
         </versions>
         <fields>
-            <field name="unknown68763a86" type="Reference" ref_to="VEC3"/>
+            <field name="vectors" type="Reference" ref_to="VEC3"/>
             <field name="unknownd3f6c7b8" type="float"/>
             <field name="unknown74229b33" type="float"/>
             <field name="unknownd4f91286" type="FloatAnimationReferenceV0"/>
