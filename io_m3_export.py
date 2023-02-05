@@ -247,6 +247,7 @@ class M3OutputProcessor:
         self.version = m3.desc.version
 
     def collect_anim_data_single(self, field, anim_data_tag):
+        type_ob = float if anim_data_tag == 'SDR3' else int
         head = getattr(self.bl, field + '_header')
         head.hex_id = head.hex_id  # set hex_id to itself to verify
 
@@ -260,7 +261,7 @@ class M3OutputProcessor:
 
             is_animated = True
 
-            values = [int(fcurve.evaluate(frame)) for frame in frames]
+            values = [type_ob(fcurve.evaluate(frame)) for frame in frames]
             self.exporter.action_to_anim_data[action][anim_data_tag][int(head.hex_id, 16)] = (frames, values)
 
         return is_animated
@@ -493,7 +494,7 @@ class Exporter:
 
         self.ob = ob
         self.scene = bpy.context.scene
-        self.m3 = io_m3.SectionList(init_header=True)
+        self.m3 = io_m3.M3SectionList(init_header=True)
 
         self.anim_id_count = 0
         self.uv_count = 0
@@ -874,7 +875,7 @@ class Exporter:
         model = model_section.content_add()
 
         model_name_section = self.m3.section_for_reference(model, 'model_name')
-        model_name_section.content_add(*os.path.basename(filename))
+        model_name_section.content_from_string(os.path.basename(filename))
 
         self.bounds_min = mathutils.Vector((self.ob.m3_bounds.left, self.ob.m3_bounds.back, self.ob.m3_bounds.bottom))
         self.bounds_max = mathutils.Vector((self.ob.m3_bounds.right, self.ob.m3_bounds.front, self.ob.m3_bounds.top))
@@ -946,7 +947,7 @@ class Exporter:
         for anim_group in anim_groups:
             m3_seq = seq_section.content_add()
             m3_seq_name_section = self.m3.section_for_reference(m3_seq, 'name')
-            m3_seq_name_section.content_add(*anim_group.name)
+            m3_seq_name_section.content_from_string(anim_group.name)
 
             processor = M3OutputProcessor(self, anim_group, m3_seq)
             io_shared.io_anim_group(processor)
@@ -967,7 +968,7 @@ class Exporter:
 
                     m3_stc = stc_section.content_add()
                     m3_stc_name_section = self.m3.section_for_reference(m3_stc, 'name', pos=None)
-                    m3_stc_name_section.content_add(*anim.name)
+                    m3_stc_name_section.content_from_string(anim.name)
                     self.stc_to_name_section[m3_stc] = m3_stc_name_section
                     stc_name_sections.append(m3_stc_name_section)
 
@@ -1011,7 +1012,7 @@ class Exporter:
 
             evnt_name_sections = []
             for stc in stc_list:
-                anim_index = self.ob.m3_animations.find(''.join(self.stc_to_name_section[stc].content))
+                anim_index = self.ob.m3_animations.find(self.stc_to_name_section[stc].content_to_string())
                 if anim_index is not None:
                     anim = self.ob.m3_animations[anim_index]
                 if anim and anim.simulate:
@@ -1020,7 +1021,7 @@ class Exporter:
                     evnt_data[0].append(anim.simulate_frame)
                     evnt = io_m3.structures['EVNT'].get_version(0).instance()
                     evnt_name_section = self.m3.section_for_reference(evnt, 'name', pos=None)
-                    evnt_name_section.content_add(*'Evt_Simulate')
+                    evnt_name_section.content_from_string('Evt_Simulate')
                     evnt_data[1].append(evnt)
                     evnt_name_sections.append(evnt_name_section)
 
@@ -1132,7 +1133,7 @@ class Exporter:
             m3_bone_parent = bone_to_m3_bone.get(pose_bone.parent, None) if pose_bone.parent else None
             m3_bone = bone_section.content_add()
             m3_bone_name_section = self.m3.section_for_reference(m3_bone, 'name')
-            m3_bone_name_section.content_add(*pose_bone.name)
+            m3_bone_name_section.content_from_string(pose_bone.name)
             m3_bone.parent = self.bone_name_indices.get(pose_bone.parent.name) if pose_bone.parent else -1
             m3_bone.flags = 0
             m3_bone.bit_set('flags', 'real', True)  # TODO is not always true for blizzard models, figure out when this is applicable
@@ -1293,7 +1294,7 @@ class Exporter:
             msec.bounding = self.init_anim_ref_bnds((self.bounds_min, self.bounds_max))
             return
 
-        model.skin_bone_count = sorted([self.bone_name_indices[bone.name] for bone in self.skinned_bones])[-1] + 1
+        model.skin_bone_count = max([self.bone_name_indices[bone.name] for bone in self.skinned_bones]) + 1
         model.vertex_flags = 0x182007d
 
         model.bit_set('vertex_flags', 'use_uv0', self.uv_count > 1)
@@ -1545,7 +1546,7 @@ class Exporter:
         msec = msec_section.content_add()
         msec.bounding = self.init_anim_ref_bnds(bounding_vectors_from_bones(self.bone_bound_vecs, self.bone_to_abs_pose_matrix))
 
-        vertex_section.content_add(*list(m3_vertex_desc.instances_to_bytes(m3_vertices)))
+        vertex_section.content_add(*list(m3_vertex_desc.instances_to_bytearray(m3_vertices)))
         face_section.content_add(*m3_faces)
         bone_lookup_section = self.m3.section_for_reference(model, 'bone_lookup')
         bone_lookup_section.content_add(*m3_lookup)
@@ -1561,7 +1562,7 @@ class Exporter:
 
             m3_attachment = attachment_point_section.content_add()
             m3_attachment_name_section = self.m3.section_for_reference(m3_attachment, 'name')
-            m3_attachment_name_section.content_add(*('Ref_' if not attachment.name.startswith('Ref_') else '') + attachment.name)
+            m3_attachment_name_section.content_from_string(('Ref_' if not attachment.name.startswith('Ref_') else '') + attachment.name)
             m3_attachment.bone = self.bone_name_indices[attachment_bone.name]
             attachment_point_addon_section.content_add(0xffff)
         # add volumes later so that sections are in order of the modl data
@@ -1599,7 +1600,7 @@ class Exporter:
             camera_bone = shared.m3_pointer_get(self.ob.pose.bones, camera.bone)
             m3_camera = camera_section.content_add()
             m3_camera_name_section = self.m3.section_for_reference(m3_camera, 'name')
-            m3_camera_name_section.content_add(*camera.name)
+            m3_camera_name_section.content_from_string(camera.name)
             m3_camera.bone = self.bone_name_indices[camera_bone.name]
             processor = M3OutputProcessor(self, camera, m3_camera)
             io_shared.io_camera(processor)
@@ -1612,7 +1613,7 @@ class Exporter:
 
         layer_desc = io_m3.structures['LAYR'].get_version(self.ob.m3_materiallayers_version)
         # manually add into section list if referenced
-        null_layer_section = io_m3.Section(index_entry=None, desc=layer_desc, references=[], content=[])
+        null_layer_section = io_m3.M3Section(desc=layer_desc, index_entry=None, references=[], content=[])
         null_layer_section.content_add()
 
         matrefs_typed = {ii: [] for ii in range(0, 13)}
@@ -1632,7 +1633,7 @@ class Exporter:
                 mat = shared.m3_pointer_get(mat_collection, matref.mat_handle)
                 m3_mat = mat_section.content_add()
                 m3_mat_name_section = self.m3.section_for_reference(m3_mat, 'name')
-                m3_mat_name_section.content_add(*matref.name)
+                m3_mat_name_section.content_from_string(matref.name)
                 processor = M3OutputProcessor(self, mat, m3_mat)
                 io_shared.material_type_io_method[type_ii](processor)
 
@@ -1669,7 +1670,7 @@ class Exporter:
 
                             if layer.color_type == 'BITMAP':
                                 m3_layer_bitmap_section = self.m3.section_for_reference(m3_layer, 'color_bitmap')
-                                m3_layer_bitmap_section.content_add(*layer.color_bitmap)
+                                m3_layer_bitmap_section.content_from_string(layer.color_bitmap)
                             else:
                                 m3_layer.bit_set('flags', 'color', True)
 
@@ -2176,7 +2177,7 @@ class Exporter:
             m3_turret = turret_section.content_add()
             m3_turret_part_index_section = self.m3.section_for_reference(m3_turret, 'parts')
             m3_turret_name_section = self.m3.section_for_reference(m3_turret, 'name')
-            m3_turret_name_section.content_add(*turret.name)
+            m3_turret_name_section.content_from_string(turret.name)
 
             for part in turret.parts:
                 try:

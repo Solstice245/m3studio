@@ -2900,7 +2900,7 @@
             <version number="11" size="24"/>
         </versions>
         <fields>
-            <field name="tag" type="tag"/>
+            <field name="tag" type="uint32"/>
             <field name="index_offset" type="uint32"/>
             <field name="index_size" type="uint32"/>
             <field name="model" type="Reference" ref_to="MODL"/>
@@ -2913,7 +2913,7 @@
             <version number="11" size="20"/>
         </versions>
         <fields>
-            <field name="tag" type="tag"/>
+            <field name="tag" type="uint32"/>
             <field name="index_offset" type="uint32"/>
             <field name="index_size" type="uint32"/>
             <field name="model" type="SmallReference" ref_to="MODL"/>
@@ -2928,7 +2928,7 @@
             <version number="34" size="16"/>
         </versions>
         <fields>
-            <field name="tag" type="tag"/>
+            <field name="tag" type="uint32"/>
             <field name="offset" type="uint32"/>
             <field name="repetitions" type="uint32"/>
             <field name="version" type="uint32"/>

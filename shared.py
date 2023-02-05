@@ -115,7 +115,7 @@ def m3_item_add(collection, item_name=''):
 def m3_item_duplicate(collection, src, dup_action_keyframes, dst_collection=None):
     # need to get path before adding item to collection
     src_path_base = src.path_from_id()
-    dst_path_base = collection.path_from_id() + '[{}]'.format(len(collection))
+    dst_path_base = f'{collection.path_from_id()}[{len(collection)}]'
 
     if dst_collection is None:
         dst_collection = collection
@@ -151,8 +151,8 @@ def m3_item_duplicate(collection, src, dup_action_keyframes, dst_collection=None
             if not rna_props.is_animatable or type(prop) == str:
                 continue
 
-            src_path = '{}.{}'.format(src_path_base, key)
-            dst_path = '{}.{}'.format(dst_path_base, key)
+            src_path = f'{src_path_base}.{key}'
+            dst_path = f'{dst_path_base}.{key}'
 
             for action in dup_actions:
                 for ii in range(max(1, rna_props.array_length)):
@@ -742,16 +742,16 @@ def draw_collection_list(layout, collection, draw_func, ui_list_id='', menu_id='
 
 def remove_m3_action_keyframes(ob, prefix, index):
     for action in [action for action in bpy.data.actions if ob.name in action.name]:
-        path = '{}[{}]'.format(prefix, index)
+        path = f'{prefix}[{index}]'
         for fcurve in [fcurve for fcurve in action.fcurves if prefix in fcurve.data_path and path in fcurve.data_path]:
             action.fcurves.remove(fcurve)
 
 
 def shift_m3_action_keyframes(ob, prefix, index, offset=-1):
     for action in [action for action in bpy.data.actions if ob.name in action.name]:
-        path = '{}[{}]'.format(prefix, index)
+        path = f'{prefix}[{index}]'
         for fcurve in [fcurve for fcurve in action.fcurves if prefix in fcurve.data_path and path in fcurve.data_path]:
-            fcurve.data_path = fcurve.data_path.replace(path, '{}[{}]'.format(prefix, index + offset))
+            fcurve.data_path = fcurve.data_path.replace(path, f'{prefix}[{index + offset}]')
 
 
 def swap_m3_action_keyframes(ob, prefix, old, new):
@@ -759,8 +759,8 @@ def swap_m3_action_keyframes(ob, prefix, old, new):
         if ob.name not in action.name:
             continue
 
-        path = '{}[{}]'.format(prefix, old)
-        path_new = '{}[{}]'.format(prefix, new)
+        path = f'{prefix}[{old}]'
+        path_new = f'{prefix}[{new}]'
 
         fcurves = [fcurve for fcurve in action.fcurves if path in fcurve.data_path]
         fcurves_new = [fcurve for fcurve in action.fcurves if path_new in fcurve.data_path]

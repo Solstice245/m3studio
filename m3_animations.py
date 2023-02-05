@@ -220,7 +220,7 @@ class M3AnimationActionNewOp(bpy.types.Operator):
 
     def invoke(self, context, event):
         anim = context.object.m3_animations[context.object.m3_animations_index]
-        action = bpy.data.actions.new(name='{}_{}'.format(anim.id_data.name, anim.name))
+        action = bpy.data.actions.new(name=f'{anim.id_data.name}_{anim.name}')
         anim.action = action
         return {'FINISHED'}
 
