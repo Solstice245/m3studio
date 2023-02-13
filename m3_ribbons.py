@@ -112,7 +112,7 @@ def draw_ribbon_props(ribbon, layout):
     col.prop(ribbon, 'lod_cut', text='Cutoff')
     col = layout.column(align=True)
     col.prop(ribbon, 'divisions', text='Emission Rate')
-    shared.draw_prop_anim(col, ribbon, 'length', text='Velocity')
+    shared.draw_prop_anim(col, ribbon, 'speed', text='Velocity')
     shared.draw_prop_anim(col, ribbon, 'yaw', text='Yaw')
     shared.draw_prop_anim(col, ribbon, 'pitch', text='Pitch')
     col.separator()
@@ -122,7 +122,7 @@ def draw_ribbon_props(ribbon, layout):
     col.prop(ribbon, 'cull_method', text='Division Cull Type')
 
     if ribbon.cull_method == 'TIME':
-        col.prop(ribbon, 'lifespan', text=' ')
+        shared.draw_prop_anim(col, ribbon, 'lifespan', text=' ')
 
     elif ribbon.cull_method == 'LENGTH':
         shared.draw_prop_anim(col, ribbon, 'length', text='Length')
@@ -130,7 +130,7 @@ def draw_ribbon_props(ribbon, layout):
         row.prop(ribbon, 'length_time', text='')
         sub = row.column(align=True)
         sub.active = ribbon.length_time
-        sub.prop(ribbon, 'lifespan', text='')
+        shared.draw_prop_anim(sub, ribbon, 'lifespan', text='')
 
     col = layout.column(align=True)
     shared.draw_prop_anim(col, ribbon, 'twist', index=0, text='Twist Base')
@@ -161,17 +161,17 @@ def draw_ribbon_props(ribbon, layout):
     col.prop(ribbon, 'noise_frequency', text='Frequency')
     col.prop(ribbon, 'noise_scale', text='Scale')
     col = layout.column(align=True)
-    col.prop(ribbon, 'amplitude_var_shape', text='Amplitude Variation')
+    col.prop(ribbon, 'yaw_var_shape', text='Yaw Variation')
     sub = col.column(align=True)
-    sub.active = ribbon.amplitude_var_shape != 'NONE'
-    shared.draw_prop_anim(sub, ribbon, 'amplitude_var_frequency', text='Frequency')
-    shared.draw_prop_anim(sub, ribbon, 'amplitude_var_amplitude', text='Amount')
+    sub.active = ribbon.yaw_var_shape != 'NONE'
+    shared.draw_prop_anim(sub, ribbon, 'yaw_var_frequency', text='Frequency')
+    shared.draw_prop_anim(sub, ribbon, 'yaw_var_amplitude', text='Amount')
     col = layout.column(align=True)
-    col.prop(ribbon, 'direction_var_shape', text='Direction Variation')
+    col.prop(ribbon, 'pitch_var_shape', text='Pitch Variation')
     sub = col.column(align=True)
-    sub.active = ribbon.direction_var_shape != 'NONE'
-    shared.draw_prop_anim(sub, ribbon, 'direction_var_frequency', text='Frequency')
-    shared.draw_prop_anim(sub, ribbon, 'direction_var_amplitude', text='Amount')
+    sub.active = ribbon.pitch_var_shape != 'NONE'
+    shared.draw_prop_anim(sub, ribbon, 'pitch_var_frequency', text='Frequency')
+    shared.draw_prop_anim(sub, ribbon, 'pitch_var_amplitude', text='Amount')
     col = layout.column(align=True)
     col.prop(ribbon, 'length_var_shape', text='Length Variation')
     sub = col.column(align=True)
@@ -257,6 +257,8 @@ class RibbonProperties(shared.M3PropertyGroup):
     divisions: bpy.props.FloatProperty(options=set(), min=0, default=20)
     sides: bpy.props.IntProperty(options=set(), min=3, default=5)
     star_ratio: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0, max=1, default=0.5)
+    speed: bpy.props.FloatProperty(name='Speed', min=0)
+    speed_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     length: bpy.props.FloatProperty(name='Length', min=0)
     length_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     yaw: bpy.props.FloatProperty(name='Yaw')
@@ -298,16 +300,16 @@ class RibbonProperties(shared.M3PropertyGroup):
     local_forces: bpy.props.BoolVectorProperty(options=set(), subtype='LAYER', size=16)  # TODO
     world_forces: bpy.props.BoolVectorProperty(options=set(), subtype='LAYER', size=16)  # TODO
     world_space: bpy.props.BoolProperty(options=set())
-    amplitude_var_shape: bpy.props.EnumProperty(options=set(), items=bl_enum.ribbon_variation_shape)
-    amplitude_var_amplitude: bpy.props.FloatProperty(name='Amplitude Variation Amount')
-    amplitude_var_amplitude_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
-    amplitude_var_frequency: bpy.props.FloatProperty(name='Amplitude Variation Frequency')
-    amplitude_var_frequency_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
-    direction_var_shape: bpy.props.EnumProperty(options=set(), items=bl_enum.ribbon_variation_shape)
-    direction_var_amplitude: bpy.props.FloatProperty(name='Directional Variation Amount')
-    direction_var_amplitude_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
-    direction_var_frequency: bpy.props.FloatProperty(name='Directional Variation Frequency')
-    direction_var_frequency_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
+    yaw_var_shape: bpy.props.EnumProperty(options=set(), items=bl_enum.ribbon_variation_shape)
+    yaw_var_amplitude: bpy.props.FloatProperty(name='Yaw Variation Amount')
+    yaw_var_amplitude_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
+    yaw_var_frequency: bpy.props.FloatProperty(name='Yaw Variation Frequency')
+    yaw_var_frequency_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
+    pitch_var_shape: bpy.props.EnumProperty(options=set(), items=bl_enum.ribbon_variation_shape)
+    pitch_var_amplitude: bpy.props.FloatProperty(name='Pitch Variation Amount')
+    pitch_var_amplitude_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
+    pitch_var_frequency: bpy.props.FloatProperty(name='Pitch Variation Frequency')
+    pitch_var_frequency_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     length_var_shape: bpy.props.EnumProperty(options=set(), items=bl_enum.ribbon_variation_shape)
     length_var_amplitude: bpy.props.FloatProperty(name='Length Variation Amount')
     length_var_amplitude_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)

@@ -894,7 +894,7 @@ class Exporter:
         self.create_projections(model, export_projections)
         self.create_forces(model, export_forces)
         self.create_warps(model, export_warps)
-        self.create_physics_bodies(model, export_physics_bodies, body_version=ob.m3_rigidbodies_version, shape_version=1)  # TODO research PHSHV2/3
+        self.create_physics_bodies(model, export_physics_bodies, body_version=ob.m3_rigidbodies_version, shape_version=3)  # TODO research PHSHV2/3
         self.create_physics_joints(model, export_physics_bodies, export_physics_joints)
         self.create_physics_cloths(model, export_physics_cloths, version=ob.m3_cloths_version)  # TODO simulation rigging
         self.create_ik_joints(model, export_ik_joints)
@@ -1863,6 +1863,10 @@ class Exporter:
             m3_ribbon.unknownee00ae0a = self.init_anim_ref_float()
             m3_ribbon.unknown1686c0b7 = self.init_anim_ref_float()
             m3_ribbon.unknown9eba8df8 = self.init_anim_ref_float()
+
+            m3_ribbon.color_base.null.a = 0xFF
+            m3_ribbon.color_mid.null.a = 0xFF
+            m3_ribbon.color_tip.null.a = 0xFF
 
             if ribbon.spline.handle not in handle_to_spline_sections.keys():
                 spline = shared.m3_pointer_get(self.ob.m3_ribbonsplines, ribbon.spline)

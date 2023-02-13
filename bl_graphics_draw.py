@@ -403,6 +403,7 @@ def draw():
                             volume_matrix = mathutils.Matrix.Scale(item.size[0], 4)
                             coords, indices = blgd.sphere
                         elif item.shape == 'CAPSULE':
+                            volume_matrix = mathutils.Matrix.Scale(1, 4)
                             coords, indices = blgd.init_capsule(item.size[0], item.size[1])
                         elif item.shape == 'CYLINDER':
                             volume_matrix = mathutils.Matrix.LocRotScale(None, None, (item.size[0], item.size[0], item.size[1]))

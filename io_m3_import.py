@@ -1590,9 +1590,7 @@ class Importer:
 
         bl_vert_data = []
         for v in self.m3[m3_vert_ref]:
-            bl_vert_data.append(v.x)
-            bl_vert_data.append(v.y)
-            bl_vert_data.append(v.z)
+            bl_vert_data.extend((v.x, v.y, v.z))
 
         bl_loop_data = self.m3[m3_loop_ref].content
         bl_poly_data = self.m3[m3_poly_ref].content
