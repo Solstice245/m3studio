@@ -640,7 +640,7 @@ class M3MaterialLayerOpAdd(bpy.types.Operator):
     def invoke(self, context, event):
         ob = context.object
         matref = ob.m3_materialrefs[ob.m3_materialrefs_index]
-        mat = m3_material_get(ob, matref)
+        mat = m3_material_get(matref)
         layer = m3_material_layer_get(ob, getattr(mat, self.layer_name))
 
         if layer:
