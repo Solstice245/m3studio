@@ -1477,7 +1477,7 @@ class Exporter:
             m3_lookup.extend(region_lookup)
 
             # TODO mesh flags for versions 4+
-            for ii, batch in enumerate(ob.m3_mesh_batches):
+            for ii, batch in enumerate(ob.m3_mesh_batches[0:1]):
 
                 # if ii > 0 and bat_hack_region:
                 #     region_section.content_add(bat_hack_region)

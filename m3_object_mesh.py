@@ -31,7 +31,6 @@ def register_props():
 
 class BatchPropertyGroup(bpy.types.PropertyGroup):
     material: bpy.props.PointerProperty(type=shared.M3MatRefPointerProp)
-    # bone: bpy.props.StringProperty(options=set(), description='The selected bone\'s "Batching" property will determine whether the material is rendered')
     bone: bpy.props.PointerProperty(type=shared.M3BonePointerProp)
 
 
@@ -240,11 +239,12 @@ class Panel(bpy.types.Panel):
         if parent:
             box = layout.box()
             box.use_property_decorate = False
-            op = box.operator('m3.handle_add', text='Add M3 Material Batch')
-            op.collection = ob.m3_mesh_batches.path_from_id()
+            if not len(context.object.m3_mesh_batches):
+                op = box.operator('m3.handle_add', text='Add M3 Material Batch')
+                op.collection = ob.m3_mesh_batches.path_from_id()
+
             for ii, batch in enumerate(ob.m3_mesh_batches):
-                sub_box = box.box()
-                row = sub_box.row()
+                row = box.row()
                 col = row.column()
                 shared.draw_prop_pointer_search(col, batch.material, parent, 'm3_materialrefs', text='Material', icon='MATERIAL')
                 shared.draw_prop_pointer_search(col, batch.bone, parent.data, 'bones', text='Batching Toggle Bone', icon='BONE_DATA')

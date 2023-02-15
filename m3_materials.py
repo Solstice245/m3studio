@@ -622,8 +622,9 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Materials'
 
     def draw(self, context):
+        matref = context.object.m3_materialrefs[context.object.m3_materialrefs_index] if context.object.m3_materialrefs_index > -1 else None
         shared.draw_collection_list(
-            self.layout, context.object.m3_materialrefs, mat_type_dict[context.object.m3_materialrefs[context.object.m3_materialrefs_index].mat_type]['draw'],
+            self.layout, context.object.m3_materialrefs, mat_type_dict[matref.mat_type]['draw'] if matref else lambda x, y: None,
             ops={'add': draw_ops_add, 'del': draw_ops_del}, ui_list_id=MaterialList.bl_idname, menu_id=MaterialMenu.bl_idname
         )
 

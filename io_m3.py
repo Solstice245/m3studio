@@ -133,14 +133,13 @@ class M3StructureHistory:
 
     def get_version(self, version, md_version=34):
         desc_id = f'MD{md_version}_{version}'
-        desc = self.version_to_description.get(desc_id)
-        if desc is None:
 
+        if (desc := self.version_to_description.get(desc_id)) is None:
             fields = {field.name: field for field_versions in self.field_versions if (field := field_versions.get(version))}
             if md_version == 33:
                 for field in fields.values():
                     if type(field) == M3FieldStructure:
-                        new_field_desc_name = 'SmallReference' if field.desc.name == 'Reference' else field.desc.name
+                        new_field_desc_name = 'SmallReference' if field.desc.history.name == 'Reference' else field.desc.history.name
                         new_field_desc = structures[new_field_desc_name].get_version(field.desc.version, md_version)
                         fields[field.name] = M3FieldStructure(field.name, new_field_desc, field.since_version, field.till_version, field.ref_to)
 
@@ -163,21 +162,19 @@ class M3StructureDescription:
 
     def __init__(self, history: M3StructureHistory, version, fields, size):
         self.history = history
-        self.name = history.name
         self.version = version
         self.fields = fields
         self.size = size
-        self.primitive = history.primitive
 
     def __str__(self):
-        return f'{self.name}V{self.version}: {{{self.fields}}}'
+        return f'{self.history.name}V{self.version}: {{{self.fields}}}'
 
     def instance(self, buffer=None, offset=0):
         return M3StructureData(self, buffer, offset)
 
     def instances(self, buffer, count):
         vals = []
-        if self.primitive:
+        if self.history.primitive:
             struct_format = self.fields['value'].struct_format
             for offset in range(0, count * self.size, self.size):
                 vals.append(struct_format.unpack(buffer[offset:offset + self.size])[0])
@@ -189,7 +186,7 @@ class M3StructureDescription:
         return vals
 
     def instance_validate(self, instance, instance_name):
-        if self.primitive:
+        if self.history.primitive:
             self.fields['value'].content_validate(instance, instance_name + '.value')
         else:
             for field in self.fields.values():
@@ -202,7 +199,7 @@ class M3StructureDescription:
     def instances_to_bytearray(self, instances):
         raw_bytes = bytearray(self.size * len(instances))
         offset = 0
-        if self.primitive:  # instances of numbers
+        if self.history.primitive:  # instances of numbers
             struct_format = self.fields['value'].struct_format
             for value in instances:
                 struct_format.pack_into(raw_bytes, offset, value)
@@ -228,7 +225,7 @@ class M3StructureData:
 
     def __str__(self):
         field_strings = list(f'{field_name}: {getattr(self, field_name)}' for field_name in self.desc.fields)
-        return f'{self.desc.name}V{self.desc.version} fields: {field_strings}'
+        return f'{self.desc.history.name}V{self.desc.version} fields: {field_strings}'
 
     def from_buffer(self, buffer, offset):
         field_offset = offset
@@ -311,7 +308,7 @@ class M3FieldPrimitive(M3Field):
     def from_buffer(self, data, buffer, offset):
         value = self.struct_format.unpack_from(buffer, offset)[0]
         if self.expected_value is not None and value != self.expected_value:
-            raise Exception(f'{data.desc.name}V{data.desc.version}.{self.name} expected to be {self.expected_value}, but it was {value}')
+            raise Exception(f'{data.desc.history.name}V{data.desc.version}.{self.name} expected to be {self.expected_value}, but it was {value}')
         setattr(data, self.name, value)
 
     def to_buffer(self, data, buffer, offset):
@@ -367,8 +364,7 @@ class M3SectionList(list):
 
         if init_header:
             section = M3Section(desc=structures['MD34'].get_version(11), index_entry=None, references=[], content=[])
-            md34 = section.content_add()
-            md34.tag = int.from_bytes('43DM'.encode('ascii'), 'little')
+            section.content_add().tag = int.from_bytes(b'43DM', 'little')
             self.append(section)
 
     def __getitem__(self, item):
@@ -410,7 +406,7 @@ class M3SectionList(list):
             section = self[ii - culled_sections]
             if len(section):
                 for instance in section:
-                    section.desc.instance_validate(instance, section.desc.name)
+                    section.desc.instance_validate(instance, section.desc.history.name)
             else:
                 del self[ii - culled_sections]
                 culled_sections += 1
@@ -428,7 +424,7 @@ class M3SectionList(list):
         buffer_offset = 0
         for section in self:
             section.index_entry = structures['MDIndexEntry'].get_version(34).instance()
-            section.index_entry.tag = int.from_bytes(section.desc.name[::-1].encode('ascii'), 'little')
+            section.index_entry.tag = int.from_bytes(section.desc.history.name[::-1].encode('ascii'), 'little')
             section.index_entry.offset = buffer_offset
             section.index_entry.repetitions = len(section)
             section.index_entry.version = section.desc.version
@@ -453,12 +449,10 @@ class M3Section:
         self.raw_bytes = None
 
     def __str__(self):
-        result = 'Section'
         if self.index_entry:
-            result += f' {self.index_entry}'
+            return f'Section {self.index_entry}'
         if self.desc:
-            result += f' {self.desc.name}V{self.desc.version}'
-        return result
+            return f'Section {self.desc.history.name}V{self.desc.version}'
 
     def __iter__(self):
         return iter(self.content)
@@ -470,7 +464,7 @@ class M3Section:
         return self.content[item]
 
     def content_add(self, *instances):
-        if not instances and not self.desc.primitive:
+        if not instances and not self.desc.history.primitive:
             self.content.append(instance := self.desc.instance())
             return instance
         self.content += instances
