@@ -23,7 +23,7 @@ import mathutils
 from . import io_m3
 from . import io_shared
 from . import shared
-from .m3_animations import set_default_value, anim_set
+from .m3_animations import set_default_value, ob_anim_data_set
 
 
 FRAME_RATE = 30
@@ -65,7 +65,7 @@ def to_bl_matrix(m3_matrix):
         (m3_matrix.x.x, m3_matrix.y.x, m3_matrix.z.x, m3_matrix.w.x),
         (m3_matrix.x.y, m3_matrix.y.y, m3_matrix.z.y, m3_matrix.w.y),
         (m3_matrix.x.z, m3_matrix.y.z, m3_matrix.z.z, m3_matrix.w.z),
-        (m3_matrix.x.w, m3_matrix.y.w, m3_matrix.z.w, m3_matrix.w.w)
+        (m3_matrix.x.w, m3_matrix.y.w, m3_matrix.z.w, m3_matrix.w.w),
     ))
 
 
@@ -342,7 +342,7 @@ class Importer:
         self.is_new_object = not ob
         self.ob = ob or armature_object_new()
 
-        anims_len = len(self.ob.m3_animations)
+        anims_len = len(self.ob.m3_animation_groups)
         matref_len = len(self.ob.m3_materialrefs)
         self.anim_index = lambda x: anims_len + x
         self.matref_index = lambda x: matref_len + x
@@ -382,7 +382,7 @@ class Importer:
             self.create_warps()
 
         if self.is_new_object:
-            anim_set(bpy.context.scene, self.ob, None)
+            ob_anim_data_set(bpy.context.scene, self.ob, None)
             bpy.context.view_layer.objects.active = self.ob
             self.ob.select_set(True)
 
@@ -418,7 +418,7 @@ class Importer:
 
         # TODO make fps an import options
         bpy.context.scene.render.fps = FRAME_RATE
-        anim_set(bpy.context.scene, ob, None)
+        ob_anim_data_set(bpy.context.scene, ob, None)
 
         self.is_new_object = False
         self.ob = ob
@@ -426,7 +426,7 @@ class Importer:
         self.m3_model = self.m3[self.m3[0][0].model][0]
         self.stc_id_data = {}
 
-        anims_len = len(self.ob.m3_animations)
+        anims_len = len(self.ob.m3_animation_groups)
         self.anim_index = lambda x: anims_len + x
         self.create_animations()
 
@@ -624,70 +624,66 @@ class Importer:
         if self.is_new_object:
             ob.m3_animations_default = bpy.data.actions.new(ob.name + '_DEFAULTS')
 
-        for m3_anim_group in self.m3[self.m3_model.sequences]:
-            anim_group_name = self.m3[m3_anim_group.name].content_to_string()
+        for m3_seq, m3_stg in zip(self.m3[self.m3_model.sequences], self.m3[self.m3_model.sequence_transformation_groups]):
+            anim_group_name = self.m3[m3_seq.name].content_to_string()
             anim_group = shared.m3_item_add(ob.m3_animation_groups, anim_group_name)
-            processor = M3InputProcessor(self, anim_group, m3_anim_group)
-            io_shared.io_anim_group(processor)
+            seq_processor = M3InputProcessor(self, anim_group, m3_seq)
+            io_shared.io_anim_group(seq_processor)
 
-            anim_group['frame_start'] = to_bl_frame(m3_anim_group.anim_ms_start)
-            anim_group['frame_end'] = to_bl_frame(m3_anim_group.anim_ms_end)
+            anim_group['frame_start'] = to_bl_frame(m3_seq.anim_ms_start)
+            anim_group['frame_end'] = to_bl_frame(m3_seq.anim_ms_end)
 
-        for m3_anim in self.m3[self.m3_model.sequence_transformation_collections]:
-            if not m3_anim.name.index:
-                continue
+            for m3_stc_index in self.m3[m3_stg.stc_indices]:
+                m3_stc = self.m3[self.m3_model.sequence_transformation_collections][m3_stc_index]
 
-            anim = shared.m3_item_add(ob.m3_animations, self.m3[m3_anim.name].content_to_string())
-            anim['concurrent'] = m3_anim.concurrent
-            anim['priority'] = m3_anim.priority
-            anim['action'] = bpy.data.actions.new(ob.name + '_' + anim.name)
+                if not m3_stc.name.index:
+                    continue
 
-            m3_key_type_collection_list = [
-                m3_anim.sdev, m3_anim.sd2v, m3_anim.sd3v, m3_anim.sd4q, m3_anim.sdcc, m3_anim.sdr3, m3_anim.sd08,
-                m3_anim.sds6, m3_anim.sdu6, m3_anim.sds3, m3_anim.sdu3, m3_anim.sdfg, m3_anim.sdmb,
-            ]
+                anim_name = self.m3[m3_stc.name].content_to_string().replace(anim_group_name, '')[1:]
+                anim = shared.m3_item_add(anim_group.animations, anim_name)
+                anim['concurrent'] = m3_stc.concurrent
+                anim['priority'] = m3_stc.priority
+                anim['action'] = bpy.data.actions.new(f'{ob.name}_{anim_group.name}_{anim.name}')
 
-            for stc_id, stc_ref in zip(self.m3[m3_anim.anim_ids], self.m3[m3_anim.anim_refs]):
-                anim_type = stc_ref >> 16
-                anim_index = stc_ref & 0xffff
-                m3_key_type_collection = m3_key_type_collection_list[anim_type]
-                m3_key_entries = self.m3[m3_key_type_collection][anim_index]
+                m3_key_type_collection_list = [
+                    m3_stc.sdev, m3_stc.sd2v, m3_stc.sd3v, m3_stc.sd4q, m3_stc.sdcc, m3_stc.sdr3, m3_stc.sd08,
+                    m3_stc.sds6, m3_stc.sdu6, m3_stc.sds3, m3_stc.sdu3, m3_stc.sdfg, m3_stc.sdmb,
+                ]
 
-                frames = []
-                ignored_indices = []
-                for ii, ms in enumerate(self.m3[m3_key_entries.frames]):
-                    frame = to_bl_frame(ms)
-                    if frame not in frames:
-                        frames.append(frame)
-                    else:
-                        ignored_indices.append(ii)
+                for stc_id, stc_ref in zip(self.m3[m3_stc.anim_ids], self.m3[m3_stc.anim_refs]):
+                    anim_type = stc_ref >> 16
+                    anim_index = stc_ref & 0xffff
+                    m3_key_type_collection = m3_key_type_collection_list[anim_type]
+                    m3_key_entries = self.m3[m3_key_type_collection][anim_index]
 
-                m3_keys = self.m3[m3_key_entries.keys]
-                keys = [m3_keys[ii] for ii in range(len(m3_keys)) if ii not in ignored_indices]
+                    frames = []
+                    ignored_indices = []
+                    for ii, ms in enumerate(self.m3[m3_key_entries.frames]):
+                        frame = to_bl_frame(ms)
+                        if frame not in frames:
+                            frames.append(frame)
+                        else:
+                            ignored_indices.append(ii)
 
-                try:
-                    self.stc_id_data[stc_id][anim.action.name] = m3_key_type_collection_method[anim_type](frames, keys)
-                except KeyError:
-                    self.stc_id_data[stc_id] = {}
-                    self.stc_id_data[stc_id][anim.action.name] = m3_key_type_collection_method[anim_type](frames, keys)
+                    m3_keys = self.m3[m3_key_entries.keys]
+                    keys = [m3_keys[ii] for ii in range(len(m3_keys)) if ii not in ignored_indices]
 
-                # consider making a dedicated property type and collection list for events
-                if m3_key_type_collection == m3_anim.sdev:
-                    for ii, frame in enumerate(frames):
-                        key = keys[ii]
-                        event_name = self.m3[key.name].content_to_string()
-                        if event_name == 'Evt_Simulate':
-                            anim['simulate'] = True
-                            anim['simulate_frame'] = frame
+                    try:
+                        self.stc_id_data[stc_id][anim.action.name] = m3_key_type_collection_method[anim_type](frames, keys)
+                    except KeyError:
+                        self.stc_id_data[stc_id] = {}
+                        self.stc_id_data[stc_id][anim.action.name] = m3_key_type_collection_method[anim_type](frames, keys)
 
-        m3_stgs = self.m3[self.m3_model.sequence_transformation_groups]
-        for ii, m3_stc_group in enumerate(m3_stgs):
-            m3_stc_indices = self.m3[m3_stc_group.stc_indices]
-            for stc_index in m3_stc_indices:
-                anim_group = ob.m3_animation_groups[-len(m3_stgs) + ii]
-                anim_pointer = anim_group.animations.add()
-                anim_pointer.handle = ob.m3_animations[self.anim_index(stc_index)].bl_handle
-                anim_group['animations_index'] = 0
+                    # consider making a dedicated property type and collection list for events
+                    if m3_key_type_collection == m3_stc.sdev:
+                        for ii, frame in enumerate(frames):
+                            key = keys[ii]
+                            event_name = self.m3[key.name].content_to_string()
+                            if event_name == 'Evt_Simulate':
+                                anim_group['simulate'] = True
+                                anim_group['simulate_frame'] = min(anim_group.simulate_frame, frame)
+
+            anim_group['animations_index'] = 0
 
     def create_bones(self):
 
@@ -1509,7 +1505,6 @@ class Importer:
     def create_billboards(self):
         ob = self.ob
         for m3_billboard in self.m3[self.m3_model.billboards]:
-            print(m3_billboard)
             pose_bone_name = self.m3_get_bone_name(m3_billboard.bone)
             pose_bone = ob.pose.bones.get(bone_name)
             billboard = shared.m3_item_add(ob.m3_billboards, item_name=pose_bone_name)

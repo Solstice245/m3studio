@@ -22,7 +22,6 @@ from . import bl_enum
 
 
 m3_collections_suggested_names = {
-    'm3_animations': ['Stand_full', 'Walk_full', 'Attack_full', 'Birth_full', 'Spell_full'],
     'm3_animation_groups': ['Stand', 'Walk', 'Attack', 'Birth', 'Spell'],
     'm3_attachmentpoints': ['Origin', 'Center', 'Overhead', 'Target'],
     'm3_billboards': ['Billboard'],
@@ -46,6 +45,7 @@ m3_collections_suggested_names = {
     'm3_shadowbox': ['Shadow Box'],
     'm3_turrets': ['Turret'],
     'm3_warps': ['Warp'],
+    'animations': ['full', 'sub'],
     'volumes': ['Volume'],
     'points': ['Spline Point'],
     'parts': ['Turret Part'],
@@ -128,9 +128,10 @@ def m3_item_duplicate(collection, src, dup_action_keyframes, dst_collection=None
 
     dup_actions = []
     if dup_action_keyframes:
-        for anim in collection.id_data.m3_animations:
-            if anim.action not in dup_actions:
-                dup_actions.append(anim.action)
+        for anim_group in collection.id_data.m3_animation_groups:
+            for anim in anim_group.animations:
+                if anim.action and anim.action not in dup_actions:
+                    dup_actions.append(anim.action)
 
     for key in type(dst).__annotations__.keys():
         prop = getattr(src, key)
@@ -143,7 +144,12 @@ def m3_item_duplicate(collection, src, dup_action_keyframes, dst_collection=None
         elif str(type(prop)) == '<class \'bpy_prop_collection_idprop\'>':
             for item in prop:
                 m3_item_duplicate(prop, item, dup_action_keyframes, dst_collection=getattr(dst, key))
+        elif 'PointerProp' in str(type(prop)):
+            dst_prop = getattr(dst, key)
+            dst_prop.value = prop.value
+            dst_prop.handle = prop.handle
         elif key != 'name':
+            print(key, type(prop))
             setattr(dst, key, prop)
 
             rna_props = src.bl_rna.properties[key]
