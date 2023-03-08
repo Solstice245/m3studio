@@ -1236,7 +1236,7 @@ class Importer:
         for m3_projection in self.m3[self.m3_model.projections]:
             pose_bone_name = self.m3_get_bone_name(m3_projection.bone)
             pose_bone = ob.pose.bones.get(pose_bone_name)
-            projection = shared.m3_item_add(ob.m3_projections, item_name=bone_name)
+            projection = shared.m3_item_add(ob.m3_projections, item_name=pose_bone_name)
             projection.bone.handle = pose_bone.bl_handle if pose_bone else ''
             projection.material.handle = ob.m3_materialrefs[self.matref_index(m3_projection.material_reference_index)].bl_handle
             processor = M3InputProcessor(self, projection, m3_projection)
