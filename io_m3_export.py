@@ -899,7 +899,7 @@ class Exporter:
         self.create_projections(model, export_projections)
         self.create_forces(model, export_forces)
         self.create_warps(model, export_warps)
-        self.create_physics_bodies(model, export_physics_bodies, body_version=self.ob.m3_rigidbodies_version, shape_version=1 if self.ob.m3_rigidbodies_version == '2' else 2)  # TODO research PHSHV2/3
+        self.create_physics_bodies(model, export_physics_bodies, body_version=self.ob.m3_rigidbodies_version, shape_version=1 if self.ob.m3_rigidbodies_version == '2' else 2)
         self.create_physics_joints(model, export_physics_bodies, export_physics_joints)
         self.create_physics_cloths(model, export_physics_cloths, version=self.ob.m3_cloths_version)  # TODO simulation rigging
         self.create_ik_joints(model, export_ik_joints)
@@ -1605,15 +1605,15 @@ class Exporter:
         for type_ii, matrefs in matrefs_typed.items():
             if not matrefs:
                 continue
-            mat_section = self.m3.section_for_reference(model, io_shared.material_type_to_model_reference[type_ii], version=versions[type_ii])
-            mat_collection = getattr(self.ob, 'm3_' + io_shared.material_type_to_model_reference[type_ii])
+            mat_section = self.m3.section_for_reference(model, shared.material_type_to_model_reference[type_ii], version=versions[type_ii])
+            mat_collection = getattr(self.ob, 'm3_' + shared.material_type_to_model_reference[type_ii])
             for matref in matrefs:
                 mat = shared.m3_pointer_get(mat_collection, matref.mat_handle)
                 m3_mat = mat_section.content_add()
                 m3_mat_name_section = self.m3.section_for_reference(m3_mat, 'name')
                 m3_mat_name_section.content_from_string(matref.name)
                 processor = M3OutputProcessor(self, mat, m3_mat)
-                shared.material_type_io_method[type_ii](processor)
+                io_shared.material_type_io_method[type_ii](processor)
 
                 for layer_name in shared.material_type_to_layers[type_ii]:
                     layer_name_full = 'layer_' + layer_name
@@ -2301,8 +2301,8 @@ class Exporter:
                     m3_loop.loop = face.loops[next_loop].index
                     loop_data.append(m3_loop)
 
-                # TODO try to figure out what data is actually appropriate here
-                polygon_related_data.append(to_m3_vec4((0.0, 0.0, 0.0, 1.0)))
+                vec = face.calc_center_bounds()
+                polygon_related_data.append(to_m3_vec4((*vec.normalized(), vec.length)))
 
             vert_section = self.m3.section_for_reference(m3, 'vertices')
             vert_section.content_add(*vert_data)
@@ -2312,6 +2312,11 @@ class Exporter:
             loop_section.content_add(*loop_data)
             polygon_section = self.m3.section_for_reference(m3, 'polygons')
             polygon_section.content_add(*polygon_data)
+
+            m3.vertices_count = len(vert_section)
+            m3.polygons_count = len(polygon_related_section)
+            m3.loops_count = len(loop_section)
+
             self.mesh_to_physics_volume_sections[mesh_ob.name] = [vert_section, polygon_related_section, loop_section, polygon_section]
         else:
             vert_section, polygon_related_section, loop_section, polygon_section = self.mesh_to_physics_volume_sections[mesh_ob.name]

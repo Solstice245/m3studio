@@ -2308,15 +2308,11 @@
             <field name="loops" type="Reference" ref_to="DMSE" since_version="2"/>
             <field name="polygons" type="Reference" ref_to="U8__" since_version="2"/>
             <field name="unknownbda8f787" size="12" default_value="0x000000000000000000000000" since_version="2"/>
-            <!-- unknown2e655ca4 can have the value 0x80000000 too -->
-            <field name="unknown2e655ca4" type="uint32" since_version="2"/>
-            <!-- unknown7df99f73 is not a float and has strange content -->
-            <field name="unknown7df99f73" type="uint32" since_version="2"/>
-            <field name="unknown5c04305e" type="uint32" default_value="0x00000000" since_version="2"/>
-            <!-- unknown8d41b3f8 is not a float and has strange content -->
-            <field name="unknown8d41b3f8" type="uint32" since_version="2"/>
-            <!-- unknown56fece2 is not a float and has strange content -->
-            <field name="unknown56fece2" type="uint32" since_version="2"/>
+            <field name="vertices_count" type="uint32" since_version="2"/>
+            <field name="polygons_count" type="uint32" since_version="2"/>
+            <field name="loops_count" type="uint32" since_version="2"/>
+            <field name="unknown8d41b3f8" type="float" since_version="2"/>
+            <field name="unknown56fece2" type="float" since_version="2"/>
             <field name="unknown6f23bce8" type="Reference" ref_to="DMMN" since_version="2"/>
             <field name="unknown9836ec85" type="Reference" ref_to="VEC4" since_version="2"/>
             <field name="unknownac0ac492" size="12" default_value="0x000000000000000000000000" since_version="2"/>
