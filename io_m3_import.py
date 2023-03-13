@@ -861,9 +861,9 @@ class Importer:
             bind_fac_y = sum(iref[1]) / sum(out_iref[1]) if (sum(iref[1]) and sum(out_iref[1])) else 1
             bind_fac_z = sum(iref[2]) / sum(out_iref[2]) if (sum(iref[2]) and sum(out_iref[2])) else 1
 
-            bind_scales[ii][0] = bind_scales[ii][0] * bind_fac_x
-            bind_scales[ii][1] = bind_scales[ii][1] * bind_fac_y
-            bind_scales[ii][2] = bind_scales[ii][2] * bind_fac_z
+            bind_scales[ii][0] = bind_scales[ii][0] * abs(bind_fac_x)
+            bind_scales[ii][1] = bind_scales[ii][1] * abs(bind_fac_y)
+            bind_scales[ii][2] = bind_scales[ii][2] * abs(bind_fac_z)
 
             bind_matrices.append(mathutils.Matrix.LocRotScale(None, None, bind_scales[ii]))
 
@@ -1346,7 +1346,7 @@ class Importer:
                     if m3_volume.desc.version == 1:
                         volume['mesh_object'] = self.gen_basic_volume_object(physics_shape.name, m3_volume.vertices, m3_volume.face_data)
                     else:
-                        args = (physics_shape.name, m3_volume.vertices, m3_volume.polygons_related, m3_volume.loops, m3_volume.polygons)
+                        args = physics_shape.name, m3_volume.vertices, m3_volume.polygons_related, m3_volume.loops, m3_volume.polygons
                         volume['mesh_object'] = self.gen_rigidbody_volume_object(*args)
 
                 self.m3_bl_ref[m3_rigidbody.physics_shape.index] = physics_shape
@@ -1627,7 +1627,7 @@ class Importer:
             bl_loop_start_ordered.append(num)
             num += len(loop_indices[ii])
 
-        me.vertices.add(round(len(bl_vert_data) / 3))
+        me.vertices.add(len(bl_vert_data) // 3)
         me.vertices.foreach_set('co', bl_vert_data)
         me.loops.add(len(bl_loop_data))
         me.loops.foreach_set('vertex_index', [ii for ii in bl_loop_data_ordered])
