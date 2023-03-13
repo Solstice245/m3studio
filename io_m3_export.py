@@ -888,22 +888,22 @@ class Exporter:
 
         self.create_sequences(model, self.export_sequences)
         self.create_bones(model)
-        self.create_division(model, self.export_regions, regn_version=ob.m3_mesh_version)  # TODO create dummy region if 1 and only region has multiple batches
+        self.create_division(model, self.export_regions, regn_version=self.ob.m3_mesh_version)  # TODO create dummy region if 1 and only region has multiple batches
         self.create_attachment_points(model, export_attachment_points)  # TODO should exclude attachments with same bone as other attachments
         self.create_lights(model, export_lights)
         self.create_shadow_boxes(model, export_shadow_boxes)
         self.create_cameras(model, export_cameras)
         self.create_materials(model, export_material_references, material_versions)  # TODO test volume, volume noise and stb material types
-        self.create_particle_systems(model, export_particle_systems, export_particle_copies, version=ob.m3_particlesystems_version)
-        self.create_ribbons(model, export_ribbons, export_ribbon_splines, version=ob.m3_ribbons_version)
+        self.create_particle_systems(model, export_particle_systems, export_particle_copies, version=self.ob.m3_particlesystems_version)
+        self.create_ribbons(model, export_ribbons, export_ribbon_splines, version=self.ob.m3_ribbons_version)
         self.create_projections(model, export_projections)
         self.create_forces(model, export_forces)
         self.create_warps(model, export_warps)
-        self.create_physics_bodies(model, export_physics_bodies, body_version=ob.m3_rigidbodies_version, shape_version=3)  # TODO research PHSHV2/3
+        self.create_physics_bodies(model, export_physics_bodies, body_version=self.ob.m3_rigidbodies_version, shape_version=1 if self.ob.m3_rigidbodies_version == '2' else 2)  # TODO research PHSHV2/3
         self.create_physics_joints(model, export_physics_bodies, export_physics_joints)
-        self.create_physics_cloths(model, export_physics_cloths, version=ob.m3_cloths_version)  # TODO simulation rigging
+        self.create_physics_cloths(model, export_physics_cloths, version=self.ob.m3_cloths_version)  # TODO simulation rigging
         self.create_ik_joints(model, export_ik_joints)
-        self.create_turrets(model, export_turrets, part_version=ob.m3_turrets_part_version)
+        self.create_turrets(model, export_turrets, part_version=self.ob.m3_turrets_part_version)
         self.create_irefs(model)
         self.create_hittests(model, export_hittests)
         self.create_attachment_volumes(model, export_attachment_volumes)
@@ -1048,6 +1048,7 @@ class Exporter:
                         evnt_name_section.content_from_string('Evt_Simulate')
                         evnt_data[1].append(evnt)
                         evnt_name_sections.append(evnt_name_section)
+                        evnt.matrix = to_m3_matrix(mathutils.Matrix(((1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0), (0, 0, 0, 1))))
 
                     evnt_data[0].append(anim_group.frame_end)
                     evnt = io_m3.structures['EVNT'].get_version(0).instance()
@@ -1055,6 +1056,7 @@ class Exporter:
                     evnt_name_section.content_from_string('Evt_SeqEnd')
                     evnt_data[1].append(evnt)
                     evnt_name_sections.append(evnt_name_section)
+                    evnt.matrix = to_m3_matrix(mathutils.Matrix(((1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0), (0, 0, 0, 1))))
 
             # do not calculate bounds if action which has no bone animation data
             if self.action_to_sdmb_user.get(action):
