@@ -881,16 +881,16 @@ class Importer:
 
         layer_section_to_index = {}
         for m3_matref in self.m3[self.m3_model.material_references]:
-            m3_mat = self.m3[getattr(self.m3_model, io_shared.material_type_to_model_reference[m3_matref.type])][m3_matref.material_index]
+            m3_mat = self.m3[getattr(self.m3_model, shared.material_type_to_model_reference[m3_matref.type])][m3_matref.material_index]
 
             matref = shared.m3_item_add(ob.m3_materialrefs, item_name=self.m3[m3_mat.name].content_to_string())
-            mat_col = getattr(ob, 'm3_' + io_shared.material_type_to_model_reference[m3_matref.type])
+            mat_col = getattr(ob, 'm3_' + shared.material_type_to_model_reference[m3_matref.type])
             mat = shared.m3_item_add(mat_col, item_name=matref.name)
 
             processor = M3InputProcessor(self, mat, m3_mat)
             io_shared.material_type_io_method[m3_matref.type](processor)
 
-            matref.mat_type = 'm3_' + io_shared.material_type_to_model_reference[m3_matref.type]
+            matref.mat_type = 'm3_' + shared.material_type_to_model_reference[m3_matref.type]
             matref.mat_handle = mat.bl_handle
 
             if m3_matref.type == 3:
@@ -905,7 +905,7 @@ class Importer:
                     processor = M3InputProcessor(self, starburst, m3_starburst)
                     io_shared.io_starburst(processor)
 
-            for layer_name in io_shared.material_type_to_layers[m3_matref.type]:
+            for layer_name in shared.material_type_to_layers[m3_matref.type]:
                 m3_layer_field = getattr(m3_mat, 'layer_' + layer_name, None)
                 if not m3_layer_field:
                     continue

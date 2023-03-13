@@ -746,6 +746,29 @@ class M3MaterialOpRemove(bpy.types.Operator):
         matrefs = ob.m3_materialrefs
         matref = matrefs[ob.m3_materialrefs_index]
 
+        # check if material is in use
+        user_strings = []
+
+        for particle_system in ob.m3_particlesystems:
+            if particle_system.material.value == matref.name:
+                user_strings.append(f'The particle system {particle_system.name} is using this material')
+        for ribbon in ob.m3_ribbons:
+            if ribbon.material.value == matref.name:
+                user_strings.append(f'The particle system {ribbon.name} is using this material')
+        for projection in ob.m3_projections:
+            if projection.material.value == matref.name:
+                user_strings.append(f'The particle system {projection.name} is using this material')
+        for child in ob.children_recursive:
+            if child.type != 'MESH':
+                continue
+            for mesh_batch in child.m3_mesh_batches:
+                if mesh_batch.material.value == matref.name:
+                    user_strings.append(f'The mesh object {child.name} is using this material')
+
+        if user_strings:
+            self.report({"ERROR"}, 'Deletion cancelled due to the following reason(s):\n' + '\n'.join(user_strings))
+            return {'CANCELLED'}
+
         mat_col = getattr(ob, matref.mat_type)
         mat_ii = None
         for ii, item in enumerate(mat_col):

@@ -19,6 +19,7 @@
 import bpy
 from . import shared
 from . import bl_enum
+from .shared import material_type_to_layers, material_collections
 
 
 def register_props():
@@ -184,15 +185,51 @@ class Menu(bpy.types.Menu):
         shared.draw_menu_duplicate(self.layout, context.object.m3_materiallayers, dup_keyframes_opt=True)
 
 
+def draw_ops_del(layout):
+    layout.operator('m3.materiallayer_del', icon='REMOVE', text='')
+
+
 class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_idname = 'OBJECT_PT_M3_MATERIALLAYERS'
     bl_label = 'M3 Material Layers'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, context.object.m3_materiallayers, draw_props, menu_id=Menu.bl_idname)
+        shared.draw_collection_list(self.layout, context.object.m3_materiallayers, draw_props, ops={'del': draw_ops_del}, menu_id=Menu.bl_idname)
+
+
+class M3MaterialLayerOpRemove(shared.M3CollectionOpRemove):
+    bl_idname = 'm3.materiallayer_del'
+
+    def invoke(self, context, event):
+        ob = context.object
+        layers = ob.m3_materiallayers
+        layer = layers[ob.m3_materiallayers_index]
+
+        # check if layer is in use
+        user_strings = []
+        for matref in ob.m3_materialrefs:
+            mat = shared.m3_pointer_get(getattr(ob, matref.mat_type), matref.mat_handle)
+            for layer_name in material_type_to_layers[material_collections.index(matref.mat_type)]:
+                if getattr(mat, 'layer_' + layer_name) == layer.bl_handle:
+                    user_strings.append(f'The material {matref.name} is using this material layer')
+
+        if user_strings:
+            self.report({"ERROR"}, 'Deletion cancelled due to the following reason(s):\n' + '\n'.join(user_strings))
+            return {'CANCELLED'}
+
+        ob.m3_materiallayers.remove(ob.m3_materiallayers_index)
+
+        shared.remove_m3_action_keyframes(ob, 'm3_materiallayers', ob.m3_materiallayers_index)
+        for ii in range(ob.m3_materiallayers_index, len(ob.m3_materiallayers)):
+            shared.shift_m3_action_keyframes(ob, 'm3_materiallayers', ii + 1)
+
+        ob.m3_materiallayers_index -= 1 if (ob.m3_materiallayers_index == 0 and len(layers) > 0) or ob.m3_materiallayers_index == len(layers) else 0
+
+        return {'FINISHED'}
 
 
 classes = (
+    M3MaterialLayerOpRemove,
     Properties,
     Menu,
     Panel,

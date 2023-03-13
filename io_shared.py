@@ -659,20 +659,6 @@ def io_billboard(processor):
     processor.integer('camera_look_at')
 
 
-material_type_to_model_reference = {
-    1: 'materials_standard',
-    2: 'materials_displacement',
-    3: 'materials_composite',
-    4: 'materials_terrain',
-    5: 'materials_volume',
-    7: 'materials_creep',
-    8: 'materials_volumenoise',
-    9: 'materials_stb',
-    10: 'materials_reflection',
-    11: 'materials_lensflare',
-    12: 'materials_buffer',
-}
-
 material_type_io_method = {
     1: io_material_standard,
     2: io_material_displacement,
@@ -686,23 +672,3 @@ material_type_io_method = {
     11: io_material_lens_flare,
     12: io_material_buffer,
 }
-
-material_type_to_layers = {
-    1: ['diff', 'decal', 'spec', 'gloss', 'emis1', 'emis2', 'envi', 'envi_mask', 'alpha1', 'alpha2', 'norm',
-        'height', 'light', 'ao', 'norm_blend1_mask', 'norm_blend2_mask', 'norm_blend1', 'norm_blend2'],
-    2: ['norm', 'strength'],
-    3: [],
-    4: ['terrain'],
-    5: ['color', 'unknown1', 'unknown2'],
-    7: ['creep'],
-    8: ['color', 'noise1', 'noise2'],
-    9: ['diff', 'spec', 'normal'],
-    10: ['norm', 'strength', 'blur'],
-    11: ['color', 'unknown'],
-    12: []
-}
-
-material_collections = [
-    'None', 'm3_materials_standard', 'm3_materials_displacement', 'm3_materials_composite', 'm3_materials_terrain', 'm3_materials_volume', 'None',
-    'm3_materials_creep', 'm3_materials_volumenoise', 'm3_materials_stb', 'm3_materials_reflection', 'm3_materials_lensflare', 'm3_materials_buffer',
-]

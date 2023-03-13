@@ -1597,7 +1597,7 @@ class Exporter:
         matrefs_typed = {ii: [] for ii in range(0, 13)}
         for matref in matrefs:
             m3_matref = matref_section.content_add()
-            m3_matref.type = io_shared.material_collections.index(matref.mat_type)
+            m3_matref.type = shared.material_collections.index(matref.mat_type)
             m3_matref.material_index = len(matrefs_typed[m3_matref.type])
             matrefs_typed[m3_matref.type].append(matref)
 
@@ -1613,9 +1613,9 @@ class Exporter:
                 m3_mat_name_section = self.m3.section_for_reference(m3_mat, 'name')
                 m3_mat_name_section.content_from_string(matref.name)
                 processor = M3OutputProcessor(self, mat, m3_mat)
-                io_shared.material_type_io_method[type_ii](processor)
+                shared.material_type_io_method[type_ii](processor)
 
-                for layer_name in io_shared.material_type_to_layers[type_ii]:
+                for layer_name in shared.material_type_to_layers[type_ii]:
                     layer_name_full = 'layer_' + layer_name
 
                     if not hasattr(m3_mat, layer_name_full):
