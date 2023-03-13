@@ -681,7 +681,7 @@ class Importer:
                             event_name = self.m3[key.name].content_to_string()
                             if event_name == 'Evt_Simulate':
                                 anim_group['simulate'] = True
-                                anim_group['simulate_frame'] = min(anim_group.simulate_frame, frame)
+                                anim_group['simulate_frame'] = frame
 
             anim_group['animations_index'] = 0
 
@@ -850,6 +850,7 @@ class Importer:
         edit_bone_relations = get_edit_bone_relations(m3_bones, edit_bones)
         bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
 
+        # this fixes the scale of bone rest matrices that use an unusual matrix form
         for ii, m3_bone in enumerate(m3_bones):
             db = self.ob.data.bones.get(self.m3[m3_bone.name].content_to_string())
             bone_local_inv_matrix = (db.matrix_local @ io_shared.rot_fix_matrix_transpose).inverted()
