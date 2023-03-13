@@ -149,7 +149,6 @@ def m3_item_duplicate(collection, src, dup_action_keyframes, dst_collection=None
             dst_prop.value = prop.value
             dst_prop.handle = prop.handle
         elif key != 'name':
-            print(key, type(prop))
             setattr(dst, key, prop)
 
             rna_props = src.bl_rna.properties[key]
