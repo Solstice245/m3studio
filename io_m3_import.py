@@ -461,7 +461,7 @@ class Importer:
 
             # now importing with the m3 defaults of the current pose
             rel_mat = db.matrix_local.inverted() if not pb.parent else (db.parent.matrix_local.inverted() @ db.matrix_local).inverted()
-            bind_mats[pb] = (bind_mat := mathutils.Matrix.LocRotScale(None, None, pb.m3_bind_scale.yxz))
+            bind_mat = bind_mats[pb] = mathutils.Matrix.LocRotScale(None, None, pb.m3_bind_scale.yxz)
 
             anim_ids = (int(pb.m3_location_hex_id, 16), int(pb.m3_rotation_hex_id, 16), int(pb.m3_scale_hex_id, 16), int(pb.m3_batching_hex_id, 16))
 
@@ -687,15 +687,15 @@ class Importer:
 
     def create_bones(self):
 
-        def get_bone_tails(bone_heads, bone_vectors):
-            child_bone_indices = [[] for ii in self.m3[self.m3_model.bones]]
-            for bone_index, bone_entry in enumerate(self.m3[self.m3_model.bones]):
+        def get_bone_tails(m3_bones, bone_heads, bone_vectors):
+            child_bone_indices = [[] for ii in m3_bones]
+            for bone_index, bone_entry in enumerate(m3_bones):
                 if bone_entry.parent != -1:
                     child_bone_indices[bone_entry.parent].append(bone_index)
 
             tails = []
 
-            for m3_bone, child_indices, head, vector in zip(self.m3[self.m3_model.bones], child_bone_indices, bone_heads, bone_vectors):
+            for m3_bone, child_indices, head, vector in zip(m3_bones, child_bone_indices, bone_heads, bone_vectors):
                 length = 0.1
                 for child_index in child_indices:
                     head_to_child_head = bone_heads[child_index] - head
@@ -741,9 +741,9 @@ class Importer:
 
             return rolls
 
-        def get_edit_bones(bone_heads, bone_tails, bone_rolls):
+        def get_edit_bones(m3_bones, bone_heads, bone_tails, bone_rolls):
             edit_bones = []
-            for index, m3_bone in enumerate(self.m3[self.m3_model.bones]):
+            for index, m3_bone in enumerate(m3_bones):
                 m3_bone_name = self.m3[m3_bone.name].content_to_string()
                 edit_bone = self.ob.data.edit_bones.new(m3_bone_name)
                 self.final_bone_names[m3_bone_name] = edit_bone.name
@@ -763,9 +763,10 @@ class Importer:
 
             return edit_bones
 
-        def get_edit_bone_relations(edit_bones):
+        def get_edit_bone_relations(m3_bones, edit_bones):
             rel_mats = []
-            for m3_bone, edit_bone in zip(self.m3[self.m3_model.bones], edit_bones):
+            for m3_bone, edit_bone in zip(m3_bones, edit_bones):
+
                 if m3_bone.parent != -1:
                     parent_edit_bone = self.ob.data.edit_bones.get(self.m3_get_bone_name(m3_bone.parent))
                     rel_mats.append((parent_edit_bone.matrix.inverted() @ edit_bone.matrix).inverted())
@@ -774,8 +775,8 @@ class Importer:
 
             return rel_mats
 
-        def adjust_pose_bones(edit_bone_relations, bind_scales, bind_matrices):
-            for ii, m3_bone, rel_mat, bind_scl, bind_mat in zip(range(len(self.m3[self.m3_model.bones])), self.m3[self.m3_model.bones], edit_bone_relations, bind_scales, bind_matrices):
+        def adjust_pose_bones(m3_bones, edit_bone_relations, bind_scales, bind_matrices):
+            for ii, m3_bone, rel_mat, bind_scl, bind_mat in zip(range(len(m3_bones)), m3_bones, edit_bone_relations, bind_scales, bind_matrices):
                 # TODO incorrect scale values with large non-uniform bind scales
 
                 if m3_bone.parent != -1:
@@ -818,13 +819,16 @@ class Importer:
 
         bpy.context.view_layer.objects.active = self.ob
 
+        bl_irefs = []
         bone_rests = []
         bind_scales = []
         bind_matrices = []
         bone_heads = []
         bone_vectors = []
 
-        for iref, m3_bone in zip(self.m3[self.m3_model.bone_rests], self.m3[self.m3_model.bones]):
+        m3_bones = self.m3[self.m3_model.bones]
+
+        for iref, m3_bone in zip(self.m3[self.m3_model.bone_rests], m3_bones):
             orig_mat = to_bl_matrix(iref.matrix)
             mat = orig_mat.copy()
 
@@ -833,19 +837,36 @@ class Importer:
                 if mat_scale[ii] < 0:
                     mat[ii] = -mat[ii]
 
+            bl_irefs.append(mat)
             bone_rests.append(mat.inverted() @ io_shared.rot_fix_matrix)
-            bind_scales.append((orig_mat @ io_shared.rot_fix_matrix_transpose).to_scale())
-            bind_matrices.append(mathutils.Matrix.LocRotScale(None, None, bind_scales[-1]))
+            bind_scales.append((orig_mat @ io_shared.rot_fix_matrix_transpose).to_scale().yxz)
             bone_heads.append(bone_rests[-1].translation)
             bone_vectors.append(bone_rests[-1].col[1].to_3d().normalized())
 
-        bone_tails = get_bone_tails(bone_heads, bone_vectors)
+        bone_tails = get_bone_tails(m3_bones, bone_heads, bone_vectors)
         bone_rolls = get_bone_rolls(bone_rests, bone_heads, bone_tails)
         bpy.ops.object.mode_set(mode='EDIT', toggle=False)
-        edit_bones = get_edit_bones(bone_heads, bone_tails, bone_rolls)
-        edit_bone_relations = get_edit_bone_relations(edit_bones)
+        edit_bones = get_edit_bones(m3_bones, bone_heads, bone_tails, bone_rolls)
+        edit_bone_relations = get_edit_bone_relations(m3_bones, edit_bones)
         bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
-        adjust_pose_bones(edit_bone_relations, bind_scales, bind_matrices)
+
+        for ii, m3_bone in enumerate(m3_bones):
+            db = self.ob.data.bones.get(self.m3[m3_bone.name].content_to_string())
+            bone_local_inv_matrix = (db.matrix_local @ io_shared.rot_fix_matrix_transpose).inverted()
+            iref = bl_irefs[ii]
+            out_iref = mathutils.Matrix.LocRotScale(None, None, bind_scales[ii]) @ bone_local_inv_matrix
+
+            bind_fac_x = sum(iref[0]) / sum(out_iref[0]) if (sum(iref[0]) and sum(out_iref[0])) else 1
+            bind_fac_y = sum(iref[1]) / sum(out_iref[1]) if (sum(iref[1]) and sum(out_iref[1])) else 1
+            bind_fac_z = sum(iref[2]) / sum(out_iref[2]) if (sum(iref[2]) and sum(out_iref[2])) else 1
+
+            bind_scales[ii][0] = bind_scales[ii][0] * bind_fac_x
+            bind_scales[ii][1] = bind_scales[ii][1] * bind_fac_y
+            bind_scales[ii][2] = bind_scales[ii][2] * bind_fac_z
+
+            bind_matrices.append(mathutils.Matrix.LocRotScale(None, None, bind_scales[ii]))
+
+        adjust_pose_bones(m3_bones, edit_bone_relations, bind_scales, bind_matrices)
 
     def create_materials(self):
         ob = self.ob
@@ -1406,9 +1427,9 @@ class Importer:
                         constraint.bone.handle = pose_bone.bl_handle if pose_bone else ''
                         constraint.height = m3_constraint.height
                         constraint.radius = m3_constraint.radius
-                        md = to_bl_matrix(m3_constraint.matrix).decompose()
-                        constraint.location = md[0]
-                        constraint.rotation = md[1].to_euler('XYZ')
+                        md = (to_bl_matrix(m3_constraint.matrix) @ io_shared.rot_fix_matrix_transpose).decompose()
+                        constraint.location = md[0] - mathutils.Vector(ob.data.bones.get(pose_bone_name).head_local)
+                        constraint.rotation = md[1].rotation_difference(ob.data.bones.get(pose_bone_name).matrix_local.to_quaternion()).to_euler('XYZ')
                         constraint.scale = md[2]
                     self.m3_bl_ref[m3_cloth.constraints.index] = constraint_set
 

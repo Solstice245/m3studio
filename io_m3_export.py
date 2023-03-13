@@ -1590,6 +1590,8 @@ class Exporter:
         null_layer_section = io_m3.M3Section(desc=layer_desc, index_entry=None, references=[], content=[])
         null_layer_section.content_add()
 
+        # print(matrefs)
+
         matrefs_typed = {ii: [] for ii in range(0, 13)}
         for matref in matrefs:
             m3_matref = matref_section.content_add()
@@ -2010,10 +2012,14 @@ class Exporter:
                 constraints_sections[physics_cloth.constraint_set.handle] = constraints_section
                 for volume in self.physics_cloth_constraint_handle_to_volumes[physics_cloth.constraint_set.handle]:
                     volume_bone = shared.m3_pointer_get(self.ob.pose.bones, volume.bone)
+                    db = self.ob.data.bones.get(volume_bone.name)
                     skin_bones.add(self.bone_name_indices[volume_bone.name])
                     m3_volume = constraints_section.content_add()
                     m3_volume.bone = self.bone_name_indices[volume_bone.name]
-                    m3_volume.matrix = to_m3_matrix(mathutils.Matrix.LocRotScale(volume.location, volume.rotation, volume.scale))
+                    db_rot = db.matrix_local.to_euler('XYZ')
+                    mat_loc = volume.location + db.head_local
+                    mat_rot = mathutils.Euler(tuple(volume.rotation[ii] + db_rot[ii] for ii in range(3)))
+                    m3_volume.matrix = to_m3_matrix(mathutils.Matrix.LocRotScale(mat_loc, mat_rot, volume.scale) @ io_shared.rot_fix_matrix)
                     m3_volume.height = volume.height
                     m3_volume.radius = volume.radius
             else:
@@ -2052,8 +2058,8 @@ class Exporter:
                         break
 
                 vertex_simulated_list.append(vert[layer_clothsim])
-                vertex_bones_section.content_add(*vertex_bones)
-                vertex_weights_section.content_add(*vertex_weights)
+                vertex_bones_section.content_add(vertex_bones)
+                vertex_weights_section.content_add(vertex_weights)
 
             skin_bones_section.content_add(*list(skin_bones))
             vertex_simulated_section.content_add(*vertex_simulated_list)
