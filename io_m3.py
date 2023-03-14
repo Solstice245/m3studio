@@ -415,7 +415,8 @@ class M3SectionList(list):
         aggregate_references = set()
         for ii, section in enumerate(self):
             for reference in section.references:
-                assert reference not in aggregate_references  # reference must be unique to section
+                if reference in aggregate_references:
+                    raise Exception('Cannot have reference index referenced by more than one section', reference, section.references)
                 aggregate_references.add(reference)
                 reference.index = ii
                 reference.entries = len(section)

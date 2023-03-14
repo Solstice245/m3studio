@@ -1033,31 +1033,6 @@ class Exporter:
 
         for action, stc_list in self.action_to_stc.items():
 
-            evnt_name_sections = []
-            for stc in stc_list:
-                anim_group = self.stc_to_anim_group.get(stc)
-
-                if anim_group:
-                    self.action_to_anim_data[action]['SDEV'][EVNT_ANIM_ID] = [[], []]
-                    evnt_data = self.action_to_anim_data[action]['SDEV'][EVNT_ANIM_ID]
-
-                    if anim_group.simulate:
-                        evnt_data[0].append(anim_group.simulate_frame)
-                        evnt = io_m3.structures['EVNT'].get_version(0).instance()
-                        evnt_name_section = self.m3.section_for_reference(evnt, 'name', pos=None)
-                        evnt_name_section.content_from_string('Evt_Simulate')
-                        evnt_data[1].append(evnt)
-                        evnt_name_sections.append(evnt_name_section)
-                        evnt.matrix = to_m3_matrix(mathutils.Matrix(((1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0), (0, 0, 0, 1))))
-
-                    evnt_data[0].append(anim_group.frame_end)
-                    evnt = io_m3.structures['EVNT'].get_version(0).instance()
-                    evnt_name_section = self.m3.section_for_reference(evnt, 'name', pos=None)
-                    evnt_name_section.content_from_string('Evt_SeqEnd')
-                    evnt_data[1].append(evnt)
-                    evnt_name_sections.append(evnt_name_section)
-                    evnt.matrix = to_m3_matrix(mathutils.Matrix(((1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0), (0, 0, 0, 1))))
-
             # do not calculate bounds if action which has no bone animation data
             if self.action_to_sdmb_user.get(action):
                 self.action_to_anim_data[action]['SDMB'][BNDS_ANIM_ID] = [[], []]
@@ -1088,56 +1063,77 @@ class Exporter:
 
             section_pos = self.m3.index(self.stc_to_name_section[stc_list[-1]]) + 1
 
-            ids_section = self.m3.section_for_reference(stc_list[0], 'anim_ids', pos=None)  # position later
-            ids_sections.append(ids_section)
-            refs_section = self.m3.section_for_reference(stc_list[0], 'anim_refs', pos=section_pos)
-            section_pos += 1
+            stc_ids_section = {}
 
-            for data_type_ii, section_data_name in enumerate(ANIM_DATA_SECTION_NAMES):
+            for stc in stc_list:
 
-                if not len(self.action_to_anim_data[action][section_data_name]):
-                    continue
+                evnt_name_sections = []
+                anim_group = self.stc_to_anim_group.get(stc)
 
-                action_data = self.action_to_anim_data[action][section_data_name]
-                attr_name = section_data_name.lower()
+                if anim_group:
+                    self.action_to_anim_data[action]['SDEV'][EVNT_ANIM_ID] = [[], []]
+                    evnt_data = self.action_to_anim_data[action]['SDEV'][EVNT_ANIM_ID]
 
-                data_section = self.m3.section_for_reference(stc_list[0], attr_name, pos=section_pos)
+                    if anim_group.simulate:
+                        evnt_data[0].append(anim_group.simulate_frame)
+                        evnt = io_m3.structures['EVNT'].get_version(0).instance()
+                        evnt_name_section = self.m3.section_for_reference(evnt, 'name', pos=None)
+                        evnt_name_section.content_from_string('Evt_Simulate')
+                        evnt_data[1].append(evnt)
+                        evnt_name_sections.append(evnt_name_section)
+                        evnt.matrix = to_m3_matrix(mathutils.Matrix(((1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0), (0, 0, 0, 1))))
+
+                    evnt_data[0].append(anim_group.frame_end)
+                    evnt = io_m3.structures['EVNT'].get_version(0).instance()
+                    evnt_name_section = self.m3.section_for_reference(evnt, 'name', pos=None)
+                    evnt_name_section.content_from_string('Evt_SeqEnd')
+                    evnt_data[1].append(evnt)
+                    evnt_name_sections.append(evnt_name_section)
+                    evnt.matrix = to_m3_matrix(mathutils.Matrix(((1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0), (0, 0, 0, 1))))
+
+                ids_section = self.m3.section_for_reference(stc, 'anim_ids', pos=None)  # position later
+                ids_sections.append(ids_section)
+                stc_ids_section[stc] = ids_section
+                refs_section = self.m3.section_for_reference(stc, 'anim_refs', pos=section_pos)
                 section_pos += 1
 
-                for ii, id_num in enumerate(action_data):
-                    data_head = data_section.content_add()
+                for data_type_ii, section_data_name in enumerate(ANIM_DATA_SECTION_NAMES):
 
-                    ids_section.content_add(id_num)
-                    refs_section.content_add((data_type_ii << 16) + ii)
+                    if not len(self.action_to_anim_data[action][section_data_name]):
+                        continue
 
-                    data_head.fend = to_m3_ms(action_data[id_num][0][-1])
+                    action_data = self.action_to_anim_data[action][section_data_name]
+                    attr_name = section_data_name.lower()
 
-                    frames_section = self.m3.section_for_reference(data_head, 'frames', pos=section_pos)
-                    frames_section.content_add(*(to_m3_ms(frame) for frame in action_data[id_num][0]))
+                    data_section = self.m3.section_for_reference(stc, attr_name, pos=section_pos)
                     section_pos += 1
 
-                    values_section = self.m3.section_for_reference(data_head, 'keys', pos=section_pos)
-                    values_section.content_add(*action_data[id_num][1])
-                    section_pos += 1
+                    for ii, id_num in enumerate(action_data):
+                        data_head = data_section.content_add()
 
-                    if section_data_name == 'SDEV':
-                        data_head.flags = 1
+                        ids_section.content_add(id_num)
+                        refs_section.content_add((data_type_ii << 16) + ii)
 
-                        for evnt_name_section in evnt_name_sections:
-                            self.m3.insert(section_pos, evnt_name_section)
-                            section_pos += 1
+                        data_head.fend = to_m3_ms(action_data[id_num][0][-1])
 
-                if len(stc_list) > 1:
-                    for stc in stc_list[1:]:
-                        data_section.references.append(getattr(stc, attr_name))
+                        frames_section = self.m3.section_for_reference(data_head, 'frames', pos=section_pos)
+                        frames_section.content_add(*(to_m3_ms(frame) for frame in action_data[id_num][0]))
+                        section_pos += 1
 
-            if len(stc_list) > 1:
-                ids_section.references.append(getattr(stc, 'anim_ids'))
-                refs_section.references.append(getattr(stc, 'anim_refs'))
+                        values_section = self.m3.section_for_reference(data_head, 'keys', pos=section_pos)
+                        values_section.content_add(*action_data[id_num][1])
+                        section_pos += 1
+
+                        if section_data_name == 'SDEV':
+                            data_head.flags = 1
+
+                            for evnt_name_section in evnt_name_sections:
+                                self.m3.insert(section_pos, evnt_name_section)
+                                section_pos += 1
 
             for stc in stc_list:
                 sts = sts_section.content_add()
-                ids_section.references.append(getattr(sts, 'anim_ids'))
+                stc_ids_section[stc].references.append(sts.anim_ids)
 
         if self.action_to_stc:
             # offseting the position the given amount assuming model unknown reference is unused
