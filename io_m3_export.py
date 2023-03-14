@@ -556,7 +556,6 @@ class Exporter:
         export_lights = valid_collections_and_requirements(ob.m3_lights)
         export_shadow_boxes = valid_collections_and_requirements(ob.m3_shadowboxes)
         export_cameras = valid_collections_and_requirements(ob.m3_cameras)
-        export_material_references = valid_collections_and_requirements(ob.m3_materialrefs)
         export_particle_systems = valid_collections_and_requirements(ob.m3_particlesystems)
         export_particle_copies = []  # handled specially
         export_ribbons = valid_collections_and_requirements(ob.m3_ribbons)
@@ -876,7 +875,7 @@ class Exporter:
 
         self.depsgraph = bpy.context.evaluated_depsgraph_get()
 
-        model_section = self.m3.section_for_reference(self.m3[0][0], 'model', version=ob.m3_model_version)
+        model_section = self.m3.section_for_reference(self.m3[0][0], 'model', version=self.ob.m3_model_version)
         model = model_section.content_add()
 
         model_name_section = self.m3.section_for_reference(model, 'model_name')
@@ -888,18 +887,19 @@ class Exporter:
 
         self.create_sequences(model, self.export_sequences)
         self.create_bones(model)
-        self.create_division(model, self.export_regions, regn_version=self.ob.m3_mesh_version)  # TODO create dummy region if 1 and only region has multiple batches
+        self.create_division(model, self.export_regions, regn_version=self.ob.m3_mesh_version)
         self.create_attachment_points(model, export_attachment_points)  # TODO should exclude attachments with same bone as other attachments
         self.create_lights(model, export_lights)
         self.create_shadow_boxes(model, export_shadow_boxes)
         self.create_cameras(model, export_cameras)
-        self.create_materials(model, export_material_references, material_versions)  # TODO test volume, volume noise and stb material types
+        self.create_materials(model, self.export_required_material_references, material_versions)  # TODO test volume, volume noise and stb material types
         self.create_particle_systems(model, export_particle_systems, export_particle_copies, version=self.ob.m3_particlesystems_version)
         self.create_ribbons(model, export_ribbons, export_ribbon_splines, version=self.ob.m3_ribbons_version)
         self.create_projections(model, export_projections)
         self.create_forces(model, export_forces)
         self.create_warps(model, export_warps)
-        self.create_physics_bodies(model, export_physics_bodies, body_version=self.ob.m3_rigidbodies_version, shape_version=1 if self.ob.m3_rigidbodies_version == '2' else 2)
+        # TODO PHSH 2/3 polygon shapes are buggy
+        self.create_physics_bodies(model, export_physics_bodies, body_version=self.ob.m3_rigidbodies_version, shape_version=1 if self.ob.m3_rigidbodies_version == '2' else 3)
         self.create_physics_joints(model, export_physics_bodies, export_physics_joints)
         self.create_physics_cloths(model, export_physics_cloths, version=self.ob.m3_cloths_version)  # TODO simulation rigging
         self.create_ik_joints(model, export_ik_joints)
@@ -2146,8 +2146,8 @@ class Exporter:
 
             db = self.ob.data.bones.get(bone.name)
 
-            if db.parent:
-                upquat = to_m3_vec4_quat(db.matrix_local.to_quaternion().rotation_difference(db.parent.matrix_local.transposed().to_quaternion()))
+            # if db.parent:
+            #     upquat = to_m3_vec4_quat(db.matrix_local.to_quaternion().rotation_difference(db.parent.matrix_local.transposed().to_quaternion()))
             # else:
             #     m3_part.quat_up0 = to_m3_vec4_quat(db.matrix_local.to_quaternion().rotation_difference(base_quat))
 
@@ -2290,6 +2290,8 @@ class Exporter:
 
             loop_desc = io_m3.structures['DMSE'].get_version(0)
 
+            polygon_medians = []
+
             for face in bm.faces:
                 polygon_data.append(face.loops[0].index)
                 loop_count = len(face.loops)
@@ -2302,6 +2304,7 @@ class Exporter:
                     loop_data.append(m3_loop)
 
                 vec = face.calc_center_bounds()
+                polygon_medians.append(vec)
                 polygon_related_data.append(to_m3_vec4((*vec.normalized(), vec.length)))
 
             vert_section = self.m3.section_for_reference(m3, 'vertices')
@@ -2313,6 +2316,7 @@ class Exporter:
             polygon_section = self.m3.section_for_reference(m3, 'polygons')
             polygon_section.content_add(*polygon_data)
 
+            m3.polygons_center = to_m3_vec3([(sum([poly_med[ii] for poly_med in polygon_medians]) / len(polygon_medians)) for ii in range(3)])
             m3.vertices_count = len(vert_section)
             m3.polygons_count = len(polygon_related_section)
             m3.loops_count = len(loop_section)

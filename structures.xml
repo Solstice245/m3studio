@@ -2307,7 +2307,7 @@
             <field name="polygons_related" type="Reference" ref_to="VEC4" since_version="2"/>
             <field name="loops" type="Reference" ref_to="DMSE" since_version="2"/>
             <field name="polygons" type="Reference" ref_to="U8__" since_version="2"/>
-            <field name="unknownbda8f787" size="12" default_value="0x000000000000000000000000" since_version="2"/>
+            <field name="polygons_center" type="VEC3V0" since_version="2"/>
             <field name="vertices_count" type="uint32" since_version="2"/>
             <field name="polygons_count" type="uint32" since_version="2"/>
             <field name="loops_count" type="uint32" since_version="2"/>
@@ -2315,11 +2315,23 @@
             <field name="unknown56fece2" type="float" since_version="2"/>
             <field name="unknown6f23bce8" type="Reference" ref_to="DMMN" since_version="2"/>
             <field name="unknown9836ec85" type="Reference" ref_to="VEC4" since_version="2"/>
-            <field name="unknownac0ac492" size="12" default_value="0x000000000000000000000000" since_version="2"/>
+            <!--<field name="unknownac0ac492" size="12" default_value="0x000000000000000000000000" since_version="2"/>-->
+            <field name="unknownac0ac492" type="uint32" since_version="2"/>
+            <field name="unknownac0ac493" type="uint32" since_version="2"/>
+            <field name="unknownac0ac494" type="uint32" since_version="2"/>
             <field name="unknown90e72e22" type="Reference" ref_to="MT32" since_version="2"/>
-            <field name="unknownd93ef965" size="12" default_value="0x000000000000000000000000" since_version="2"/>
+            <!--<field name="unknownd93ef965" size="12" default_value="0x000000000000000000000000" since_version="2"/>
             <field name="unknown09823b6e" size="12" default_value="0x000000000000000000000000" since_version="2"/>
-            <field name="unknown2f8ad6d6" size="12" default_value="0x000000000000000000000000" since_version="2"/>
+            <field name="unknown2f8ad6d6" size="12" default_value="0x000000000000000000000000" since_version="2"/>-->
+            <field name="unknownd93ef965" type="uint32" since_version="2"/>
+            <field name="unknownd93ef966" type="uint32" since_version="2"/>
+            <field name="unknownd93ef967" type="uint32" since_version="2"/>
+            <field name="unknown09823b6e" type="uint32" since_version="2"/>
+            <field name="unknown09823b6f" type="uint32" since_version="2"/>
+            <field name="unknown09823b60" type="uint32" since_version="2"/>
+            <field name="unknown2f8ad6d6" type="uint32" since_version="2"/>
+            <field name="unknown2f8ad6d7" type="uint32" since_version="2"/>
+            <field name="unknown2f8ad6d8" type="uint32" since_version="2"/>
             <field name="unknown9d115fa7" type="uint32" since_version="2"/>
             <!-- unknown9aea956e is not a float and has strange content -->
             <field name="unknown9aea956e" type="uint32" since_version="2"/>
