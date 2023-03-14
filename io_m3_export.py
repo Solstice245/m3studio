@@ -556,6 +556,7 @@ class Exporter:
         export_lights = valid_collections_and_requirements(ob.m3_lights)
         export_shadow_boxes = valid_collections_and_requirements(ob.m3_shadowboxes)
         export_cameras = valid_collections_and_requirements(ob.m3_cameras)
+        export_material_references = []  # handled specially
         export_particle_systems = valid_collections_and_requirements(ob.m3_particlesystems)
         export_particle_copies = []  # handled specially
         export_ribbons = valid_collections_and_requirements(ob.m3_ribbons)
@@ -861,6 +862,7 @@ class Exporter:
         for matref in ob.m3_materialrefs:
             if matref in self.export_required_material_references:
                 self.matref_handle_indices[matref.bl_handle] = len(self.matref_handle_indices.keys())
+                export_material_references.append(matref)
 
         # make sure mesh objects are in their rest position
         for ob in self.export_regions:
@@ -892,7 +894,7 @@ class Exporter:
         self.create_lights(model, export_lights)
         self.create_shadow_boxes(model, export_shadow_boxes)
         self.create_cameras(model, export_cameras)
-        self.create_materials(model, self.export_required_material_references, material_versions)  # TODO test volume, volume noise and stb material types
+        self.create_materials(model, export_material_references, material_versions)  # TODO test volume, volume noise and stb material types
         self.create_particle_systems(model, export_particle_systems, export_particle_copies, version=self.ob.m3_particlesystems_version)
         self.create_ribbons(model, export_ribbons, export_ribbon_splines, version=self.ob.m3_ribbons_version)
         self.create_projections(model, export_projections)
