@@ -628,19 +628,6 @@ def draw_menu_duplicate(layout, collection, dup_keyframes_opt=False):
         op.dup_action_keyframes = True
 
 
-def draw_pointer_list(layout, data, prop, search_data, search_prop, text=''):
-    op = layout.operator('m3.handle_add', text=('Add ' + text) if text else None)
-    op.collection = data.path_from_id(prop)
-
-    for ii, item in enumerate(getattr(data, prop)):
-        row = layout.row(align=True)
-        row.use_property_split = False
-        draw_prop_pointer_search(row, item.pointer, search_data, search_prop, icon='LINKED')
-        op = row.operator('m3.handle_remove', text='', icon='X')
-        op.collection = data.path_from_id(prop)
-        op.index = ii
-
-
 def draw_prop_anim(layout, data, field, index=-1, text=''):
     main = layout.row(align=True)
     main.use_property_split = False

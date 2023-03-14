@@ -62,7 +62,18 @@ def draw_copy_props(copy, layout):
     shared.draw_prop_anim(col, copy, 'emit_rate', text='Emission Rate')
     shared.draw_prop_anim(col, copy, 'emit_count', text='Emission Amount')
     layout.separator()
-    shared.draw_pointer_list(layout.box(), copy, 'systems', copy.id_data, 'm3_particlesystems', text='Particle System')
+    box = layout.box()
+    box.use_property_decorate = False
+    op = box.operator('m3.handle_add', text='Add Particle System')
+    op.collection = copy.systems.path_from_id()
+
+    for ii, system_ref in enumerate(copy.systems):
+        row = box.row()
+        col = row.column()
+        shared.draw_prop_pointer_search(col, system_ref, copy.id_data, 'm3_particlesystems', text='Particle System', icon='LINKED')
+        op = row.operator('m3.handle_remove', text='', icon='X')
+        op.collection = copy.systems.path_from_id()
+        op.index = ii
 
 
 def draw_props(particle, layout):
@@ -301,7 +312,7 @@ class SystemPointerProp(bpy.types.PropertyGroup):
 
 
 class CopySystemPointerProp(bpy.types.PropertyGroup):
-    value: bpy.props.StringProperty(options=set(), get=shared.pointer_get_args('m3_particlesystems'), set=shared.pointer_set_args('m3_particlesystems', True))
+    value: bpy.props.StringProperty(options=set(), get=shared.pointer_get_args('m3_particlecopies'), set=shared.pointer_set_args('m3_particlesystems', False))
     handle: bpy.props.StringProperty(options=set())
 
 
