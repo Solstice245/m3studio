@@ -197,8 +197,10 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
         shared.draw_collection_list(self.layout, context.object.m3_materiallayers, draw_props, ops={'del': draw_ops_del}, menu_id=Menu.bl_idname)
 
 
-class M3MaterialLayerOpRemove(shared.M3CollectionOpRemove):
+class M3MaterialLayerOpRemove(bpy.types.Operator):
     bl_idname = 'm3.materiallayer_del'
+    bl_label = 'Remove Collection Item'
+    bl_description = 'Removes the active item from the collection'
 
     def invoke(self, context, event):
         ob = context.object
