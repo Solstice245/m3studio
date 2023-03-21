@@ -855,7 +855,6 @@ class Importer:
             iref = bl_irefs[ii]
             out_iref = mathutils.Matrix.LocRotScale(None, None, bind_scales[ii]) @ bone_local_inv_matrix
 
-            bind_fac_z = sum(iref[2]) / sum(out_iref[2]) if (sum(iref[2]) and sum(out_iref[2])) else 1
             # hacky solution for certain import problems, could cause problems elsewhere
             sub_x = abs(abs(sum(iref[0])) - abs(sum(out_iref[0]))) + 1
             sub_y = abs(abs(sum(iref[1])) - abs(sum(out_iref[1]))) + 1
