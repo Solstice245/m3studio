@@ -439,7 +439,6 @@ class Importer:
                 key_fcurves(self.stc_id_data, ob.path_resolve(rs[0]), rs[1], ob.path_resolve(paths[0] + '_header'), prop)
             except TypeError:
                 key_fcurves(self.stc_id_data, ob.path_resolve(rs[0]), rs[1], ob.path_resolve(paths[0] + '_header'), (prop,))
-            # TODO mark other props as duplicate ID
 
         bind_mats = {}
         for pb in ob.pose.bones:
@@ -777,7 +776,6 @@ class Importer:
 
         def adjust_pose_bones(m3_bones, edit_bone_relations, bind_scales, bind_matrices):
             for ii, m3_bone, rel_mat, bind_scl, bind_mat in zip(range(len(m3_bones)), m3_bones, edit_bone_relations, bind_scales, bind_matrices):
-                # TODO incorrect scale values with large non-uniform bind scales
 
                 if m3_bone.parent != -1:
                     bind_mat.transpose()
@@ -857,13 +855,28 @@ class Importer:
             iref = bl_irefs[ii]
             out_iref = mathutils.Matrix.LocRotScale(None, None, bind_scales[ii]) @ bone_local_inv_matrix
 
-            bind_fac_x = sum(iref[0]) / sum(out_iref[0]) if (sum(iref[0]) and sum(out_iref[0])) else 1
-            bind_fac_y = sum(iref[1]) / sum(out_iref[1]) if (sum(iref[1]) and sum(out_iref[1])) else 1
             bind_fac_z = sum(iref[2]) / sum(out_iref[2]) if (sum(iref[2]) and sum(out_iref[2])) else 1
+            # hacky solution for certain import problems, could cause problems elsewhere
+            sub_x = abs(abs(sum(iref[0])) - abs(sum(out_iref[0]))) + 1
+            sub_y = abs(abs(sum(iref[1])) - abs(sum(out_iref[1]))) + 1
+            sub_z = abs(abs(sum(iref[2])) - abs(sum(out_iref[2]))) + 1
 
-            bind_scales[ii][0] = bind_scales[ii][0] * abs(bind_fac_x)
-            bind_scales[ii][1] = bind_scales[ii][1] * abs(bind_fac_y)
-            bind_scales[ii][2] = bind_scales[ii][2] * abs(bind_fac_z)
+            div_x = sum(iref[0]) / sum(out_iref[0]) if (sum(iref[0]) and sum(out_iref[0])) else 1
+            div_y = sum(iref[1]) / sum(out_iref[1]) if (sum(iref[1]) and sum(out_iref[1])) else 1
+            div_z = sum(iref[2]) / sum(out_iref[2]) if (sum(iref[2]) and sum(out_iref[2])) else 1
+
+            if abs(sum((sub_x, sub_y, sub_z))) < abs(sum((div_x, div_y, div_z))):
+                bind_fac_x = abs(abs(sum(iref[0])) - abs(sum(out_iref[0]))) + 1
+                bind_fac_y = abs(abs(sum(iref[1])) - abs(sum(out_iref[1]))) + 1
+                bind_fac_z = abs(abs(sum(iref[2])) - abs(sum(out_iref[2]))) + 1
+            else:
+                bind_fac_x = abs(sum(iref[0]) / sum(out_iref[0])) if (sum(iref[0]) and sum(out_iref[0])) else 1
+                bind_fac_y = abs(sum(iref[1]) / sum(out_iref[1])) if (sum(iref[1]) and sum(out_iref[1])) else 1
+                bind_fac_z = abs(sum(iref[2]) / sum(out_iref[2])) if (sum(iref[2]) and sum(out_iref[2])) else 1
+
+            bind_scales[ii][0] = bind_scales[ii][0] * bind_fac_x
+            bind_scales[ii][1] = bind_scales[ii][1] * bind_fac_y
+            bind_scales[ii][2] = bind_scales[ii][2] * bind_fac_z
 
             bind_matrices.append(mathutils.Matrix.LocRotScale(None, None, bind_scales[ii]))
 
@@ -1107,7 +1120,6 @@ class Importer:
         bounds = ob.m3_bounds
         bounds.left, bounds.back, bounds.bottom = to_bl_vec3(self.m3_model.boundings.min)
         bounds.right, bounds.front, bounds.top = to_bl_vec3(self.m3_model.boundings.max)
-        # TODO animate boundings?
 
     def create_attachments(self):
         ob = self.ob
@@ -1528,7 +1540,7 @@ class Importer:
         ob = self.ob
         for m3_billboard in self.m3[self.m3_model.billboards]:
             pose_bone_name = self.m3_get_bone_name(m3_billboard.bone)
-            pose_bone = ob.pose.bones.get(bone_name)
+            pose_bone = ob.pose.bones.get(pose_bone_name)
             billboard = shared.m3_item_add(ob.m3_billboards, item_name=pose_bone_name)
             billboard.bone.handle = pose_bone.bl_handle if pose_bone else ''
             processor = M3InputProcessor(self, billboard, m3_billboard)

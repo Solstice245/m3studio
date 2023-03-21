@@ -1751,6 +1751,10 @@ class Exporter:
             if trail_system:
                 m3_system.trail_system = systems.index(trail_system)
 
+            if int(version) >= 12:
+                m3_system.local_forces_fb = m3_system.local_forces
+                m3_system.world_forces_fb = m3_system.world_forces
+
             m3_system.unknowne0bd54c8 = self.init_anim_ref_float()
             m3_system.unknowna2d44d80 = self.init_anim_ref_float()
             m3_system.unknownf8e2b3d0 = self.init_anim_ref_float()

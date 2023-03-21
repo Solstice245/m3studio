@@ -115,9 +115,16 @@ def draw_ribbon_props(ribbon, layout):
     shared.draw_prop_anim(col, ribbon, 'speed', text='Velocity')
     shared.draw_prop_anim(col, ribbon, 'yaw', text='Yaw')
     shared.draw_prop_anim(col, ribbon, 'pitch', text='Pitch')
+    col = layout.column(align=True)
+    shared.draw_prop_anim(col, ribbon, 'active', text='Active')
     col.separator()
     col = layout.column(align=True)
+    col.prop(ribbon, 'mass', text='Mass')
+    col.prop(ribbon, 'mass2', text='Mass Random')
     col.prop(ribbon, 'gravity', text='Gravity')
+    col.prop(ribbon, 'drag', text='Drag')
+    col.prop(ribbon, 'friction', text='Friction')
+    col.prop(ribbon, 'bounce', text='Bounce')
     col = layout.column(align=True)
     col.prop(ribbon, 'cull_method', text='Division Cull Type')
 
@@ -142,12 +149,14 @@ def draw_ribbon_props(ribbon, layout):
     shared.draw_prop_anim(col, ribbon, 'scale', index=0, text='Scale Base')
     shared.draw_prop_anim(col, ribbon, 'scale', index=1, text='Center')
     shared.draw_prop_anim(col, ribbon, 'scale', index=2, text='Tip')
+    col.prop(ribbon, 'scale_smoothing', text='Smoothing')
     col.prop(ribbon, 'scale_anim_mid', text='Animation Center')
     col.prop(ribbon, 'scale_anim_mid_time', text='Animation Center Time')
     col = layout.column(align=True)
     shared.draw_prop_anim(col, ribbon, 'color_base', text='Color Base')
     shared.draw_prop_anim(col, ribbon, 'color_mid', text='Center')
     shared.draw_prop_anim(col, ribbon, 'color_tip', text='Tip')
+    col.prop(ribbon, 'color_smoothing', text='Color Smoothing')
     col.prop(ribbon, 'color_anim_mid', text='Color Animation Center')
     col.prop(ribbon, 'color_anim_mid_time', text='Color Animation Center Time')
     col.prop(ribbon, 'alpha_anim_mid', text='Alpha Animation Center')
@@ -155,6 +164,9 @@ def draw_ribbon_props(ribbon, layout):
     col = layout.column(align=True)
     col.prop(ribbon, 'stretch_limit', text='Stretch Limit')
     col.prop(ribbon, 'stretch_amount', text='Amount')
+    col = layout.column(align=True)
+    shared.draw_prop_anim(col, ribbon, 'parent_velocity', text='Parent Velocity')
+    shared.draw_prop_anim(col, ribbon, 'phase_shift', text='Phase Shift')
     col = layout.column(align=True)
     col.prop(ribbon, 'noise_amplitude', text='Noise Amplitude')
     col.prop(ribbon, 'noise_waves', text='Waves')
@@ -190,6 +202,10 @@ def draw_ribbon_props(ribbon, layout):
     sub.active = ribbon.alpha_var_shape != 'NONE'
     shared.draw_prop_anim(sub, ribbon, 'alpha_var_frequency', text='Frequency')
     shared.draw_prop_anim(sub, ribbon, 'alpha_var_amplitude', text='Amount')
+    col = layout.column()
+    col.use_property_split = False
+    col.prop(ribbon, 'local_forces', text='Local Force Channels')
+    col.prop(ribbon, 'world_forces', text='World Force Channels')
     col = layout.column_flow(align=True, columns=2)
     col.use_property_split = False
     col.prop(ribbon, 'collide_terrain', text='Collide Terrain')
@@ -203,6 +219,7 @@ def draw_ribbon_props(ribbon, layout):
     col.prop(ribbon, 'scale_smooth', text='Smooth Size')
     col.prop(ribbon, 'scale_smooth_bezier', text='Smooth Size Bezier')
     col.prop(ribbon, 'vertex_alpha', text='Vertex Alpha')
+    col.prop(ribbon, 'accurate_gpu_tangents', text='Accurate GPU Tangents')
 
 
 class RibbonPointerProp(bpy.types.PropertyGroup):
@@ -250,7 +267,7 @@ class RibbonProperties(shared.M3PropertyGroup):
     cull_method: bpy.props.EnumProperty(options=set(), items=bl_enum.ribbon_cull)
     lod_cut: bpy.props.EnumProperty(options=set(), items=bl_enum.lod)
     lod_reduce: bpy.props.EnumProperty(options=set(), items=bl_enum.lod)
-    active: bpy.props.BoolProperty(name='Active', default=True)  # TODO draw
+    active: bpy.props.BoolProperty(name='Active', default=True)
     active_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     lifespan: bpy.props.FloatProperty(name='Lifespan', min=0, default=5)
     lifespan_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
@@ -283,8 +300,8 @@ class RibbonProperties(shared.M3PropertyGroup):
     scale_anim_mid_time: bpy.props.FloatProperty(options=set(), min=0)
     color_anim_mid_time: bpy.props.FloatProperty(options=set(), min=0)
     alpha_anim_mid_time: bpy.props.FloatProperty(options=set(), min=0)
-    scale_smoothing: bpy.props.EnumProperty(items=bl_enum.anim_smoothing)  # TODO
-    color_smoothing: bpy.props.EnumProperty(items=bl_enum.anim_smoothing)  # TODO
+    scale_smoothing: bpy.props.EnumProperty(items=bl_enum.anim_smoothing)
+    color_smoothing: bpy.props.EnumProperty(items=bl_enum.anim_smoothing)
     gravity: bpy.props.FloatProperty(options=set())
     stretch_amount: bpy.props.FloatProperty(options=set(), default=1)
     stretch_limit: bpy.props.FloatProperty(options=set(), default=1)
@@ -292,13 +309,13 @@ class RibbonProperties(shared.M3PropertyGroup):
     noise_waves: bpy.props.FloatProperty(options=set())
     noise_frequency: bpy.props.FloatProperty(options=set())
     noise_scale: bpy.props.FloatProperty(options=set())
-    bounce: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0, max=1)  # TODO
-    friction: bpy.props.FloatProperty(options=set(), min=0, max=1)  # TODO
-    drag: bpy.props.FloatProperty(options=set())  # TODO
-    mass: bpy.props.FloatProperty(options=set())  # TODO
-    mass2: bpy.props.FloatProperty(options=set())  # TODO
-    local_forces: bpy.props.BoolVectorProperty(options=set(), subtype='LAYER', size=16)  # TODO
-    world_forces: bpy.props.BoolVectorProperty(options=set(), subtype='LAYER', size=16)  # TODO
+    bounce: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0, max=1)
+    friction: bpy.props.FloatProperty(options=set(), min=0, max=1)
+    drag: bpy.props.FloatProperty(options=set())
+    mass: bpy.props.FloatProperty(options=set())
+    mass2: bpy.props.FloatProperty(options=set())
+    local_forces: bpy.props.BoolVectorProperty(options=set(), subtype='LAYER', size=16)
+    world_forces: bpy.props.BoolVectorProperty(options=set(), subtype='LAYER', size=16)
     world_space: bpy.props.BoolProperty(options=set())
     yaw_var_shape: bpy.props.EnumProperty(options=set(), items=bl_enum.ribbon_variation_shape)
     yaw_var_amplitude: bpy.props.FloatProperty(name='Yaw Variation Amount')
@@ -325,9 +342,9 @@ class RibbonProperties(shared.M3PropertyGroup):
     alpha_var_amplitude_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     alpha_var_frequency: bpy.props.FloatProperty(name='Alpha Variation Frequency')
     alpha_var_frequency_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
-    parent_velocity: bpy.props.FloatProperty(name='Parent Velocity')  # TODO
+    parent_velocity: bpy.props.FloatProperty(name='Parent Velocity')
     parent_velocity_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
-    phase_shift: bpy.props.FloatProperty(name='Phase Shift')  # TODO
+    phase_shift: bpy.props.FloatProperty(name='Phase Shift')
     phase_shift_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     collide_terrain: bpy.props.BoolProperty(options=set())
     collide_objects: bpy.props.BoolProperty(options=set())
@@ -341,7 +358,7 @@ class RibbonProperties(shared.M3PropertyGroup):
     local_time: bpy.props.BoolProperty(options=set())
     simulate_init: bpy.props.BoolProperty(options=set())
     length_time: bpy.props.BoolProperty(options=set())
-    accurate_gpu_tangents: bpy.props.BoolProperty(options=set())  # TODO add to draw method
+    accurate_gpu_tangents: bpy.props.BoolProperty(options=set())
 
 
 class PointsMenu(bpy.types.Menu):

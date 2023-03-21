@@ -1909,7 +1909,7 @@
             <field name="local_forces" type="uint16" default_value="0" since_version="12"/>
             <field name="world_forces" type="uint16" default_value="0" since_version="12"/>
             <field name="local_forces_fb" type="uint16" default_value="0" since_version="12"/>
-            <field name="world_force_copy" type="uint16" default_value="0" since_version="12"/>
+            <field name="world_forces_fb" type="uint16" default_value="0" since_version="12"/>
             <field name="unknownb379688d" size="16" since_version="10" till_version="11"/>
             <field name="unknownc851d80" type="float" default_value="1.0" since_version="24"/>
             <field name="noise_amplitude" type="float" default_value="0.0"/>
@@ -1942,7 +1942,7 @@
             <field name="uv_flipbook_start_init_index" type="uint8"  default_value="0"/>
             <field name="uv_flipbook_start_stop_index" type="uint8"  default_value="0"/>
             <field name="uv_flipbook_end_init_index" type="uint8" default_value="0"/>
-            <field name="uv_flipbook_end_stop_index" type="uint8" expected_value="0"/>
+            <field name="uv_flipbook_end_stop_index" type="uint8" default_value="0"/>
             <field name="uv_flipbook_start_lifespan_factor" type="float"/>
             <field name="uv_flipbook_cols" type="uint16"/>
             <field name="uv_flipbook_rows" type="uint16"/>

@@ -152,7 +152,12 @@ def m3_item_add(collection, item_name=''):
 def m3_item_duplicate(collection, src, dup_action_keyframes, dst_collection=None):
     # need to get path before adding item to collection
     src_path_base = src.path_from_id()
-    dst_path_base = f'{collection.path_from_id()}[{len(collection)}]'
+
+    try:
+        dst_path_base = f'{collection.path_from_id()}[{len(collection)}]'
+    except ValueError:
+        print('unable to create path to collection', collection)
+        dst_path_base = None
 
     if dst_collection is None:
         dst_collection = collection

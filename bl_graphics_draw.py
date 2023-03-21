@@ -301,7 +301,7 @@ def draw():
 
                 col = blgd.particle_color_normal if not pb_select[pb] else blgd.particle_color_select
                 for system in item.systems:
-                    system_data = handle_to_par_data.get(system.bl_handle)
+                    system_data = handle_to_par_data.get(system.handle)
                     if not system_data:
                         continue
                     coords, indices, par_matrix, par_cutout_matrix = system_data

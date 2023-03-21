@@ -82,7 +82,7 @@ def draw_props(particle, layout):
     shared.draw_prop_pointer_search(col, particle.material, particle.id_data, 'm3_materialrefs', text='Material', icon='MATERIAL')
     col.prop(particle, 'particle_type', text='Type')
 
-    if particle.particle_type == 'RECT_BILLBOARD':
+    if particle.particle_type in ('SPEED_ROTSCALE_BILLBOARD', 'RECT_BILLBOARD', 'SPEEDNORMAL_BILLBOARD', 'RAY'):
         col.prop(particle, 'length_width_ratio', text='Length/Width Ratio')
 
     col.prop(particle, 'distance_limit', text='Distance Limit')
@@ -318,6 +318,7 @@ class CopySystemPointerProp(bpy.types.PropertyGroup):
 
 class SplinePointProperties(shared.M3PropertyGroup):
     location: bpy.props.FloatVectorProperty(name='Location', subtype='XYZ', size=3)
+    location_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
 
 
 class CopyProperties(shared.M3PropertyGroup):
