@@ -973,8 +973,6 @@ class Exporter:
             m3_stg_col_indices_section = self.m3.section_for_reference(m3_stg, 'stc_indices', pos=None)
             stg_indices_sections.append(m3_stg_col_indices_section)
 
-            use_full_as_main = False  # anim named 'full' should be the key for this anim group, otherwise use [0]
-
             stcs = len(stc_section)
 
             for anim in anim_group.animations:
@@ -987,10 +985,7 @@ class Exporter:
                 m3_stc_name_section.content_from_string(anim_group.name + '_' + anim.name)
                 self.stc_to_name_section[m3_stc] = m3_stc_name_section
                 stc_name_sections.append(m3_stc_name_section)
-
-                if anim.name == 'full':
-                    self.stc_to_anim_group[m3_stc] = anim_group
-                    use_full_as_main = True
+                self.stc_to_anim_group[m3_stc] = anim_group
 
                 m3_stc.concurrent = int(anim.concurrent)
                 m3_stc.priority = anim.priority
@@ -1012,9 +1007,6 @@ class Exporter:
                     self.action_frame_range[anim.action] = [anim_group.frame_start, anim_group.frame_end]
 
                 m3_stg_col_indices_section.content_add(len(stc_section) - 1)
-
-            if not use_full_as_main:
-                self.stc_to_anim_group[stc_section[stcs - 1]] = anim_group
 
         # used to position other sections
         self.stg_last_indice_section = stg_indices_sections[-1]
@@ -1054,14 +1046,6 @@ class Exporter:
                         bnds_data[0].append(frame)
                         bnds_data[1].append(to_m3_bnds((bnds_min, bnds_max)))
                         prev_min, prev_max = bnds_min, bnds_max
-
-            data_names_with_data = 0
-            for section_data_name in ANIM_DATA_SECTION_NAMES:
-                if len(self.action_to_anim_data[action][section_data_name]):
-                    data_names_with_data += 1
-
-            if not data_names_with_data:
-                continue
 
             section_pos = self.m3.index(self.stc_to_name_section[stc_list[-1]]) + 1
 
@@ -1854,12 +1838,8 @@ class Exporter:
                     spline_section = self.m3.section_for_reference(m3_ribbon, 'spline', version=0)
                     handle_to_spline_sections[ribbon.spline.handle] = spline_section
 
-                    for point in splines[splines.index(spline)].points:
+                    for point in spline.points:
                         point_bone = shared.m3_pointer_get(self.ob.pose.bones, point.bone)
-
-                        if not point_bone:
-                            continue
-
                         m3_point = spline_section.content_add()
                         m3_point.bone = self.bone_name_indices[point_bone.name]
                         processor = M3OutputProcessor(self, point, m3_point)

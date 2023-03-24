@@ -222,8 +222,8 @@ def draw_ribbon_props(ribbon, layout):
     col.prop(ribbon, 'accurate_gpu_tangents', text='Accurate GPU Tangents')
 
 
-class RibbonPointerProp(bpy.types.PropertyGroup):
-    value: bpy.props.StringProperty(options=set(), get=shared.pointer_get_args('m3_ribbons'), set=shared.pointer_set_args('m3_ribbons', False))
+class SplinePointerProp(bpy.types.PropertyGroup):
+    value: bpy.props.StringProperty(options=set(), get=shared.pointer_get_args('m3_ribbonsplines'), set=shared.pointer_set_args('m3_ribbonsplines', False))
     handle: bpy.props.StringProperty(options=set())
 
 
@@ -262,7 +262,7 @@ class SplineProperties(shared.M3PropertyGroup):
 class RibbonProperties(shared.M3PropertyGroup):
     bone: bpy.props.PointerProperty(type=shared.M3BonePointerProp)
     material: bpy.props.PointerProperty(type=shared.M3MatRefPointerProp)
-    spline: bpy.props.PointerProperty(type=RibbonPointerProp)
+    spline: bpy.props.PointerProperty(type=SplinePointerProp)
     ribbon_type: bpy.props.EnumProperty(options=set(), items=bl_enum.ribbon_type)
     cull_method: bpy.props.EnumProperty(options=set(), items=bl_enum.ribbon_cull)
     lod_cut: bpy.props.EnumProperty(options=set(), items=bl_enum.lod)
@@ -403,7 +403,7 @@ class SplinePanel(shared.ArmatureObjectPanel, bpy.types.Panel):
 
 
 classes = (
-    RibbonPointerProp,
+    SplinePointerProp,
     PointProperties,
     SplineProperties,
     RibbonProperties,
