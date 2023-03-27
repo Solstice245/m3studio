@@ -210,8 +210,8 @@ def draw_ribbon_props(ribbon, layout):
     col.use_property_split = False
     col.prop(ribbon, 'collide_terrain', text='Collide Terrain')
     col.prop(ribbon, 'collide_objects', text='Collide Objects')
-    col.prop(ribbon, 'edge_falloff', text='Edge Falloff')
     col.prop(ribbon, 'force_cpu_sim', text='Force CPU Simulation')
+    col.prop(ribbon, 'accurate_gpu_tangents', text='Accurate GPU Tangents')
     col.prop(ribbon, 'inherit_parent_velocity', text='Inherit Parent Velocity')
     col.prop(ribbon, 'scale_time_parent', text='Scale Time By Parent')
     col.prop(ribbon, 'local_time', text='Local Time')
@@ -219,7 +219,8 @@ def draw_ribbon_props(ribbon, layout):
     col.prop(ribbon, 'scale_smooth', text='Smooth Size')
     col.prop(ribbon, 'scale_smooth_bezier', text='Smooth Size Bezier')
     col.prop(ribbon, 'vertex_alpha', text='Vertex Alpha')
-    col.prop(ribbon, 'accurate_gpu_tangents', text='Accurate GPU Tangents')
+    col.prop(ribbon, 'world_space', text='World Space')
+    col.prop(ribbon, 'edge_falloff', text='Edge Falloff')
 
 
 class SplinePointerProp(bpy.types.PropertyGroup):

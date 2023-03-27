@@ -789,10 +789,14 @@ def shift_m3_action_keyframes(ob, prefix, index, offset=-1):
 
 
 def swap_m3_action_keyframes(ob, prefix, old, new):
-    for action in bpy.data.actions:
-        if ob.name not in action.name:
-            continue
 
+    update_actions = {ob.m3_animations_default}
+
+    for anim_group in ob.m3_animation_groups:
+        for anim in anim_group.animations:
+            update_actions.add(anim.action)
+
+    for action in update_actions:
         path = f'{prefix}[{old}]'
         path_new = f'{prefix}[{new}]'
 
