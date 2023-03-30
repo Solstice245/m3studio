@@ -225,7 +225,7 @@ class M3MaterialLayerOpRemove(bpy.types.Operator):
         for ii in range(ob.m3_materiallayers_index, len(ob.m3_materiallayers)):
             shared.shift_m3_action_keyframes(ob, 'm3_materiallayers', ii + 1)
 
-        ob.m3_materiallayers_index -= 1 if (ob.m3_materiallayers_index == 0 and len(layers) > 0) or ob.m3_materiallayers_index == len(layers) else 0
+        ob.m3_materiallayers_index -= 1 if (ob.m3_materiallayers_index == 0 and len(layers) == 0) or ob.m3_materiallayers_index == len(layers) else 0
 
         return {'FINISHED'}
 

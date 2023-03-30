@@ -91,7 +91,7 @@ class StandardProperties(shared.M3PropertyGroup):
 
     priority: bpy.props.IntProperty(options=set())
     blend_mode: bpy.props.EnumProperty(options=set(), items=bl_enum.mat_blend, default='OPAQUE')
-    layr_blend_mode: bpy.props.EnumProperty(options=set(), items=bl_enum.mat_layer_blend, default='ADD')
+    layer_blend_mode: bpy.props.EnumProperty(options=set(), items=bl_enum.mat_layer_blend, default='ADD')
     emis1_blend_mode: bpy.props.EnumProperty(options=set(), items=bl_enum.mat_layer_blend, default='ADD')
     emis2_blend_mode: bpy.props.EnumProperty(options=set(), items=bl_enum.mat_layer_blend, default='ADD')
     spec_mode: bpy.props.EnumProperty(options=set(), items=bl_enum.mat_spec, default='RGB')
@@ -349,7 +349,7 @@ def draw_standard_props(matref, layout):
         col.prop(material, 'depth_blend_falloff', text='Depth Blend')
 
     col.separator()
-    col.prop(material, 'layr_blend_mode', text='Layer Blend')
+    col.prop(material, 'layer_blend_mode', text='Layer Blend')
     col.prop(material, 'emis1_blend_mode', text='Emissive 1 Blend')
     col.prop(material, 'emis2_blend_mode', text='Emissive 2 Blend')
     col.separator()
@@ -783,7 +783,7 @@ class M3MaterialOpRemove(bpy.types.Operator):
         for ii in range(mat_ii, len(matrefs)):
             shared.shift_m3_action_keyframes(ob, matref.mat_type, ii + 1)
 
-        ob.m3_materialrefs_index -= 1 if (ob.m3_materialrefs_index == 0 and len(matrefs) > 0) or ob.m3_materialrefs_index == len(matrefs) else 0
+        ob.m3_materialrefs_index -= 1 if (ob.m3_materialrefs_index == 0 and len(matrefs) == 0) or ob.m3_materialrefs_index == len(matrefs) else 0
 
         return {'FINISHED'}
 

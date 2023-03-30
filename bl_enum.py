@@ -328,8 +328,8 @@ material_layer_channel = (
 )
 
 uv_source = (
-    ('UV1', 'Default', 'First UV layer of mesh or generated whole image UVs for particles'),
-    ('UV2', 'UV Layer 2', 'Second UV layer which can be used for decals'),
+    ('UV0', 'Default', 'First UV layer of mesh or generated whole image UVs for particles'),
+    ('UV1', 'UV Layer 2', 'Second UV layer which can be used for decals'),
     ('REFCUBE', 'Ref Cubic Env', 'For Env. Layer: Reflective Cubic Environment'),
     ('REFSPHERE', 'Ref Spherical Env', 'For Env. Layer: Reflective Spherical Environemnt'),
     ('PLANARLZ', 'Planar Local Z', 'Planar Local Z'),
@@ -337,8 +337,8 @@ uv_source = (
     ('PARTICLE', 'Animated Particle UV', 'The flip book of the particle system is used to determine the UVs'),
     ('CUBE', 'Cubic Environment', 'For Env. Layer: Cubic Environment'),
     ('SPHERE', 'Spherical Environment', 'For Env. Layer: Spherical Environment'),
-    ('UV3', 'UV Layer 3', 'UV Layer 3'),
-    ('UV4', 'UV Layer 4', 'UV Layer 4'),
+    ('UV2', 'UV Layer 3', 'UV Layer 3'),
+    ('UV3', 'UV Layer 4', 'UV Layer 4'),
     ('PLANARLX', 'Planar Local X', 'Planar Local X'),
     ('PLANARLY', 'Planar Local Y', 'Planar Local Y'),
     ('PLANARWX', 'Planar World X', 'Planar World X'),

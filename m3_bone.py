@@ -114,7 +114,7 @@ class M3EditBoneAnimHeaders(bpy.types.Operator):
     def invoke(self, context, event):
         # use set function of the anim id prop to get locker before it first becomes visible to user
         bpy.context.active_pose_bone.m3_location_hex_id = bpy.context.active_pose_bone.m3_location_hex_id
-        return context.window_manager.invoke_props_dialog(self, width=145)
+        return context.window_manager.invoke_props_dialog(self, width=180)
 
     def draw(self, context):
         pb = bpy.context.active_pose_bone

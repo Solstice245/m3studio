@@ -22,11 +22,16 @@ from . import shared
 
 
 desc_mesh_export = 'The mesh will be exported to m3. If disabled, this object may still be used as a volume'
+desc_mesh_uv = 'Specifies the exact UV map that should be used on the given M3 UV layer slot. Leave blank for automatic UV map selection'
 
 
 def register_props():
     bpy.types.Object.m3_mesh_batches = bpy.props.CollectionProperty(type=BatchPropertyGroup)
     bpy.types.Object.m3_mesh_export = bpy.props.BoolProperty(options=set(), default=True, description=desc_mesh_export)
+    bpy.types.Object.m3_mesh_uv0 = bpy.props.StringProperty(options=set(), description=desc_mesh_uv)
+    bpy.types.Object.m3_mesh_uv1 = bpy.props.StringProperty(options=set(), description=desc_mesh_uv)
+    bpy.types.Object.m3_mesh_uv2 = bpy.props.StringProperty(options=set(), description=desc_mesh_uv)
+    bpy.types.Object.m3_mesh_uv3 = bpy.props.StringProperty(options=set(), description=desc_mesh_uv)
 
 
 class BatchPropertyGroup(bpy.types.PropertyGroup):
@@ -242,15 +247,25 @@ class Panel(bpy.types.Panel):
             if not len(context.object.m3_mesh_batches):
                 op = box.operator('m3.handle_add', text='Add M3 Material Batch')
                 op.collection = ob.m3_mesh_batches.path_from_id()
+            else:
+                op = box.operator('m3.handle_add', text='Add M3 Material Batch')
+                op.collection = ob.m3_mesh_batches.path_from_id()
 
             for ii, batch in enumerate(ob.m3_mesh_batches):
                 row = box.row()
                 col = row.column()
                 shared.draw_prop_pointer_search(col, batch.material, parent, 'm3_materialrefs', text='Material', icon='MATERIAL')
-                shared.draw_prop_pointer_search(col, batch.bone, parent.data, 'bones', text='Batching Toggle Bone', icon='BONE_DATA')
+                shared.draw_prop_pointer_search(col, batch.bone, parent.data, 'bones', text='Batching Toggle', icon='BONE_DATA')
                 op = row.operator('m3.handle_remove', text='', icon='X')
                 op.collection = ob.m3_mesh_batches.path_from_id()
                 op.index = ii
+
+        box = layout.box()
+        box.label(text='Custom M3 UV Mapping')
+        box.prop(ob, 'm3_mesh_uv0', text='UV Layer 0')
+        box.prop(ob, 'm3_mesh_uv1', text='UV Layer 1')
+        box.prop(ob, 'm3_mesh_uv2', text='UV Layer 2')
+        box.prop(ob, 'm3_mesh_uv3', text='UV Layer 3')
 
         if ob.mode == 'EDIT':
             layout.separator()

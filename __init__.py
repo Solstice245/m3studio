@@ -99,11 +99,14 @@ class M3ExportOperator(bpy.types.Operator):
         return (context.object and context.object.type == 'ARMATURE')
 
     def invoke(self, context, event):
+        if context.active_object.m3_filepath_export:
+            self.filepath = context.active_object.m3_filepath_export
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
 
     def execute(self, context):
         io_m3_export.m3_export(context.active_object, self.filepath)
+        context.active_object.m3_filepath_export = self.filepath
         return {'FINISHED'}
 
 

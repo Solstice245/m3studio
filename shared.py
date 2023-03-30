@@ -467,7 +467,7 @@ class M3CollectionOpRemove(M3CollectionOpBase):
         for ii in range(self.index, len(collection)):
             shift_m3_action_keyframes(context.object, self.collection, ii + 1)
 
-        m3_collection_index_set(collection, self.index - (1 if self.index == len(collection) else 0))
+        m3_collection_index_set(collection, self.index - (1 if (self.index == 0 and len(collection) == 0) or self.index == len(collection) else 0))
 
         return {'FINISHED'}
 
@@ -600,7 +600,7 @@ class M3EditAnimHeader(bpy.types.Operator):
         return {'FINISHED'}
 
     def invoke(self, context, event):
-        return context.window_manager.invoke_props_dialog(self, width=300)
+        return context.window_manager.invoke_props_dialog(self, width=360)
 
     def draw(self, context):
         m3_anim_header = getattr(bpy.data.objects.get(self.prop_id_name).path_resolve(self.prop_path), self.prop_name + '_header')
@@ -775,14 +775,28 @@ def draw_collection_list(layout, collection, draw_func, ui_list_id='', menu_id='
 
 
 def remove_m3_action_keyframes(ob, prefix, index):
-    for action in [action for action in bpy.data.actions if ob.name in action.name]:
+    update_actions = {ob.m3_animations_default} if ob.m3_animations_default else {}
+
+    for anim_group in ob.m3_animation_groups:
+        for anim in anim_group.animations:
+            if anim.action:
+                update_actions.add(anim.action)
+
+    for action in update_actions:
         path = f'{prefix}[{index}]'
         for fcurve in [fcurve for fcurve in action.fcurves if prefix in fcurve.data_path and path in fcurve.data_path]:
             action.fcurves.remove(fcurve)
 
 
 def shift_m3_action_keyframes(ob, prefix, index, offset=-1):
-    for action in [action for action in bpy.data.actions if ob.name in action.name]:
+    update_actions = {ob.m3_animations_default} if ob.m3_animations_default else {}
+
+    for anim_group in ob.m3_animation_groups:
+        for anim in anim_group.animations:
+            if anim.action:
+                update_actions.add(anim.action)
+
+    for action in update_actions:
         path = f'{prefix}[{index}]'
         for fcurve in [fcurve for fcurve in action.fcurves if prefix in fcurve.data_path and path in fcurve.data_path]:
             fcurve.data_path = fcurve.data_path.replace(path, f'{prefix}[{index + offset}]')
@@ -790,11 +804,12 @@ def shift_m3_action_keyframes(ob, prefix, index, offset=-1):
 
 def swap_m3_action_keyframes(ob, prefix, old, new):
 
-    update_actions = {ob.m3_animations_default}
+    update_actions = {ob.m3_animations_default} if ob.m3_animations_default else {}
 
     for anim_group in ob.m3_animation_groups:
         for anim in anim_group.animations:
-            update_actions.add(anim.action)
+            if anim.action:
+                update_actions.add(anim.action)
 
     for action in update_actions:
         path = f'{prefix}[{old}]'

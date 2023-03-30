@@ -82,7 +82,7 @@ def io_material_standard(processor):
     processor.float('envi_diff_multiply', since_version=20)
     processor.float('envi_spec_multiply', since_version=20)
     # processor.integer('unknown2481ae8a')
-    processor.enum('layr_blend_mode')
+    processor.enum('layer_blend_mode')
     processor.enum('emis1_blend_mode')
     processor.enum('emis2_blend_mode')
     processor.enum('spec_mode')
@@ -656,7 +656,7 @@ def io_tmd(processor):
 
 def io_billboard(processor):
     processor.enum('billboard_type')
-    processor.integer('camera_look_at')
+    processor.boolean('camera_look_at')
 
 
 material_type_io_method = {

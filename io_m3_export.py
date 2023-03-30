@@ -497,7 +497,7 @@ class Exporter:
         self.m3 = io_m3.M3SectionList(init_header=True)
 
         self.anim_id_count = 0
-        self.uv_count = 0
+        self.uv_count = 1
         self.skinned_bones = []
         self.mesh_to_basic_volume_sections = {}
         self.mesh_to_physics_volume_sections = {}
@@ -520,7 +520,6 @@ class Exporter:
         self.stg_last_indice_section = None  # defined in the sequence export
 
         # used for later reference such as setting region flags
-        self.use_batching_hack = False
         self.region_section = None  # defined in the mesh export code
 
         self.init_action = self.ob.animation_data.action
@@ -735,9 +734,8 @@ class Exporter:
             if m3_tmd.m3_export:
                 export_tmd_data.append(m3_tmd)
 
-        # batch hack crashes can crash the game if there is not a single-batch region at the front, so we make sure multi-batch regions are at the end
-        self.reg_mesh_obs = []
-        self.bat_hack_obs = []
+        self.export_regions = []
+        self.ob_to_region_index = []
 
         for child in ob.children:
             if child.type == 'MESH' and (child.m3_mesh_export or child in self.export_required_regions):
@@ -745,22 +743,15 @@ class Exporter:
                 me.calc_loop_triangles()
 
                 if len(me.loop_triangles) > 0:
-                    non_standard_mat = False
                     valid_mesh_batches = 0
                     for mesh_batch in child.m3_mesh_batches:
                         matref = shared.m3_pointer_get(ob.m3_materialrefs, mesh_batch.material)
                         if matref:
                             self.export_required_material_references.add(matref)
                             valid_mesh_batches += 1
-                            if matref.mat_type != 'm3_materials_standard':
-                                non_standard_mat = True
 
                     assert valid_mesh_batches != 0
                     # TODO improve invalidation so that a list of all warnings and exceptions can be made
-
-                    # * MAT_V19+ will crash the game if multi-batching hack is used
-                    invalid_mesh_batching = valid_mesh_batches > 1 and (int(ob.m3_materials_standard_version) > 18)
-                    assert not invalid_mesh_batching
 
                     skin_vertex_groups = 0
                     for vertex_group in child.vertex_groups:
@@ -772,17 +763,10 @@ class Exporter:
 
                     assert skin_vertex_groups != 0
 
-                    if valid_mesh_batches > 1:
-                        self.use_batching_hack = True
-                        self.bat_hack_obs.append(child)
-                    else:
-                        self.reg_mesh_obs.append(child)
+                    self.export_regions.append(child)
 
-                    self.uv_count = max(self.uv_count, len(me.uv_layers))
-
-        self.export_regions = []
-        self.export_regions.extend(self.reg_mesh_obs)
-        self.export_regions.extend(self.bat_hack_obs)
+                    for ii in range(valid_mesh_batches):
+                        self.ob_to_region_index.append(child)
 
         def recurse_composite_materials(matref, force_color, force_alpha):
             if force_color:
@@ -801,6 +785,20 @@ class Exporter:
             recurse_composite_materials(matref, matref.bl_handle in self.vertex_color_mats, matref.bl_handle in self.vertex_alpha_mats)
 
         # TODO exclude materials if their type cannot be exported in model version
+
+        for matref in self.export_required_material_references:
+            mat = shared.m3_pointer_get(getattr(ob, matref.mat_type), matref.mat_handle)
+            for layer_name in shared.material_type_to_layers[shared.material_collections.index(matref.mat_type)]:
+                layer = shared.m3_pointer_get(self.ob.m3_materiallayers, getattr(mat, f'layer_{layer_name}'))
+
+                if layer:
+                    if layer.color_type == 'BITMAP' and layer.color_bitmap:
+                        if layer.uv_source == 'UV3':
+                            self.uv_count = 4
+                        elif layer.uv_source == 'UV2' and self.uv_count < 3:
+                            self.uv_count = 3
+                        elif layer.uv_source == 'UV1' and self.uv_count < 2:
+                            self.uv_count = 2
 
         def export_bone_bool(bone):
             result = False
@@ -831,9 +829,9 @@ class Exporter:
         # billboards will not require bones, instead the billboard will be culled if the bone is not required
         for billboard in ob.m3_billboards:
             billboard_bone = shared.m3_pointer_get(ob.pose.bones, billboard.bone)
-            if billboard.m3_export and billboard_bone and billboard_bone in self.bones and billboard_bone not in billboard_bones:
+            if billboard.m3_export and billboard_bone and billboard_bone in self.bones and billboard_bone not in self.billboard_bones:
                 self.billboard_bones.append(billboard_bone)
-                export_billboards.append[billboard]
+                export_billboards.append(billboard)
 
         material_versions = {
             1: ob.m3_materials_standard_version,
@@ -1356,12 +1354,23 @@ class Exporter:
             layer_deform = bm.verts.layers.deform.verify()
             layer_color = bm.loops.layers.color.get('m3color')
             layer_alpha = bm.loops.layers.color.get('m3alpha')
+
             layers_uv = bm.loops.layers.uv.values()
+
+            for ii in range(0, self.uv_count):
+                custom_uv_name = getattr(ob, f'm3_mesh_uv{ii}')
+                if custom_uv_name:
+                    for uv_layer in layers_uv:
+                        if custom_uv_name == uv_layer.name:
+                            layers_uv[ii] = uv_layer
+                            break
+
+            layers_uv = layers_uv[0:self.uv_count]
+
             layer_tan = layers_uv[0]
             layer_sign = bm.faces.layers.int.get('m3sign') or bm.faces.layers.int.new('m3sign')
 
             first_vertex_index = len(m3_vertices)
-            first_face_index = len(m3_faces)
             first_lookup_index = len(m3_lookup)
             vertex_lookups_used = 0
 
@@ -1456,12 +1465,14 @@ class Exporter:
                     region_faces.append(id_index)
 
             m3_vertices.extend(region_vertices)
-            m3_faces.extend(region_faces)
             m3_lookup.extend(region_lookup)
 
             # TODO mesh flags for versions 4+
-            for ii, batch in enumerate(ob.m3_mesh_batches[0:1]):
-                region = region_section.desc.instance()
+            # for ii, batch in enumerate(ob.m3_mesh_batches[0:1]):
+            for ii, batch in enumerate(ob.m3_mesh_batches):
+                first_face_index = len(m3_faces)
+                m3_faces.extend(region_faces)
+                region = region_section.content_add()
                 region.first_vertex_index = first_vertex_index
                 region.vertex_count = len(region_vertices)
                 region.first_face_index = first_face_index
@@ -1471,22 +1482,11 @@ class Exporter:
                 region.bone_lookup_count = len(region_lookup)
                 region.vertex_lookups_used = vertex_lookups_used
                 region.root_bone = region_lookup[0]
-                m3_batch = batch_section.desc.instance()
-                m3_batch.material_reference_index = self.matref_handle_indices[batch.material.handle]
                 bone = shared.m3_pointer_get(self.ob.pose.bones, batch.bone)
+                m3_batch = batch_section.content_add()
+                m3_batch.material_reference_index = self.matref_handle_indices[batch.material.handle]
+                m3_batch.region_index = len(region_section) - 1
                 m3_batch.bone = self.bone_name_indices[bone.name] if bone else -1
-
-                try:
-                    region_batch_columns[ii].append((region, m3_batch))
-                except IndexError:
-                    region_batch_columns.append([])
-                    region_batch_columns[ii].append((region, m3_batch))
-
-        for col in region_batch_columns:
-            for region, batch in col:
-                batch.region_index = len(region_section)
-                region_section.content_add(region)
-                batch_section.content_add(batch)
 
         self.bone_bound_vecs = {}
 
@@ -1772,7 +1772,7 @@ class Exporter:
                     region_indices = set()
                     for mesh_pointer in system.emit_shape_meshes:
                         if mesh_pointer.bl_object in self.export_regions:
-                            region_indices.add(self.export_regions.index(mesh_pointer.bl_object))
+                            region_indices.add(self.ob_to_region_index.index(mesh_pointer.bl_object))
                     if len(region_indices):
                         region_indices_section = self.m3.section_for_reference(m3_system, 'emit_shape_regions')
                         region_indices_section.content_add(*region_indices)
@@ -1967,8 +1967,8 @@ class Exporter:
             mesh_ob = physics_cloth.mesh_object
             sim_ob = physics_cloth.simulator_object
 
-            regn_inf = self.region_section[self.export_regions.index(mesh_ob)]
-            regn_sim = self.region_section[self.export_regions.index(sim_ob)]
+            regn_inf = self.region_section[self.ob_to_region_index.index(mesh_ob)]
+            regn_sim = self.region_section[self.ob_to_region_index.index(sim_ob)]
 
             # set flags for regions used by the cloth behavior
             regn_inf.bit_set('flags', 'hidden', True)
@@ -1979,7 +1979,7 @@ class Exporter:
             regn_sim.bit_set('flags', 'cloth_simulated', True)
 
             m3_physics_cloth = physics_cloth_section.content_add()
-            m3_physics_cloth.simulation_region_index = self.export_regions.index(sim_ob)
+            m3_physics_cloth.simulation_region_index = self.ob_to_region_index.index(sim_ob)
 
             processor = M3OutputProcessor(self, physics_cloth, m3_physics_cloth)
             io_shared.io_cloth(processor)
@@ -2012,8 +2012,8 @@ class Exporter:
 
             influence_map_section = self.m3.section_for_reference(m3_physics_cloth, 'influence_map', version=0)
             m3_influence_map = influence_map_section.content_add()
-            m3_influence_map.influenced_region_index = self.export_regions.index(mesh_ob)
-            m3_influence_map.simulation_region_index = self.export_regions.index(sim_ob)
+            m3_influence_map.influenced_region_index = self.ob_to_region_index.index(mesh_ob)
+            m3_influence_map.simulation_region_index = self.ob_to_region_index.index(sim_ob)
 
             sim_group_names = [group.name for group in sim_ob.vertex_groups]
             sim_group_verts = {group.name: [] for group in sim_ob.vertex_groups}
@@ -2119,21 +2119,21 @@ class Exporter:
             io_shared.io_turret_part(processor)
 
             forward_mat = mathutils.Euler(part.forward).to_quaternion().to_matrix().to_4x4()
-            # m3_part.matrix_forward.x = to_m3_vec4(forward_mat.col[0].yzxw)
-            # m3_part.matrix_forward.y = to_m3_vec4(forward_mat.col[1].yzxw)
-            # m3_part.matrix_forward.z = to_m3_vec4(forward_mat.col[2].yzxw)
-            # m3_part.matrix_forward.w = to_m3_vec4((0.0, 0.0, 0.0, 1.0))
+            m3_part.matrix_forward.x = to_m3_vec4(forward_mat.col[0].yzxw)
+            m3_part.matrix_forward.y = to_m3_vec4(forward_mat.col[1].yzxw)
+            m3_part.matrix_forward.z = to_m3_vec4(forward_mat.col[2].yzxw)
+            m3_part.matrix_forward.w = to_m3_vec4((0.0, 0.0, 0.0, 1.0))
 
-            m3_part.matrix_forward = to_m3_matrix(forward_mat)
+            # m3_part.matrix_forward = to_m3_matrix(forward_mat)
 
             db = self.ob.data.bones.get(bone.name)
 
-            # if db.parent:
-            #     upquat = to_m3_vec4_quat(db.matrix_local.to_quaternion().rotation_difference(db.parent.matrix_local.transposed().to_quaternion()))
-            # else:
-            #     m3_part.quat_up0 = to_m3_vec4_quat(db.matrix_local.to_quaternion().rotation_difference(base_quat))
+            if db.parent:
+                upquat = to_m3_vec4_quat(db.matrix_local.to_quaternion().rotation_difference(db.parent.matrix_local.transposed().to_quaternion()))
+            else:
+                m3_part.quat_up0 = to_m3_vec4_quat(db.matrix_local.to_quaternion().rotation_difference(base_quat))
 
-            m3_part.quat_up1 = to_m3_vec4_quat()
+            # m3_part.quat_up1 = to_m3_vec4_quat()
 
             if group_id_main_bone.get(part.group_id) and not part.main_part:
                 mdb = self.ob.data.bones.get(group_id_main_bone[part.group_id].name)

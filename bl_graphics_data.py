@@ -161,9 +161,9 @@ def init_disc(radius=1, sides=10):
         y = sin(angle) * radius
         coords.append(V((x, y, 0)))
 
-    for ii in range(0, 2, len(coords)):
+    for ii in range(0, len(coords)):
         indices.append((ii, ii + 1))
-    indices.append((len(coords) - 1, 0))
+    indices[-1] = (len(coords) - 1, 0)
 
     return coords, indices
 

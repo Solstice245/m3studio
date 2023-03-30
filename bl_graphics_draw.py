@@ -169,7 +169,8 @@ def draw():
                     continue
 
                 pb_matrix = get_pb_world_matrix(ob, pb_to_world_bind_matrix, pb, apply_bind_matrix=True)
-                item_matrix = mathutils.Matrix.LocRotScale((-item.location.y, item.location.x, item.location.z), item.rotation, item.scale.yxz)
+                swizzle_rot = mathutils.Euler((item.rotation.y, item.rotation.x, item.rotation.z))
+                item_matrix = mathutils.Matrix.LocRotScale((-item.location.y, item.location.x, item.location.z), swizzle_rot, item.scale.yxz)
                 col = blgd.hittest_color_normal if not pb_select[pb] else blgd.hittest_color_select
                 if item.shape == 'CUBE':
                     volume_matrix = mathutils.Matrix.LocRotScale(None, None, (item.size[1], item.size[0], item.size[2]))

@@ -21,6 +21,7 @@ from . import shared
 
 
 def register_props():
+    bpy.types.Object.m3_filepath_export = bpy.props.StringProperty(name='File Path', description='File path for export operation', maxlen=1023, default='')
     bpy.types.Object.m3_options = bpy.props.PointerProperty(type=OptionProperties)
     bpy.types.Object.m3_model_version = bpy.props.EnumProperty(options=set(), items=model_versions, default='29')
     bpy.types.Object.m3_mesh_version = bpy.props.EnumProperty(options=set(), items=mesh_versions, default='5')

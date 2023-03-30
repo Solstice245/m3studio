@@ -33,13 +33,13 @@ def update_collection_index(self, context):
 
 def draw_props(billboard, layout):
     layout.prop(billboard, 'billboard_type', text='Type')
-    layout.prop(billboard, 'look', text='Look At Camera Center')
+    layout.prop(billboard, 'camera_look_at', text='Look At Camera Center')
 
 
 class Properties(shared.M3PropertyGroup):
     bone: bpy.props.PointerProperty(type=shared.M3BonePointerPropExclusive)
     billboard_type: bpy.props.EnumProperty(options=set(), items=bl_enum.billboard_type, default='FULL')
-    look: bpy.props.BoolProperty(options=set())
+    camera_look_at: bpy.props.BoolProperty(options=set())
 
 
 class Menu(bpy.types.Menu):

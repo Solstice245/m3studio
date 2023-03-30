@@ -1444,7 +1444,7 @@
             <version number="26" size="464"/>
         </versions>
         <fields>
-            <field name="layr_unknown00" type="uint32" expected_value="0"/>
+            <field name="layer_unknown00" type="uint32" expected_value="0"/>
             <field name="color_bitmap" type="Reference" ref_to="CHAR"/>
             <field name="color_value" type="ColorAnimationReferenceV0"/>
             <field name="flags" type="uint32" default_value="0xec">
@@ -1483,8 +1483,8 @@
             <field name="uv_offset" type="Vector2AnimationReferenceV0"/>
             <field name="uv_angle" type="Vector3AnimationReferenceV0"/>
             <field name="uv_tiling" type="Vector2AnimationReferenceV0"/>
-            <field name="layr_anim_unknown00" type="UInt32AnimationReferenceV0"/>
-            <field name="layr_anim_unknown01" type="FloatAnimationReferenceV0"/>
+            <field name="layer_anim_unknown00" type="UInt32AnimationReferenceV0"/>
+            <field name="layer_anim_unknown01" type="FloatAnimationReferenceV0"/>
             <field name="color_brightness" type="FloatAnimationReferenceV0"/>
             <field name="uv_triplanar_offset" type="Vector3AnimationReferenceV0" since_version="24"/>
             <field name="uv_triplanar_scale" type="Vector3AnimationReferenceV0" since_version="24"/> <!-- default (1.0, 1.0, 1.0)-->
@@ -1501,7 +1501,7 @@
             <field name="fresnel_inverted_mask_z" type="float" default_value="1.0" since_version="25"/>
             <field name="fresnel_yaw" type="float" default_value="0.0" since_version="25"/>
             <field name="fresnel_pitch" type="float" default_value="0.0" since_version="25"/>
-            <field name="layr_unknown01" type="uint32" default_value="0" since_version="25" till_version="25" />
+            <field name="layer_unknown01" type="uint32" default_value="0" since_version="25" till_version="25" />
         </fields>
     </structure>
 
@@ -1608,7 +1608,7 @@
             <field name="layer_norm_blend1" type="Reference" ref_to="LAYR" since_version="19"/>
             <field name="layer_norm_blend2" type="Reference" ref_to="LAYR" since_version="19"/>
             <field name="unknown2481ae8a" type="uint32" default_value="0"/>
-            <field name="layr_blend_mode" type="uint32"/>
+            <field name="layer_blend_mode" type="uint32"/>
             <field name="emis1_blend_mode" type="uint32"/>
             <field name="emis2_blend_mode" type="uint32"/>
             <field name="spec_mode" type="uint32"/>
