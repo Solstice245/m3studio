@@ -61,7 +61,7 @@ def update_point_collection_index(self, context):
 
 def draw_point_props(point, layout):
     shared.draw_prop_pointer_search(layout, point.bone, point.id_data.data, 'bones', text='Bone', icon='BONE_DATA')
-    col.separator()
+    layout.separator()
     col = layout.column(align=True)
     col.prop(point, 'emission_offset', text='Emission Offset')
     col.separator()
