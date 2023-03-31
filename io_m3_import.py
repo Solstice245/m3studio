@@ -364,13 +364,15 @@ class Importer:
             self.create_turrets()
             self.create_shadow_boxes()
 
+        if rig and mesh:
+            self.create_bounding()
+
         if mesh or effects:
             self.create_materials()
 
         if mesh:
             self.create_mesh()
             self.create_cloths()
-            self.create_bounding()
             self.create_tmd()
 
         if effects:

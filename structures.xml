@@ -2528,20 +2528,20 @@
         <fields>
             <field name="emission_offset" type="VEC3V0"/>
             <field name="emission_vector" type="VEC3V0"/>
-            <field name="length" type="FloatAnimationReferenceV0"/>
+            <field name="velocity" type="FloatAnimationReferenceV0"/>
             <field name="unknowneee1a711" type="uint32" default="0"/>
             <field name="bone" type="uint32"/>
-            <field name="unknown00" type="FloatAnimationReferenceV0"/>
-            <field name="unknown01" type="FloatAnimationReferenceV0"/>
+            <field name="velocity_base_fac" type="FloatAnimationReferenceV0"/>
+            <field name="velocity_end_fac" type="FloatAnimationReferenceV0"/>
             <field name="yaw_var_shape" type="uint32"/>
             <field name="yaw_var_amplitude" type="FloatAnimationReferenceV0"/>
             <field name="yaw_var_frequency" type="FloatAnimationReferenceV0"/>
             <field name="pitch_var_shape" type="uint32"/>
             <field name="pitch_var_amplitude" type="FloatAnimationReferenceV0"/>
             <field name="pitch_var_frequency" type="FloatAnimationReferenceV0"/>
-            <field name="length_var_shape" type="uint32"/>
-            <field name="length_var_amplitude" type="FloatAnimationReferenceV0"/>
-            <field name="length_var_frequency" type="FloatAnimationReferenceV0"/>
+            <field name="velocity_var_shape" type="uint32"/>
+            <field name="velocity_var_amplitude" type="FloatAnimationReferenceV0"/>
+            <field name="velocity_var_frequency" type="FloatAnimationReferenceV0"/>
             <field name="yaw" type="FloatAnimationReferenceV0"/>
             <field name="pitch" type="FloatAnimationReferenceV0"/>
             <field name="unknown02" type="float"/>

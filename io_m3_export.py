@@ -1468,7 +1468,6 @@ class Exporter:
             m3_lookup.extend(region_lookup)
 
             # TODO mesh flags for versions 4+
-            # for ii, batch in enumerate(ob.m3_mesh_batches[0:1]):
             for ii, batch in enumerate(ob.m3_mesh_batches):
                 first_face_index = len(m3_faces)
                 m3_faces.extend(region_faces)

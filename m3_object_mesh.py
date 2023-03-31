@@ -244,12 +244,8 @@ class Panel(bpy.types.Panel):
         if parent:
             box = layout.box()
             box.use_property_decorate = False
-            if not len(context.object.m3_mesh_batches):
-                op = box.operator('m3.handle_add', text='Add M3 Material Batch')
-                op.collection = ob.m3_mesh_batches.path_from_id()
-            else:
-                op = box.operator('m3.handle_add', text='Add M3 Material Batch')
-                op.collection = ob.m3_mesh_batches.path_from_id()
+            op = box.operator('m3.handle_add', text='Add M3 Material Batch')
+            op.collection = ob.m3_mesh_batches.path_from_id()
 
             for ii, batch in enumerate(ob.m3_mesh_batches):
                 row = box.row()
