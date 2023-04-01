@@ -52,6 +52,8 @@ def draw_props(force, layout):
     col.prop(force, 'falloff', text='Falloff')
     col.prop(force, 'height_gradient', text='Height Gradient')
     col.prop(force, 'unbounded', text='Unbounded')
+    col.prop(force, 'unknown0x08', text='Unknown (0x8)')
+    col.prop(force, 'unknown0x10', text='Unknown (0x10)')
 
 
 class Properties(shared.M3PropertyGroup):
@@ -70,6 +72,8 @@ class Properties(shared.M3PropertyGroup):
     falloff: bpy.props.BoolProperty(options=set())
     height_gradient: bpy.props.BoolProperty(options=set())
     unbounded: bpy.props.BoolProperty(options=set())
+    unknown0x08: bpy.props.BoolProperty(options=set(), default=True)
+    unknown0x10: bpy.props.BoolProperty(options=set(), default=True)
 
 
 class Menu(bpy.types.Menu):

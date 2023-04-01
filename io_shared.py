@@ -521,6 +521,8 @@ def io_force(processor):
     processor.bit('flags', 'falloff')
     processor.bit('flags', 'height_gradient')
     processor.bit('flags', 'unbounded')
+    processor.bit('flags', 'unknown0x08')
+    processor.bit('flags', 'unknown0x10')
     processor.bits_32('channels')
     processor.anim_float('strength')
     processor.anim_float('width')

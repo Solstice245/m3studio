@@ -2247,6 +2247,8 @@
                     <bit mask="0x1" name="falloff"/>
                     <bit mask="0x2" name="height_gradient"/>
                     <bit mask="0x4" name="unbounded"/>
+                    <bit mask="0x8" name="unknown0x08"/>
+                    <bit mask="0x10" name="unknown0x10"/>
                 </bits>
             </field>
             <field name="channels" type="uint32"/>
