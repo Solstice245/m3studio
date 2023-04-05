@@ -91,19 +91,19 @@ class StandardProperties(shared.M3PropertyGroup):
 
     priority: bpy.props.IntProperty(options=set())
     blend_mode: bpy.props.EnumProperty(options=set(), items=bl_enum.mat_blend, default='OPAQUE')
-    layer_blend_mode: bpy.props.EnumProperty(options=set(), items=bl_enum.mat_layer_blend, default='ADD')
-    emis1_blend_mode: bpy.props.EnumProperty(options=set(), items=bl_enum.mat_layer_blend, default='ADD')
-    emis2_blend_mode: bpy.props.EnumProperty(options=set(), items=bl_enum.mat_layer_blend, default='ADD')
+    blend_mode_layer: bpy.props.EnumProperty(options=set(), items=bl_enum.mat_layer_blend, default='ADD')
+    blend_mode_emis1: bpy.props.EnumProperty(options=set(), items=bl_enum.mat_layer_blend, default='ADD')
+    blend_mode_emis2: bpy.props.EnumProperty(options=set(), items=bl_enum.mat_layer_blend, default='ADD')
     spec_mode: bpy.props.EnumProperty(options=set(), items=bl_enum.mat_spec, default='RGB')
     specularity: bpy.props.FloatProperty(options=set(), min=0, default=20)
     depth_blend_falloff: bpy.props.FloatProperty(options=set())
     alpha_test_threshold: bpy.props.IntProperty(options=set(), subtype='FACTOR', min=0, max=255)
-    spec_hdr: bpy.props.FloatProperty(options=set(), min=0, default=1)
-    emis_hdr: bpy.props.FloatProperty(options=set(), min=0, default=1)
-    envi_const_multiply: bpy.props.FloatProperty(options=set(), min=0, default=1)
-    envi_diff_multiply: bpy.props.FloatProperty(options=set(), min=0, default=0)
-    envi_spec_multiply: bpy.props.FloatProperty(options=set(), min=0, default=0)
-    parallax_height: bpy.props.FloatProperty(name='Parallax Height', default=0)  # no UI
+    hdr_spec: bpy.props.FloatProperty(options=set(), min=0, default=1)
+    hdr_emis: bpy.props.FloatProperty(options=set(), min=0, default=1)
+    hdr_envi_const: bpy.props.FloatProperty(options=set(), min=0, default=1)
+    hdr_envi_diff: bpy.props.FloatProperty(options=set(), min=0, default=0)
+    hdr_envi_spec: bpy.props.FloatProperty(options=set(), min=0, default=0)
+    parallax_height: bpy.props.FloatProperty(name='Parallax Height', default=0)
     parallax_height_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     unknown_animation_ref: bpy.props.IntProperty(name='Unknown', min=0, default=0)  # no UI
     unknown_animation_ref_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
@@ -349,22 +349,24 @@ def draw_standard_props(matref, layout):
         col.prop(material, 'depth_blend_falloff', text='Depth Blend')
 
     col.separator()
-    col.prop(material, 'layer_blend_mode', text='Layer Blend')
-    col.prop(material, 'emis1_blend_mode', text='Emissive 1 Blend')
-    col.prop(material, 'emis2_blend_mode', text='Emissive 2 Blend')
+    col.prop(material, 'blend_mode_layer', text='Layer Blend')
+    col.prop(material, 'blend_mode_emis1', text='Emissive 1 Blend')
+    col.prop(material, 'blend_mode_emis2', text='Emissive 2 Blend')
     col.separator()
     # col.prop(material, 'spec_mode', text='Specular Mode')  # * does this actually do anything?
     col.prop(material, 'specularity', text='Specularity')
     col.separator()
-    col.prop(material, 'emis_hdr', text='Emissive HDR')
-    col.prop(material, 'spec_hdr', text='Specular HDR')
+    col.prop(material, 'hdr_emis', text='Emissive HDR')
+    col.prop(material, 'hdr_spec', text='Specular HDR')
     col.separator()
 
     if version >= 20:
-        col.prop(material, 'envi_const_multiply', text='Environment Multiply')
-        col.prop(material, 'envi_diff_multiply', text='Diffuse')
-        col.prop(material, 'envi_spec_multiply', text='Specular')
+        col.prop(material, 'hdr_envi_const', text='Environment HDR')
+        col.prop(material, 'hdr_envi_diff', text='Diffuse')
+        col.prop(material, 'hdr_envi_spec', text='Specular')
         col.separator()
+
+    shared.draw_prop_anim(col, material, 'parallax_height', text='Parallax Height')
 
     col = layout.column_flow(align=True, columns=2)
     col.use_property_split = False

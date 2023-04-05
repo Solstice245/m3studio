@@ -40,7 +40,7 @@
         </fields>
     </structure>
 
-    <structure name="SmallReference" >
+    <structure name="SmallReference">
         <description>A reference to one or more entries in a file</description>
         <versions>
             <version number="0" size="8"/>
@@ -197,7 +197,7 @@
             <field name="unused" type="int32" default_value="0" />
         </fields>
     </structure>
-    <structure name="SVC3" >
+    <structure name="SVC3">
         <description>
             Vector 3 animation reference
         </description>
@@ -379,7 +379,7 @@
             <field name="value" type="int32"/>
         </fields>
     </structure>
-    <structure name="U32_" >
+    <structure name="U32_">
         <description>An unsigned integer</description>
         <versions>
             <version number="0" size="4"/>
@@ -388,7 +388,7 @@
             <field name="value" type="uint32"/>
         </fields>
     </structure>
-    <structure name="U64_" >
+    <structure name="U64_">
         <description>An unsigned integer</description>
         <versions>
             <version number="0" size="8"/>
@@ -424,7 +424,7 @@
             <field name="unused" type="uint8" default_value="0"/>
         </fields>
     </structure>
-    <structure name="VertexFormat0x182007d" >
+    <structure name="VertexFormat0x182007d">
         <description>Vertex with one UV coordinate</description>
         <versions>
             <version number="0" size="32"/>
@@ -446,7 +446,7 @@
             <field name="unused" type="uint8" default_value="0"/>
         </fields>
     </structure>
-    <structure name="VertexFormat0x186007d" >
+    <structure name="VertexFormat0x186007d">
         <description>Vertex with two UV coordinates</description>
         <versions>
             <version number="0" size="36"/>
@@ -469,7 +469,7 @@
             <field name="unused" type="uint8" default_value="0"/>
         </fields>
     </structure>
-    <structure name="VertexFormat0x186027d" >
+    <structure name="VertexFormat0x186027d">
         <description>Vertex with two UV coordinates and vertex color</description>
         <versions>
             <version number="0" size="40"/>
@@ -517,7 +517,7 @@
             <field name="unused" type="uint8" default_value="0"/>
         </fields>
     </structure>
-    <structure name="VertexFormat0x18e027d" >
+    <structure name="VertexFormat0x18e027d">
         <description>Vertex with three UV coordinates and vertex color</description>
         <versions>
             <version number="0" size="44"/>
@@ -542,7 +542,7 @@
             <field name="unused" type="uint8" default_value="0"/>
         </fields>
     </structure>
-    <structure name="VertexFormat0x19e007d" >
+    <structure name="VertexFormat0x19e007d">
         <description>Vertex with four UV coordinates</description>
         <versions>
             <version number="0" size="44"/>
@@ -568,7 +568,7 @@
         </fields>
     </structure>
 
-    <structure name="VertexFormat0x19e027d" >
+    <structure name="VertexFormat0x19e027d">
         <description>Vertex with four UV coordinates and vertex color</description>
         <versions>
             <version number="0" size="48"/>
@@ -618,7 +618,7 @@
             <field name="unused" type="uint8" default_value="0"/> <!-- Can be -1.0 in old 3ds max exporter files -->
         </fields>
     </structure>
-    <structure name="VertexFormat0x1820061" >
+    <structure name="VertexFormat0x1820061">
         <description>Vertex with one UV coordinate</description>
         <versions>
             <version number="0" size="32"/>
@@ -640,7 +640,7 @@
             <field name="unused" type="uint8" default_value="0"/>
         </fields>
     </structure>
-    <structure name="VertexFormat0x1860061" >
+    <structure name="VertexFormat0x1860061">
         <description>Vertex with two UV coordinates</description>
         <versions>
             <version number="0" size="36"/>
@@ -663,7 +663,7 @@
             <field name="unused" type="uint8" default_value="0"/>
         </fields>
     </structure>
-    <structure name="VertexFormat0x1860261" >
+    <structure name="VertexFormat0x1860261">
         <description>Vertex with two UV coordinates and vertex color</description>
         <versions>
             <version number="0" size="40"/>
@@ -711,7 +711,7 @@
             <field name="unused" type="uint8" default_value="0"/>
         </fields>
     </structure>
-    <structure name="VertexFormat0x18e0261" >
+    <structure name="VertexFormat0x18e0261">
         <description>Vertex with three UV coordinates and vertex color</description>
         <versions>
             <version number="0" size="44"/>
@@ -736,7 +736,7 @@
             <field name="unused" type="uint8" default_value="0"/>
         </fields>
     </structure>
-    <structure name="VertexFormat0x19e0061" >
+    <structure name="VertexFormat0x19e0061">
         <description>Vertex with four UV coordinates</description>
         <versions>
             <version number="0" size="44"/>
@@ -762,7 +762,7 @@
         </fields>
     </structure>
 
-    <structure name="VertexFormat0x19e0261" >
+    <structure name="VertexFormat0x19e0261">
         <description>Vertex with four UV coordinates and vertex color</description>
         <versions>
             <version number="0" size="48"/>
@@ -838,7 +838,7 @@
         </fields>
     </structure>
 
-    <structure name="VertexFormat0x41860261" >
+    <structure name="VertexFormat0x41860261">
         <description></description>
         <versions>
             <version number="0" size="44"/>
@@ -864,7 +864,7 @@
         </fields>
     </structure>
 
-    <structure name="VertexFormat0x4186007d" >
+    <structure name="VertexFormat0x4186007d">
         <description></description>
         <versions>
             <version number="0" size="40"/>
@@ -1087,7 +1087,7 @@
         <fields>
             <field name="d1" type="int32" default_value="-1"/>
             <field name="name" type="Reference" ref_to="CHAR"/>
-            <field name="flags" type="uint32" default_value="0" >
+            <field name="flags" type="uint32" default_value="0">
                 <bits>
                     <bit mask="0x1" name="inheritTranslation"/>
                     <bit mask="0x2" name="inheritScale"/>
@@ -1166,7 +1166,7 @@
             <field name="anim_ms_start" type="uint32"/>
             <field name="anim_ms_end" type="uint32"/>
             <field name="movement_speed" type="float"/>
-            <field name="flags" type="uint32" default_value="0" >
+            <field name="flags" type="uint32" default_value="0">
                 <bits>
                     <bit mask="0x1" name="not_looping"/>
                     <bit mask="0x2" name="always_global"/>
@@ -1524,7 +1524,7 @@
                     <bit mask="0x8" name="vertex_alpha"/> <!-- Calculated value: based on the flag useVertexColor and the particle flag makesUseOfVertexAlpha -->
                 </bits>
             </field>
-            <field name="flags" type="uint32" default_value="0" >
+            <field name="flags" type="uint32" default_value="0">
                 <bits>
                     <!-- if useVertexColor is set, the following flags need also to be set:
                       * vertex_color of the additional_flags field
@@ -1570,7 +1570,7 @@
             </field>
             <field name="blend_mode" type="uint32"/>
             <field name="priority" type="int32"/>
-            <field name="rtt_channels_used" type="uint32" default_value="0" >
+            <field name="rtt_channels_used" type="uint32" default_value="0">
                  <bits>
                     <bit mask="0x1" name="channel0"/>
                     <bit mask="0x2" name="channel1"/>
@@ -1584,11 +1584,11 @@
             <field name="specularity" type="float"/>
             <field name="depth_blend_falloff" type="float" default_value="0.0"/> <!-- Only used if the bit depth_blend_falloff of additional_flags is set, typically set for particle systems -->
             <field name="alpha_test_threshold" type="uint32" default_value="0"/>
-            <field name="spec_hdr" type="float" default_value="1.0"/>
-            <field name="emis_hdr" type="float" default_value="1.0"/>
-            <field name="envi_const_multiply" type="float" since_version="20" default_value="1.0"/>
-            <field name="envi_diff_multiply" type="float" since_version="20" default_value="0.0"/>
-            <field name="envi_spec_multiply" type="float" since_version="20" default_value="0.0"/>
+            <field name="hdr_spec" type="float" default_value="1.0"/>
+            <field name="hdr_emis" type="float" default_value="1.0"/>
+            <field name="hdr_envi_const" type="float" since_version="20" default_value="1.0"/>
+            <field name="hdr_envi_diff" type="float" since_version="20" default_value="0.0"/>
+            <field name="hdr_envi_spec" type="float" since_version="20" default_value="0.0"/>
             <field name="layer_diff" type="Reference" ref_to="LAYR"/>
             <field name="layer_decal" type="Reference" ref_to="LAYR"/>
             <field name="layer_spec" type="Reference" ref_to="LAYR"/>
@@ -1608,9 +1608,9 @@
             <field name="layer_norm_blend1" type="Reference" ref_to="LAYR" since_version="19"/>
             <field name="layer_norm_blend2" type="Reference" ref_to="LAYR" since_version="19"/>
             <field name="unknown2481ae8a" type="uint32" default_value="0"/>
-            <field name="layer_blend_mode" type="uint32"/>
-            <field name="emis1_blend_mode" type="uint32"/>
-            <field name="emis2_blend_mode" type="uint32"/>
+            <field name="blend_mode_layer" type="uint32"/>
+            <field name="blend_mode_emis1" type="uint32"/>
+            <field name="blend_mode_emis2" type="uint32"/>
             <field name="spec_mode" type="uint32"/>
             <field name="parallax_height" type="FloatAnimationReferenceV0"/>
             <field name="unknown_animation_ref" type="UInt32AnimationReferenceV0"/>
@@ -1814,7 +1814,7 @@
         </fields>
     </structure>
 
-    <structure name="REF_" >
+    <structure name="REF_">
         <description>Reflection material</description>
         <versions>
             <version number="1" size="84"/>
@@ -1862,7 +1862,7 @@
         <fields>
             <field name="bone" type="uint32"/>
             <field name="material_reference_index" type="uint32"/>
-            <field name="additional_flags" type="uint32" default_value="4" since_version="17" >
+            <field name="additional_flags" type="uint32" default_value="4" since_version="17">
                 <bits>
                     <bit mask="0x1" name="emit_speed_randomize"/>
                     <bit mask="0x2" name="lifespan_randomize"/>
@@ -2000,7 +2000,7 @@
             <field name="unknown3c76d64c" type="FloatAnimationReferenceV0"/> <!-- Elsecaro_Colonist_Hut_Death_00.m3 -->
             <field name="unknownbc151e17" type="FloatAnimationReferenceV0"/>
             <field name="unknown8f507b52" type="UInt32AnimationReferenceV0" since_version="22"/>
-            <field name="flags" type="uint32" default_value="0" >
+            <field name="flags" type="uint32" default_value="0">
                 <bits>
                     <bit mask="0x1" name="sort"/>
                     <bit mask="0x2" name="collide_terrain"/>
@@ -2032,7 +2032,7 @@
                     <bit mask="0x8000000" name="copy"/>
                 </bits>
             </field>
-            <field name="rotation_flags" type="uint32" default_value="4" since_version="18" >
+            <field name="rotation_flags" type="uint32" default_value="4" since_version="18">
                 <bits>
                     <bit mask="0x2" name="relative"/>
                     <bit mask="0x4" name="always_set"/>
@@ -2120,10 +2120,10 @@
             <field name="lifetime_decay_to" type="float"/>
             <field name="attenuation_distance" type="float"/>
             <field name="active" type="UInt32AnimationReferenceV0"/>
-            <field name="layer" type="uint32" since_version="4"/>
-            <field name="lod_reduce" type="uint32" since_version="4"/>
-            <field name="lod_cut" type="uint32" since_version="4"/>
-            <field name="flags" type="uint32" default_value="0" since_version="4">
+            <field name="layer" type="uint32"/>
+            <field name="lod_reduce" type="uint32"/>
+            <field name="lod_cut" type="uint32"/>
+            <field name="flags" type="uint32" default_value="0">
                 <bits>
                     <bit mask="0x1" name="static"/>
                     <bit mask="0x2" name="unknown_flag0x2"/>
@@ -2131,7 +2131,6 @@
                     <bit mask="0x8" name="unknown_flag0x8"/>
                 </bits>
             </field>
-            <!-- <field name="unknowna0283820" size="18" till_version="4"/> -->
         </fields>
     </structure>
 
@@ -2427,7 +2426,7 @@
         </fields>
     </structure>
 
-    <structure name="SSGS" >
+    <structure name="SSGS">
         <description>
             Describes a super simple geometic shape
 
@@ -2459,7 +2458,7 @@
 
             0 = Cuboid (width=size0, length=size1, height=size2)
             1 = Sphere (radius=size0)
-            2 = Cylinder (radius=size0, height=size1))
+            2 = Cylinder (radius=size0, height=size1)
         </description>
         <versions>
             <version number="0" size="116"/>
@@ -2640,7 +2639,7 @@
             <field name="unknown3fbae7d6" type="int32" expected_value="0" till_version="6"/> <!-- haven't seen a Blizzard model where this wouldn't be 0 -->
             <field name="spline" type="Reference" ref_to="SRIB"/>
             <field name="active" type="UInt32AnimationReferenceV0"/>
-            <field name="flags" type="uint32" default_value="0" >
+            <field name="flags" type="uint32" default_value="0">
                 <bits>
                     <bit mask="0x2" name="collide_terrain"/>
                     <bit mask="0x4" name="collide_objects"/>
@@ -2694,7 +2693,7 @@
         </fields>
     </structure>
 
-    <structure name="IKJT" >
+    <structure name="IKJT">
         <description>
             IK Joint Behavior
         </description>
@@ -2712,7 +2711,7 @@
         </fields>
     </structure>
 
-    <structure name="SHBX" >
+    <structure name="SHBX">
         <description>
             Shadow Box
         </description>
@@ -2826,7 +2825,7 @@
             <field name="sts" type="Reference" ref_to="STS_"/>
             <field name="bones" type="Reference" ref_to="BONE"/>
             <field name="skin_bone_count" type="uint32"/>
-            <field name="vertex_flags" type="uint32" default_value="0x180007d" >
+            <field name="vertex_flags" type="uint32" default_value="0x180007d">
                 <bits>
                     <bit mask="0x200" name="has_vertex_colors"/>
                     <bit mask="0x20000" name="has_vertices"/>
