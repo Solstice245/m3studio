@@ -73,7 +73,7 @@ def draw_body_props(rigidbody, layout):
     # col.prop(rigidbody, 'simulation_type', text='Simulation Type')  # unknown if effective
     col.prop(rigidbody, 'mass', text='Mass')
     col.prop(rigidbody, 'friction', text='Friction')
-    col.prop(rigidbody, 'restitution', text='Restitution')
+    col.prop(rigidbody, 'bounce', text='Bounciness')
     col.prop(rigidbody, 'damping_linear', text='Linear Damping')
     col.prop(rigidbody, 'damping_angular', text='Angular Damping')
     col.prop(rigidbody, 'gravity_factor', text='Gravity Factor')
@@ -125,7 +125,7 @@ class BodyProperties(shared.M3PropertyGroup):
     physical_material: bpy.props.EnumProperty(options=set(), items=bl_enum.physics_materials)
     mass: bpy.props.FloatProperty(options=set(), default=2400)
     friction: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0, max=1, default=0.5)
-    restitution: bpy.props.FloatProperty(options=set(), default=0.1)
+    bounce: bpy.props.FloatProperty(options=set(), default=0.1)
     damping_linear: bpy.props.FloatProperty(options=set(), default=0.001)
     damping_angular: bpy.props.FloatProperty(options=set(), default=0.001)
     gravity_factor: bpy.props.FloatProperty(options=set(), default=1)

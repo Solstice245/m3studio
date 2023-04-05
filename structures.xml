@@ -2371,7 +2371,7 @@
 
             <field name="mass" type="float" default_value="2400.0" since_version="3"/>
             <field name="friction" type="float" default_value="0.7" since_version="3"/>
-            <field name="restitution" type="float" default_value="0.1"  since_version="3"/>
+            <field name="bounce" type="float" default_value="0.1"  since_version="3"/>
             <field name="damping_linear" type="float" default_value="0.001"  since_version="3"/>
             <field name="damping_angular" type="float" default_value="0.001" since_version="3"/>
             <field name="gravity_factor" type="float" default_value="1.0"  since_version="3"/>

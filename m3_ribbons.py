@@ -130,7 +130,7 @@ def draw_ribbon_props(ribbon, layout):
     col.prop(ribbon, 'gravity', text='Gravity')
     col.prop(ribbon, 'drag', text='Drag')
     col.prop(ribbon, 'friction', text='Friction')
-    col.prop(ribbon, 'bounce', text='Bounce')
+    col.prop(ribbon, 'bounce', text='Bounciness')
     col = layout.column(align=True)
     col.prop(ribbon, 'cull_method', text='Division Cull Type')
 
