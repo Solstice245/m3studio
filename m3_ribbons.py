@@ -265,7 +265,6 @@ class PointProperties(shared.M3PropertyGroup):
     velocity_var_frequency_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
 
 
-
 class SplineProperties(shared.M3PropertyGroup):
     points: bpy.props.CollectionProperty(type=PointProperties)
     points_index: bpy.props.IntProperty(options=set(), default=-1, update=update_point_collection_index)
