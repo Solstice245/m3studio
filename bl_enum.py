@@ -127,8 +127,8 @@ volume_shape = (
 
 billboard_type = (
     ('WORLDX', 'World X', 'Aligns the bone\'s X axis to the world view'),
-    ('WORLDX', 'World Y', 'Aligns the bone\'s Y axis to the world view'),
-    ('WORLDX', 'World Z', 'Aligns the bone\'s Z axis to the world view'),
+    ('WORLDY', 'World Y', 'Aligns the bone\'s Y axis to the world view'),
+    ('WORLDZ', 'World Z', 'Aligns the bone\'s Z axis to the world view'),
     ('LOCALX', 'Local X', 'Aligns the bone\'s X axis to the local view'),
     ('LOCALY', 'Local Y', 'Aligns the bone\'s Y axis to the local view'),
     ('LOCALZ', 'Local Z', 'Aligns the bone\'s Z axis to the local view'),

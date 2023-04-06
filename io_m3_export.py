@@ -971,8 +971,6 @@ class Exporter:
             m3_stg_col_indices_section = self.m3.section_for_reference(m3_stg, 'stc_indices', pos=None)
             stg_indices_sections.append(m3_stg_col_indices_section)
 
-            stcs = len(stc_section)
-
             for anim in anim_group.animations:
 
                 if not anim.action:
@@ -1343,8 +1341,6 @@ class Exporter:
         m3_lookup = []
 
         bone_bounding_points = {bone: [] for bone in self.bones}
-
-        region_batch_columns = []
 
         for ob_index, ob in enumerate(mesh_objects):
             bm = bmesh.new(use_operators=True)
@@ -2223,6 +2219,9 @@ class Exporter:
             m3_billboard.bone = self.bone_name_indices[bone.name]
             processor = M3OutputProcessor(self, billboard, m3_billboard)
             io_shared.io_billboard(processor)
+
+            m3_billboard.up = to_m3_quat(mathutils.Euler(billboard.up).to_quaternion())
+            m3_billboard.forward = to_m3_quat(mathutils.Euler(billboard.forward).to_quaternion())
 
     def create_tmd_data(self, model, tmd_data):
         tmd_section = self.m3.section_for_reference(model, 'tmd_data', version=1)

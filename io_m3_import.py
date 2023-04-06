@@ -1547,6 +1547,9 @@ class Importer:
             processor = M3InputProcessor(self, billboard, m3_billboard)
             io_shared.io_billboard(processor)
 
+            billboard.up = to_bl_quat(m3_billboard.up).to_euler('XYZ')
+            billboard.forward = to_bl_quat(m3_billboard.forward).to_euler('XYZ')
+
     def create_tmd(self):
         ob = self.ob
         for m3_tmd in self.m3[self.m3_model.tmd_data]:

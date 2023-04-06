@@ -96,7 +96,7 @@
             <field name="x" type="float"/>
             <field name="y" type="float"/>
             <field name="z" type="float"/>
-            <field name="w" type="float"/>
+            <field name="w" type="float" default="1.0"/>
         </fields>
     </structure>
     <structure name="Matrix44">
@@ -2489,14 +2489,8 @@
             <field name="bone" type="uint16"/>
             <field name="billboard_type" type="uint8" default_value="6"/>
             <field name="camera_look_at" type="uint8" default_value="1"/>
-            <field name="unknown76974b30" type="float" default_value="0.0"/>
-            <field name="unknownb7903f37" type="float" default_value="0.0"/>
-            <field name="unknown15901615" type="float" default_value="0.0"/>
-            <field name="unknown8db56887" type="float" default_value="1.0"/>
-            <field name="unknown8a4fe2ab" type="float" default_value="0.0"/>
-            <field name="unknown51d106ab" type="float" default_value="0.0"/>
-            <field name="unknownb410610b" type="float" default_value="0.0"/>
-            <field name="unknown6a9fde72" type="float" default_value="1.0"/>
+            <field name="up" type="QUATV0"/>
+            <field name="forward" type="QUATV0"/>
         </fields>
     </structure>
 
