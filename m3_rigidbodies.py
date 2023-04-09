@@ -24,9 +24,17 @@ from . import bl_enum
 def register_props():
     bpy.types.Object.m3_physicsshapes = bpy.props.CollectionProperty(type=ShapeProperties)
     bpy.types.Object.m3_physicsshapes_index = bpy.props.IntProperty(options=set(), default=-1)
+    bpy.types.Object.m3_physicsshapes_version = bpy.props.EnumProperty(options=set(), items=physicsshapes_versions, default='3')
     bpy.types.Object.m3_rigidbodies = bpy.props.CollectionProperty(type=BodyProperties)
     bpy.types.Object.m3_rigidbodies_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
     bpy.types.Object.m3_rigidbodies_version = bpy.props.EnumProperty(options=set(), items=rigid_body_versions, default='4')
+
+
+physicsshapes_versions = (
+    ('1', '1', 'Version 1'),
+    ('2', '2', 'Version 2'),
+    ('3', '3', 'Version 3'),
+)
 
 
 # need better documentation of non version 3 version
@@ -47,7 +55,7 @@ def draw_volume_props(shape, layout):
     sub = layout.column(align=True)
     sub.prop(shape, 'shape', text='Shape Type')
     if shape.shape in ['CONVEXHULL', 'MESH']:
-        sub.prop_search(shape, 'mesh_object', bpy.data, 'meshes', text='Mesh Object')
+        sub.prop_search(shape, 'mesh_object', bpy.data, 'objects', text='Mesh Object')
     elif shape.shape == 'CUBE':
         sub.prop(shape, 'size', text='Size')
     elif shape.shape == 'SPHERE':

@@ -899,7 +899,7 @@ class Exporter:
         self.create_forces(model, export_forces)
         self.create_warps(model, export_warps)
         # TODO PHSH 2/3 polygon shapes are buggy
-        self.create_physics_bodies(model, export_physics_bodies, body_version=self.ob.m3_rigidbodies_version, shape_version=1 if self.ob.m3_rigidbodies_version == '2' else 3)
+        self.create_physics_bodies(model, export_physics_bodies, body_version=self.ob.m3_rigidbodies_version, shape_version=self.ob.m3_physicsshapes_version)
         self.create_physics_joints(model, export_physics_bodies, export_physics_joints)
         self.create_physics_cloths(model, export_physics_cloths, version=self.ob.m3_cloths_version)  # TODO simulation rigging
         self.create_ik_joints(model, export_ik_joints)

@@ -126,6 +126,7 @@ class IOPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
         col.prop(ob, 'm3_cameras_version', text='Camera Version')
         col.prop(ob, 'm3_particlesystems_version', text='Particle System Version')
         col.prop(ob, 'm3_ribbons_version', text='Ribbon Version')
+        col.prop(ob, 'm3_physicsshapes_version', text='Physics Shape Version')
         col.prop(ob, 'm3_rigidbodies_version', text='Rigid Body Version')
         col.prop(ob, 'm3_turrets_part_version', text='Turret Part Version')
         col.prop(ob, 'm3_cloths_version', text='Cloth Version')
