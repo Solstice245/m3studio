@@ -2264,7 +2264,7 @@ class Exporter:
             bm.from_object(mesh_ob, self.depsgraph)
 
             vert_data = [to_m3_vec3(vert.co) for vert in bm.verts]
-            polygon_related_data = []
+            plane_equation_data = []
             loop_data = []
             polygon_data = []
 
@@ -2278,19 +2278,37 @@ class Exporter:
                 for ii, loop in enumerate(face.loops):
                     next_loop = (ii + 1) if ii < loop_count - 1 else 0
                     m3_loop = loop_desc.instance()
+                    m3_loop.unknown00 = 1
                     m3_loop.vertex = loop.vert.index
                     m3_loop.polygon = face.index
                     m3_loop.loop = face.loops[next_loop].index
                     loop_data.append(m3_loop)
 
+                # calculating plane equation
+                # simply taking first 3 verts since we assume that the face is planar
+                v0 = face.verts[0].co
+                v1 = face.verts[1].co
+                v2 = face.verts[2].co
+
+                a = v0 - v1
+                b = v0 - v2
+
+                r, s, t = a.cross(b)
+
+                k = ((r * v0[0]) + (s * v0[1]) + (t * v0[2]))
+
+                pe = mathutils.Vector((r, s, t, k))
+                pen = pe.normalized()
+                pen[3] = pe[3] * (pen[0] / pe[0])
+
                 vec = face.calc_center_bounds()
                 polygon_medians.append(vec)
-                polygon_related_data.append(to_m3_vec4((*vec.normalized(), vec.length)))
+                plane_equation_data.append(to_m3_vec4(pen))
 
             vert_section = self.m3.section_for_reference(m3, 'vertices')
             vert_section.content_add(*vert_data)
-            polygon_related_section = self.m3.section_for_reference(m3, 'polygons_related')
-            polygon_related_section.content_add(*polygon_related_data)
+            plane_equation_section = self.m3.section_for_reference(m3, 'plane_equations')
+            plane_equation_section.content_add(*plane_equation_data)
             loop_section = self.m3.section_for_reference(m3, 'loops')
             loop_section.content_add(*loop_data)
             polygon_section = self.m3.section_for_reference(m3, 'polygons')
@@ -2298,14 +2316,14 @@ class Exporter:
 
             m3.polygons_center = to_m3_vec3([(sum([poly_med[ii] for poly_med in polygon_medians]) / len(polygon_medians)) for ii in range(3)])
             m3.vertices_count = len(vert_section)
-            m3.polygons_count = len(polygon_related_section)
+            m3.polygons_count = len(plane_equation_section)
             m3.loops_count = len(loop_section)
 
-            self.mesh_to_physics_volume_sections[mesh_ob.name] = [vert_section, polygon_related_section, loop_section, polygon_section]
+            self.mesh_to_physics_volume_sections[mesh_ob.name] = [vert_section, plane_equation_section, loop_section, polygon_section]
         else:
-            vert_section, polygon_related_section, loop_section, polygon_section = self.mesh_to_physics_volume_sections[mesh_ob.name]
+            vert_section, plane_equation_section, loop_section, polygon_section = self.mesh_to_physics_volume_sections[mesh_ob.name]
             vert_section.references.append(m3.vertices)
-            # polygon_related_section.references.append(m3.polygons_related)
+            plane_equation_section.references.append(m3.plane_equations)
             loop_section.references.append(m3.loops)
             polygon_section.references.append(m3.polygons)
 

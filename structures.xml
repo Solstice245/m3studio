@@ -2305,7 +2305,7 @@
             <field name="size1" type="float" default_value="1.0"/> <!-- box y-size / capsule length (/ cylinder length?) -->
             <field name="size2" type="float" default_value="1.0"/> <!-- box z-size -->
             <field name="vertices" type="Reference" ref_to="VEC3" since_version="2"/>
-            <field name="polygons_related" type="Reference" ref_to="VEC4" since_version="2"/>
+            <field name="plane_equations" type="Reference" ref_to="VEC4" since_version="2"/>
             <field name="loops" type="Reference" ref_to="DMSE" since_version="2"/>
             <field name="polygons" type="Reference" ref_to="U8__" since_version="2"/>
             <field name="polygons_center" type="VEC3V0" since_version="2"/>

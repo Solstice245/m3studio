@@ -1359,7 +1359,7 @@ class Importer:
                     if m3_volume.desc.version == 1:
                         volume['mesh_object'] = self.gen_basic_volume_object(physics_shape.name, m3_volume.vertices, m3_volume.face_data)
                     else:
-                        args = physics_shape.name, m3_volume.vertices, m3_volume.polygons_related, m3_volume.loops, m3_volume.polygons
+                        args = physics_shape.name, m3_volume.vertices, m3_volume.plane_equations, m3_volume.loops, m3_volume.polygons
                         volume['mesh_object'] = self.gen_rigidbody_volume_object(*args)
 
                 self.m3_bl_ref[m3_rigidbody.physics_shape.index] = physics_shape
