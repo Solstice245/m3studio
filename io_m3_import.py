@@ -1477,7 +1477,7 @@ class Importer:
             pose_bone_target_name = self.m3_get_bone_name(m3_ik.bone_target)
             pose_bone_base = ob.pose.bones.get(pose_bone_base_name)
             pose_bone_target = ob.pose.bones.get(pose_bone_target_name)
-            ik = shared.m3_item_add(ob.m3_ikjoints, item_name=bone_target_name)
+            ik = shared.m3_item_add(ob.m3_ikjoints, item_name=pose_bone_target_name)
             ik.bone.handle = pose_bone_target.bl_handle if pose_bone_target else ''
 
             if pose_bone_base and pose_bone_target:
