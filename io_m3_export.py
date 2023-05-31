@@ -1079,6 +1079,18 @@ class Exporter:
                 refs_section = self.m3.section_for_reference(stc, 'anim_refs', pos=section_pos)
                 section_pos += 1
 
+                anim_fend = float('-inf')
+
+                for data_type_ii, section_data_name in enumerate(ANIM_DATA_SECTION_NAMES):
+
+                    if not len(self.action_to_anim_data[action][section_data_name]):
+                        continue
+
+                    action_data = self.action_to_anim_data[action][section_data_name]
+
+                    for ii, id_num in enumerate(action_data):
+                        anim_fend = max(anim_fend, action_data[id_num][0][-1])
+
                 for data_type_ii, section_data_name in enumerate(ANIM_DATA_SECTION_NAMES):
 
                     if not len(self.action_to_anim_data[action][section_data_name]):
@@ -1096,7 +1108,7 @@ class Exporter:
                         ids_section.content_add(id_num)
                         refs_section.content_add((data_type_ii << 16) + ii)
 
-                        data_head.fend = to_m3_ms(action_data[id_num][0][-1])
+                        data_head.fend = to_m3_ms(anim_fend)
 
                         frames_section = self.m3.section_for_reference(data_head, 'frames', pos=section_pos)
                         frames_section.content_add(*(to_m3_ms(frame) for frame in action_data[id_num][0]))

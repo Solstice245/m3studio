@@ -917,7 +917,7 @@
         <fields>
             <field name="frames" type="Reference" ref_to="I32_"/>
             <field name="flags" type="uint32"/>
-            <field name="fend" type="uint32"/>
+            <field name="fend" type="int32"/>
             <field name="keys" type="Reference" ref_to="EVNT"/>
         </fields>
     </structure>
@@ -930,7 +930,7 @@
         <fields>
             <field name="frames" type="Reference" ref_to="I32_"/>
             <field name="flags" type="uint32"/>
-            <field name="fend" type="uint32"/>
+            <field name="fend" type="int32"/>
             <field name="keys" type="Reference" ref_to="VEC2"/>
         </fields>
     </structure>
@@ -943,7 +943,7 @@
         <fields>
             <field name="frames" type="Reference" ref_to="I32_"/>
             <field name="flags" type="uint32"/>
-            <field name="fend" type="uint32"/>
+            <field name="fend" type="int32"/>
             <field name="keys" type="Reference" ref_to="VEC3"/>
         </fields>
     </structure>
@@ -956,7 +956,7 @@
         <fields>
             <field name="frames" type="Reference" ref_to="I32_"/>
             <field name="flags" type="uint32"/>
-            <field name="fend" type="uint32"/>
+            <field name="fend" type="int32"/>
             <field name="keys" type="Reference" ref_to="REAL"/>
         </fields>
     </structure>
@@ -969,7 +969,7 @@
         <fields>
             <field name="frames" type="Reference" ref_to="I32_"/>
             <field name="flags" type="uint32"/>
-            <field name="fend" type="uint32"/>
+            <field name="fend" type="int32"/>
             <field name="keys" type="Reference" ref_to="COL"/>
         </fields>
     </structure>
@@ -982,7 +982,7 @@
         <fields>
             <field name="frames" type="Reference" ref_to="I32_"/>
             <field name="flags" type="uint32"/>
-            <field name="fend" type="uint32"/>
+            <field name="fend" type="int32"/>
             <field name="keys" type="Reference" ref_to="I32_"/>
         </fields>
     </structure>
@@ -995,7 +995,7 @@
         <fields>
             <field name="frames" type="Reference" ref_to="I32_"/>
             <field name="flags" type="uint32"/>
-            <field name="fend" type="uint32"/>
+            <field name="fend" type="int32"/>
             <field name="keys" type="Reference" ref_to="I16_"/>
         </fields>
     </structure>
@@ -1008,7 +1008,7 @@
         <fields>
             <field name="frames" type="Reference" ref_to="I32_"/>
             <field name="flags" type="uint32"/>
-            <field name="fend" type="uint32"/>
+            <field name="fend" type="int32"/>
             <field name="keys" type="Reference" ref_to="I32_"/>
         </fields>
     </structure>
@@ -1021,7 +1021,7 @@
         <fields>
             <field name="frames" type="Reference" ref_to="I32_"/>
             <field name="flags" type="uint32"/>
-            <field name="fend" type="uint32"/>
+            <field name="fend" type="int32"/>
             <field name="keys" type="Reference" ref_to="U16_"/>
         </fields>
     </structure>
@@ -1035,7 +1035,7 @@
         <fields>
             <field name="frames" type="Reference" ref_to="I32_"/>
             <field name="flags" type="uint32"/>
-            <field name="fend" type="uint32"/>
+            <field name="fend" type="int32"/>
             <field name="keys" type="Reference" ref_to="U32_"/>
         </fields>
     </structure>
@@ -1048,7 +1048,7 @@
         <fields>
             <field name="frames" type="Reference" ref_to="I32_"/>
             <field name="flags" type="uint32"/>
-            <field name="fend" type="uint32"/>
+            <field name="fend" type="int32"/>
             <field name="keys" type="Reference" ref_to="QUAT"/>
         </fields>
     </structure>
@@ -1061,7 +1061,7 @@
         <fields>
             <field name="frames" type="Reference" ref_to="I32_"/>
             <field name="flags" type="uint32"/>
-            <field name="fend" type="uint32"/>
+            <field name="fend" type="int32"/>
             <field name="keys" type="Reference" ref_to="FLAG"/>
         </fields>
     </structure>
@@ -1074,7 +1074,7 @@
         <fields>
             <field name="frames" type="Reference" ref_to="I32_"/>
             <field name="flags" type="uint32"/>
-            <field name="fend" type="uint32"/>
+            <field name="fend" type="int32"/>
             <field name="keys" type="Reference" ref_to="BNDS"/>
         </fields>
     </structure>
