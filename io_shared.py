@@ -374,8 +374,8 @@ def io_particle_system(processor):
     processor.bit('flags', 'spawn_trailing_particles')
     processor.bit('flags', 'fix_length_trailing_particles')
     processor.bit('flags', 'vertex_alpha')
-    processor.bit('flags', 'model_parts')
-    processor.bit('flags', 'swap_yz_on_model_parts')
+    # processor.bit('flags', 'model_particles')  # ! handled manually
+    processor.bit('flags', 'swap_yz_on_model_particles')
     processor.bit('flags', 'scale_time_parent')
     processor.bit('flags', 'local_time')
     processor.bit('flags', 'simulate_init')

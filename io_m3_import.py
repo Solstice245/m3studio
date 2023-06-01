@@ -1231,6 +1231,11 @@ class Importer:
                 system_pointer = copy.systems.add()
                 system_pointer.handle = system.bl_handle
 
+            m3_modelpaths = self.m3[m3_system.model_paths]
+            if m3_modelpaths:
+                # currently assuming that it is only valid to have 1 path given
+                system.model_path = self.m3[m3_modelpaths[0].path].content_to_string()
+
         for system, m3_system in zip(ob.m3_particlesystems[prev_particles:], m3_systems):
             system.trail_system.handle = system_handles[m3_system.trail_system] if m3_system.trail_system >= 0 else ''
 

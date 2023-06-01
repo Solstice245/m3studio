@@ -77,12 +77,15 @@ def draw_copy_props(copy, layout):
 
 
 def draw_props(particle, layout):
+
+    par_ver = int(particle.id_data.m3_particlesystems_version)
+
     col = layout.column()
     shared.draw_prop_pointer_search(col, particle.bone, particle.id_data.data, 'bones', text='Bone', icon='BONE_DATA')
     shared.draw_prop_pointer_search(col, particle.material, particle.id_data, 'm3_materialrefs', text='Material', icon='MATERIAL')
     col.prop(particle, 'particle_type', text='Type')
 
-    if particle.particle_type in ('SPEED_ROTSCALE_BILLBOARD', 'RECT_BILLBOARD', 'SPEEDNORMAL_BILLBOARD', 'RAY'):
+    if particle.particle_type in ('BILLBOARD_XY_SPEEDRECT', 'VEC_SPEEDY_RECT', 'BILLBOARD_XY_SPEEDRECT_ALT', 'RAY'):
         col.prop(particle, 'length_width_ratio', text='Length/Width Ratio')
 
     layout.separator()
@@ -183,7 +186,8 @@ def draw_props(particle, layout):
 
     layout.separator()
     col = layout.column(align=True)
-    col.prop(particle, 'color_smoothing', text='Color Smooth Type')
+    if par_ver >= 17:
+        col.prop(particle, 'color_smoothing', text='Color Smooth Type')
     col.prop(particle, 'color_anim_mid', text='Color Middle')
     col.prop(particle, 'alpha_anim_mid', text='Alpha Middle')
     if particle.color_smoothing == 'LINEARHOLD' or particle.color_smoothing == 'BEZIERHOLD':
@@ -202,7 +206,8 @@ def draw_props(particle, layout):
 
     layout.separator()
     col = layout.column(align=True)
-    col.prop(particle, 'rotation_smoothing', text='Rotation Smooth Type')
+    if par_ver >= 17:
+        col.prop(particle, 'rotation_smoothing', text='Rotation Smooth Type')
     col.prop(particle, 'rotation_anim_mid', text='Rotation Middle')
     if particle.rotation_smoothing == 'LINEARHOLD' or particle.rotation_smoothing == 'BEZIERHOLD':
         col.prop(particle, 'rotation_hold', text='Rotation Hold Time')
@@ -219,7 +224,8 @@ def draw_props(particle, layout):
 
     layout.separator()
     col = layout.column(align=True)
-    col.prop(particle, 'size_smoothing', text='Size Smooth Type')
+    if par_ver >= 17:
+        col.prop(particle, 'size_smoothing', text='Size Smooth Type')
     col.prop(particle, 'size_anim_mid', text='Size Middle')
     if particle.size_smoothing == 'LINEARHOLD' or particle.size_smoothing == 'BEZIERHOLD':
         col.prop(particle, 'size_hold', text='Size Hold Time')
@@ -261,43 +267,48 @@ def draw_props(particle, layout):
     shared.draw_prop_pointer_search(col, particle.trail_system, particle.id_data, 'm3_particlesystems', text='Trailing Particle', icon='LINKED')
     col.prop(particle, 'trail_chance', text='Chance')
     shared.draw_prop_anim(col, particle, 'trail_rate', text='Rate')
-    col = layout.column()
-    col.use_property_split = False
-    col.prop(particle, 'local_forces', text='Local Force Channels')
-    col.prop(particle, 'world_forces', text='World Force Channels')
+    layout.separator()
+    layout.prop(particle, 'model_path', text='Model Path')
+    layout.separator()
+    row = layout.row()
+    row.use_property_split = False
+    row.prop(particle, 'local_forces', text='Local Force Channels')
+    row.prop(particle, 'world_forces', text='World Force Channels')
+    layout.separator()
     col = layout.column_flow(align=True, columns=2)
     col.use_property_split = False
     col.prop(particle, 'trailing', text='Trailing Enabled')
-    col.prop(particle, 'sort', text='Sort')
     col.prop(particle, 'collide_terrain', text='Collide Terrain')
     col.prop(particle, 'collide_objects', text='Collide Objects')
     col.prop(particle, 'spawn_on_bounce', text='Spawn On Bounce')
     col.prop(particle, 'inherit_emit_shape', text='Inherit Emission Area')
     col.prop(particle, 'inherit_emit_params', text='Inherit Emission Parameters')
     col.prop(particle, 'inherit_parent_velocity', text='Inherit Parent Velocity')
+    col.prop(particle, 'sort', text='Sort')
     col.prop(particle, 'sort_z_height', text='Sort By Z-Height')
-    col.prop(particle, 'old_rotation_smooth', text='Smooth Rotation (Old)')
-    col.prop(particle, 'old_rotation_smooth_bezier', text='Smooth Rotation Bezier (Old)')
-    col.prop(particle, 'old_size_smooth', text='Smooth Size (Old)')
-    col.prop(particle, 'old_size_smooth_bezier', text='Smooth Size Bezier (Old)')
-    col.prop(particle, 'old_color_smooth', text='Smooth Color (Old)')
-    col.prop(particle, 'old_color_smooth_bezier', text='Smooth Color Bezier (Old)')
+
+    if par_ver < 17:
+        col.prop(particle, 'old_rotation_smooth', text='Smooth Rotation')
+        col.prop(particle, 'old_rotation_smooth_bezier', text='Smooth Rotation Bezier')
+        col.prop(particle, 'old_size_smooth', text='Smooth Size')
+        col.prop(particle, 'old_size_smooth_bezier', text='Smooth Size Bezier')
+        col.prop(particle, 'old_color_smooth', text='Smooth Color')
+        col.prop(particle, 'old_color_smooth_bezier', text='Smooth Color Bezier')
     col.prop(particle, 'reverse_iteration', text='Reverse Iteration')
-    col.prop(particle, 'lit_parts', text='Lit Parts')
-    col.prop(particle, 'random_uv_flipbook_start', text='uv Start')
-    col.prop(particle, 'multiply_gravity', text='Multiply By Gravity')
-    col.prop(particle, 'clamp_trailing_particles', text='Clamp Trailing Parts')
-    col.prop(particle, 'spawn_trailing_particles', text='Spawn Trailing Parts')
-    col.prop(particle, 'fix_length_trailing_particles', text='Fix Length Trailing Parts')
-    col.prop(particle, 'vertex_alpha', text='Use Vertex Alpha')
-    col.prop(particle, 'model_parts', text='Model Parts')
-    col.prop(particle, 'swap_yz_on_model_parts', text='Swap Y-Z On Model Parts')
-    col.prop(particle, 'scale_time_parent', text='Scale Time By Parent')
-    col.prop(particle, 'local_time', text='Use Local Time')
-    col.prop(particle, 'simulate_init', text='Simulate On Init')
-    col.prop(particle, 'copy', text='Copy')
     col.prop(particle, 'relative', text='Relative Rotation')
     col.prop(particle, 'always_set', text='Always Set')
+    col.prop(particle, 'vertex_alpha', text='Use Vertex Alpha')
+    col.prop(particle, 'random_uv_flipbook_start', text='Flipbook UV Random Start')
+    col.prop(particle, 'clamp_trailing_particles', text='Clamp Trailing Particles')
+    col.prop(particle, 'spawn_trailing_particles', text='Spawn Trailing Particles')
+    col.prop(particle, 'fix_length_trailing_particles', text='Fix Length Trailing Particles')
+    col.prop(particle, 'simulate_init', text='Simulate On Init')
+    col.prop(particle, 'scale_time_parent', text='Scale Time By Parent')
+    col.prop(particle, 'local_time', text='Use Local Time')
+    col.prop(particle, 'lit_parts', text='Lit Parts')
+    col.prop(particle, 'multiply_gravity', text='Multiply By Gravity')
+    col.prop(particle, 'swap_yz_on_model_particles', text='Swap Y-Z On Model Particles')
+    col.prop(particle, 'copy', text='Copy')
 
 
 class SystemPointerProp(bpy.types.PropertyGroup):
@@ -328,6 +339,7 @@ class SystemProperties(shared.M3PropertyGroup):
     bone: bpy.props.PointerProperty(type=shared.M3BonePointerProp)
     material: bpy.props.PointerProperty(type=shared.M3MatRefPointerProp)
     particle_type: bpy.props.EnumProperty(options=set(), items=bl_enum.particle_type)
+    model_path: bpy.props.StringProperty(options=set(), description='Replaces the particle system\'s material with the m3 asset at the given path')
     length_width_ratio: bpy.props.FloatProperty(default=1)
     distance_limit: bpy.props.FloatProperty(options=set(), min=0)
     lod_cut: bpy.props.EnumProperty(options=set(), items=bl_enum.lod)
@@ -452,8 +464,7 @@ class SystemProperties(shared.M3PropertyGroup):
     spawn_trailing_particles: bpy.props.BoolProperty(options=set())
     fix_length_trailing_particles: bpy.props.BoolProperty(options=set())
     vertex_alpha: bpy.props.BoolProperty(options=set())
-    model_parts: bpy.props.BoolProperty(options=set())
-    swap_yz_on_model_parts: bpy.props.BoolProperty(options=set())
+    swap_yz_on_model_particles: bpy.props.BoolProperty(options=set())
     scale_time_parent: bpy.props.BoolProperty(options=set())
     local_time: bpy.props.BoolProperty(options=set())
     simulate_init: bpy.props.BoolProperty(options=set())

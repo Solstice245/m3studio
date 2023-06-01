@@ -157,17 +157,17 @@ light_shape = (
 )
 
 particle_type = (
-    ('BILLBOARD', 'Square Billboards', 'The emitted particles are square shaped and always face the camera'),
-    ('SPEED_ROTSCALE_BILLBOARD', 'Speed Scaled and Rotated Billboards', 'The emitted particles are scaled and rotated according to their speed'),
-    ('UNKNOWN_02', 'Unknown Particle Type 2', ''),
-    ('UNKNOWN_03', 'Unknown Particle Type 3', ''),
-    ('UNKNOWN_04', 'Unknown Particle Type 4', ''),
-    ('UNKNOWN_05', 'Unknown Particle Type 5', ''),
-    ('RECT_BILLBOARD', 'Rectangular Bollboards', 'The emitted particles are rectgularly shaped and always face the camera'),
-    ('SPEEDNORMAL_BILLBOARD', 'Square Billboards with Speed Normals', 'The emitted particles are square shaped and face their speed vector'),
-    ('UNKNOWN_08', 'Unknown Particle Type 8', ''),
-    ('RAY', 'Ray from Spawn Location', 'The emitted particles are stretched from the spawn location'),
-    ('UNKNOWN_10', 'Unknown Particle Type 10', ''),
+    ('BILLBOARD_XYZ_SQUARE', 'Billboard XYZ Square', 'The emitted particles are square and face the camera on all axes'),
+    ('BILLBOARD_XY_SPEEDRECT', 'Billboard XY Speed Rectangle', 'The emitted particles face the camera on the XY axes and are scaled on speed'),
+    ('VEC_SQUARE_ALT1', 'Vector Normal Square (Alt 1)', 'The emitted particles are square and face their emission vector'), # alt1/2 only different from the common version by flipping the angle
+    ('VEC_SQUARE_ALT2', 'Vector Normal Square (Alt 2)', 'The emitted particles are square and face their emission vector'),
+    ('BILLBOARD_XY_SQUARE', 'Billboard XY Square', 'The emitted particles are square and face the camera on the XY axes'),
+    ('VEC_SQUARE_ALT3', 'Vector Normal Square (Alt 3)', 'The emitted particles are square and face their emission vector'), # seems to have slight differences from alt1/2
+    ('VEC_SPEEDY_RECT', 'Vector Normal Speed Y Rectangle', 'The emitted particles face their emission vector. Their width is scaled on speed'),
+    ('VEC_SQUARE', 'Vector Normal Square', 'The emitted particles are square and face their emission vector'),
+    ('VECRAND_SQUARE', 'Vector Random Square', 'The emitted particles are square and face their emission vector, but with random tilts'),
+    ('RAY', 'Ray', 'The emitted particles are stretched from the emitter while facing the camera on the XY axes'),
+    ('BILLBOARD_XY_SPEEDRECT_ALT', 'Billboard XY Speed Rectangle (Alt)', 'The emitted particles are scaled and rotated according to their speed'), # similar to BILLBOARD_XY_SPEEDRECT, but it seems to emit from a point behind the emitter, instead of in front
 )
 
 particle_shape = (

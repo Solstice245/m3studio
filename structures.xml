@@ -1734,7 +1734,7 @@
     </structure>
 
     <structure name="SCHR">
-        <description>Unknown</description>
+        <description>List of strings, typically for asset paths</description>
         <versions>
             <version number="0" size="12"/>
         </versions>
@@ -2024,8 +2024,8 @@
                     <bit mask="0x80000" name="spawn_trailing_particles"/>
                     <bit mask="0x100000" name="fix_length_trailing_particles"/>
                     <bit mask="0x200000" name="vertex_alpha"/>
-                    <bit mask="0x400000" name="model_parts"/>
-                    <bit mask="0x800000" name="swap_yz_on_model_parts"/>
+                    <bit mask="0x400000" name="model_particles"/> <!-- check if model_paths in use, otherwise must be unchecked -->
+                    <bit mask="0x800000" name="swap_yz_on_model_particles"/>
                     <bit mask="0x1000000" name="scale_time_parent"/>
                     <bit mask="0x2000000" name="local_time"/>
                     <bit mask="0x4000000" name="simulate_init"/>
@@ -2063,7 +2063,7 @@
             <field name="trail_rate" type="FloatAnimationReferenceV0"/>
             <field name="unknownfdab7ff3" type="uint32" default_value="0xffffffff"/>
             <field name="unknown7d4a9e6b" type="uint32" expected_value="0x00000000"/>
-            <field name="used_model" type="Reference" ref_to="SCHR"/>
+            <field name="model_paths" type="Reference" ref_to="SCHR"/>
             <field name="copy_indices" type="Reference" ref_to="U32_"/>
             <field name="unknown9a7afdf2" type="uint32" since_version="23"/>
             <field name="unknown87d57a7a" type="uint32" since_version="23"/>

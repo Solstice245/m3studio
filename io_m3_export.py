@@ -1804,6 +1804,13 @@ class Exporter:
                     if pointer.handle == system.bl_handle:
                         copy_indices.append(ii)
 
+            if system.model_path:
+                model_paths_section = self.m3.section_for_reference(m3_system, 'model_paths')
+                model_path = model_paths_section.content_add()
+                model_path_string_section = self.m3.section_for_reference(model_path, 'path')
+                model_path_string_section.content_from_string(system.model_path)
+                m3_system.bit_set('flags', 'model_particles', True)
+
             if len(copy_indices):
                 copy_indices_section = self.m3.section_for_reference(m3_system, 'copy_indices')
                 copy_indices_section.content_add(*copy_indices)
