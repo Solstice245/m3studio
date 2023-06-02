@@ -1950,12 +1950,12 @@
             <field name="uv_flipbook_row_fraction" type="float" default_value="inf" since_version="12"/>
             <field name="bounce" type="float" default_value="0.0"/>
             <field name="friction" type="float" default_value="1.0"/>
-            <field name="unknown9" type="int32" default_value="-1"/>
-            <field name="unknown10" type="uint32"/>
-            <field name="unknown11" type="uint32"/>
-            <field name="unknown12" type="uint32"/>
-            <field name="unknown13" type="uint32"/>
-            <field name="unknown14" type="uint32"/>
+            <field name="unknown9" type="int32" default_value="-1"/> <!-- possibly collision particle system index? -->
+            <field name="collide_emit_min" type="uint32"/> <!-- Vulture_Ghost_DOM_Death.m3 uses collision particle emission -->
+            <field name="collide_emit_max" type="uint32"/>
+            <field name="unknown12" type="float"/>
+            <field name="unknown13" type="float"/>
+            <field name="collide_events_cull" type="uint32"/>
             <!-- particleType:
             0,2,3,4,5=Square Billbords ?
             1= Speed Scaled and Rotated Billbords influenced by lengthWidhtRatio
@@ -1969,35 +1969,33 @@
             <field name="unknown16" type="uint32" default_value="0x00000000"/>
             <field name="unknownFloat7" type="float" default_value="1.0"/>
             <field name="unknown5Addedv2" type="float"  default_value="1.0" since_version="17"/>
-            <field name="unknown9ffad0f0" type="uint32" default_value="0"/>
-            <field name="unknowne0bd54c8" type="FloatAnimationReferenceV0"/>
-            <field name="unknowna2d44d80" type="FloatAnimationReferenceV0"/>
-            <field name="unknownb6d53a88" type="uint32" default_value="0"/>
-            <field name="unknownf8e2b3d0" type="FloatAnimationReferenceV0"/>
-            <field name="unknown54f4ae30" type="FloatAnimationReferenceV0"/>
-            <field name="unknownf8b3d529" type="uint32" default_value="0"/>
-            <field name="unknown5f54fb02" type="FloatAnimationReferenceV0"/>
-            <field name="unknown84d843d6" type="FloatAnimationReferenceV0"/>
-            <field name="unknown6b3b9f9" type="uint32" default_value="0x00000000"/> <!-- Spectre_Heavens_COOP_UltrasonicPulse.m3 -->
-            <field name="unknown9cb3dd18" type="FloatAnimationReferenceV0"/>
-            <field name="unknown2e01be90" type="FloatAnimationReferenceV0"/>
-            <field name="unknowneff4c5be" type="uint32" default_value="0"/>
+            <field name="pitch_var_shape" type="uint32"/>
+            <field name="pitch_var_amplitude" type="FloatAnimationReferenceV0"/>
+            <field name="pitch_var_frequency" type="FloatAnimationReferenceV0"/>
+            <field name="yaw_var_shape" type="uint32"/>
+            <field name="yaw_var_amplitude" type="FloatAnimationReferenceV0"/>
+            <field name="yaw_var_frequency" type="FloatAnimationReferenceV0"/>
+            <field name="speed_var_shape" type="uint32"/>
+            <field name="speed_var_amplitude" type="FloatAnimationReferenceV0"/>
+            <field name="speed_var_frequency" type="FloatAnimationReferenceV0"/>
+            <field name="size_var_shape" type="uint32"/>
+            <field name="size_var_amplitude" type="FloatAnimationReferenceV0"/>
+            <field name="size_var_frequency" type="FloatAnimationReferenceV0"/>
+            <field name="unknowneff4c5be" type="uint32"/> <!-- haven't found a use case for this -->
             <field name="unknownf6193fc0" type="FloatAnimationReferenceV0"/>
             <field name="unknowna5e2260a" type="FloatAnimationReferenceV0"/>
-            <field name="unknown9aa3bbb9" type="uint32" expected_value="0x00000000"/>
-            <!-- making guess on unknown485f7eea type -->
+            <field name="unknown9aa3bbb9" type="uint32"/> <!-- haven't found a use case for this -->
             <field name="unknown485f7eea" type="FloatAnimationReferenceV0"/>
-            <!-- making guess on unknown34b6f141 type -->
             <field name="unknown34b6f141" type="FloatAnimationReferenceV0"/>
-            <field name="unknownb69653a4" type="uint32" default_value="0"/>
+            <field name="unknownb69653a4" type="uint32"/> <!-- haven't found a use case for this -->
             <field name="unknown89cdf966" type="FloatAnimationReferenceV0"/>
             <field name="unknown4eefdfc1" type="FloatAnimationReferenceV0"/>
-            <field name="unknownb47e5f82" type="uint32" default_value="0x00000000"/>
-            <field name="unknownab37a1d5" type="FloatAnimationReferenceV0"/> <!-- Elsecaro_Colonist_Hut_Death_01.m3 Elsecaro_Colonist_Hut_Death_02.m3 -->
-            <field name="unknownbef7f4d3" type="FloatAnimationReferenceV0"/> <!-- Elsecaro_Colonist_Hut_Death_03.m3 -->
-            <field name="unknown8262f69c" type="uint32" default_value="0x00000000"/>
-            <field name="unknownb2dbf2f3" type="FloatAnimationReferenceV0"/> <!-- Elsecaro_Colonist_Hut_Death_00.m3 -->
-            <field name="unknown3c76d64c" type="FloatAnimationReferenceV0"/> <!-- Elsecaro_Colonist_Hut_Death_00.m3 -->
+            <field name="spread_x_var_shape" type="uint32"/>
+            <field name="spread_x_var_amplitude" type="FloatAnimationReferenceV0"/>
+            <field name="spread_x_var_frequency" type="FloatAnimationReferenceV0"/>
+            <field name="spread_y_var_shape" type="uint32"/>
+            <field name="spread_y_var_amplitude" type="FloatAnimationReferenceV0"/>
+            <field name="spread_y_var_frequency" type="FloatAnimationReferenceV0"/>
             <field name="unknownbc151e17" type="FloatAnimationReferenceV0"/>
             <field name="unknown8f507b52" type="UInt32AnimationReferenceV0" since_version="22"/>
             <field name="flags" type="uint32" default_value="0">
@@ -2061,12 +2059,12 @@
             <field name="trail_system" type="int32" default_value="-1"/>
             <field name="trail_chance" type="float" default_value="0.0"/>
             <field name="trail_rate" type="FloatAnimationReferenceV0"/>
-            <field name="unknownfdab7ff3" type="uint32" default_value="0xffffffff"/>
+            <field name="unknownfdab7ff3" type="int32" default_value="-1"/> <!-- possibly collision projection index? -->
             <field name="unknown7d4a9e6b" type="uint32" expected_value="0x00000000"/>
             <field name="model_paths" type="Reference" ref_to="SCHR"/>
             <field name="copy_indices" type="Reference" ref_to="U32_"/>
             <field name="unknown9a7afdf2" type="uint32" since_version="23"/>
-            <field name="unknown87d57a7a" type="uint32" since_version="23"/>
+            <field name="unknown87d57a7a" type="int32" since_version="23"/> <!-- possibly collision projection index? -->
         </fields>
     </structure>
 
