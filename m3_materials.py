@@ -25,7 +25,7 @@ def register_props():
     bpy.types.Object.m3_materialrefs = bpy.props.CollectionProperty(type=ReferenceProperties)
     bpy.types.Object.m3_materialrefs_index = bpy.props.IntProperty(options=set(), default=-1)
     bpy.types.Object.m3_materials_standard = bpy.props.CollectionProperty(type=StandardProperties)
-    bpy.types.Object.m3_materials_standard_version = bpy.props.EnumProperty(options=set(), items=standard_versions, default='20')
+    bpy.types.Object.m3_materials_standard_version = bpy.props.EnumProperty(options=set(), items=standard_versions, default='18')
     bpy.types.Object.m3_materials_displacement = bpy.props.CollectionProperty(type=DisplacementProperties)
     bpy.types.Object.m3_materials_composite = bpy.props.CollectionProperty(type=CompositeProperties)
     bpy.types.Object.m3_materials_terrain = bpy.props.CollectionProperty(type=TerrainProperties)
