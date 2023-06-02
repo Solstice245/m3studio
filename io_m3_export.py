@@ -1741,6 +1741,7 @@ class Exporter:
             trail_system = shared.m3_pointer_get(systems, system.trail_system)
             if trail_system:
                 m3_system.trail_system = systems.index(trail_system)
+                m3_system.bit_set('flags', 'spawn_trailing_particles', True)
 
             if int(version) >= 12:
                 m3_system.local_forces_fb = m3_system.local_forces
