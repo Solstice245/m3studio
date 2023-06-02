@@ -633,7 +633,47 @@ def draw_menu_duplicate(layout, collection, dup_keyframes_opt=False):
         op.dup_action_keyframes = True
 
 
-def draw_prop_anim(layout, data, field, index=-1, text=''):
+def draw_prop_split(layout, flow='col', align=False, text='', sep=3.5):
+    main = layout.row(align=align)
+    main.use_property_split = False
+
+    split = main.split(factor=0.4, align=align)
+    row = split.row()
+    col = row.column(align=align)
+    col.alignment = 'RIGHT'
+    col.label(text=text)
+    row = main.row()
+    if layout.use_property_decorate:
+        row.separator(factor=sep)
+    return split.row(align=align) if flow == 'row' else split.column(align=align)
+
+
+def draw_op_anim_header(layout, data, field):
+    op = layout.operator('m3.edit_anim_header', text='', icon='PREFERENCES')
+    op.prop_id_name = data.id_data.name
+    op.prop_path = data.path_from_id()
+    op.prop_name = field
+
+
+def draw_op_anim_prop(layout, data, field, index=-1, draw_op=True):
+    row = layout.row(align=True)
+    if draw_op:
+        draw_op_anim_header(row, data, field)
+    else:
+        row.separator(factor=3.6)
+    col = row.column(align=True)
+
+    rna_props = data.bl_rna.properties[field]
+    if rna_props.array_length and rna_props.subtype != 'COLOR' and index == -1:
+        for ii in range(rna_props.array_length):
+            col.prop(data, field, index=ii, text='')
+    else:
+        col.prop(data, field, index=index, text='')
+
+    return col
+
+
+def draw_prop_anim(layout, data, field, index=-1, style='col', split=True, text=''):
     main = layout.row(align=True)
     main.use_property_split = False
 
@@ -644,9 +684,12 @@ def draw_prop_anim(layout, data, field, index=-1, text=''):
         vec_name_items = 'XYZ'
 
     if layout.use_property_split:
-        split = main.split(factor=0.4, align=True)
-        row = split.row(align=True)
-        if vec_name_items:
+        if split:
+            split = main.split(factor=0.4, align=True)
+            row = split.row(align=True)
+        else:
+            split = main.row(align=True)
+        if vec_name_items and style == 'col':
             col = row.column(align=True)
             col.alignment = 'RIGHT'
             col.label(text=(text or rna_props.name or field) + ' ' + vec_name_items[0])
@@ -661,19 +704,17 @@ def draw_prop_anim(layout, data, field, index=-1, text=''):
         row = main
 
     if index < 1:
-        op = row.operator('m3.edit_anim_header', text='', icon='PREFERENCES')
-        op.prop_id_name = data.id_data.name
-        op.prop_path = data.path_from_id()
-        op.prop_name = field
+        draw_op_anim_header(row, data, field)
     else:
         row.separator(factor=3.6)
 
-    col = row.column(align=True)
+    sub = row.row(align=True) if style == 'row' else row.column(align=True)
+    sub.use_property_decorate = False
     if vec_name_items:
         for ii in range(max(1, rna_props.array_length)):
-            col.prop(data, field, index=ii, text='' if layout.use_property_split else text)
+            sub.prop(data, field, index=ii, text='' if layout.use_property_split else text)
     else:
-        col.prop(data, field, index=index, text='' if layout.use_property_split else text)
+        sub.prop(data, field, index=index, text='' if layout.use_property_split else text)
 
     if layout.use_property_split and layout.use_property_decorate:
         row = main.row()

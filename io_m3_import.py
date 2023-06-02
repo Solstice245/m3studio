@@ -1216,6 +1216,11 @@ class Importer:
             processor = M3InputProcessor(self, system, m3_system)
             io_shared.io_particle_system(processor)
 
+            if m3_system.bit_get('flags', 'tail_clamp'):
+                system.tail_type = 'CLAMP'
+            if m3_system.bit_get('flags', 'tail_fix'):
+                system.tail_type = 'FIX'
+
             if hasattr(m3_system, 'emit_shape_regions'):
                 for region_indice in self.m3[m3_system.emit_shape_regions]:
                     mesh_object_pointer = system.emit_shape_meshes.add()

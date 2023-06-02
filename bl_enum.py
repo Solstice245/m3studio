@@ -157,28 +157,28 @@ light_shape = (
 )
 
 particle_type = (
-    ('BILLBOARD_XYZ_SQUARE', 'Billboard XYZ Square', 'The emitted particles are square and face the camera on all axes'),
-    ('BILLBOARD_XY_SPEEDRECT', 'Billboard XY Speed Rectangle', 'The emitted particles face the camera on the XY axes and are scaled on speed'),
-    ('VEC_SQUARE_ALT1', 'Vector Normal Square (Alt 1)', 'The emitted particles are square and face their emission vector'), # alt1/2 only different from the common version by flipping the angle
-    ('VEC_SQUARE_ALT2', 'Vector Normal Square (Alt 2)', 'The emitted particles are square and face their emission vector'),
-    ('BILLBOARD_XY_SQUARE', 'Billboard XY Square', 'The emitted particles are square and face the camera on the XY axes'),
-    ('VEC_SQUARE_ALT3', 'Vector Normal Square (Alt 3)', 'The emitted particles are square and face their emission vector'), # seems to have slight differences from alt1/2
-    ('VEC_SPEEDY_RECT', 'Vector Normal Speed Y Rectangle', 'The emitted particles face their emission vector. Their width is scaled on speed'),
-    ('VEC_SQUARE', 'Vector Normal Square', 'The emitted particles are square and face their emission vector'),
-    ('VECRAND_SQUARE', 'Vector Random Square', 'The emitted particles are square and face their emission vector, but with random tilts'),
-    ('RAY', 'Ray', 'The emitted particles are stretched from the emitter while facing the camera on the XY axes'),
-    ('BILLBOARD_XY_SPEEDRECT_ALT', 'Billboard XY Speed Rectangle (Alt)', 'The emitted particles are scaled and rotated according to their speed'), # similar to BILLBOARD_XY_SPEEDRECT, but it seems to emit from a point behind the emitter, instead of in front
+    ('BILLBOARD', 'Billboard', 'Particles will always be square to the camera'),
+    ('TAIL', 'Tail', 'Particles will face the camera and be stretched based on Tail Length and velocity'),
+    ('EMISSION', 'Emission', 'Particles will face the same direction as their velocity vector'),
+    ('WORLD', 'World', 'Particles will face the given yaw and pitch in world space'),
+    ('SINGLE', 'Single', 'Particles will face the camera on the Z-axis while using the given yaw and pitch'),
+    ('GROUND', 'Ground', 'Particles will face away from the terrain heightmap'),
+    ('GROUND_TAIL', 'Ground Tail', 'Particles will face away from the terrain heightmap while being streched based on Tail Length and velocity'),
+    ('EMITTER', 'Emitter', 'Particles will face their emitter\'s local Z-axis'),
+    ('COLLISION', 'Collision', 'Particles will face a direction based on the collision surface in the collision event they were generated from'),
+    ('RAY', 'Ray', 'Particles are stretched from the emitter while facing the camera'),
+    ('TAIL_ALT', 'Tail (Alt)', 'Particles will face the camera and be stretched based on Tail Length and velocity'),  # similar to TAIL, but it seems to emit from a point behind the emitter, instead of in front
 )
 
 particle_shape = (
-    ('POINT', 'Point', 'Particles spawn at a certain point'),
-    ('PLANE', 'Plane', 'Particles spawn within the area of the defined plane'),
-    ('SPHERE', 'Sphere', 'Particles spawn within the area of the defined sphere'),
-    ('CUBE', 'Cube', 'Particles spawn within the area of the defined cube'),
-    ('CYLINDER', 'Cylinder', 'Particles spawn within the area of the defined cylinder'),
-    ('DISC', 'Disc', 'Particles spawn within the area of the defined disc'),
-    ('SPLINE', 'Spline', 'Particles spawn on defined points'),
-    ('MESH', 'Mesh (V17+)', 'Particles spawn on faces of a mesh. A mesh using vertex colors can control the probability of emission using the red channel'),
+    ('POINT', 'Point', 'Particles emit at a certain point'),
+    ('PLANE', 'Plane', 'Particles emit within the area of the defined plane'),
+    ('SPHERE', 'Sphere', 'Particles emit within the area of the defined sphere'),
+    ('CUBE', 'Cube', 'Particles emit within the area of the defined cube'),
+    ('CYLINDER', 'Cylinder', 'Particles emit within the area of the defined cylinder'),
+    ('DISC', 'Disc', 'Particles emit within the area of the defined disc'),
+    ('SPLINE', 'Spline', 'Particles emit on defined points'),
+    ('MESH', 'Mesh (V17+)', 'Particles emit on faces of a mesh. A mesh with vertex colors can control the probability of emission using the red channel'),
 )
 
 particle_emit_type = (
@@ -187,6 +187,12 @@ particle_emit_type = (
     ('ZAXIS', 'Z-Axis', 'Emitted particles move in a random direction along the Z axis of the emitter'),
     ('RANDOM', 'Random', 'Emitted particles move in an entirely arbitrary direction'),
     ('MESH', 'Mesh Normal', 'Emitted particles move along the normal of the face being used as the emitter'),
+)
+
+particle_tail_type = (
+    ('FREE', 'Free', 'The given tail length acts as a general factor for the computed tail length'),
+    ('CLAMP', 'Clamped', 'The computed tail length starts at zero and will never exceed the given tail length'),
+    ('FIX', 'Fixed', 'The computed tail length is fixed at the given tail length, regardless of velocity'),
 )
 
 projection_type = (

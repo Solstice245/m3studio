@@ -1735,17 +1735,28 @@ class Exporter:
             processor = M3OutputProcessor(self, system, m3_system)
             io_shared.io_particle_system(processor)
 
+            if system.tail_type == 'CLAMP':
+                m3_system.bit_set('flags', 'tail_clamp', True)
+            elif system.tail_type == 'FIX':
+                m3_system.bit_set('flags', 'tail_fix', True)
+
             if system.emit_count_header.flags == -1:
                 m3_system.emit_count.header.flags = 0x6
 
             trail_system = shared.m3_pointer_get(systems, system.trail_system)
             if trail_system:
                 m3_system.trail_system = systems.index(trail_system)
-                m3_system.bit_set('flags', 'spawn_trailing_particles', True)
+                m3_system.bit_set('flags', 'use_trailing_particle', True)
 
             if int(version) >= 12:
                 m3_system.local_forces_fb = m3_system.local_forces
                 m3_system.world_forces_fb = m3_system.world_forces
+                try:
+                    m3_system.uv_flipbook_col_fraction = 1 / m3_system.uv_flipbook_cols
+                    m3_system.uv_flipbook_row_fraction = 1 / m3_system.uv_flipbook_rows
+                except ZeroDivisionError:
+                    m3_system.uv_flipbook_col_fraction = float('inf')
+                    m3_system.uv_flipbook_row_fraction = float('inf')
 
             m3_system.unknowne0bd54c8 = self.init_anim_ref_float()
             m3_system.unknowna2d44d80 = self.init_anim_ref_float()

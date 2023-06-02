@@ -1867,7 +1867,7 @@
                     <bit mask="0x1" name="emit_speed_randomize"/>
                     <bit mask="0x2" name="lifespan_randomize"/>
                     <bit mask="0x4" name="mass_randomize"/>
-                    <bit mask="0x8" name="trailing"/>
+                    <bit mask="0x8" name="world_space"/>
                 </bits>
             </field>
             <field name="emit_speed" type="FloatAnimationReferenceV0"/>
@@ -1905,7 +1905,7 @@
             <field name="mass" type="float" default_value="0.001"/>
             <field name="mass2" type="float" default_value="1.0"/>
             <field name="unknownFloat2c" type="float" default_value="1.0" since_version="12"/>
-            <field name="trailing" type="uint32" till_version="12"/>
+            <field name="world_space" type="uint32" till_version="12"/>
             <field name="local_forces" type="uint16" default_value="0" since_version="12"/>
             <field name="world_forces" type="uint16" default_value="0" since_version="12"/>
             <field name="local_forces_fb" type="uint16" default_value="0" since_version="12"/>
@@ -1939,10 +1939,10 @@
             <field name="color2_end" type="ColorAnimationReferenceV0"/>
             <field name="unknown7" type="uint32" default_value="0"/>
             <field name="emit_count" type="Int16AnimationReferenceV0"/>
-            <field name="uv_flipbook_start_init_index" type="uint8"  default_value="0"/>
-            <field name="uv_flipbook_start_stop_index" type="uint8"  default_value="0"/>
-            <field name="uv_flipbook_end_init_index" type="uint8" default_value="0"/>
-            <field name="uv_flipbook_end_stop_index" type="uint8" default_value="0"/>
+            <field name="uv_flipbook_start_init_index" type="uint8"/>
+            <field name="uv_flipbook_start_stop_index" type="uint8"/>
+            <field name="uv_flipbook_end_init_index" type="uint8"/>
+            <field name="uv_flipbook_end_stop_index" type="uint8"/>
             <field name="uv_flipbook_start_lifespan_factor" type="float"/>
             <field name="uv_flipbook_cols" type="uint16"/>
             <field name="uv_flipbook_rows" type="uint16"/>
@@ -1953,22 +1953,15 @@
             <field name="unknown9" type="int32" default_value="-1"/> <!-- possibly collision particle system index? -->
             <field name="collide_emit_min" type="uint32"/> <!-- Vulture_Ghost_DOM_Death.m3 uses collision particle emission -->
             <field name="collide_emit_max" type="uint32"/>
-            <field name="unknown12" type="float"/>
-            <field name="unknown13" type="float"/>
+            <field name="unknown12" type="float"/> <!-- collide emission chance or energy %? -->
+            <field name="unknown13" type="float"/> <!-- collide emission chance or energy %? -->
             <field name="collide_events_cull" type="uint32"/>
-            <!-- particleType:
-            0,2,3,4,5=Square Billbords ?
-            1= Speed Scaled and Rotated Billbords influenced by lengthWidhtRatio
-            6 = Rectangular Billbords (see length_width_ratio)
-            7 = Quads with speed as normal
-            9 = Quads that stretches between spawn point and current location
-            -->
             <field name="particle_type" type="uint32"/>
-            <field name="length_width_ratio" type="float" default_value="1.0"/>
-            <field name="unknown15" type="uint32" default_value="0x00000000"/>
-            <field name="unknown16" type="uint32" default_value="0x00000000"/>
+            <field name="instance_tail" type="float" default_value="1.0"/>
+            <field name="instance_yaw" type="float"/>
+            <field name="instance_pitch" type="float"/>
             <field name="unknownFloat7" type="float" default_value="1.0"/>
-            <field name="unknown5Addedv2" type="float"  default_value="1.0" since_version="17"/>
+            <field name="unknown5Addedv2" type="float" default_value="1.0" since_version="17"/> <!-- interacts with particle_type 9 in some way -->
             <field name="pitch_var_shape" type="uint32"/>
             <field name="pitch_var_amplitude" type="FloatAnimationReferenceV0"/>
             <field name="pitch_var_frequency" type="FloatAnimationReferenceV0"/>
@@ -1981,9 +1974,9 @@
             <field name="size_var_shape" type="uint32"/>
             <field name="size_var_amplitude" type="FloatAnimationReferenceV0"/>
             <field name="size_var_frequency" type="FloatAnimationReferenceV0"/>
-            <field name="unknowneff4c5be" type="uint32"/> <!-- haven't found a use case for this -->
-            <field name="unknownf6193fc0" type="FloatAnimationReferenceV0"/>
-            <field name="unknowna5e2260a" type="FloatAnimationReferenceV0"/>
+            <field name="alpha_var_shape" type="uint32"/>
+            <field name="alpha_var_amplitude" type="FloatAnimationReferenceV0"/>
+            <field name="alpha_var_frequency" type="FloatAnimationReferenceV0"/>
             <field name="unknown9aa3bbb9" type="uint32"/> <!-- haven't found a use case for this -->
             <field name="unknown485f7eea" type="FloatAnimationReferenceV0"/>
             <field name="unknown34b6f141" type="FloatAnimationReferenceV0"/>
@@ -1996,31 +1989,31 @@
             <field name="spread_y_var_shape" type="uint32"/>
             <field name="spread_y_var_amplitude" type="FloatAnimationReferenceV0"/>
             <field name="spread_y_var_frequency" type="FloatAnimationReferenceV0"/>
-            <field name="unknownbc151e17" type="FloatAnimationReferenceV0"/>
+            <field name="parent_velocity" type="FloatAnimationReferenceV0"/>
             <field name="unknown8f507b52" type="UInt32AnimationReferenceV0" since_version="22"/>
             <field name="flags" type="uint32" default_value="0">
                 <bits>
                     <bit mask="0x1" name="sort"/>
                     <bit mask="0x2" name="collide_terrain"/>
                     <bit mask="0x4" name="collide_objects"/>
-                    <bit mask="0x8" name="spawn_on_bounce"/>
+                    <bit mask="0x8" name="collide_emit"/>
                     <bit mask="0x10" name="emit_shape_cutout"/>
                     <bit mask="0x20" name="inherit_emit_params"/>
                     <bit mask="0x40" name="inherit_parent_velocity"/>
                     <bit mask="0x80" name="sort_z_height"/>
-                    <bit mask="0x100" name="reverse_iteration"/>
-                    <bit mask="0x200" name="old_smooth_rotation"/>
-                    <bit mask="0x400" name="old_smooth_rotation_bezier"/>
-                    <bit mask="0x800" name="old_smooth_size"/>
-                    <bit mask="0x1000" name="old_smooth_size_bezier"/>
-                    <bit mask="0x2000" name="old_smooth_color"/>
-                    <bit mask="0x4000" name="old_smooth_color_bezier"/>
+                    <bit mask="0x100" name="sort_reverse"/>
+                    <bit mask="0x200" name="old_rotation_smooth"/>
+                    <bit mask="0x400" name="old_rotation_bezier"/>
+                    <bit mask="0x800" name="old_size_smooth"/>
+                    <bit mask="0x1000" name="old_size_bezier"/>
+                    <bit mask="0x2000" name="old_color_smooth"/>
+                    <bit mask="0x4000" name="old_color_bezier"/>
                     <bit mask="0x8000" name="lit_parts"/>
                     <bit mask="0x10000" name="random_uv_flipbook_start"/>
                     <bit mask="0x20000" name="multiply_gravity"/>
-                    <bit mask="0x40000" name="clamp_trailing_particles"/>
-                    <bit mask="0x80000" name="spawn_trailing_particles"/>
-                    <bit mask="0x100000" name="fix_length_trailing_particles"/>
+                    <bit mask="0x40000" name="tail_clamp"/>
+                    <bit mask="0x80000" name="use_trailing_particle"/>
+                    <bit mask="0x100000" name="tail_fix"/>
                     <bit mask="0x200000" name="vertex_alpha"/>
                     <bit mask="0x400000" name="model_particles"/> <!-- check if model_paths in use, otherwise must be unchecked -->
                     <bit mask="0x800000" name="swap_yz_on_model_particles"/>
@@ -2045,15 +2038,15 @@
             -->
             <field name="color_smoothing" type="uint32" default_value="0" since_version="17"/>
             <field name="size_smoothing" type="uint32" default_value="0" since_version="17"/>
-            <field name="rotation_smoothing" type="uint32"  default_value="0" since_version="17"/>
+            <field name="rotation_smoothing" type="uint32" default_value="0" since_version="17"/>
             <field name="unknown22856fde" type="FloatAnimationReferenceV0" since_version="17"/>
-            <field name="unknownb35ad6e1" type="Vector2AnimationReferenceV0" since_version="17"/>
-            <field name="unknown686e5943" type="Vector3AnimationReferenceV0" since_version="17"/>
-            <field name="unknown18a90564" type="Vector2AnimationReferenceV0" since_version="17"/> <!-- with init=(1.0, 1.0) and null=(1.0, 1.0)-->
+            <field name="uv_ss_offset" type="Vector2AnimationReferenceV0" since_version="17"/>
+            <field name="uv_ss_angle" type="Vector3AnimationReferenceV0" since_version="17"/>
+            <field name="uv_ss_tiling" type="Vector2AnimationReferenceV0" since_version="17"/> <!-- with init=(1.0, 1.0) and null=(1.0, 1.0)-->
             <field name="emit_shape_spline" type="Reference" ref_to="SVC3"/>
             <field name="wind_multiplier" type="float" default_value="0.0"/>
             <field name="lod_reduce" type="uint32" default_value="2"/>
-            <field name="lod_cut" type="uint32" default_value="1"/>
+            <field name="lod_cut" type="uint32" default_value="0"/>
             <field name="unknown21ca0cea" type="FloatAnimationReferenceV0"/> <!-- Void_Narud_Beam.m3 -->
             <field name="unknown1e97145f" type="FloatAnimationReferenceV0"/> <!-- default 1.0 -->
             <field name="trail_system" type="int32" default_value="-1"/>
@@ -2493,6 +2486,7 @@
     </structure>
 
     <!-- used only by Infestor from SC2 beta -->
+    <!-- seems to invariably cause SC2 to crash if rendered -->
     <structure name="TMD_">
         <description>
         </description>
@@ -2638,7 +2632,7 @@
                     <bit mask="0x8" name="edge_falloff"/>
                     <bit mask="0x10" name="inherit_parent_velocity"/>
                     <bit mask="0x20" name="scale_smooth"/>
-                    <bit mask="0x40" name="scale_smooth_bezier"/>
+                    <bit mask="0x40" name="scale_bezier"/>
                     <bit mask="0x80" name="vertex_alpha"/>
                     <bit mask="0x100" name="scale_time_parent"/>
                     <bit mask="0x200" name="force_cpu_sim"/>
