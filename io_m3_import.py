@@ -347,7 +347,7 @@ class Importer:
         self.anim_index = lambda x: anims_len + x
         self.matref_index = lambda x: matref_len + x
 
-        self.m3_set_struct_version('m3_model_version', self.m3_model.desc.version)
+        self.m3_struct_version_set_from_ref('m3_model_version', self.m3[0][0].model)
 
         if rig:
             if anims:
@@ -471,11 +471,15 @@ class Importer:
 
             self.animate_pose_bone(anim_ids, defaults, pb, left_in_mat, right_in_mat)
 
-    def m3_set_struct_version(self, version_attr, version_val):
-        if not self.is_new_object:
-            setattr(self.ob, version_attr, str(max(int(getattr(self.ob, version_attr)), version_val)))
-        else:
-            setattr(self.ob, version_attr, str(version_val))
+    def m3_struct_version_set_from_ref(self, version_attr, ref):
+
+        if ref.index and ref.entries:
+            version_val = self.m3[ref].desc.version
+
+            if not self.is_new_object:
+                setattr(self.ob, version_attr, str(max(int(getattr(self.ob, version_attr)), version_val)))
+            else:
+                setattr(self.ob, version_attr, str(version_val))
 
     def m3_get_bone_name(self, bone_index):
         m3_bone_name = self.m3[self.m3[self.m3_model.bones][bone_index].name].content_to_string()
@@ -886,12 +890,10 @@ class Importer:
     def create_materials(self):
         ob = self.ob
 
-        if self.m3_model.materials_standard.index:
-            self.m3_set_struct_version('m3_materials_standard_version', self.m3[self.m3_model.materials_standard.index].desc.version)
+        self.m3_struct_version_set_from_ref('m3_materials_standard_version', self.m3_model.materials_standard)
 
         if hasattr(self.m3_model, 'materials_reflection'):
-            if self.m3_model.materials_reflection.index:
-                self.m3_set_struct_version('m3_materials_reflection_version', self.m3[self.m3_model.materials_reflection].desc.version)
+            self.m3_struct_version_set_from_ref('m3_materials_reflection_version', self.m3_model.materials_reflection)
 
         layer_section_to_index = {}
         for m3_matref in self.m3[self.m3_model.material_references]:
@@ -934,7 +936,7 @@ class Importer:
                 if not m3_layer_bitmap_str and not m3_layer.bit_get('flags', 'color'):
                     continue
 
-                self.m3_set_struct_version('m3_materiallayers_version', self.m3[m3_layer_field].desc.version)
+                self.m3_struct_version_set_from_ref('m3_materiallayers_version', m3_layer_field)
 
                 layer = shared.m3_item_add(ob.m3_materiallayers, item_name=matref.name + '_' + layer_name)
                 layer.color_bitmap = m3_layer_bitmap_str
@@ -955,10 +957,10 @@ class Importer:
     def create_mesh(self):
         ob = self.ob
 
-        if not self.m3_division.regions.index:
+        if not (self.m3_division.regions.index and self.m3_division.regions.entries):
             return
 
-        self.m3_set_struct_version('m3_mesh_version', self.m3[self.m3_division.regions].desc.version)
+        self.m3_struct_version_set_from_ref('m3_mesh_version', self.m3_division.regions)
         m3_vertices = self.m3[self.m3_model.vertices]
 
         if not self.m3_model.bit_get('vertex_flags', 'has_vertices'):
@@ -1174,8 +1176,7 @@ class Importer:
     def create_cameras(self):
         ob = self.ob
 
-        if self.m3_model.cameras.index:
-            self.m3_set_struct_version('m3_cameras_version', self.m3[self.m3_model.cameras].desc.version)
+        self.m3_struct_version_set_from_ref('m3_cameras_version', self.m3_model.cameras)
 
         for m3_camera in self.m3[self.m3_model.cameras]:
             pose_bone_name = self.m3_get_bone_name(m3_camera.bone)
@@ -1188,8 +1189,7 @@ class Importer:
     def create_particles(self):
         ob = self.ob
 
-        if self.m3_model.particle_systems.index:
-            self.m3_set_struct_version('m3_particlesystems_version', self.m3[self.m3_model.particle_systems].desc.version)
+        self.m3_struct_version_set_from_ref('m3_particlesystems_version', self.m3_model.particle_systems)
 
         m3_systems = self.m3[self.m3_model.particle_systems]
         m3_copies = self.m3[self.m3_model.particle_copies]
@@ -1246,8 +1246,7 @@ class Importer:
     def create_ribbons(self):
         ob = self.ob
 
-        if self.m3_model.ribbons.index:
-            self.m3_set_struct_version('m3_ribbons_version', self.m3[self.m3_model.ribbons].desc.version)
+        self.m3_struct_version_set_from_ref('m3_ribbons_version', self.m3_model.ribbons)
 
         for m3_ribbon in self.m3[self.m3_model.ribbons]:
             pose_bone_name = self.m3_get_bone_name(m3_ribbon.bone)
@@ -1337,8 +1336,7 @@ class Importer:
     def create_rigid_bodies(self):
         ob = self.ob
 
-        if self.m3_model.physics_rigidbodies.index:
-            self.m3_set_struct_version('m3_rigidbodies_version', self.m3[self.m3_model.physics_rigidbodies].desc.version)
+        self.m3_struct_version_set_from_ref('m3_rigidbodies_version', self.m3_model.physics_rigidbodies)
 
         for m3_rigidbody in self.m3[self.m3_model.physics_rigidbodies]:
             pose_bone_name = self.m3_get_bone_name(m3_rigidbody.bone)
@@ -1427,8 +1425,7 @@ class Importer:
 
         ob = self.ob
 
-        if self.m3_model.physics_cloths.index:
-            self.m3_set_struct_version('m3_cloths_version', self.m3[self.m3_model.physics_cloths].desc.version)
+        self.m3_struct_version_set_from_ref('m3_cloths_version', self.m3_model.physics_cloths)
 
         for m3_cloth in self.m3[self.m3_model.physics_cloths]:
             cloth = shared.m3_item_add(ob.m3_cloths, item_name='Cloth')
@@ -1517,8 +1514,7 @@ class Importer:
             m3_matrix.w = to_m3_vec4(bl_matrix.col[3])
             return m3_matrix
 
-        if self.m3_model.turret_parts.index:
-            self.m3_set_struct_version('m3_turrets_part_version', self.m3[self.m3_model.turret_parts].desc.version)
+        self.m3_struct_version_set_from_ref('m3_turrets_part_version', self.m3_model.turret_parts)
 
         for m3_turret in self.m3[self.m3_model.turrets]:
             turret = shared.m3_item_add(ob.m3_turrets, item_name=self.m3[m3_turret.name].content_to_string())
@@ -1572,7 +1568,7 @@ class Importer:
 
     def gen_basic_volume_object(self, name, m3_vert_ref, m3_face_ref):
 
-        if not m3_vert_ref.index or not m3_face_ref.index:
+        if not (m3_vert_ref.index and m3_vert_ref.entries and m3_face_ref.index and m3_face_ref.entries):
             return
 
         for ref in self.bl_ref_objects:
@@ -1614,7 +1610,7 @@ class Importer:
 
     def gen_rigidbody_volume_object(self, name, m3_vert_ref, m3_poly_related_ref, m3_loop_ref, m3_poly_ref):
 
-        if not m3_vert_ref.index or not m3_loop_ref.index or not m3_poly_ref.index:
+        if not (m3_vert_ref.index and m3_vert_ref_entries and m3_loop_ref.index and m3_loop_ref.entries and m3_poly_ref.index and m3_poly_ref.entries):
             return
 
         for ref in self.bl_ref_objects:
@@ -1670,8 +1666,7 @@ class Importer:
 
 def m3_import(filename, ob=None):
     importer = Importer()
-    if filename.endswith('.m3a'):
-        assert ob
+    if ob and filename.endswith('.m3a'):
         importer.m3a_import(filename, ob)
     elif ob:
         importer.m3_import(filename, ob, anims=False, rig=False)  # TODO options

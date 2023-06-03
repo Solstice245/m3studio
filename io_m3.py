@@ -368,7 +368,7 @@ class M3SectionList(list):
             self.append(section)
 
     def __getitem__(self, item):
-        return (self[item.index] if item.index else []) if type(item) == M3StructureData else super(M3SectionList, self).__getitem__(item)
+        return (self[item.index] if item.index and item.entries else []) if type(item) == M3StructureData else super(M3SectionList, self).__getitem__(item)
 
     def __setitem__(self, item, val):
         assert type(val.desc) == M3StructureDescription
