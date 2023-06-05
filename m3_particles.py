@@ -76,18 +76,6 @@ def draw_copy_props(copy, layout):
         op.index = ii
 
 
-def draw_var_props(layout, data, field, text=''):
-    row = shared.draw_prop_split(layout, flow='row', align=True, text=text)
-    sub = row.row(align=True)
-    sub.ui_units_x = 70
-    sub.prop(data, field + '_var_shape', text='')
-    sub = row.row(align=True)
-    sub.active = getattr(data, field + '_var_shape') != 'NONE'
-    sub.ui_units_x = 80
-    shared.draw_op_anim_prop(sub, data, field + '_var_amplitude')
-    shared.draw_op_anim_prop(sub, data, field + '_var_frequency')
-
-
 def draw_props(particle, layout):
     layout.use_property_decorate = False
     par_ver = int(particle.id_data.m3_particlesystems_version)
@@ -290,13 +278,13 @@ def draw_props(particle, layout):
     sub = shared.draw_op_anim_prop(row, particle, 'parent_velocity')
     sub.active = particle.inherit_parent_velocity
     layout.separator()
-    draw_var_props(layout, particle, 'yaw', text='Yaw Variation')
-    draw_var_props(layout, particle, 'pitch', text='Pitch Variation')
-    draw_var_props(layout, particle, 'spread_x', text='Spread X Variation')
-    draw_var_props(layout, particle, 'spread_y', text='Spread Y Variation')
-    draw_var_props(layout, particle, 'speed', text='Speed Variation')
-    draw_var_props(layout, particle, 'size', text='Size Variation')
-    draw_var_props(layout, particle, 'alpha', text='Alpha Variation')
+    shared.draw_var_props(layout, particle, 'yaw', text='Yaw Variation')
+    shared.draw_var_props(layout, particle, 'pitch', text='Pitch Variation')
+    shared.draw_var_props(layout, particle, 'spread_x', text='Spread X Variation')
+    shared.draw_var_props(layout, particle, 'spread_y', text='Spread Y Variation')
+    shared.draw_var_props(layout, particle, 'speed', text='Speed Variation')
+    shared.draw_var_props(layout, particle, 'size', text='Size Variation')
+    shared.draw_var_props(layout, particle, 'alpha', text='Alpha Variation')
     layout.separator()
     col = layout.column(align=True)
     row = col.row(align=True)

@@ -292,7 +292,7 @@ def layer_enum(self, context):
 def draw_layer_pointer_prop(layout, material, layer_name, label='test'):
     col = layout.column(align=True)
     col.use_property_split = False
-    split = col.split(factor=0.375, align=True)
+    split = col.split(factor=0.4, align=True)
     row = split.row(align=True)
     row.alignment = 'RIGHT'
     row.label(text=label)
@@ -312,6 +312,7 @@ def draw_layer_pointer_prop(layout, material, layer_name, label='test'):
 
 
 def draw_standard_props(matref, layout):
+    layout.use_property_decorate = False
     material = m3_material_get(matref)
     version = int(material.id_data.m3_materials_standard_version)
 

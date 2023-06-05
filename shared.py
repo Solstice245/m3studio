@@ -642,9 +642,8 @@ def draw_prop_split(layout, flow='col', align=False, text='', sep=3.5):
     col = row.column(align=align)
     col.alignment = 'RIGHT'
     col.label(text=text)
-    row = main.row()
     if layout.use_property_decorate:
-        row.separator(factor=sep)
+        main.separator(factor=sep)
     return split.row(align=align) if flow == 'row' else split.column(align=align)
 
 
@@ -671,6 +670,18 @@ def draw_op_anim_prop(layout, data, field, index=-1, draw_op=True):
         col.prop(data, field, index=index, text='')
 
     return col
+
+
+def draw_var_props(layout, data, field, text=''):
+    row = draw_prop_split(layout, flow='row', align=True, text=text)
+    sub = row.row(align=True)
+    sub.ui_units_x = 70
+    sub.prop(data, field + '_var_shape', text='')
+    sub = row.row(align=True)
+    sub.active = getattr(data, field + '_var_shape') != 'NONE'
+    sub.ui_units_x = 80
+    draw_op_anim_prop(sub, data, field + '_var_amplitude')
+    draw_op_anim_prop(sub, data, field + '_var_frequency')
 
 
 def draw_prop_anim(layout, data, field, index=-1, style='col', split=True, text=''):

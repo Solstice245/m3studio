@@ -2604,7 +2604,7 @@
             <field name="unknownc7004d01" type="float" default_value="0.0"/> <!-- almost always 0.0 on Blizzard models, few occurences where it's 10.0 ; could be some multiplier related to mass?? -->
 
             <field name="unknown20683e1b" type="uint32" default_value="0" till_version="6"/> <!-- always 0 on Blizzard models expect 3 cases (LarvaPortrait.m3 OverlordPortrait.m3 HydraliskPortrait.m3) where it's 0x41200000 -->
-            <field name="world_space" type="uint32" default_value="0" till_version="6"/> <!-- 0x0 or 0x1 (off/on) -->
+            <field name="world_space" type="uint32" default_value="0" till_version="6"/>
             <field name="local_forces" type="uint16" default_value="0"/>
             <field name="world_forces" type="uint16" default_value="0"/>
             <field name="local_forces_fb" type="uint16" default_value="0"/>
@@ -2612,9 +2612,9 @@
 
             <field name="unknownfb168d8c" type="uint32" expected_value="0" since_version="9"/> <!-- haven't seen a Blizzard model where this wouldn't be 0 -->
             <field name="noise_amplitude" type="float"/>
-            <field name="noise_waves" type="float"/>
             <field name="noise_frequency" type="float"/>
-            <field name="noise_scale" type="float"/>
+            <field name="noise_cohesion" type="float"/>
+            <field name="noise_edge" type="float"/>
             <field name="index_plus_length" type="uint32" default_value="1" since_version="5"/> <!-- 1-255 value ; never seen to be 0 on Blizzard models ; shared with PAR_ ; probably determines the rendering priority of some sort ? -->
             <field name="ribbon_type" type="uint32"/>
             <field name="cull_method" type="uint32" default_value="1"/>

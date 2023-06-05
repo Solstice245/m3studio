@@ -39,6 +39,7 @@ layer_versions = (
 
 
 def draw_props(layer, layout):
+    layout.use_property_decorate = False
     version = int(layer.id_data.m3_materiallayers_version)
     is_bitmap = layer.color_type == 'BITMAP'
 
@@ -67,10 +68,11 @@ def draw_props(layer, layout):
         shared.draw_prop_anim(layout, layer, 'uv_offset', text='Offset')
         shared.draw_prop_anim(layout, layer, 'uv_angle', text='Angle')
         shared.draw_prop_anim(layout, layer, 'uv_tiling', text='Tiling')
-        col = layout.column()
-        sub = col.column(align=True)
-        sub.prop(layer, 'uv_flipbook_rows', text='Flipbook Rows')
-        sub.prop(layer, 'uv_flipbook_cols', text='Columns')
+        layout.separator()
+        col = layout.column(align=True)
+        row = col.row(align=True)
+        row.prop(layer, 'uv_flipbook_rows', text='Flipbook Rows/Columns')
+        row.prop(layer, 'uv_flipbook_cols', text='')
         shared.draw_prop_anim(col, layer, 'uv_flipbook_frame', text='Frame')
 
         if version >= 24 and 'TRIPLANAR' in layer.uv_source:
@@ -81,9 +83,9 @@ def draw_props(layer, layout):
 
     if is_bitmap:
         if version >= 24:
-            col = layout.column(align=True)
-            col.prop(layer, 'noise_amplitude', text='Volume Noise Amplitude')
-            col.prop(layer, 'noise_frequency', text='Frequency')
+            col = layout.row(align=True)
+            col.prop(layer, 'noise_amplitude', text='Volume Noise Amp/Freq')
+            col.prop(layer, 'noise_frequency', text='')
             layout.separator()
 
     layout.prop(layer, 'fresnel_type', text='Fresel Mode')
