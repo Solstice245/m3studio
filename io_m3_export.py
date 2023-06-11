@@ -1412,7 +1412,7 @@ class Exporter:
                             bone_bounding_points[self.bones[region_lookup[lookup_ii]]].append(co)
 
                     deformations.sort(key=lambda x: x[1])
-                    deformations = deformations[0:max(4, len(deformations))]
+                    deformations = deformations[0:min(4, len(deformations))]
 
                     assert len(deformations)
 
