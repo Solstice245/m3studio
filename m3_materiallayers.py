@@ -63,11 +63,40 @@ def draw_props(layer, layout):
         layout.prop(layer, 'uv_source', text='UV Source')
         layout.prop(layer, 'uv_source_related', text='Unknown Related')
         row = layout.row(heading='Wrap')
-        row.prop(layer, 'uv_wrap_x', text='X')
-        row.prop(layer, 'uv_wrap_y', text='Y')
-        shared.draw_prop_anim(layout, layer, 'uv_offset', text='Offset')
-        shared.draw_prop_anim(layout, layer, 'uv_angle', text='Angle')
-        shared.draw_prop_anim(layout, layer, 'uv_tiling', text='Tiling')
+        row.prop(layer, 'uv_wrap_x', text='U')
+        row.prop(layer, 'uv_wrap_y', text='V')
+        row = shared.draw_prop_split(layout, text='Offset')
+        shared.draw_op_anim_header(row, layer, 'uv_offset')
+        shared.draw_prop_items(row, layer, 'uv_offset')
+        row = shared.draw_prop_split(layout, text='Angle')
+        shared.draw_op_anim_header(row, layer, 'uv_angle')
+        shared.draw_prop_items(row, layer, 'uv_angle')
+        row = shared.draw_prop_split(layout, text='Tiling')
+        shared.draw_op_anim_header(row, layer, 'uv_tiling')
+        shared.draw_prop_items(row, layer, 'uv_tiling')
+
+        if version >= 24 and 'TRIPLANAR' in layer.uv_source:
+            layout.separator()
+            layout.prop(layer, 'uv_triplanar_offset', text='Triplanar Offset')
+            layout.prop(layer, 'uv_triplanar_scale', text='Triplanar Scale')
+
+        if version >= 24:
+            layout.separator()
+            col = layout.row(align=True)
+            col.prop(layer, 'noise_amplitude', text='Volume Noise Amp/Freq')
+            col.prop(layer, 'noise_frequency', text='')
+
+    if layer.color_bitmap.endswith('.ogv'):
+        layout.separator()
+        layout.prop(layer, 'video_mode', text='Video Mode')
+        col = layout.column()
+        col.prop(layer, 'video_frame_rate', text='Frame Rate')
+        col.prop(layer, 'video_frame_start', text='Frame Start')
+        col.prop(layer, 'video_frame_end', text='Frame End')
+        shared.draw_prop_anim(layout, layer, 'video_play', text='Play')
+        shared.draw_prop_anim(layout, layer, 'video_restart', text='Restart')
+        layout.prop(layer, 'video_sync_timing', text='Sync Timing')
+    else:
         layout.separator()
         col = layout.column(align=True)
         row = col.row(align=True)
@@ -75,19 +104,7 @@ def draw_props(layer, layout):
         row.prop(layer, 'uv_flipbook_cols', text='')
         shared.draw_prop_anim(col, layer, 'uv_flipbook_frame', text='Frame')
 
-        if version >= 24 and 'TRIPLANAR' in layer.uv_source:
-            layout.prop(layer, 'uv_triplanar_offset', text='Triplanar Offset')
-            layout.prop(layer, 'uv_triplanar_scale', text='Triplanar Scale')
-
     layout.separator()
-
-    if is_bitmap:
-        if version >= 24:
-            col = layout.row(align=True)
-            col.prop(layer, 'noise_amplitude', text='Volume Noise Amp/Freq')
-            col.prop(layer, 'noise_frequency', text='')
-            layout.separator()
-
     layout.prop(layer, 'fresnel_type', text='Fresel Mode')
     if layer.fresnel_type != 'DISABLED':
         layout.prop(layer, 'fresnel_exponent', text='Exponent')
@@ -106,21 +123,12 @@ def draw_props(layer, layout):
         row.prop(layer, 'fresnel_local_transform', text='Local Transform')
         row.prop(layer, 'fresnel_do_not_mirror', text='Don\'t Mirror')
 
-    if is_bitmap:
-        layout.separator()
-        layout.prop(layer, 'video_channel', text='RTT Channel')
-        if layer.video_channel != 'NONE':
-            layout.prop(layer, 'video_mode', text='Video Mode')
-            col = layout.column()
-            col.prop(layer, 'video_frame_rate', text='Frame Rate')
-            col.prop(layer, 'video_frame_start', text='Frame Start')
-            col.prop(layer, 'video_frame_end', text='Frame End')
-            layout.prop(layer, 'video_sync_timing', text='Sync Timing')
-            shared.draw_prop_anim(layout, layer, 'video_play', text='Play')
-            shared.draw_prop_anim(layout, layer, 'video_restart', text='Restart')
+    layout.separator()
+    layout.prop(layer, 'video_channel', text='RTT Channel')
 
 
 class Properties(shared.M3PropertyGroup):
+    name: bpy.props.StringProperty(options=set(), )
     color_type: bpy.props.EnumProperty(items=bl_enum.material_layer_type, options=set())
     color_bitmap: bpy.props.StringProperty(default='', options=set())
     color_channels: bpy.props.EnumProperty(items=bl_enum.material_layer_channel, options=set(), default='RGB')
@@ -162,15 +170,15 @@ class Properties(shared.M3PropertyGroup):
     fresnel_pitch: bpy.props.FloatProperty(subtype='ANGLE', options=set())
     fresnel_local_transform: bpy.props.BoolProperty(options=set(), default=False)
     fresnel_do_not_mirror: bpy.props.BoolProperty(options=set(), default=False)
-    video_channel: bpy.props.EnumProperty(items=bl_enum.rtt_channel, options=set(), default='NONE')
+    video_channel: bpy.props.IntProperty(options=set(), min=-1, max=6, default=-1)
     video_frame_rate: bpy.props.IntProperty(options=set(), min=0, default=24)
     video_frame_start: bpy.props.IntProperty(options=set(), min=0, default=0)
     video_frame_end: bpy.props.IntProperty(options=set(), min=-1, default=-1)
     video_mode: bpy.props.EnumProperty(items=bl_enum.video_mode, options=set())
     video_sync_timing: bpy.props.BoolProperty(options=set())
-    video_play: bpy.props.BoolProperty(name='Video Play', options={'ANIMATABLE'}, default=True)
+    video_play: bpy.props.BoolProperty(name='Video Play', options={'ANIMATABLE'}, default=False)
     video_play_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
-    video_restart: bpy.props.BoolProperty(name='Video Restart', options={'ANIMATABLE'}, default=True)
+    video_restart: bpy.props.BoolProperty(name='Video Restart', options={'ANIMATABLE'}, default=False)
     video_restart_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     noise_amplitude: bpy.props.FloatProperty(options=set(), default=0.8)
     noise_frequency: bpy.props.FloatProperty(options=set(), default=0.5)

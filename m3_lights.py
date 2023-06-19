@@ -33,6 +33,7 @@ def update_collection_index(self, context):
 
 
 def draw_props(light, layout):
+    layout.use_property_decorate = False
     shared.draw_prop_pointer_search(layout, light.bone, light.id_data.data, 'bones', text='Bone', icon='BONE_DATA')
     col = layout.column(align=True)
     col.prop(light, 'shape', text='Shape')
@@ -41,11 +42,10 @@ def draw_props(light, layout):
     if light.shape == 'SPOT':
         shared.draw_prop_anim(col, light, 'hotspot', text='Hotspot')
         shared.draw_prop_anim(col, light, 'falloff', text='Falloff')
-    col.separator()
-    shared.draw_prop_anim(col, light, 'intensity', text='Intensity')
-    shared.draw_prop_anim(col, light, 'color', text='Color')
-    col.separator()
-    col.prop(light, 'unknown148', text='Unknown At 148')
+    layout.separator()
+    shared.draw_prop_anim(layout, light, 'intensity', text='Intensity')
+    shared.draw_prop_anim(layout, light, 'color', text='Color')
+    layout.separator()
     col = layout.column_flow(columns=2)
     col.use_property_split = False
     col.prop(light, 'light_opaque', text='Lights Opaque')
@@ -71,7 +71,6 @@ class Properties(shared.M3PropertyGroup):
     falloff_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     hotspot: bpy.props.FloatProperty(name='M3 Light Hotspot', default=2)
     hotspot_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
-    unknown148: bpy.props.FloatProperty(options=set())
     ao: bpy.props.BoolProperty(options=set(), description='NOTE: This feature is (probably) exclusive to campaign mode')
     light_opaque: bpy.props.BoolProperty(options=set(), default=True)
     light_transparent: bpy.props.BoolProperty(options=set())

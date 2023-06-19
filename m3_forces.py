@@ -33,22 +33,31 @@ def update_collection_index(self, context):
 
 
 def draw_props(force, layout):
+    layout.use_property_decorate = False
     shared.draw_prop_pointer_search(layout, force.bone, force.id_data.data, 'bones', text='Bone', icon='BONE_DATA')
-    col = layout.column()
-    col.prop(force, 'force_type', text='Type')
+    layout.prop(force, 'force_type', text='Type')
     col = layout.column(align=True)
     col.prop(force, 'shape', text='Shape')
-    # TODO display dimension props only relevent to current shape
-    shared.draw_prop_anim(col, force, 'width', text='Width')
-    shared.draw_prop_anim(col, force, 'height', text='Height')
-    shared.draw_prop_anim(col, force, 'length', text='Length')
-    col = layout.column()
+    if force.shape in ('SPHERE', 'HEMISPHERE'):
+        shared.draw_prop_anim(col, force, 'width', text='Radius')
+    elif force.shape == 'CYLINDER':
+        shared.draw_prop_anim(col, force, 'width', text='Radius')
+        shared.draw_prop_anim(col, force, 'height', text='Height')
+    elif force.shape == 'CUBE':
+        shared.draw_prop_anim(col, force, 'width', text='Width')
+        shared.draw_prop_anim(col, force, 'height', text='Height')
+        shared.draw_prop_anim(col, force, 'length', text='Length')
+    elif force.shape == 'CONEDOME':
+        shared.draw_prop_anim(col, force, 'width', text='Radius')
+        shared.draw_prop_anim(col, force, 'height', text='Angle Factor')
+    layout.separator()
+    shared.draw_prop_anim(layout, force, 'strength', text='Strength')
+    layout.separator()
+    row = shared.draw_prop_split(layout, text='Force Channels')
+    row.prop(force, 'channels', text='')
+    layout.separator()
+    col = layout.column_flow(align=True, columns=2)
     col.use_property_split = False
-    col.prop(force, 'channels', text='Force Channels')
-    col.separator()
-    col = layout.column(align=True)
-    shared.draw_prop_anim(col, force, 'strength', text='Strength')
-    col = layout.column_flow(align=True)
     col.prop(force, 'falloff', text='Falloff')
     col.prop(force, 'height_gradient', text='Height Gradient')
     col.prop(force, 'unbounded', text='Unbounded')

@@ -633,7 +633,15 @@ def draw_menu_duplicate(layout, collection, dup_keyframes_opt=False):
         op.dup_action_keyframes = True
 
 
-def draw_prop_split(layout, flow='col', align=False, text='', sep=3.5):
+def draw_prop_items(layout, data, prop, items=[]):
+    rna_props = data.bl_rna.properties[prop]
+
+    for ii in range(rna_props.array_length):
+        if not items or ii in items:
+            layout.prop(data, prop, index=ii, text='')
+
+
+def draw_prop_split(layout, flow='row', align=True, text='', sep=3.5):
     main = layout.row(align=align)
     main.use_property_split = False
 
@@ -673,7 +681,7 @@ def draw_op_anim_prop(layout, data, field, index=-1, draw_op=True):
 
 
 def draw_var_props(layout, data, field, text=''):
-    row = draw_prop_split(layout, flow='row', align=True, text=text)
+    row = draw_prop_split(layout, text=text)
     sub = row.row(align=True)
     sub.ui_units_x = 70
     sub.prop(data, field + '_var_shape', text='')
@@ -734,21 +742,24 @@ def draw_prop_anim(layout, data, field, index=-1, style='col', split=True, text=
 
 def draw_volume_props(volume, layout):
     draw_prop_pointer_search(layout, volume.bone, volume.id_data.data, 'bones', text='Bone', icon='BONE_DATA')
-    sub = layout.column(align=True)
-    sub.prop(volume, 'shape', text='Shape Type')
+    col = layout.column(align=True)
+    col.prop(volume, 'shape', text='Shape Type')
     if volume.shape == 'CUBE':
-        sub.prop(volume, 'size', text='Size')
+        row = draw_prop_split(col, text='Size')
+        draw_prop_items(row, volume, 'size')
     elif volume.shape == 'SPHERE':
-        sub.prop(volume, 'size', index=0, text='Size R')
+        col.prop(volume, 'size', index=0, text='Radius')
     elif volume.shape in ['CAPSULE', 'CYLINDER']:
-        sub.prop(volume, 'size', index=0, text='Size R')
-        sub.prop(volume, 'size', index=1, text='H')
+        row = draw_prop_split(col, text='Radius/Height')
+        draw_prop_items(row, volume, 'size', (0, 1))
     elif volume.shape == 'MESH':
-        sub.prop(volume, 'mesh_object', text='Mesh Object')
-    col = layout.column()
-    col.prop(volume, 'location', text='Location')
-    col.prop(volume, 'rotation', text='Rotation')
-    col.prop(volume, 'scale', text='Scale')
+        col.prop(volume, 'mesh_object', text='Mesh Object')
+    layout.separator()
+    draw_prop_items(draw_prop_split(layout, text='Location'), volume, 'location')
+    layout.separator()
+    draw_prop_items(draw_prop_split(layout, text='Rotation'), volume, 'rotation')
+    layout.separator()
+    draw_prop_items(draw_prop_split(layout, text='Scale'), volume, 'scale')
 
 
 def draw_gen_op_add(layout, collection_path, index):

@@ -361,17 +361,6 @@ fresnel_type = (
     ('INVERTED', 'Enabled; Inverted', 'Strenth of layer is based on inverted fresnel formula')
 )
 
-rtt_channel = (
-    ('0', 'Layer 0', 'Render To Texture Layer 0'),
-    ('1', 'Layer 1', 'Render To Texture Layer 1'),
-    ('2', 'Layer 2', 'Render To Texture Layer 2'),
-    ('3', 'Layer 3', 'Render To Texture Layer 3'),
-    ('4', 'Layer 4', 'Render To Texture Layer 4'),
-    ('5', 'Layer 5', 'Render To Texture Layer 5'),
-    ('6', 'Layer 6', 'Render To Texture Layer 6'),
-    ('NONE', 'None', 'None'),
-)
-
 video_mode = (
     ('LOOP', 'Loop', 'Loop'),
     ('HOLD', 'Hold', 'Hold')

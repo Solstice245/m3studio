@@ -107,12 +107,12 @@ def draw_props(particle, layout):
     row.prop(particle, 'emit_max', text='Particle Count/Distance Limit')
     row.prop(particle, 'distance_limit', text='')
     layout.separator()
-    row = shared.draw_prop_split(layout, flow='row', align=True, text='Emission Rate/Count')
+    row = shared.draw_prop_split(layout, text='Emission Rate/Count')
     shared.draw_op_anim_prop(row, particle, 'emit_rate')
     row.separator(factor=0.325)
     shared.draw_op_anim_prop(row, particle, 'emit_count')
     layout.separator()
-    row = shared.draw_prop_split(layout, flow='row', align=True, text='Trail Chance/Emission Rate')
+    row = shared.draw_prop_split(layout, text='Trail Chance/Emission Rate')
     row.prop(particle, 'trail_chance', text='')
     row.separator(factor=0.325)
     shared.draw_op_anim_prop(row, particle, 'trail_rate')
@@ -130,14 +130,14 @@ def draw_props(particle, layout):
         size_r = particle.emit_shape in ['SPHERE', 'CYLINDER', 'DISC']
         if size_xy or size_z or size_r:
             if size_xy:
-                row = shared.draw_prop_split(col, flow='row', align=True, text='X')
+                row = shared.draw_prop_split(col, text='X')
                 shared.draw_op_anim_prop(row, particle, 'emit_shape_size', index=0)
                 row.separator(factor=0.325)
                 sub = row.row(align=True)
                 sub.active = particle.emit_shape_cutout
                 shared.draw_op_anim_prop(sub, particle, 'emit_shape_size_cutout', index=0)
 
-                row = shared.draw_prop_split(col, flow='row', align=True, text='Y')
+                row = shared.draw_prop_split(col, text='Y')
                 shared.draw_op_anim_prop(row, particle, 'emit_shape_size', index=1, draw_op=False)
                 row.separator(factor=0.325)
                 sub = row.row(align=True)
@@ -145,7 +145,7 @@ def draw_props(particle, layout):
                 shared.draw_op_anim_prop(sub, particle, 'emit_shape_size_cutout', index=1, draw_op=False)
 
             if size_z:
-                row = shared.draw_prop_split(col, flow='row', align=True, text='Z')
+                row = shared.draw_prop_split(col, text='Z')
                 shared.draw_op_anim_prop(row, particle, 'emit_shape_size', index=2, draw_op=not size_xy)
                 row.separator(factor=0.325)
                 sub = row.row(align=True)
@@ -153,7 +153,7 @@ def draw_props(particle, layout):
                 shared.draw_op_anim_prop(sub, particle, 'emit_shape_size_cutout', index=2, draw_op=not size_xy)
 
             if size_r:
-                row = shared.draw_prop_split(col, flow='row', align=True, text='R')
+                row = shared.draw_prop_split(col, text='R')
                 shared.draw_op_anim_prop(row, particle, 'emit_shape_radius', index=0)
                 row.separator(factor=0.325)
                 sub = row.row(align=True)
@@ -186,22 +186,22 @@ def draw_props(particle, layout):
 
     layout.separator()
     col = layout.column()
-    row = shared.draw_prop_split(col, flow='row', align=True, text='Yaw/Pitch')
+    row = shared.draw_prop_split(col, text='Yaw/Pitch')
     shared.draw_op_anim_prop(row, particle, 'emit_angle_x')
     row.separator(factor=0.325)
     shared.draw_op_anim_prop(row, particle, 'emit_angle_y')
-    row = shared.draw_prop_split(col, flow='row', align=True, text='Spread XY')
+    row = shared.draw_prop_split(col, text='Spread XY')
     shared.draw_op_anim_prop(row, particle, 'emit_spread_x')
     row.separator(factor=0.325)
     shared.draw_op_anim_prop(row, particle, 'emit_spread_y')
-    row = shared.draw_prop_split(col, flow='row', align=True, text='Speed')
+    row = shared.draw_prop_split(col, text='Speed')
     shared.draw_op_anim_prop(row, particle, 'emit_speed')
     row.separator(factor=0.75)
     row.prop(particle, 'emit_speed_randomize', text='')
     sub = row.row(align=True)
     sub.active = particle.emit_speed_randomize
     shared.draw_op_anim_prop(sub, particle, 'emit_speed_random')
-    row = shared.draw_prop_split(col, flow='row', align=True, text='Lifetime')
+    row = shared.draw_prop_split(col, text='Lifetime')
     shared.draw_op_anim_prop(row, particle, 'lifespan')
     row.separator(factor=0.75)
     row.prop(particle, 'lifespan_randomize', text='')
@@ -219,7 +219,7 @@ def draw_props(particle, layout):
         row = col.row(align=True)
         row.prop(particle, 'color_hold', text='RGB/A Hold Time')
         row.prop(particle, 'alpha_hold', text='')
-    row = shared.draw_prop_split(layout, flow='row', align=True, text='Lifespan Colors')
+    row = shared.draw_prop_split(layout, text='Lifespan Colors')
     sub = row.column(align=True)
     shared.draw_op_anim_prop(sub, particle, 'color_init')
     shared.draw_op_anim_prop(sub, particle, 'color_mid')
@@ -233,7 +233,7 @@ def draw_props(particle, layout):
     shared.draw_op_anim_prop(sub, particle, 'color2_end')
     layout.prop(particle, 'vertex_alpha', text='Use Vertex Alpha')
     layout.separator()
-    row = shared.draw_prop_split(layout, flow='row', align=True, text='Rotation Interpolation')
+    row = shared.draw_prop_split(layout, text='Rotation Interpolation')
     if par_ver >= 17:
         sub = row.row()
         sub.ui_units_x = 100
@@ -243,7 +243,7 @@ def draw_props(particle, layout):
     sub.prop(particle, 'rotation_anim_mid', text='')
     if par_ver >= 17 and particle.rotation_smoothing == 'LINEARHOLD' or particle.rotation_smoothing == 'BEZIERHOLD':
         sub.prop(particle, 'rotation_hold', text='')
-    row = shared.draw_prop_split(layout, flow='row', align=True, text='Lifespan Factor')
+    row = shared.draw_prop_split(layout, text='Lifespan Factor')
     shared.draw_op_anim_prop(row, particle, 'rotation')
     row.separator(factor=0.75)
     row.prop(particle, 'rotation_randomize', text='')
@@ -255,7 +255,7 @@ def draw_props(particle, layout):
         row.prop(particle, 'relative', text='Relative Rotation')
         row.prop(particle, 'always_set', text='Always Set')
     layout.separator()
-    row = shared.draw_prop_split(layout, flow='row', align=True, text='Size Interpolation')
+    row = shared.draw_prop_split(layout, text='Size Interpolation')
     if par_ver >= 17:
         sub = row.row()
         sub.ui_units_x = 100
@@ -265,7 +265,7 @@ def draw_props(particle, layout):
     sub.prop(particle, 'size_anim_mid', text='')
     if par_ver >= 17 and particle.size_smoothing == 'LINEARHOLD' or particle.size_smoothing == 'BEZIERHOLD':
         sub.prop(particle, 'size_hold', text='')
-    row = shared.draw_prop_split(layout, flow='row', align=True, text='Lifespan Factor')
+    row = shared.draw_prop_split(layout, text='Lifespan Factor')
     shared.draw_op_anim_prop(row, particle, 'size')
     row.separator(factor=0.75)
     row.prop(particle, 'size_randomize', text='')
@@ -273,7 +273,7 @@ def draw_props(particle, layout):
     sub.active = particle.size_randomize
     shared.draw_op_anim_prop(sub, particle, 'size2')
     layout.separator()
-    row = shared.draw_prop_split(layout, flow='row', align=True, text='Parent Velocity')
+    row = shared.draw_prop_split(layout, text='Parent Velocity')
     row.prop(particle, 'inherit_parent_velocity', text='')
     sub = shared.draw_op_anim_prop(row, particle, 'parent_velocity')
     sub.active = particle.inherit_parent_velocity

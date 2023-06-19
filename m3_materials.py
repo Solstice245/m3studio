@@ -312,7 +312,6 @@ def draw_layer_pointer_prop(layout, material, layer_name, label='test'):
 
 
 def draw_standard_props(matref, layout):
-    layout.use_property_decorate = False
     material = m3_material_get(matref)
     version = int(material.id_data.m3_materials_standard_version)
 
@@ -422,7 +421,7 @@ def draw_displacement_props(matref, layout):
     draw_layer_pointer_prop(layout, material, 'layer_strength', 'Strength')
     layout.separator()
     layout.prop(material, 'priority', text='Priority')
-    shared.draw_prop_anim(layout, material, 'strength_factor', text='Strength Multiplier')
+    shared.draw_prop_anim(layout, material, 'strength_factor', text='Strength Factor')
 
 
 def draw_composite_props(matref, layout):
@@ -625,6 +624,7 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Materials'
 
     def draw(self, context):
+        self.layout.use_property_decorate = False
         matref = context.object.m3_materialrefs[context.object.m3_materialrefs_index] if context.object.m3_materialrefs_index > -1 else None
         shared.draw_collection_list(
             self.layout, context.object.m3_materialrefs, mat_type_dict[matref.mat_type]['draw'] if matref else lambda x, y: None,

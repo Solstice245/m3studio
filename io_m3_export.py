@@ -848,7 +848,7 @@ class Exporter:
         }
 
         # TODO warning if meshes and particles have materials or layers in common
-        # TODO warning if layers have rtt channel collision, also only to be used in standard material
+        # TODO warning if layers have rtt channel in non-standard material
 
         self.bone_name_indices = {bone.name: ii for ii, bone in enumerate(self.bones)}
         self.bone_to_correction_matrices = {}
@@ -1545,6 +1545,8 @@ class Exporter:
             processor = M3OutputProcessor(self, light, m3_light)
             io_shared.io_light(processor)
 
+            m3_light.unknown148 = m3_light.attenuation_far
+
     def create_shadow_boxes(self, model, shadow_boxes):
         if int(self.ob.m3_model_version) < 21:
             return
@@ -1624,9 +1626,8 @@ class Exporter:
                         null_layer_section.references.append(m3_layer_ref)
                     else:
 
-                        if layer.video_channel != 'NONE':
-                            # TODO warn if rtt channel collision (assigning to true while already true)
-                            m3_mat.bit_set('rtt_channels_used', 'channel' + layer.video_channel, True)
+                        if layer.video_channel != -1:
+                            m3_mat.bit_set('rtt_channels_used', 'channel' + str(layer.video_channel), True)
 
                         if layer.bl_handle in handle_to_layer_section.keys():
                             handle_to_layer_section[layer.bl_handle].references.append(m3_layer_ref)

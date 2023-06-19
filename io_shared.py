@@ -252,7 +252,6 @@ def io_light(processor):
     # processor.anim_vec3('spec_color') # ! ignored
     # processor.anim_float('spec_intensity') # ! ignored
     processor.anim_float('attenuation_far')
-    processor.float('unknown148')
     processor.anim_float('attenuation_near')
     processor.anim_float('hotspot')
     processor.anim_float('falloff')

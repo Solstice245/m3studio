@@ -359,6 +359,7 @@ def draw():
                     volume_matrix = mathutils.Matrix.Scale(item.width, 4)
                     coords, indices = blgd.hemisphere
                 elif item.shape == 'CONEDOME':
+                    volume_matrix = mathutils.Matrix.Scale(1.0, 4)
                     coords, indices = blgd.init_cone_dome(item.width, item.height)
 
                 final_matrix = pb_matrix @ volume_matrix
