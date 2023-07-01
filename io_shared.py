@@ -204,7 +204,7 @@ def io_material_layer(processor):
     # processor.integer('unknown3b61017a')  # ! unknown
     processor.float('noise_amplitude', since_version=24)
     processor.float('noise_frequency', since_version=24)
-    processor.enum('video_channel')
+    processor.integer('video_channel')
     processor.integer('video_frame_rate')
     processor.integer('video_frame_start')
     processor.integer('video_frame_end')

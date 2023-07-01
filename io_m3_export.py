@@ -1545,7 +1545,7 @@ class Exporter:
             processor = M3OutputProcessor(self, light, m3_light)
             io_shared.io_light(processor)
 
-            m3_light.unknown148 = m3_light.attenuation_far
+            m3_light.unknown148 = light.attenuation_far
 
     def create_shadow_boxes(self, model, shadow_boxes):
         if int(self.ob.m3_model_version) < 21:
