@@ -147,7 +147,7 @@ class Properties(shared.M3PropertyGroup):
     uv_wrap_y: bpy.props.BoolProperty(options=set(), default=True)
     uv_offset: bpy.props.FloatVectorProperty(name='UV Offset', default=(0.0, 0.0), size=2, subtype='XYZ', options={'ANIMATABLE'})
     uv_offset_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
-    uv_angle: bpy.props.FloatVectorProperty(name='UV Angle', default=(0.0, 0.0, 0.0), size=3, subtype='XYZ', options={'ANIMATABLE'})
+    uv_angle: bpy.props.FloatVectorProperty(name='UV Angle', default=(0.0, 0.0, 0.0), size=3, subtype='EULER', unit='ROTATION', options={'ANIMATABLE'})
     uv_angle_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     uv_tiling: bpy.props.FloatVectorProperty(name='UV Tiling', default=(1.0, 1.0), size=2, subtype='XYZ', options={'ANIMATABLE'})
     uv_tiling_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
