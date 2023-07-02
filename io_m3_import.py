@@ -1610,7 +1610,7 @@ class Importer:
 
     def gen_rigidbody_volume_object(self, name, m3_vert_ref, m3_poly_related_ref, m3_loop_ref, m3_poly_ref):
 
-        if not (m3_vert_ref.index and m3_vert_ref_entries and m3_loop_ref.index and m3_loop_ref.entries and m3_poly_ref.index and m3_poly_ref.entries):
+        if not (m3_vert_ref.index and m3_vert_ref.entries and m3_loop_ref.index and m3_loop_ref.entries and m3_poly_ref.index and m3_poly_ref.entries):
             return
 
         for ref in self.bl_ref_objects:
