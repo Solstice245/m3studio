@@ -481,7 +481,10 @@ class M3OutputProcessor:
             setattr(self.m3, field, self.exporter.init_anim_ref_color(getattr(self.bl, field), 0, 0, int(head.hex_id, 16)))
 
 
-class Exporter:
+class Exporter():
+
+    def __init__(self, bl_op=None):
+        self.bl_op = bl_op
 
     def m3_export(self, ob, filename):
         assert ob.type == 'ARMATURE'
@@ -525,6 +528,8 @@ class Exporter:
         self.init_action = self.ob.animation_data.action
         self.init_frame = self.scene.frame_current
 
+        self.warn_strings = []
+
         # TODO look for duplicate animation header ids and warn that they need to be resolved
 
         def valid_collections_and_requirements(collection):
@@ -539,13 +544,15 @@ class Exporter:
                     if bone:
                         item_bones.add(bone)
                     else:
-                        continue  # TODO warn items without valid bone that need one
+                        self.warn_strings.append(f'{str(item)} has no bone assigned to it and will not be exported')
+                        continue
                 if hasattr(item, 'material'):
                     matref = shared.m3_pointer_get(ob.m3_materialrefs, item.material)
                     if matref:
                         self.export_required_material_references.add(matref)
                     else:
-                        continue  # TODO warn items without valid material reference that need one
+                        self.warn_strings.append(f'{str(item)} has no material assigned to it and will not be exported')
+                        continue
                 self.export_required_bones = self.export_required_bones.union(item_bones)
                 export_items.append(item)
             return export_items
@@ -612,7 +619,7 @@ class Exporter:
                     self.export_required_bones.add(point_bone)
                     export_spline_points.append(point)
                 else:
-                    pass  # TODO warning that spline point has no valid bone
+                    self.warn_strings.append(f'{str(point)} has no bone assigned to it and will not be exported')
             if len(export_spline_points):
                 export_ribbon_splines.append(spline)
 
@@ -633,18 +640,18 @@ class Exporter:
                             if volume.shape == 'MESH' or volume.shape == 'CONVEXHULL':
                                 if volume.mesh_object:
                                     valid_volumes.append(volume)
-                                    # TODO warning if mesh type volume has no mesh object
+                                    self.warn_strings.append(f'{str(volume)} is a mesh type volume, but no mesh object is assigned')
                             else:
                                 valid_volumes.append(volume)
                         if len(valid_volumes):
                             self.physics_shape_handle_to_volumes[physics_shape.bl_handle] = valid_volumes
                             export_physics_bodies.append(physics_body)
                         else:
-                            pass  # TODO warning that physics body shape has no valid volumes
+                            self.warn_strings.append(f'{str(physics_shape)} has a volume shape collection, but no shapes')
                 else:
-                    pass  # TODO warning that physics body has no shape
+                    self.warn_strings.append(f'{str(physics_shape)} has no volume shape collection')
             else:
-                pass  # TODO warning that physics body has no valid bone or bone is already used
+                self.warn_strings.append(f'{str(physics_shape)} has no corrosponding bone or the bone is already used by a physics body')
 
         for physics_joint in ob.m3_physicsjoints:
             if not physics_joint.m3_export:
@@ -688,7 +695,7 @@ class Exporter:
                         bone_parent = bone_parent.parent if bone_parent else bone_parent
                         self.ik_bones.append(bone_parent)
                     else:
-                        pass  # TODO warning that joint length is invalid
+                        self.warn_strings.append(f'{str(ik_joint)} joint length exceeds the length of the target bone\'s heirarchy')
                         # ???? warn if ik joints have any collisions?
                 if bone_parent != bone:
                     export_ik_joints.append(ik_joint)
@@ -698,24 +705,30 @@ class Exporter:
                     self.export_required_bones.add(bone_parent)
 
         self.export_turret_parts = []
-        # TODO assert that for each group ID, only one main bone exists
+
+        group_id_to_part = {}
         for turret in ob.m3_turrets:
             if not turret.m3_export:
                 continue
             turret_has_parts = False
             for part in turret.parts:
                 part_bone = shared.m3_pointer_get(ob.pose.bones, part.bone)
-                if part_bone:  # TODO warning if parts have invalid bones
+                if part_bone:
                     turret_has_parts = True
                     self.export_required_bones.add(part_bone)
                     if part.main_part:
                         self.export_turret_parts.insert(0, part)
+                        if not group_id_to_part[part.group_id]:
+                            group_id_to_part[part.group_id] = part
+                        else:
+                            self.warn_strings.append(f'Turret group {part.group_id} has more than one main part, but it should have only one')
                     else:
                         self.export_turret_parts.append(part)
+                else:
+                    self.warn_strings.append(f'{str(part)} has no bone assigned to it and will not be exported')
             if turret_has_parts:
                 export_turrets.append(turret)
 
-        # TODO warning if hittest bone is none
         hittest_bone = shared.m3_pointer_get(ob.pose.bones, ob.m3_hittest_tight.bone)
         if hittest_bone:
             self.export_required_bones.add(hittest_bone)
@@ -737,6 +750,8 @@ class Exporter:
         self.export_regions = []
         self.ob_to_region_index = []
 
+        mesh_matrefs = set()
+
         for child in ob.children:
             if child.type == 'MESH' and (child.m3_mesh_export or child in self.export_required_regions):
                 me = child.data
@@ -748,10 +763,12 @@ class Exporter:
                         matref = shared.m3_pointer_get(ob.m3_materialrefs, mesh_batch.material)
                         if matref:
                             self.export_required_material_references.add(matref)
+                            mesh_matrefs.add(matref)
                             valid_mesh_batches += 1
 
-                    assert valid_mesh_batches != 0
-                    # TODO improve invalidation so that a list of all warnings and exceptions can be made
+                    if valid_mesh_batches == 0:
+                        self.warn_strings.append(f'{str(child)} has no valid material assignments and will not be exported')
+                        continue
 
                     skin_vertex_groups = 0
                     for vertex_group in child.vertex_groups:
@@ -761,12 +778,28 @@ class Exporter:
                             self.export_required_bones.add(group_bone)
                             self.skinned_bones.append(group_bone)
 
-                    assert skin_vertex_groups != 0
+                    if skin_vertex_groups == 0:
+                        self.warn_strings.append(f'{str(child)} has no vertex groups skinned to a bone and will not be exported')
+                        continue
 
                     self.export_regions.append(child)
 
                     for ii in range(valid_mesh_batches):
                         self.ob_to_region_index.append(child)
+
+        materials_used_by_particle = set()
+        materials_used_by_not_particle = set()
+
+        for particle in export_particle_systems:
+            matref = shared.m3_pointer_get(ob.m3_materialrefs, particle.material)
+            materials_used_by_particle.add(matref)
+
+        for handle in mesh_matrefs:
+            materials_used_by_not_particle.add(handle)
+
+        for item in export_ribbons + export_projections:
+            matref = shared.m3_pointer_get(ob.m3_materialrefs, item.material)
+            materials_used_by_not_particle.add(matref)
 
         def recurse_composite_materials(matref, force_color, force_alpha):
             if force_color:
@@ -778,6 +811,10 @@ class Exporter:
                 for section in mat.sections:
                     section_matref = shared.m3_pointer_get(ob.m3_materialrefs, section.material.handle)
                     if section_matref:
+                        if matref in materials_used_by_particle:
+                            materials_used_by_particle.add(section_matref)
+                        if matref in materials_used_by_not_particle:
+                            materials_used_by_not_particle.add(section_matref)
                         self.export_required_material_references.add(section_matref)
                         recurse_composite_materials(section_matref, matref.bl_handle in self.vertex_color_mats, matref.bl_handle in self.vertex_alpha_mats)
 
@@ -785,6 +822,7 @@ class Exporter:
             recurse_composite_materials(matref, matref.bl_handle in self.vertex_color_mats, matref.bl_handle in self.vertex_alpha_mats)
 
         # TODO exclude materials if their type cannot be exported in model version
+        # TODO warning if layers have rtt channel in non-standard material
 
         for matref in self.export_required_material_references:
             mat = shared.m3_pointer_get(getattr(ob, matref.mat_type), matref.mat_handle)
@@ -800,6 +838,10 @@ class Exporter:
                         elif layer.uv_source == 'UV1' and self.uv_count < 2:
                             self.uv_count = 2
 
+        for matref in materials_used_by_particle & materials_used_by_not_particle:
+            mat = shared.m3_pointer_get(getattr(ob, matref.mat_type), matref.mat_handle)
+            self.warn_strings.append(f'M3 Material "{mat.name}" being used by non-particles while being used by particles can break them')
+
         def export_bone_bool(bone):
             result = False
             if bone.m3_export_cull:
@@ -814,7 +856,6 @@ class Exporter:
             return result
 
         self.bones = []
-        # TODO see if this can be optimized. all these loops will be expensive for large skeletons.
         for bone in ob.pose.bones:
             if export_bone_bool(bone):
                 self.bones.append(bone)
@@ -847,9 +888,6 @@ class Exporter:
             12: 1,
         }
 
-        # TODO warning if meshes and particles have materials or layers in common
-        # TODO warning if layers have rtt channel in non-standard material
-
         self.bone_name_indices = {bone.name: ii for ii, bone in enumerate(self.bones)}
         self.bone_to_correction_matrices = {}
         self.bone_to_iref = {}
@@ -867,10 +905,11 @@ class Exporter:
             arm_mod = None
             for modifier in ob.modifiers:
                 if modifier.type == 'ARMATURE':
-                    assert arm_mod is None
+                    if arm_mod:
+                        self.warn_strings.append(f'{str(ob)} has more than one armature modifier')
                     arm_mod = modifier
-                    if arm_mod.object:
-                        assert arm_mod.object == self.ob
+                    if arm_mod.object != self.ob:
+                        self.warn_strings.append(f'{str(ob)} has an armature modifier object which is not the parent armature object')
                     arm_mod.object = None
 
         self.depsgraph = bpy.context.evaluated_depsgraph_get()
@@ -911,6 +950,12 @@ class Exporter:
         # self.create_tmd_data(model, export_tmd_data)  # ! not supported in modern SC2 client
 
         self.finalize_anim_data(model)
+
+        if len(self.warn_strings):
+            warning = f'The following warnings were given during the M3 export operation of {self.ob.name}:\n' + '\n'.join(self.warn_strings)
+            print(warning)  # not for debugging
+            if self.bl_op:
+                self.bl_op.report({"WARNING"}, warning)
 
         self.m3.validate()
         self.m3.resolve()
@@ -1394,6 +1439,8 @@ class Exporter:
             region_vert_id_to_vert = {}
             region_vert_count = 0
 
+            no_deform_verts = 0
+
             for face in bm.faces:
                 l0, l1, l2 = ((L.vert.co, L[layer_tan].uv[1]) for L in face.loops)
                 tan = ((l2[1] - l0[1]) * (l1[0] - l0[0]) - (l1[1] - l0[1]) * (l2[0] - l0[0])).normalized()
@@ -1414,7 +1461,8 @@ class Exporter:
                     deformations.sort(key=lambda x: x[1])
                     deformations = deformations[0:min(4, len(deformations))]
 
-                    assert len(deformations)
+                    if not len(deformations):
+                        no_deform_verts += 1
 
                     # normalize the weights
                     sum_weight = 0
@@ -1471,6 +1519,10 @@ class Exporter:
                         region_vert_count += 1
 
                     region_faces.append(id_index)
+
+            if no_deform_verts:
+                self.warn_strings.append(f'{str(ob)} has at least one vertex with no weight given to a valid bone and will not be exported')
+                continue
 
             m3_vertices.extend(region_vertices)
             m3_lookup.extend(region_lookup)
@@ -2437,9 +2489,10 @@ class Exporter:
         return anim_ref
 
 
-def m3_export(ob, filename):
+def m3_export(ob, filename, bl_op=None):
     if not (filename.endswith('.m3') or filename.endswith('.m3a')):
         filename = filename.rsplit('.', 1)[0] + '.m3'
-    exporter = Exporter()
-    sections = exporter.m3_export(ob, filename)
+    print('m3_export', bl_op)
+    exporter = Exporter(bl_op=bl_op)
+    sections = exporter.m3_export(ob, filename,)
     io_m3.section_list_save(sections, filename)

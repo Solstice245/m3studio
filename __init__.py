@@ -105,7 +105,7 @@ class M3ExportOperator(bpy.types.Operator):
         return {'RUNNING_MODAL'}
 
     def execute(self, context):
-        io_m3_export.m3_export(context.active_object, self.filepath)
+        io_m3_export.m3_export(context.active_object, self.filepath, self)
         context.active_object.m3_filepath_export = self.filepath
         return {'FINISHED'}
 
