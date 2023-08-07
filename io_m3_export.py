@@ -1483,7 +1483,10 @@ class Exporter():
                         setattr(m3_vert, 'uv' + str(ii), to_m3_uv(loop[uv_layer].uv) if uv_layer else to_m3_uv((0, 0)))
 
                     if vertex_rgba:
-                        m3_vert.col = to_m3_color((*loop[layer_color][0:3], (loop[layer_alpha][0] + loop[layer_alpha][1] + loop[layer_alpha][2]) / 3))
+                        try:
+                            m3_vert.col = to_m3_color((*loop[layer_color][0:3], sum(loop[layer_alpha][0:3]) / 3))
+                        except AttributeError:
+                            m3_vert.col = to_m3_color((1, 1, 1, 1))
 
                     m3_vert.normal = to_m3_vec3_uint8(loop.vert.normal)
 
