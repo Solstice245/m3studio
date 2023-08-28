@@ -1048,7 +1048,6 @@ class Importer:
             layer_deform = bm.verts.layers.deform.new('m3lookup')
             layer_color = bm.loops.layers.color.new('m3color') if v_colors else None
             layer_alpha = bm.loops.layers.color.new('m3alpha') if v_colors else None
-            layer_sign = bm.faces.layers.int.new('m3sign')
 
             for uv_prop in uv_props:
                 bm.loops.layers.uv.new(uv_prop)
@@ -1080,7 +1079,6 @@ class Importer:
                     for jj in range(3):
                         m3v = regn_m3_verts[regn_m3_faces[ii + jj]]
                         loop = face.loops[jj]
-                        face[layer_sign] = round(m3v.sign / 255)
                         for uv_prop in uv_props:
                             layer_uv = bm.loops.layers.uv.get(uv_prop)
                             loop[layer_uv].uv = to_bl_uv(getattr(m3v, uv_prop), regn_uv_multiply, regn_uv_offset)

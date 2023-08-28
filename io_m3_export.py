@@ -1402,6 +1402,7 @@ class Exporter():
         for ob_index, ob in enumerate(mesh_objects):
             bm = bmesh.new(use_operators=True)
             bm.from_object(ob, self.depsgraph)
+            bmesh.ops.transform(bm, matrix=ob.matrix_local, verts=bm.verts, use_shapekey=False)
             bmesh.ops.triangulate(bm, faces=bm.faces)
 
             layer_deform = bm.verts.layers.deform.verify()
@@ -1419,9 +1420,7 @@ class Exporter():
                             break
 
             layers_uv = layers_uv[0:self.uv_count]
-
             layer_tan = layers_uv[0]
-            layer_sign = bm.faces.layers.int.get('m3sign') or bm.faces.layers.int.new('m3sign')
 
             first_vertex_index = len(m3_vertices)
             first_lookup_index = len(m3_lookup)
@@ -1442,11 +1441,17 @@ class Exporter():
             no_deform_verts = 0
 
             for face in bm.faces:
-                l0, l1, l2 = ((L.vert.co, L[layer_tan].uv[1]) for L in face.loops)
-                tan = ((l2[1] - l0[1]) * (l1[0] - l0[0]) - (l1[1] - l0[1]) * (l2[0] - l0[0])).normalized()
+                c1, c2, c3 = (L.vert.co for L in face.loops)
+                u1, u2, u3 = (L[layer_tan].uv[0] for L in face.loops)
+                v1, v2, v3 = (L[layer_tan].uv[1] for L in face.loops)
+                d = (v2 - v1) * (u3 - u1) - (u2 - u1) * (v3 - v1)
+                try:
+                    tan = (((v3 - v1) * (c2 - c1) - (v2 - v1) * (c3 - c1)) / -d).normalized()
+                except ZeroDivisionError:
+                    tan = mathutils.Vector((0, 0, 0))
 
                 for loop in face.loops:
-                    co = ob.matrix_local @ loop.vert.co
+                    co = loop.vert.co
                     m3_vert = m3_vertex_desc.instance()
                     m3_vert.pos = to_m3_vec3(co)
 
@@ -1489,13 +1494,8 @@ class Exporter():
                             m3_vert.col = to_m3_color((1, 1, 1, 1))
 
                     m3_vert.normal = to_m3_vec3_uint8(loop.vert.normal)
-
-                    if face[layer_sign] == 1:
-                        m3_vert.sign = 255
-                        m3_vert.tan = to_m3_vec3_uint8(-tan)
-                    else:
-                        m3_vert.sign = 0
-                        m3_vert.tan = to_m3_vec3_uint8(tan)
+                    m3_vert.tan = to_m3_vec3_uint8(tan)
+                    m3_vert.sign = 0 if d < 0 else 255
 
                     id_list = [
                         m3_vert.pos.x, m3_vert.pos.y, m3_vert.pos.z, m3_vert.lookup0, m3_vert.lookup1, m3_vert.lookup2, m3_vert.lookup3, m3_vert.sign,

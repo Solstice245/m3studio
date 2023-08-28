@@ -39,127 +39,6 @@ class BatchPropertyGroup(bpy.types.PropertyGroup):
     bone: bpy.props.PointerProperty(type=shared.M3BonePointerProp)
 
 
-class SignOpSelect(bpy.types.Operator):
-    bl_idname = 'm3.face_sign_select'
-    bl_label = 'Select faces'
-    bl_description = 'Selects the assigned faces of the sign inversion group'
-    bl_options = {'UNDO'}
-
-    def invoke(self, context, event):
-        for ob in context.selected_objects:
-            if ob.type != 'MESH':
-                continue
-
-            me = ob.data
-            bm = bmesh.from_edit_mesh(me)
-
-            group = bm_layer_face_sign(bm)
-            for face in bm.faces:
-                face.select = True if face[group] else face.select
-
-            bm.select_flush(True)
-
-            bmesh.update_edit_mesh(me)
-
-        return {'FINISHED'}
-
-
-class SignOpSet(bpy.types.Operator):
-    bl_idname = 'm3.face_sign_set'
-    bl_label = 'Set faces'
-    bl_description = 'Sets the selected faces to the sign inversion group'
-    bl_options = {'UNDO'}
-
-    def invoke(self, context, event):
-        for ob in context.selected_objects:
-            if ob.type != 'MESH':
-                continue
-
-            me = ob.data
-            bm = bmesh.from_edit_mesh(me)
-
-            group = bm_layer_face_sign(bm)
-            for face in bm.faces:
-                face[group] = 1 if face.select else 0
-
-            bmesh.update_edit_mesh(me)
-
-        return {'FINISHED'}
-
-
-class SignOpAdd(bpy.types.Operator):
-    bl_idname = 'm3.face_sign_add'
-    bl_label = 'Add faces'
-    bl_description = 'Adds the selected faces to the sign inversion group'
-    bl_options = {'UNDO'}
-
-    def invoke(self, context, event):
-        for ob in context.selected_objects:
-            if ob.type != 'MESH':
-                continue
-
-            me = ob.data
-            bm = bmesh.from_edit_mesh(me)
-
-            group = bm_layer_face_sign(bm)
-            for face in bm.faces:
-                face[group] = 1 if face.select else face[group]
-
-            bmesh.update_edit_mesh(me)
-
-        return {'FINISHED'}
-
-
-class SignOpRemove(bpy.types.Operator):
-    bl_idname = 'm3.face_sign_remove'
-    bl_label = 'Remove faces'
-    bl_description = 'Removes the selected faces from the sign inversion group'
-    bl_options = {'UNDO'}
-
-    def invoke(self, context, event):
-        for ob in context.selected_objects:
-            if ob.type != 'MESH':
-                continue
-
-            me = ob.data
-            bm = bmesh.from_edit_mesh(me)
-
-            group = bm_layer_face_sign(bm)
-            for face in bm.faces:
-                face[group] = 0 if face.select else face[group]
-
-            bmesh.update_edit_mesh(me)
-
-        return {'FINISHED'}
-
-
-class SignOpInvert(bpy.types.Operator):
-    bl_idname = 'm3.face_sign_invert'
-    bl_label = 'Invert faces'
-    bl_description = 'Inverts the value of the sign inversion group for the selected faces.'
-    bl_options = {'UNDO'}
-
-    def invoke(self, context, event):
-        for ob in context.selected_objects:
-            if ob.type != 'MESH':
-                continue
-
-            me = ob.data
-            bm = bmesh.from_edit_mesh(me)
-
-            group = bm_layer_face_sign(bm)
-            for face in bm.faces:
-                face[group] = (1 if face[group] == 0 else 0) if face.select else face[group]
-
-            bmesh.update_edit_mesh(me)
-
-        return {'FINISHED'}
-
-
-def bm_layer_face_sign(bm):
-    return bm.faces.layers.int.get('m3sign') or bm.faces.layers.int.new('m3sign')
-
-
 class ClothSimOpSelect(bpy.types.Operator):
     bl_idname = 'm3.cloth_sim_select'
     bl_label = 'Select vertices'
@@ -263,16 +142,6 @@ class Panel(bpy.types.Panel):
         box.prop(ob, 'm3_mesh_uv2', text='UV Layer 2')
         box.prop(ob, 'm3_mesh_uv3', text='UV Layer 3')
 
-        if ob.mode == 'EDIT':
-            layout.separator()
-            layout.label(text='M3 Vertex Normal Sign:')
-            layout.operator('m3.face_sign_select', text='Select')
-            col = layout.column_flow(columns=2)
-            col.operator('m3.face_sign_set', text='Set To Selected')
-            col.operator('m3.face_sign_invert', text='Invert Selected')
-            col.operator('m3.face_sign_add', text='Add Selected')
-            col.operator('m3.face_sign_remove', text='Remove Selected')
-
         mesh_cloth = None
         if parent:
             for cloth in parent.m3_cloths:
@@ -291,11 +160,6 @@ class Panel(bpy.types.Panel):
 classes = (
     BatchPropertyGroup,
     Panel,
-    SignOpSelect,
-    SignOpSet,
-    SignOpAdd,
-    SignOpRemove,
-    SignOpInvert,
     ClothSimOpSelect,
     ClothSimOpSet,
 )
