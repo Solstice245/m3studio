@@ -21,8 +21,8 @@ from . import shared
 
 
 def register_props():
-    bpy.types.Object.m3_hittest_tight = bpy.props.PointerProperty(type=shared.M3VolumePropertyGroup)
-    bpy.types.Object.m3_hittests = bpy.props.CollectionProperty(type=shared.M3VolumePropertyGroup)
+    bpy.types.Object.m3_hittest_tight = bpy.props.PointerProperty(type=Properties)
+    bpy.types.Object.m3_hittests = bpy.props.CollectionProperty(type=Properties)
     bpy.types.Object.m3_hittests_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
 
 
@@ -30,6 +30,15 @@ def update_collection_index(self, context):
     if self.m3_hittests_index in range(len(self.m3_hittests)):
         bl = self.m3_hittests[self.m3_hittests_index]
         shared.select_bones_handles(context.object, [bl.bone])
+
+
+def draw_props(hittest, layout):
+    shared.draw_prop_pointer_search(layout, hittest.bone, hittest.id_data.data, 'bones', text='Bone', icon='BONE_DATA')
+    shared.draw_volume_props(hittest, layout)
+
+
+class Properties(shared.M3VolumePropertyGroup):
+    bone: bpy.props.PointerProperty(type=shared.M3BonePointerProp)
 
 
 class Menu(bpy.types.Menu):
@@ -49,12 +58,13 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
         ob = context.object
         layout.use_property_split = True
         layout.label(text='Tight Hit Test:')
-        shared.draw_volume_props(ob.m3_hittest_tight, layout)
+        draw_props(ob.m3_hittest_tight, layout)
         layout.label(text='Fuzzy Hit Tests:')
-        shared.draw_collection_list(layout, ob.m3_hittests, shared.draw_volume_props, menu_id=Menu.bl_idname)
+        shared.draw_collection_list(layout, ob.m3_hittests, draw_props, menu_id=Menu.bl_idname)
 
 
 classes = (
+    Properties,
     Menu,
     Panel,
 )

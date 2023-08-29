@@ -741,7 +741,7 @@ class Exporter():
                 if volume_bone:
                     self.export_required_bones.add(volume_bone)
                     export_attachment_volumes.append(volume)
-                    self.attachment_bones.append([attachment_point_bone, volume_bone])
+                    self.attachment_bones.append(attachment_point_bone)
 
         for m3_tmd in ob.m3_tmd:
             if m3_tmd.m3_export:
@@ -1582,7 +1582,7 @@ class Exporter():
 
             m3_attachment = attachment_point_section.content_add()
             m3_attachment_name_section = self.m3.section_for_reference(m3_attachment, 'name')
-            m3_attachment_name_section.content_from_string(('Ref_' if not attachment.name.startswith('Ref_') else '') + attachment.name)
+            m3_attachment_name_section.content_from_string(attachment.name)
             m3_attachment.bone = self.bone_name_indices[attachment_bone.name]
             attachment_point_addon_section.content_add(0xffff)
         # add volumes later so that sections are in order of the modl data
@@ -2286,11 +2286,11 @@ class Exporter():
             attachment_volume_addon1_section = self.m3.section_for_reference(model, 'attachment_volumes_addon1')
             attachment_volume_addon1_section.content_add(*(0 for volume in volumes))
 
-        for volume, bones in zip(volumes, self.attachment_bones):
+        for volume, bone in zip(volumes, self.attachment_bones):
             m3_volume = attachment_volume_section.content_add()
-            m3_volume.bone0 = self.bone_name_indices[bones[0].name]
-            m3_volume.bone1 = self.bone_name_indices[bones[1].name]
-            m3_volume.bone2 = self.bone_name_indices[bones[0].name]
+            m3_volume.bone0 = self.bone_name_indices[bone.name]
+            m3_volume.bone1 = self.bone_name_indices[bone.name]
+            m3_volume.bone2 = self.bone_name_indices[bone.name]
             m3_volume.shape = volume.bl_rna.properties['shape'].enum_items.find(volume.shape)
             m3_volume.size0, m3_volume.size1, m3_volume.size2 = volume.size
             m3_volume.matrix = to_m3_matrix(mathutils.Matrix.LocRotScale(volume.location, volume.rotation, volume.scale))

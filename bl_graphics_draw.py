@@ -132,7 +132,7 @@ def draw():
 
             attach = item
             for ii, item in enumerate(item.volumes):
-                pb = get_pb_from_handle(ob, item.bone, pb_handles)
+                pb = get_pb_from_handle(ob, attach.bone, pb_handles)
                 if pb:
                     if opts.draw_attach_volumes or (pb_select[pb] and opts.draw_selected):
                         col = blgd.att_point_color_normal if not pb_select[pb] or ii != attach.volumes_index else blgd.att_point_color_select

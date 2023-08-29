@@ -741,7 +741,6 @@ def draw_prop_anim(layout, data, field, index=-1, style='col', split=True, text=
 
 
 def draw_volume_props(volume, layout):
-    draw_prop_pointer_search(layout, volume.bone, volume.id_data.data, 'bones', text='Bone', icon='BONE_DATA')
     col = layout.column(align=True)
     col.prop(volume, 'shape', text='Shape Type')
     if volume.shape == 'CUBE':

@@ -1130,7 +1130,7 @@ class Importer:
         for m3_point in self.m3[self.m3_model.attachment_points]:
             bone_name = self.m3_get_bone_name(m3_point.bone)
             pose_bone = ob.pose.bones.get(bone_name)
-            point = shared.m3_item_add(ob.m3_attachmentpoints, item_name=self.m3[m3_point.name].content_to_string()[4:])
+            point = shared.m3_item_add(ob.m3_attachmentpoints, item_name=self.m3[m3_point.name].content_to_string())
             point.bone.handle = pose_bone.bl_handle if pose_bone else ''
 
             for m3_volume in m3_volumes:

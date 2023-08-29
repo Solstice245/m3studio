@@ -174,6 +174,11 @@ def register():
     bpy.types.TOPBAR_MT_file_export.append(top_bar_export)
     M3_SHADER = bpy.types.SpaceView3D.draw_handler_add(bl_graphics_draw.draw, (), 'WINDOW', 'POST_VIEW')
 
+    # populate search list for attachment point name
+    bpy.app.handlers.load_post.append(m3_attachmentpoints.attachment_name_list_verify)
+    # for backwards compatibility with the names of attachment points from previous importer versions
+    bpy.app.handlers.load_post.append(m3_attachmentpoints.attachmentpoint_names_fix)
+
 
 def unregister():
     global M3_SHADER

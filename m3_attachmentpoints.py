@@ -17,12 +17,36 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import bpy
+from bpy.app.handlers import persistent
 from . import shared
+from . import bl_enum
 
 
 def register_props():
+    # prop_search can only operate on Blender collections
+    bpy.types.Scene.m3_attachment_names = bpy.props.CollectionProperty(type=AttachmentNameProperties)
     bpy.types.Object.m3_attachmentpoints = bpy.props.CollectionProperty(type=Properties)
     bpy.types.Object.m3_attachmentpoints_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
+
+
+@persistent
+def attachment_name_list_verify(self, context):
+    for scene in bpy.data.scenes:
+        scene.m3_attachment_names.clear()
+        for name in bl_enum.attachment_names:
+            scene.m3_attachment_names.add().name = name
+
+
+@persistent
+def attachmentpoint_names_fix(self, context):
+    for ob in bpy.data.objects:
+        for point in ob.m3_attachmentpoints:
+            if not (point.name.startswith('Ref_') or point.name.startswith('Pos_')):
+                point.name = 'Ref_' + point.name
+
+
+class AttachmentNameProperties(bpy.types.PropertyGroup):
+    name: bpy.props.StringProperty(options=set())
 
 
 def update_collection_index(self, context):
@@ -32,6 +56,7 @@ def update_collection_index(self, context):
 
 
 def draw_props(point, layout):
+    layout.prop_search(point, 'name', bpy.context.scene, 'm3_attachment_names', text='Name')
     shared.draw_prop_pointer_search(layout, point.bone, point.id_data.data, 'bones', text='Bone', icon='BONE_DATA')
     shared.draw_collection_list(layout.box(), point.volumes, shared.draw_volume_props, menu_id=VolumeMenu.bl_idname, label='Volumes:')
 
@@ -59,17 +84,27 @@ class Properties(shared.M3PropertyGroup):
     volumes_index: bpy.props.IntProperty(options=set(), default=-1)
 
 
+class AttachmentList(bpy.types.UIList):
+    bl_idname = 'UI_UL_M3_attachmentpoints'
+
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index, flt_flag):
+        if self.layout_type in {'DEFAULT', 'COMPACT'}:
+            layout.label(text=item.name)
+
+
 class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_idname = 'OBJECT_PT_M3_ATTACHMENTPOINTS'
     bl_label = 'M3 Attachment Points'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, context.object.m3_attachmentpoints, draw_props, menu_id=PointMenu.bl_idname)
+        shared.draw_collection_list(self.layout, context.object.m3_attachmentpoints, draw_props, ui_list_id=AttachmentList.bl_idname, menu_id=PointMenu.bl_idname)
 
 
 classes = (
+    AttachmentNameProperties,
     Properties,
     VolumeMenu,
     PointMenu,
+    AttachmentList,
     Panel,
 )
