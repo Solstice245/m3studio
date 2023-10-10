@@ -1461,7 +1461,7 @@ class Exporter():
                         lookup_ii = group_to_lookup_ii.get(deformation[0])
                         if lookup_ii is not None and deformation[1]:
                             deformations.append([lookup_ii, deformation[1]])
-                            bone_bounding_points[self.bones[region_lookup[lookup_ii]]].append(co)
+                            bone_bounding_points[self.bones[region_lookup[lookup_ii]]].append(co.copy())
 
                     deformations.sort(key=lambda x: x[1])
                     deformations = deformations[0:min(4, len(deformations))]
@@ -1638,8 +1638,6 @@ class Exporter():
         null_layer_section = io_m3.M3Section(desc=layer_desc, index_entry=None, references=[], content=[])
         null_layer_section.content_add()
 
-        # print(matrefs)
-
         matrefs_typed = {ii: [] for ii in range(0, 13)}
         for matref in matrefs:
             m3_matref = matref_section.content_add()
@@ -1672,12 +1670,6 @@ class Exporter():
                     layer = shared.m3_pointer_get(self.ob.m3_materiallayers, getattr(mat, layer_name_full))
 
                     if not layer or (layer.color_type == 'BITMAP' and not layer.color_bitmap):
-                        # * looking for a way to make multi-batching not crash with MAT_V19+
-                        # if 'norm_blend' in layer_name:
-                        #     unique_null_layer_section = self.m3.section_for_reference(m3_mat, layer_name_full, version=self.ob.m3_materiallayers_version)
-                        #     unique_null_layer_section.content_add()
-                        # else:
-                        #     null_layer_section.references.append(m3_layer_ref)
                         null_layer_section.references.append(m3_layer_ref)
                     else:
 
