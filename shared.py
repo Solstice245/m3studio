@@ -23,7 +23,7 @@ from . import bl_enum
 
 m3_collections_suggested_names = {
     'm3_animation_groups': ['Stand', 'Walk', 'Attack', 'Birth', 'Spell'],
-    'm3_attachmentpoints': ['Origin', 'Center', 'Overhead', 'Target'],
+    'm3_attachmentpoints': ['Ref_Origin', 'Ref_Center', 'Ref_Overhead', 'Ref_Target'],
     'm3_billboards': ['Billboard'],
     'm3_cameras': ['CameraPortrait', 'CameraAvatar', 'Camera'],
     'm3_forces': ['Force'],
