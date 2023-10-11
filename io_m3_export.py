@@ -736,12 +736,13 @@ class Exporter():
         self.attachment_bones = []
         for attachment in export_attachment_points:
             attachment_point_bone = shared.m3_pointer_get(ob.pose.bones, attachment.bone)
-            for volume in attachment.volumes:
-                volume_bone = shared.m3_pointer_get(ob.pose.bones, volume.bone)
-                if volume_bone:
-                    self.export_required_bones.add(volume_bone)
+            if attachment_point_bone:
+                self.export_required_bones.add(attachment_point_bone)
+                for volume in attachment.volumes:
                     export_attachment_volumes.append(volume)
                     self.attachment_bones.append(attachment_point_bone)
+            else:
+                self.warn_strings.append(f'{str(attachment)} has no valid bone assigned to it and will not be exported')
 
         for m3_tmd in ob.m3_tmd:
             if m3_tmd.m3_export:
