@@ -1069,8 +1069,8 @@ class Exporter():
 
         for action, stc_list in self.action_to_stc.items():
 
-            # do not calculate bounds if action which has no bone animation data
-            if self.action_to_sdmb_user.get(action):
+            # do not calculate bounds if action which has no bone animation data, or there is no mesh data in general
+            if self.action_to_sdmb_user.get(action) and len(self.export_regions):
                 self.action_to_anim_data[action]['SDMB'][BNDS_ANIM_ID] = [[], []]
                 bnds_data = self.action_to_anim_data[action]['SDMB'][BNDS_ANIM_ID]
 
