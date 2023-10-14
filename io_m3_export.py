@@ -1135,7 +1135,7 @@ class Exporter():
                     action_data = self.action_to_anim_data[action][section_data_name]
 
                     for ii, id_num in enumerate(action_data):
-                        anim_fend = max(anim_fend, action_data[id_num][0][-1])
+                        anim_fend = min(max(anim_fend, action_data[id_num][0][-1]), anim_group.frame_end)
 
                 for data_type_ii, section_data_name in enumerate(ANIM_DATA_SECTION_NAMES):
 
