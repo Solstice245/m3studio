@@ -1601,7 +1601,11 @@ class Exporter():
             processor = M3OutputProcessor(self, light, m3_light)
             io_shared.io_light(processor)
 
-            m3_light.unknown148 = light.attenuation_far
+        # currently will never be a number below 0, not sure if this is correct
+        for action, stc_list in self.action_to_stc.items():
+            action_data = self.action_to_anim_data[action]['SDR3']
+            for m3_light in light_section:
+                m3_light.unknown148 = max(m3_light.unknown148, *action_data[m3_light.attenuation_far.header.id][1])
 
     def create_shadow_boxes(self, model, shadow_boxes):
         if int(self.ob.m3_model_version) < 21:
