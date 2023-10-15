@@ -640,7 +640,10 @@ class Exporter():
                             if volume.shape == 'MESH' or volume.shape == 'CONVEXHULL':
                                 if volume.mesh_object:
                                     valid_volumes.append(volume)
-                                    self.warn_strings.append(f'{str(volume)} is a mesh type volume, but no mesh object is assigned')
+                                else:
+                                    self.warn_strings.append(
+                                        f'Physics shape "{physics_shape.name}" volume "{volume.name}" is a mesh type volume, but no mesh object is assigned'
+                                    )
                             else:
                                 valid_volumes.append(volume)
                         if len(valid_volumes):
@@ -2496,7 +2499,6 @@ class Exporter():
 def m3_export(ob, filename, bl_op=None):
     if not (filename.endswith('.m3') or filename.endswith('.m3a')):
         filename = filename.rsplit('.', 1)[0] + '.m3'
-    print('m3_export', bl_op)
     exporter = Exporter(bl_op=bl_op)
     sections = exporter.m3_export(ob, filename,)
     io_m3.section_list_save(sections, filename)
