@@ -1219,6 +1219,26 @@ class Importer:
             if m3_system.bit_get('flags', 'tail_fix'):
                 system.tail_type = 'FIX'
 
+            if m3_system.bit_get('flags', 'sort_distance'):
+                system.sort_method = 'DISTANCE'
+            elif m3_system.bit_get('flags', 'sort_height'):
+                system.sort_method = 'HEIGHT'
+
+            if m3_system.bit_get('flags', 'old_color_smooth'):
+                system.old_color_smoothing = 'SMOOTH'
+            elif m3_system.bit_get('flags', 'old_color_bezier'):
+                system.old_color_smoothing = 'BEZIER'
+
+            if m3_system.bit_get('flags', 'old_rotation_smooth'):
+                system.old_rotation_smoothing = 'SMOOTH'
+            elif m3_system.bit_get('flags', 'old_rotation_bezier'):
+                system.old_rotation_smoothing = 'BEZIER'
+
+            if m3_system.bit_get('flags', 'old_size_smooth'):
+                system.old_size_smoothing = 'SMOOTH'
+            elif m3_system.bit_get('flags', 'old_size_bezier'):
+                system.old_size_smoothing = 'BEZIER'
+
             if hasattr(m3_system, 'emit_shape_regions'):
                 for region_indice in self.m3[m3_system.emit_shape_regions]:
                     mesh_object_pointer = system.emit_shape_meshes.add()
@@ -1285,6 +1305,9 @@ class Importer:
 
     def create_forces(self):
         ob = self.ob
+
+        self.m3_struct_version_set_from_ref('m3_forces_version', self.m3_model.forces)
+
         for m3_force in self.m3[self.m3_model.forces]:
             pose_bone_name = self.m3_get_bone_name(m3_force.bone)
             pose_bone = ob.data.bones.get(pose_bone_name)

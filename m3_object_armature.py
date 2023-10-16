@@ -55,17 +55,17 @@ desc_draw_attach_points = 'Display attachment points'
 desc_draw_attach_volumes = 'Display attachment volumes'
 desc_draw_hittests = 'Display hit test volumes'
 desc_draw_lights = 'Display light areas'
-desc_draw_particles = 'Display particle emission areas and TODO: emission vectors'
-desc_draw_ribbons = 'TODO: Display ribbon shapes'
+desc_draw_particles = 'Display particle emission areas and #TODO: emission vectors'
+desc_draw_ribbons = '#TODO: Display ribbon shapes'
 desc_draw_projections = 'Display projection bounding boxes'
 desc_draw_forces = 'Display force influence areas'
 desc_draw_cameras = 'Display cameras'
-desc_draw_rigidbodies = 'Display rigid body shapes and TODO: their joint shapes and vectors'
+desc_draw_rigidbodies = 'Display rigid body shapes and #TODO: their joint shapes and vectors'
 desc_draw_clothconstraints = 'Display cloth constraint volumes'
 desc_draw_ikjoints = 'Display IK joint relationship lines'
 desc_draw_shadowboxes = 'Display shadow box areas'
 desc_draw_warps = 'Display vertex warp influence areas'
-desc_draw_turrets = 'TODO: Display turret part vectors'
+desc_draw_turrets = '#TODO: Display turret part vectors'
 
 
 class OptionProperties(bpy.types.PropertyGroup):
@@ -126,6 +126,7 @@ class IOPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
         col.prop(ob, 'm3_cameras_version', text='Camera Version')
         col.prop(ob, 'm3_particlesystems_version', text='Particle System Version')
         col.prop(ob, 'm3_ribbons_version', text='Ribbon Version')
+        col.prop(ob, 'm3_forces_version', text='Force Version')
         col.prop(ob, 'm3_physicsshapes_version', text='Physics Shape Version')
         col.prop(ob, 'm3_rigidbodies_version', text='Rigid Body Version')
         col.prop(ob, 'm3_turrets_part_version', text='Turret Part Version')

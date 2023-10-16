@@ -81,9 +81,33 @@ def draw_props(particle, layout):
     par_ver = int(particle.id_data.m3_particlesystems_version)
 
     shared.draw_prop_pointer_search(layout, particle.bone, particle.id_data.data, 'bones', text='Bone', icon='BONE_DATA')
-    shared.draw_prop_pointer_search(layout, particle.material, particle.id_data, 'm3_materialrefs', text='Material', icon='MATERIAL')
+    col = layout.column()
+    col.active = False if bool(particle.model_path) else True
+    shared.draw_prop_pointer_search(col, particle.material, particle.id_data, 'm3_materialrefs', text='Material', icon='MATERIAL')
     layout.prop(particle, 'model_path', text='Model Path', icon='FILE_3D')
-    shared.draw_prop_pointer_search(layout, particle.trail_system, particle.id_data, 'm3_particlesystems', text='Trail System', icon='LINKED')
+    col = layout.column()
+    col.active = True if particle.model_path else False
+    col.prop(particle, 'swap_yz_on_model_particles', text='Swap Y-Z On Model Particles')
+    layout.separator()
+    row = layout.row(align=True)
+    row.prop(particle, 'lod_reduce', text='LOD Reduction/Cutoff')
+    row.prop(particle, 'lod_cut', text='')
+    row = layout.row(align=True)
+    row.prop(particle, 'emit_max', text='Particle Count/Distance Limit')
+    row.prop(particle, 'distance_limit', text='')
+    layout.separator()
+    row = shared.draw_prop_split(layout, text='Emission Rate/Count')
+    shared.draw_op_anim_prop(row, particle, 'emit_rate')
+    row.separator(factor=0.325)
+    shared.draw_op_anim_prop(row, particle, 'emit_count')
+    layout.separator()
+    col = layout.column(align=True)
+    shared.draw_prop_pointer_search(col, particle.trail_system, particle.id_data, 'm3_particlesystems', text='Trail System', icon='LINKED')
+    row = shared.draw_prop_split(col, text='Trail Chance/Emission Rate')
+    row.prop(particle, 'trail_chance', text='')
+    row.separator(factor=0.325)
+    shared.draw_op_anim_prop(row, particle, 'trail_rate')
+    layout.separator()
     col = layout.column(align=True)
     col.prop(particle, 'particle_type', text='Type')
 
@@ -98,24 +122,10 @@ def draw_props(particle, layout):
         row = col.row(align=True)
         row.prop(particle, 'instance_tail', text='Tail Length')
         row.prop(particle, 'tail_type', text='')
-
     layout.separator()
-    row = layout.row(align=True)
-    row.prop(particle, 'lod_reduce', text='LOD Reduction/Cutoff')
-    row.prop(particle, 'lod_cut', text='')
-    row = layout.row(align=True)
-    row.prop(particle, 'emit_max', text='Particle Count/Distance Limit')
-    row.prop(particle, 'distance_limit', text='')
-    layout.separator()
-    row = shared.draw_prop_split(layout, text='Emission Rate/Count')
-    shared.draw_op_anim_prop(row, particle, 'emit_rate')
-    row.separator(factor=0.325)
-    shared.draw_op_anim_prop(row, particle, 'emit_count')
-    layout.separator()
-    row = shared.draw_prop_split(layout, text='Trail Chance/Emission Rate')
-    row.prop(particle, 'trail_chance', text='')
-    row.separator(factor=0.325)
-    shared.draw_op_anim_prop(row, particle, 'trail_rate')
+    row = layout.row()
+    row.prop(particle, 'world_space', text='World Space')
+    row.prop(particle, 'simulate_init', text='Pre Pump')
     layout.separator()
     col = layout.column(align=True)
     col.prop(particle, 'emit_type', text='Emission Vector')
@@ -212,10 +222,12 @@ def draw_props(particle, layout):
     col = layout.column(align=True)
     if par_ver >= 17:
         col.prop(particle, 'color_smoothing', text='Color Interpolation')
+    else:
+        col.prop(particle, 'old_color_smoothing', text='Color Interpolation')
     row = col.row(align=True)
     row.prop(particle, 'color_anim_mid', text='RGB/A Midpoint')
     row.prop(particle, 'alpha_anim_mid', text='')
-    if particle.color_smoothing == 'LINEARHOLD' or particle.color_smoothing == 'BEZIERHOLD':
+    if par_ver >= 17 and (particle.color_smoothing == 'LINEARHOLD' or particle.color_smoothing == 'BEZIERHOLD'):
         row = col.row(align=True)
         row.prop(particle, 'color_hold', text='RGB/A Hold Time')
         row.prop(particle, 'alpha_hold', text='')
@@ -238,10 +250,14 @@ def draw_props(particle, layout):
         sub = row.row()
         sub.ui_units_x = 100
         sub.prop(particle, 'rotation_smoothing', text='')
+    else:
+        sub = row.row()
+        sub.ui_units_x = 100
+        sub.prop(particle, 'old_rotation_smoothing', text='')
     sub = row.row(align=True)
     sub.ui_units_x = 100
     sub.prop(particle, 'rotation_anim_mid', text='')
-    if par_ver >= 17 and particle.rotation_smoothing == 'LINEARHOLD' or particle.rotation_smoothing == 'BEZIERHOLD':
+    if par_ver >= 17 and (particle.rotation_smoothing == 'LINEARHOLD' or particle.rotation_smoothing == 'BEZIERHOLD'):
         sub.prop(particle, 'rotation_hold', text='')
     row = shared.draw_prop_split(layout, text='Lifespan Factor')
     shared.draw_op_anim_prop(row, particle, 'rotation')
@@ -260,10 +276,14 @@ def draw_props(particle, layout):
         sub = row.row()
         sub.ui_units_x = 100
         sub.prop(particle, 'size_smoothing', text='')
+    else:
+        sub = row.row()
+        sub.ui_units_x = 100
+        sub.prop(particle, 'old_size_smoothing', text='')
     sub = row.row(align=True)
     sub.ui_units_x = 100
     sub.prop(particle, 'size_anim_mid', text='')
-    if par_ver >= 17 and particle.size_smoothing == 'LINEARHOLD' or particle.size_smoothing == 'BEZIERHOLD':
+    if par_ver >= 17 and (particle.size_smoothing == 'LINEARHOLD' or particle.size_smoothing == 'BEZIERHOLD'):
         sub.prop(particle, 'size_hold', text='')
     row = shared.draw_prop_split(layout, text='Lifespan Factor')
     shared.draw_op_anim_prop(row, particle, 'size')
@@ -295,11 +315,18 @@ def draw_props(particle, layout):
     sub.active = particle.mass_randomize
     sub.prop(particle, 'mass2', text='')
     col.prop(particle, 'drag', text='Drag')
-    col.prop(particle, 'gravity', text='Gravity')
+    row = col.row(align=True)
+    row.prop(particle, 'gravity', text='Gravity')
+    row.separator()
+    row.prop(particle, 'multiply_gravity', text='Factor Map Gravity')
     col.prop(particle, 'wind_multiplier', text='Wind Multiplier')
     row = col.row(align=True)
     row.prop(particle, 'friction', text='Friction/Bounce Factors')
     row.prop(particle, 'bounce', text='')
+    row = layout.row(heading='Collision Flags')
+    row.prop(particle, 'collide_terrain', text='Terrain')
+    row.prop(particle, 'collide_objects', text='Objects')
+    row.prop(particle, 'collide_emit', text='Emit')
     layout.separator()
     col = layout.column(align=True)
     sub = col.row(align=True)
@@ -314,10 +341,11 @@ def draw_props(particle, layout):
     sub.prop(particle, 'uv_flipbook_end_init_index', text='Phase 2 Start/End')
     sub.prop(particle, 'uv_flipbook_end_stop_index', text='')
     layout.separator()
-    row = layout.column()
-    col = shared.draw_prop_split(layout, text='Local Force Channels', sep=2.05)
+    # row = layout.row()
+    col = shared.draw_prop_split(layout, text='Local/World Force Channels', sep=2.05)
     col.prop(particle, 'local_forces', text='')
-    col = shared.draw_prop_split(layout, text='World Force Channels', sep=2.05)
+    col.separator()
+    # col = shared.draw_prop_split(row, text='World Force Channels', sep=2.05)
     col.prop(particle, 'world_forces', text='')
     layout.separator()
     col = layout.column(align=True)
@@ -328,31 +356,10 @@ def draw_props(particle, layout):
     row.prop(particle, 'noise_cohesion', text='Cohesion/Edge')
     row.prop(particle, 'noise_edge', text='')
     layout.separator()
-    col = layout.column_flow(align=True, columns=2)
-    col.use_property_split = False
-    col.prop(particle, 'collide_terrain', text='Collide Terrain')
-    col.prop(particle, 'collide_objects', text='Collide Objects')
-    col.prop(particle, 'collide_emit', text='Collide Emit')
-    if par_ver < 17:
-        col.prop(particle, 'old_rotation_smooth', text='Smooth Rotation')
-        col.prop(particle, 'old_rotation_bezier', text='Smooth Rotation Bezier')
-        col.prop(particle, 'old_size_smooth', text='Smooth Size')
-        col.prop(particle, 'old_size_bezier', text='Smooth Size Bezier')
-        col.prop(particle, 'old_color_smooth', text='Smooth Color')
-        col.prop(particle, 'old_color_bezier', text='Smooth Color Bezier')
-    col.prop(particle, 'inherit_emit_shape', text='Inherit Emission Area')
-    col.prop(particle, 'inherit_emit_params', text='Inherit Emission Parameters')
-    col.prop(particle, 'sort', text='Sort By Distance')
-    col.prop(particle, 'sort_z_height', text='Sort By Height')
-    col.prop(particle, 'sort_reverse', text='Reverse Sorting')
-    col.prop(particle, 'world_space', text='World Space')
-    col.prop(particle, 'simulate_init', text='Simulate On Init')
-    col.prop(particle, 'scale_time_parent', text='Scale Time By Parent')
-    col.prop(particle, 'local_time', text='Use Local Time')
-    col.prop(particle, 'multiply_gravity', text='Multiply By Map Gravity')
-    col.prop(particle, 'swap_yz_on_model_particles', text='Swap Y-Z On Model Particles')
-    col.prop(particle, 'lit_parts', text='Lit Parts')
-    col.prop(particle, 'copy', text='Copy')
+    row = layout.row()
+    row.prop(particle, 'sort_method', text='Sort Method')
+    row.separator()
+    row.prop(particle, 'sort_reverse', text='Reverse')
 
 
 class SystemPointerProp(bpy.types.PropertyGroup):
@@ -377,6 +384,22 @@ class CopyProperties(shared.M3PropertyGroup):
     emit_rate_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     emit_count: bpy.props.IntProperty(name='Particle Copy Emission Count', min=0)
     emit_count_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
+
+
+# backwards compatibility for flag options before the enum property implementation
+def sort_method_get(self):
+    try:
+        return self['sort_method']
+    except KeyError:
+        if self.get('sort'):
+            return 1  # 'DISTANCE'
+        elif self.get('sort_z_height'):
+            return 2  # 'HEIGHT'
+        return 0  # 'NONE'
+
+
+def sort_method_set(self, value):
+    self['sort_method'] = value
 
 
 class SystemProperties(shared.M3PropertyGroup):
@@ -468,6 +491,9 @@ class SystemProperties(shared.M3PropertyGroup):
     color_smoothing: bpy.props.EnumProperty(options=set(), items=bl_enum.anim_smoothing)
     rotation_smoothing: bpy.props.EnumProperty(options=set(), items=bl_enum.anim_smoothing)
     size_smoothing: bpy.props.EnumProperty(options=set(), items=bl_enum.anim_smoothing)
+    old_color_smoothing: bpy.props.EnumProperty(options=set(), items=bl_enum.anim_smoothing_basic)
+    old_rotation_smoothing: bpy.props.EnumProperty(options=set(), items=bl_enum.anim_smoothing_basic)
+    old_size_smoothing: bpy.props.EnumProperty(options=set(), items=bl_enum.anim_smoothing_basic)
     noise_amplitude: bpy.props.FloatProperty(options=set())
     noise_frequency: bpy.props.FloatProperty(options=set())
     noise_cohesion: bpy.props.FloatProperty(options=set())
@@ -523,21 +549,13 @@ class SystemProperties(shared.M3PropertyGroup):
     parent_velocity: bpy.props.FloatProperty(name='Parent Velocity Factor', subtype='FACTOR', soft_min=0.0, soft_max=1.0, description='Determines how much of the velocity of the emitter is transferred to the particles')
     parent_velocity_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     world_space: bpy.props.BoolProperty(options=set())
-    sort: bpy.props.BoolProperty(options=set())
+    sort_method: bpy.props.EnumProperty(options=set(), items=bl_enum.particle_sort_method, default='NONE', get=sort_method_get, set=sort_method_set)
     collide_terrain: bpy.props.BoolProperty(options=set())
     collide_objects: bpy.props.BoolProperty(options=set())
     collide_emit: bpy.props.BoolProperty(options=set())
-    inherit_emit_shape: bpy.props.BoolProperty(options=set())
     inherit_emit_params: bpy.props.BoolProperty(options=set())
     inherit_parent_velocity: bpy.props.BoolProperty(options=set())
-    sort_z_height: bpy.props.BoolProperty(options=set())
     sort_reverse: bpy.props.BoolProperty(options=set())
-    old_color_smooth: bpy.props.BoolProperty(options=set())
-    old_color_bezier: bpy.props.BoolProperty(options=set())
-    old_rotation_smooth: bpy.props.BoolProperty(options=set())
-    old_rotation_bezier: bpy.props.BoolProperty(options=set())
-    old_size_smooth: bpy.props.BoolProperty(options=set())
-    old_size_bezier: bpy.props.BoolProperty(options=set())
     lit_parts: bpy.props.BoolProperty(options=set())
     random_uv_flipbook_start: bpy.props.BoolProperty(options=set())
     multiply_gravity: bpy.props.BoolProperty(options=set())

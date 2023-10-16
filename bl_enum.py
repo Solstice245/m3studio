@@ -376,6 +376,12 @@ world_forces = (
     (7, 'Trees'),
 )
 
+anim_smoothing_basic = (
+    ('LINEAR', 'Linear', 'Linear interpolation'),
+    ('SMOOTH', 'Smooth', 'Smooth interpolation'),
+    ('BEZIER', 'Bezier', 'Bezier interpolation'),
+)
+
 anim_smoothing = (
     ('LINEAR', 'Linear', 'Linear interpolation. No usage of hold time'),
     ('SMOOTH', 'Smooth', 'Smooth interpolation. No usage of hold time'),
@@ -468,6 +474,12 @@ particle_tail_type = (
     ('FREE', 'Free', 'The given tail length acts as a general factor for the computed tail length'),
     ('CLAMP', 'Clamped', 'The computed tail length starts at zero and will never exceed the given tail length'),
     ('FIX', 'Fixed', 'The computed tail length is fixed at the given tail length, regardless of velocity'),
+)
+
+particle_sort_method = (
+    ('NONE', 'None', 'No sorting is applied to the particle instance list'),
+    ('DISTANCE', 'Distance', 'Particles are sorted by their distance from the player camera'),
+    ('HEIGHT', 'Height', 'Particles are sorted by their height in the game world'),
 )
 
 projection_type = (

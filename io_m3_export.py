@@ -20,6 +20,7 @@ import bpy
 import bmesh
 import mathutils
 import os
+import math
 from . import io_m3
 from . import io_shared
 from . import shared
@@ -35,7 +36,7 @@ INT16_MAX = ((1 << 15) - 1)
 
 def to_m3_ms(bl_frame):
     # TODO 30 is the desired scene frame rate, but more options could be accounted for
-    return round(bl_frame / 30 * 1000)
+    return math.trunc(bl_frame / 30 * 1000)
 
 
 def to_m3_uv(bl_uv):
@@ -175,12 +176,12 @@ def vec_equal(val0, val1):
 
 
 def quat_interp(left, right, factor):
-    return left  # slerp not working as intended right now  # TODO fix or optimize out
+    return left.slerp(right, factor)
 
 
 def quat_equal(val0, val1):
     dist = (val0.x - val1.x) ** 2 + (val0.y - val1.y) ** 2 + (val0.z - val1.z) ** 2 + (val0.w - val1.w) ** 2
-    return dist < 0.0001 ** 2
+    return dist < 0.00000001
 
 
 def simplify_anim_data_with_interp(keys, vals, interp_func, equal_func):
@@ -195,8 +196,7 @@ def simplify_anim_data_with_interp(keys, vals, interp_func, equal_func):
     for right_key, right_val in zip(keys[2:], vals[2:]):
         interpolated_val = interp_func(left_val, right_val, (curr_key - left_key) / (right_key - left_key))
         if equal_func(interpolated_val, curr_val):
-            # ignore current value since since it matches the given interpolation
-            pass
+            pass  # ignore current value since since it matches the given interpolation
         else:
             new_keys.append(curr_key)
             new_vals.append(curr_val)
@@ -405,7 +405,7 @@ class M3OutputProcessor:
 
     def anim_boolean_flag(self, field):
         head = getattr(self.bl, field + '_header')
-        if self.collect_anim_data_single(field, 'SDFG'):
+        if self.collect_anim_data_single(field, 'SDFG') or self.exporter.unanimated_init:
             interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
             setattr(self.m3, field, self.exporter.init_anim_ref_flag(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
         else:
@@ -413,7 +413,7 @@ class M3OutputProcessor:
 
     def anim_int16(self, field):
         head = getattr(self.bl, field + '_header')
-        if self.collect_anim_data_single(field, 'SDS6'):
+        if self.collect_anim_data_single(field, 'SDS6') or self.exporter.unanimated_init:
             interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
             setattr(self.m3, field, self.exporter.init_anim_ref_int16(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
         else:
@@ -421,7 +421,7 @@ class M3OutputProcessor:
 
     def anim_uint16(self, field):
         head = getattr(self.bl, field + '_header')
-        if self.collect_anim_data_single(field, 'SDU6'):
+        if self.collect_anim_data_single(field, 'SDU6') or self.exporter.unanimated_init:
             interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
             setattr(self.m3, field, self.exporter.init_anim_ref_uint16(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
         else:
@@ -430,7 +430,7 @@ class M3OutputProcessor:
     def anim_uint32(self, field):
         head = getattr(self.bl, field + '_header')
         # casting val to int because sometimes bools use this
-        if self.collect_anim_data_single(field, 'SDU3'):
+        if self.collect_anim_data_single(field, 'SDU3') or self.exporter.unanimated_init:
             interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
             setattr(self.m3, field, self.exporter.init_anim_ref_uint32(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
         else:
@@ -442,7 +442,7 @@ class M3OutputProcessor:
         if (till_version is not None) and (self.version > till_version):
             return
         head = getattr(self.bl, field + '_header')
-        if self.collect_anim_data_single(field, 'SDR3'):
+        if self.collect_anim_data_single(field, 'SDR3') or self.exporter.unanimated_init:
             interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
             setattr(self.m3, field, self.exporter.init_anim_ref_float(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
         else:
@@ -450,7 +450,7 @@ class M3OutputProcessor:
 
     def anim_vec2(self, field):
         head = getattr(self.bl, field + '_header')
-        if self.collect_anim_data_vector(field, 'SD2V'):
+        if self.collect_anim_data_vector(field, 'SD2V') or self.exporter.unanimated_init:
             interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
             setattr(self.m3, field, self.exporter.init_anim_ref_vec2(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
         else:
@@ -462,7 +462,7 @@ class M3OutputProcessor:
         if (till_version is not None) and (self.version > till_version):
             return
         head = getattr(self.bl, field + '_header')
-        if self.collect_anim_data_vector(field, 'SD3V'):
+        if self.collect_anim_data_vector(field, 'SD3V') or self.exporter.unanimated_init:
             interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
             setattr(self.m3, field, self.exporter.init_anim_ref_vec3(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
         else:
@@ -474,7 +474,7 @@ class M3OutputProcessor:
         if (till_version is not None) and (self.version > till_version):
             return
         head = getattr(self.bl, field + '_header')
-        if self.collect_anim_data_vector(field, 'SDCC'):
+        if self.collect_anim_data_vector(field, 'SDCC') or self.exporter.unanimated_init:
             interp = 0 if head.interpolation == 'CONSTANT' else 1 if head.interpolation == 'LINEAR' else -1
             setattr(self.m3, field, self.exporter.init_anim_ref_color(getattr(self.bl, field), interp, head.flags, int(head.hex_id, 16)))
         else:
@@ -494,6 +494,9 @@ class Exporter():
 
         if not ob.animation_data:
             ob.animation_data_create()
+
+        self.unused_val = -1
+        self.unanimated_init = True
 
         self.ob = ob
         self.scene = bpy.context.scene
@@ -939,7 +942,7 @@ class Exporter():
         self.create_particle_systems(model, export_particle_systems, export_particle_copies, version=self.ob.m3_particlesystems_version)
         self.create_ribbons(model, export_ribbons, export_ribbon_splines, version=self.ob.m3_ribbons_version)
         self.create_projections(model, export_projections)
-        self.create_forces(model, export_forces)
+        self.create_forces(model, export_forces, version=self.ob.m3_forces_version)
         self.create_warps(model, export_warps)
         # TODO PHSH 2/3 polygon shapes are buggy
         self.create_physics_bodies(model, export_physics_bodies, body_version=self.ob.m3_rigidbodies_version, shape_version=self.ob.m3_physicsshapes_version)
@@ -1001,6 +1004,7 @@ class Exporter():
         self.stc_section = stc_section
         stc_name_sections = []
         stg_section = self.m3.section_for_reference(model, 'sequence_transformation_groups', version=0, pos=None)
+        stg_name_sections = []
         stg_indices_sections = []
 
         # TODO ensure animation group names are unique
@@ -1016,7 +1020,9 @@ class Exporter():
             m3_seq.anim_ms_end = to_m3_ms(anim_group.frame_end)
 
             m3_stg = stg_section.content_add()
-            m3_seq_name_section.references.append(m3_stg.name)
+            m3_stg_name_section = self.m3.section_for_reference(m3_stg, 'name', pos=None)
+            m3_stg_name_section.content_from_string(anim_group.name)
+            stg_name_sections.append(m3_stg_name_section)
             m3_stg_col_indices_section = self.m3.section_for_reference(m3_stg, 'stc_indices', pos=None)
             stg_indices_sections.append(m3_stg_col_indices_section)
 
@@ -1063,12 +1069,13 @@ class Exporter():
 
         self.m3.append(stg_section)
 
-        for stg_indices_section in stg_indices_sections:
+        for stg_name_section, stg_indices_section in zip(stg_name_sections, stg_indices_sections):
+            self.m3.append(stg_name_section)
             self.m3.append(stg_indices_section)
 
     def finalize_anim_data(self, model):
-        sts_section = self.m3.section_for_reference(model, 'sts', pos=None)  # position later
-        ids_sections = []  # for collecting anim_id sections to position later
+        ids_sections = []  # for collecting anim_id sections to copy later
+        stc_ids_section = {}
 
         for action, stc_list in self.action_to_stc.items():
 
@@ -1092,9 +1099,7 @@ class Exporter():
                         bnds_data[1].append(to_m3_bnds((bnds_min, bnds_max)))
                         prev_min, prev_max = bnds_min, bnds_max
 
-            section_pos = self.m3.index(self.stc_to_name_section[stc_list[-1]]) + 1
-
-            stc_ids_section = {}
+            section_pos = self.m3.index(self.stc_to_name_section[stc_list[-1]])  # initially position behind name
 
             for stc in stc_list:
 
@@ -1105,9 +1110,12 @@ class Exporter():
                     self.action_to_anim_data[action]['SDEV'][EVNT_ANIM_ID] = [[], []]
                     evnt_data = self.action_to_anim_data[action]['SDEV'][EVNT_ANIM_ID]
 
+                    evnt_version = 2
+                    evnt_structure = io_m3.structures['EVNT'].get_version(evnt_version)
+
                     if anim_group.simulate:
                         evnt_data[0].append(anim_group.simulate_frame)
-                        evnt = io_m3.structures['EVNT'].get_version(0).instance()
+                        evnt = evnt_structure.instance()
                         evnt_name_section = self.m3.section_for_reference(evnt, 'name', pos=None)
                         evnt_name_section.content_from_string('Evt_Simulate')
                         evnt_data[1].append(evnt)
@@ -1115,18 +1123,20 @@ class Exporter():
                         evnt.matrix = to_m3_matrix(mathutils.Matrix(((1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0), (0, 0, 0, 1))))
 
                     evnt_data[0].append(anim_group.frame_end)
-                    evnt = io_m3.structures['EVNT'].get_version(0).instance()
+                    evnt = evnt_structure.instance()
                     evnt_name_section = self.m3.section_for_reference(evnt, 'name', pos=None)
                     evnt_name_section.content_from_string('Evt_SeqEnd')
                     evnt_data[1].append(evnt)
                     evnt_name_sections.append(evnt_name_section)
                     evnt.matrix = to_m3_matrix(mathutils.Matrix(((1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0), (0, 0, 0, 1))))
 
-                ids_section = self.m3.section_for_reference(stc, 'anim_ids', pos=None)  # position later
+                ids_section = self.m3.section_for_reference(stc, 'anim_ids', pos=section_pos)
                 ids_sections.append(ids_section)
+                section_pos += 1
                 stc_ids_section[stc] = ids_section
                 refs_section = self.m3.section_for_reference(stc, 'anim_refs', pos=section_pos)
                 section_pos += 1
+                section_pos += 1  # hop over sts name section
 
                 anim_fend = float('-inf')
 
@@ -1163,7 +1173,7 @@ class Exporter():
                         frames_section.content_add(*(to_m3_ms(frame) for frame in action_data[id_num][0]))
                         section_pos += 1
 
-                        values_section = self.m3.section_for_reference(data_head, 'keys', pos=section_pos)
+                        values_section = self.m3.section_for_reference(data_head, 'keys', pos=section_pos, version=evnt_version if section_data_name == 'SDEV' else 0)
                         values_section.content_add(*action_data[id_num][1])
                         section_pos += 1
 
@@ -1174,17 +1184,14 @@ class Exporter():
                                 self.m3.insert(section_pos, evnt_name_section)
                                 section_pos += 1
 
+        section_pos = self.m3.index(self.stg_last_indice_section) + 1
+        sts_section = self.m3.section_for_reference(model, 'sts', pos=section_pos)
+        section_pos += 1
+        for action, stc_list in self.action_to_stc.items():
             for stc in stc_list:
                 sts = sts_section.content_add()
-                stc_ids_section[stc].references.append(sts.anim_ids)
-
-        if self.action_to_stc:
-            # offseting the position the given amount assuming model unknown reference is unused
-            section_pos = self.m3.index(self.stg_last_indice_section) + 1
-            self.m3.insert(section_pos, sts_section)
-            section_pos += 1
-            for ids_section in ids_sections:
-                self.m3.insert(section_pos, ids_section)
+                sts_ids_section = self.m3.section_for_reference(sts, 'anim_ids', pos=section_pos)
+                sts_ids_section.content = stc_ids_section[stc].content
                 section_pos += 1
 
     def create_bones(self, model):
@@ -1604,7 +1611,10 @@ class Exporter():
             processor = M3OutputProcessor(self, light, m3_light)
             io_shared.io_light(processor)
 
-            m3_light.unknown148 = min(0.0, light.attenuation_far)
+            m3_light.unknown148 = max(0.0, light.attenuation_far)
+
+            m3_light.spec_color = self.init_anim_ref_vec3((1.0, 1.0, 1.0))
+            m3_light.spec_intensity = self.init_anim_ref_float(1.0)
 
         # currently will never be a number below 0, not sure if this is correct
         for action, stc_list in self.action_to_stc.items():
@@ -1681,7 +1691,7 @@ class Exporter():
 
                     layer = shared.m3_pointer_get(self.ob.m3_materiallayers, getattr(mat, layer_name_full))
 
-                    if not layer or (layer.color_type == 'BITMAP' and not layer.color_bitmap):
+                    if not layer:
                         null_layer_section.references.append(m3_layer_ref)
                     else:
 
@@ -1696,8 +1706,9 @@ class Exporter():
                             m3_layer = layer_section.content_add()
 
                             if layer.color_type == 'BITMAP':
-                                m3_layer_bitmap_section = self.m3.section_for_reference(m3_layer, 'color_bitmap')
-                                m3_layer_bitmap_section.content_from_string(layer.color_bitmap)
+                                if layer.color_bitmap or layer_name in ['spec', 'emis1', 'envi', 'envi_mask', 'norm', 'light', 'ao']:
+                                    m3_layer_bitmap_section = self.m3.section_for_reference(m3_layer, 'color_bitmap')
+                                    m3_layer_bitmap_section.content_from_string(layer.color_bitmap)
                             else:
                                 m3_layer.bit_set('flags', 'color', True)
 
@@ -1840,12 +1851,21 @@ class Exporter():
             m3_system.unknown21ca0cea = self.init_anim_ref_float()
             m3_system.unknown1e97145f = self.init_anim_ref_float(1.0)
 
+            m3_system.color_init.null.a = 255
+            m3_system.color_mid.null.a = 255
+            m3_system.color_end.null.a = 255
+
             if int(version) >= 17:
-                m3_system.unknown22856fde = self.init_anim_ref_float()
+                m3_system.unknown22856fde = self.init_anim_ref_float(192.0)
                 m3_system.unknownb35ad6e1 = self.init_anim_ref_vec2()
                 m3_system.unknown686e5943 = self.init_anim_ref_vec3()
                 m3_system.unknown18a90564 = self.init_anim_ref_vec2((1.0, 1.0))
                 m3_system.unknown18a90564.null = to_m3_vec2((1.0, 1.0))
+
+                m3_system.uv_ss_offset = self.init_anim_ref_vec2()
+                m3_system.uv_ss_angle = self.init_anim_ref_vec3()
+                m3_system.uv_ss_tiling = self.init_anim_ref_vec2((1.0, 1.0))
+                m3_system.uv_ss_tiling.null = to_m3_vec2((1.0, 1.0))
 
                 if m3_system.emit_shape == 7:
                     region_indices = set()
@@ -1875,6 +1895,34 @@ class Exporter():
                 for pointer in particle_copy.systems:
                     if pointer.handle == system.bl_handle:
                         copy_indices.append(ii)
+
+            matref = shared.m3_pointer_get(self.ob.m3_materialrefs, system.material)
+            mat = shared.m3_pointer_get(getattr(self.ob, matref.mat_type), matref.mat_handle)
+
+            if hasattr(mat, 'unshaded'):
+                m3_system.bit_set('flags', 'lit_parts', not mat.unshaded)
+
+            if system.old_color_smoothing == 'SMOOTH':
+                m3_system.bit_set('flags', 'old_color_smooth', True)
+            elif system.old_color_smoothing == 'BEZIER':
+                m3_system.bit_set('flags', 'old_color_bezier', True)
+
+            if system.old_rotation_smoothing == 'SMOOTH':
+                m3_system.bit_set('flags', 'old_rotation_smooth', True)
+            elif system.old_rotation_smoothing == 'BEZIER':
+                m3_system.bit_set('flags', 'old_rotation_bezier', True)
+
+            if system.old_size_smoothing == 'SMOOTH':
+                m3_system.bit_set('flags', 'old_size_smooth', True)
+            elif system.old_size_smoothing == 'BEZIER':
+                m3_system.bit_set('flags', 'old_size_bezier', True)
+
+            if system.sort_method == 'NONE':
+                pass  # do nothing
+            elif system.sort_method == 'DISTANCE':
+                m3_system.bit_set('flags', 'sort_distance', True)
+            elif system.sort_method == 'HEIGHT':
+                m3_system.bit_set('flags', 'sort_height', True)
 
             if system.model_path:
                 model_paths_section = self.m3.section_for_reference(m3_system, 'model_paths')
@@ -1952,8 +2000,8 @@ class Exporter():
             m3_projection.unknown2035f500 = self.init_anim_ref_float()
             m3_projection.unknown80d8189b = self.init_anim_ref_float()
 
-    def create_forces(self, model, forces):
-        force_section = self.m3.section_for_reference(model, 'forces', version=2)
+    def create_forces(self, model, forces, version):
+        force_section = self.m3.section_for_reference(model, 'forces', version=version)
 
         for force in forces:
             force_bone = shared.m3_pointer_get(self.ob.pose.bones, force.bone)
@@ -2430,6 +2478,7 @@ class Exporter():
         anim_ref.header = self.init_anim_header(1 if interpolation == -1 else interpolation, 0x0 if flags == -1 else flags, anim_id)
         anim_ref.default = val
         anim_ref.null = 0
+        anim_ref.unused = self.unused_val
         return anim_ref
 
     def init_anim_ref_uint16(self, val=0, interpolation=-1, flags=-1, anim_id=1):
@@ -2437,6 +2486,7 @@ class Exporter():
         anim_ref.header = self.init_anim_header(0 if interpolation == -1 else interpolation, 0x0 if flags == -1 else flags, anim_id)
         anim_ref.default = val
         anim_ref.null = 0
+        anim_ref.unused = self.unused_val
         return anim_ref
 
     def init_anim_ref_uint32(self, val=0, interpolation=-1, flags=-1, anim_id=1):
@@ -2444,6 +2494,7 @@ class Exporter():
         anim_ref.header = self.init_anim_header(0 if interpolation == -1 else interpolation, 0x0 if flags == -1 else flags, anim_id)
         anim_ref.default = int(val)  # casting to int because sometimes bools use this
         anim_ref.null = 0
+        anim_ref.unused = self.unused_val
         return anim_ref
 
     def init_anim_ref_flag(self, val=0, interpolation=-1, flags=-1, anim_id=1):
@@ -2451,6 +2502,7 @@ class Exporter():
         anim_ref.header = self.init_anim_header(1 if interpolation == -1 else interpolation, 0x0 if flags == -1 else flags, anim_id)
         anim_ref.default = int(val)
         anim_ref.null = 0
+        anim_ref.unused = self.unused_val
         return anim_ref
 
     def init_anim_ref_float(self, val=0.0, interpolation=-1, flags=-1, anim_id=1):
@@ -2458,6 +2510,7 @@ class Exporter():
         anim_ref.header = self.init_anim_header(1 if interpolation == -1 else interpolation, 0x0 if flags == -1 else flags, anim_id)
         anim_ref.default = val
         anim_ref.null = 0.0
+        anim_ref.unused = self.unused_val
         return anim_ref
 
     def init_anim_ref_vec2(self, val=None, interpolation=-1, flags=-1, anim_id=1):
@@ -2465,6 +2518,7 @@ class Exporter():
         anim_ref.header = self.init_anim_header(1 if interpolation == -1 else interpolation, 0x6 if flags == -1 else flags, anim_id)
         anim_ref.default = to_m3_vec2(val)
         anim_ref.null = to_m3_vec2()
+        anim_ref.unused = self.unused_val
         return anim_ref
 
     def init_anim_ref_vec3(self, val=None, interpolation=-1, flags=-1, anim_id=1):
@@ -2472,6 +2526,7 @@ class Exporter():
         anim_ref.header = self.init_anim_header(1 if interpolation == -1 else interpolation, 0x6 if flags == -1 else flags, anim_id)
         anim_ref.default = to_m3_vec3(val)
         anim_ref.null = to_m3_vec3()
+        anim_ref.unused = self.unused_val
         return anim_ref
 
     def init_anim_ref_quat(self, val=None, interpolation=-1, flags=-1, anim_id=1):
@@ -2479,6 +2534,7 @@ class Exporter():
         anim_ref.header = self.init_anim_header(1 if interpolation == -1 else interpolation, 0x6 if flags == -1 else flags, anim_id)
         anim_ref.default = to_m3_quat(val)
         anim_ref.null = to_m3_quat()
+        anim_ref.unused = self.unused_val
         return anim_ref
 
     def init_anim_ref_color(self, val=None, interpolation=-1, flags=-1, anim_id=1):
@@ -2486,6 +2542,7 @@ class Exporter():
         anim_ref.header = self.init_anim_header(1 if interpolation == -1 else interpolation, 0x6 if flags == -1 else flags, anim_id)
         anim_ref.default = to_m3_color(val)
         anim_ref.null = to_m3_color()
+        anim_ref.unused = self.unused_val
         return anim_ref
 
     def init_anim_ref_bnds(self, val=None, interpolation=-1, flags=-1, anim_id=BNDS_ANIM_ID):
@@ -2493,6 +2550,7 @@ class Exporter():
         anim_ref.header = self.init_anim_header(1 if interpolation == -1 else interpolation, 0x6 if flags == -1 else flags, anim_id)
         anim_ref.default = to_m3_bnds(val)
         anim_ref.null = to_m3_bnds()
+        anim_ref.unused = self.unused_val
         return anim_ref
 
 

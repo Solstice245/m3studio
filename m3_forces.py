@@ -24,6 +24,13 @@ from . import bl_enum
 def register_props():
     bpy.types.Object.m3_forces = bpy.props.CollectionProperty(type=Properties)
     bpy.types.Object.m3_forces_index = bpy.props.IntProperty(options=set(), default=-1, update=update_collection_index)
+    bpy.types.Object.m3_forces_version = bpy.props.EnumProperty(options=set(), items=force_version, default='2')
+
+
+force_version = (
+    ('1', '1', 'Version 1'),
+    ('2', '2', 'Version 2'),
+)
 
 
 def update_collection_index(self, context):

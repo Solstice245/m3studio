@@ -1331,7 +1331,7 @@
                 </bits>
             </field>
             <field name="lod_cut" type="uint32" default_value="0"/>
-            <field name="shadow_lod_cut" type="uint32" default_value="0"/>
+            <field name="shadow_lod_cut" type="int32" default_value="0"/> <!-- just a guess, has been observed to be -1 so probably wrong -->
             <field name="color" type="Vector3AnimationReferenceV0"/>
             <field name="intensity" type="FloatAnimationReferenceV0"/>
             <field name="spec_color" type="Vector3AnimationReferenceV0"/>
@@ -1904,7 +1904,7 @@
             <field name="mass_randomize" type="uint32" since_version="12" till_version="12"/>
             <field name="mass" type="float" default_value="0.001"/>
             <field name="mass2" type="float" default_value="1.0"/>
-            <field name="unknownFloat2c" type="float" default_value="1.0" since_version="12"/>
+            <field name="unknownFloat2c" type="float" default_value="0.0" since_version="12"/>
             <field name="world_space" type="uint32" till_version="12"/>
             <field name="local_forces" type="uint16" default_value="0" since_version="12"/>
             <field name="world_forces" type="uint16" default_value="0" since_version="12"/>
@@ -1961,7 +1961,7 @@
             <field name="instance_yaw" type="float"/>
             <field name="instance_pitch" type="float"/>
             <field name="unknownFloat7" type="float" default_value="1.0"/>
-            <field name="unknown5Addedv2" type="float" default_value="1.0" since_version="17"/> <!-- interacts with particle_type 9 in some way -->
+            <field name="unknown5Addedv2" type="float" default_value="0.0" since_version="17"/> <!-- interacts with particle_type 9 in some way -->
             <field name="pitch_var_shape" type="uint32"/>
             <field name="pitch_var_amplitude" type="FloatAnimationReferenceV0"/>
             <field name="pitch_var_frequency" type="FloatAnimationReferenceV0"/>
@@ -1993,14 +1993,14 @@
             <field name="unknown8f507b52" type="UInt32AnimationReferenceV0" since_version="22"/>
             <field name="flags" type="uint32" default_value="0">
                 <bits>
-                    <bit mask="0x1" name="sort"/>
+                    <bit mask="0x1" name="sort_distance"/>
                     <bit mask="0x2" name="collide_terrain"/>
                     <bit mask="0x4" name="collide_objects"/>
                     <bit mask="0x8" name="collide_emit"/>
                     <bit mask="0x10" name="emit_shape_cutout"/>
                     <bit mask="0x20" name="inherit_emit_params"/>
                     <bit mask="0x40" name="inherit_parent_velocity"/>
-                    <bit mask="0x80" name="sort_z_height"/>
+                    <bit mask="0x80" name="sort_height"/>
                     <bit mask="0x100" name="sort_reverse"/>
                     <bit mask="0x200" name="old_rotation_smooth"/>
                     <bit mask="0x400" name="old_rotation_bezier"/>
@@ -2021,6 +2021,10 @@
                     <bit mask="0x2000000" name="local_time"/>
                     <bit mask="0x4000000" name="simulate_init"/>
                     <bit mask="0x8000000" name="copy"/>
+                    <!-- <bit mask="0x10000000" name="unknown_part_flag_0"> --> <!-- no immediate obvious effect -->
+                    <!-- <bit mask="0x20000000" name="unknown_part_flag_1"> --> <!-- seems to break vertex alpha -->
+                    <!-- <bit mask="0x40000000" name="unknown_part_flag_2"> --> <!-- seems to break material completely -->
+                    <!-- <bit mask="0x80000000" name="unknown_part_flag_3"> --> <!-- no immediate obvious effect -->
                 </bits>
             </field>
             <field name="rotation_flags" type="uint32" default_value="4" since_version="18">

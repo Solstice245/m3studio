@@ -372,22 +372,22 @@ def io_particle_system(processor):
     processor.anim_float('spread_y_var_amplitude')
     processor.anim_float('spread_y_var_frequency')
     processor.anim_float('parent_velocity')
-    processor.bit('flags', 'sort')
+    # processor.bit('flags', 'sort_distance')  # ! handled by script
     processor.bit('flags', 'collide_terrain')
     processor.bit('flags', 'collide_objects')
     processor.bit('flags', 'collide_emit')
     processor.bit('flags', 'emit_shape_cutout')
     processor.bit('flags', 'inherit_emit_params')
     processor.bit('flags', 'inherit_parent_velocity')
-    processor.bit('flags', 'sort_z_height')
+    # processor.bit('flags', 'sort_height')  # ! handled by script
     processor.bit('flags', 'sort_reverse')
     # the following 6 values get set based on smoothing types:
-    processor.bit('flags', 'old_rotation_smooth')
-    processor.bit('flags', 'old_rotation_bezier')
-    processor.bit('flags', 'old_size_smooth')
-    processor.bit('flags', 'old_size_bezier')
-    processor.bit('flags', 'old_color_smooth')
-    processor.bit('flags', 'old_color_bezier')
+    # processor.bit('flags', 'old_rotation_smooth')  #! handled by script
+    # processor.bit('flags', 'old_rotation_bezier')  #! handled by script
+    # processor.bit('flags', 'old_size_smooth')  #! handled by script
+    # processor.bit('flags', 'old_size_bezier')  #! handled by script
+    # processor.bit('flags', 'old_color_smooth')  #! handled by script
+    # processor.bit('flags', 'old_color_bezier')  #! handled by script
     processor.bit('flags', 'lit_parts')
     processor.bit('flags', 'random_uv_flipbook_start')
     processor.bit('flags', 'multiply_gravity')
