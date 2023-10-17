@@ -32,6 +32,7 @@ model_versions = (
     ('20', '20', 'Version 20'),
     ('21', '21', 'Version 21'),
     ('23', '23', 'Version 23'),
+    ('24', '24', 'Version 24'),
     ('25', '25', 'Version 25'),
     ('26', '26', 'Version 26'),
     ('28', '28', 'Version 28'),

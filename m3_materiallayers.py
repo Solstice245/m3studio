@@ -32,6 +32,7 @@ layer_versions = (
     ('20', '20', 'Version 20'),
     ('21', '21', 'Version 21'),
     ('22', '22', 'Version 22'),
+    ('23', '23', 'Version 23'),
     ('24', '24', 'Version 24'),
     ('25', '25', 'Version 25'),
     ('26', '26', 'Version 26'),
@@ -75,7 +76,7 @@ def draw_props(layer, layout):
         shared.draw_op_anim_header(row, layer, 'uv_tiling')
         shared.draw_prop_items(row, layer, 'uv_tiling')
 
-        if version >= 24 and 'TRIPLANAR' in layer.uv_source:
+        if version >= 23 and 'TRIPLANAR' in layer.uv_source:
             layout.separator()
             layout.prop(layer, 'uv_triplanar_offset', text='Triplanar Offset')
             layout.prop(layer, 'uv_triplanar_scale', text='Triplanar Scale')

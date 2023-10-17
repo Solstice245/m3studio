@@ -67,8 +67,8 @@ def structures_from_tree():
             str_default_val = xml_field.get('default_value', None)
             str_expected_val = xml_field.get('expected_value', None)
             str_size = xml_field.get('size', None)
-            since_version = int(str_since_version) if str_since_version else None
-            till_version = int(str_till_version) if str_till_version else None
+            since_version = int(str_since_version) if str_since_version is not None else None
+            till_version = int(str_till_version) if str_till_version is not None else None
 
             if str_type in primitive_field_info and 'int' in str_type:
                 default_val = int(str_default_val, 0) if str_default_val else None
@@ -109,7 +109,7 @@ def structures_from_tree():
                 field_desc = field_struct_history.get_version(field_version)
                 field = M3FieldStructure(str_name, field_desc, since_version, till_version, str_ref_to)
 
-            all_field_versions.append({ii: field for ii in range(since_version or 0, (till_version or max(version_nums)) + 1)})
+            all_field_versions.append({ii: field for ii in range(since_version or 0, (till_version if till_version is not None else max(version_nums)) + 1)})
 
         histories[xml_structure_name] = M3StructureHistory(xml_structure_name, version_to_size, all_field_versions)
 
@@ -147,8 +147,8 @@ class M3StructureHistory:
                 offset = 0
                 stderr.write(f'Offsets of {self.name} in version {version}:\n')
                 for field in fields:
-                    stderr.write(f'{offset}: {field.name}\n')
-                    offset += field.size
+                    stderr.write(f'{offset}: {fields[field].name}\n')
+                    offset += fields[field].size
                 raise Exception(f'Size mismatch: {self.name}V{version} specified={spec_size} calculated={calc_size}')
             self.version_to_description[desc_id] = (desc := M3StructureDescription(self, version, fields, calc_size))
 

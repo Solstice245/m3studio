@@ -34,6 +34,7 @@ particle_system_versions = (
     ('10', '10', 'Version 10'),
     ('11', '11', 'Version 11'),
     ('12', '12', 'Version 12'),
+    ('14', '14', 'Version 14'),
     ('17', '17', 'Version 17'),
     ('18', '18', 'Version 18'),
     ('19', '19', 'Version 19'),
@@ -327,6 +328,15 @@ def draw_props(particle, layout):
     row.prop(particle, 'collide_terrain', text='Terrain')
     row.prop(particle, 'collide_objects', text='Objects')
     row.prop(particle, 'collide_emit', text='Emit')
+    col = layout.column(align=True)
+    col.active = particle.collide_emit
+    shared.draw_prop_pointer_search(col, particle.collide_system, particle.id_data, 'm3_particlesystems', text='Collision System', icon='LINKED')
+    col.prop(particle, 'collide_emit_chance', text='Collision Emission Chance')
+    col.prop(particle, 'collide_emit_energy', text='Energy')
+    row = col.row(align=True)
+    row.prop(particle, 'collide_emit_min', text='Minimum/Maximum Emitted')
+    row.prop(particle, 'collide_emit_max', text='')
+    col.prop(particle, 'collide_events_cull', text='Maximum Events')
     layout.separator()
     col = layout.column(align=True)
     sub = col.row(align=True)
@@ -546,21 +556,27 @@ class SystemProperties(shared.M3PropertyGroup):
     spread_y_var_amplitude_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     spread_y_var_frequency: bpy.props.FloatProperty(name='Spread Y Variation Frequency')
     spread_y_var_frequency_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
-    parent_velocity: bpy.props.FloatProperty(name='Parent Velocity Factor', subtype='FACTOR', soft_min=0.0, soft_max=1.0, description='Determines how much of the velocity of the emitter is transferred to the particles')
+    parent_velocity: bpy.props.FloatProperty(name='Parent Velocity Factor', subtype='FACTOR', soft_min=0.0, soft_max=1.0, description='Determines how much the velocity of the emitter is transferred to particles')
     parent_velocity_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
-    world_space: bpy.props.BoolProperty(options=set())
+    collide_system: bpy.props.PointerProperty(type=SystemPointerProp, description='Specifies a system to orphan for collision events. Leave blank to emit generic physics system particles')
+    collide_emit_min: bpy.props.IntProperty(options=set(), min=0, description='The minimum number of particles emitted in a collision event')
+    collide_emit_max: bpy.props.IntProperty(options=set(), min=0, description='The maximum number of particles emitted in a collision event')
+    collide_emit_chance: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0.0, max=1.0, default=1.0, description='The particles has the given chance to emit particles in a collision event')
+    collide_emit_energy: bpy.props.FloatProperty(options=set(), subtype='FACTOR', soft_min=0.0, soft_max=1.0, description='A general factor applied to the emitted particle based on the speed of the colliding particle')
+    collide_events_cull: bpy.props.IntProperty(options=set(), min=0, description='For non-zero values, the particle is destroyed after bouncing the given number of times')
+    world_space: bpy.props.BoolProperty(options=set(), description='Makes it so that particles are not hosted to the emitter')
     sort_method: bpy.props.EnumProperty(options=set(), items=bl_enum.particle_sort_method, default='NONE', get=sort_method_get, set=sort_method_set)
-    collide_terrain: bpy.props.BoolProperty(options=set())
-    collide_objects: bpy.props.BoolProperty(options=set())
-    collide_emit: bpy.props.BoolProperty(options=set())
+    collide_terrain: bpy.props.BoolProperty(options=set(), description='Particle instances will collide with terrain')
+    collide_objects: bpy.props.BoolProperty(options=set(), description='Particle instances will collide with game models which have physics bodies')
+    collide_emit: bpy.props.BoolProperty(options=set(), description='Enables the collision particle emission system')
     inherit_parent_velocity: bpy.props.BoolProperty(options=set())
-    sort_reverse: bpy.props.BoolProperty(options=set())
-    random_uv_flipbook_start: bpy.props.BoolProperty(options=set())
-    multiply_gravity: bpy.props.BoolProperty(options=set())
+    sort_reverse: bpy.props.BoolProperty(options=set(), description='Reverses the order in which particle instances are sorted for rendering')
+    random_uv_flipbook_start: bpy.props.BoolProperty(options=set(), description='Causes the particle to initiate on a random frame index when using a flipbook')
+    multiply_gravity: bpy.props.BoolProperty(options=set(), description='Applies the in-game map\'s gravity value as a factor to the given system\'s gravity')
     tail_type: bpy.props.EnumProperty(options=set(), items=bl_enum.particle_tail_type)
-    vertex_alpha: bpy.props.BoolProperty(options=set(), default=True)
-    swap_yz_on_model_particles: bpy.props.BoolProperty(options=set())
-    simulate_init: bpy.props.BoolProperty(options=set())
+    vertex_alpha: bpy.props.BoolProperty(options=set(), default=True, description='Enables the alpha channel of the particle\'s color properties')
+    swap_yz_on_model_particles: bpy.props.BoolProperty(options=set(), description='Swaps the forward vector for particles using a model')
+    simulate_init: bpy.props.BoolProperty(options=set(), description='Simulates particle emission so that it appears to have been emitting previously for an indefinite amount of time')
     relative: bpy.props.BoolProperty(options=set())
     always_set: bpy.props.BoolProperty(options=set())
 

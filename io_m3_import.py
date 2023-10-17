@@ -1259,6 +1259,7 @@ class Importer:
                 system.model_path = self.m3[m3_modelpaths[0].path].content_to_string()
 
         for system, m3_system in zip(ob.m3_particlesystems[prev_particles:], m3_systems):
+            system.collide_system.handle = system_handles[m3_system.collide_system] if m3_system.collide_system >= 0 else ''
             system.trail_system.handle = system_handles[m3_system.trail_system] if m3_system.trail_system >= 0 else ''
 
     def create_ribbons(self):

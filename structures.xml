@@ -1406,6 +1406,71 @@
         </fields>
     </structure>
 
+    <structure name="DMMN">
+        <description>DMMN</description>
+        <versions>
+            <version number="0" size="12"/>
+            <version number="1" size="8"/>
+        </versions>
+        <fields>
+            <field name="unknownff79a6f0" type="uint32"/>
+            <field name="unknownff79a6f1" type="uint8"/>
+            <field name="unknownff79a6f2" type="uint8"/>
+            <field name="unknownff79a6f3" type="uint8"/>
+            <field name="unknownff79a6f4" type="uint8"/>
+            <field name="unknownff79a6f6" type="uint8" till_version="0"/>
+            <field name="unknownff79a6f7" type="uint8" till_version="0"/>
+            <field name="unknownff79a6f8" type="uint8" till_version="0"/>
+            <field name="unknownff79a6f9" type="uint8" till_version="0"/>
+        </fields>
+    </structure>
+
+    <structure name="DMMT">
+        <description>DMMT</description>
+        <versions>
+            <version number="0" size="28"/>
+        </versions>
+        <fields>
+            <field name="unknown00" type="uint32"/>
+            <field name="unknown01" type="uint32"/>
+            <field name="unknown02" type="uint32"/>
+            <field name="unknown03" type="uint32"/>
+            <field name="unknown04" type="uint32"/>
+            <field name="unknown05" type="uint32"/>
+            <field name="unknown06" type="uint32"/>
+        </fields>
+    </structure>
+
+    <structure name="DMME">
+        <description>DMME</description>
+        <versions>
+            <version number="0" size="20"/>
+        </versions>
+        <fields>
+            <field name="unknown00" type="uint32"/>
+            <field name="unknown01" type="uint32"/>
+            <field name="unknown02" type="uint32"/>
+            <field name="unknown03" type="uint32"/>
+            <field name="unknown04" type="uint32"/>
+        </fields>
+    </structure>
+
+    <structure name="MT16">
+        <description>MT16</description>
+        <versions>
+            <version number="0" size="14"/>
+        </versions>
+        <fields>
+            <field name="unknown4c11db70" type="uint16"/>
+            <field name="unknown2e003dc5" type="uint16"/>
+            <field name="unknownfa325055" type="uint16"/>
+            <field name="unknown902b669d" type="uint16"/>
+            <field name="unknownb6238b25" type="uint16"/>
+            <field name="unknown44190b0d" type="uint16"/>
+            <field name="unknownfbb8bb46" type="uint16"/>
+        </fields>
+    </structure>
+
     <structure name="MT32">
         <description>MT32</description>
         <versions>
@@ -1422,23 +1487,13 @@
         </fields>
     </structure>
 
-    <structure name="DMMN">
-        <description>DMMN</description>
-        <versions>
-            <version number="1" size="8"/>
-        </versions>
-        <fields>
-            <field name="unknown31cd86d3" type="uint32"/>
-            <field name="unknownff79a6f1" type="uint32"/>
-        </fields>
-    </structure>
-
     <structure name="LAYR">
         <description>Describes a layer of a material</description>
         <versions>
             <version number="20" size="356"/>
             <version number="21" size="356"/>
             <version number="22" size="356"/>
+            <version number="23" size="428"/>
             <version number="24" size="436"/>
             <version number="25" size="468"/>
             <version number="26" size="464"/>
@@ -1486,8 +1541,8 @@
             <field name="layer_anim_unknown00" type="UInt32AnimationReferenceV0"/>
             <field name="layer_anim_unknown01" type="FloatAnimationReferenceV0"/>
             <field name="color_brightness" type="FloatAnimationReferenceV0"/>
-            <field name="uv_triplanar_offset" type="Vector3AnimationReferenceV0" since_version="24"/>
-            <field name="uv_triplanar_scale" type="Vector3AnimationReferenceV0" since_version="24"/> <!-- default (1.0, 1.0, 1.0)-->
+            <field name="uv_triplanar_offset" type="Vector3AnimationReferenceV0" since_version="23"/>
+            <field name="uv_triplanar_scale" type="Vector3AnimationReferenceV0" since_version="23"/> <!-- default (1.0, 1.0, 1.0)-->
             <field name="uv_source_related" type="int32" default_value="-1"/> <!-- seems to have something to do with tangent space mapping -->
             <field name="fresnel_type" type="uint32" default_value="0"/>
             <field name="fresnel_exponent" type="float" default_value="4.0"/>
@@ -1686,7 +1741,7 @@
             <field name="layer_color" type="Reference" ref_to="LAYR"/>
             <field name="layer_unknown1" type="Reference" ref_to="LAYR"/>
             <field name="layer_unknown2" type="Reference" ref_to="LAYR"/>
-            <field name="unknown02" type="uint32" expected_value="0"/>
+            <field name="unknown02" type="uint32" default_value="0"/> <!-- voidray_zeratul_coop_portrait -->
             <field name="unknown03" type="uint32" expected_value="0x20"/>
         </fields>
     </structure>
@@ -1729,7 +1784,7 @@
         <fields>
             <field name="name" type="Reference" ref_to="CHAR"/>
             <field name="creepLayer" type="Reference" ref_to="LAYR"/>
-            <field name="unknownda1b4eb3" type="uint32" expected_value="0" since_version="1"/>
+            <field name="unknownda1b4eb3" type="uint32" default_value="0" since_version="1"/>
         </fields>
     </structure>
 
@@ -1851,6 +1906,7 @@
             <version number="10" size="1304"/>
             <version number="11" size="1308"/>
             <version number="12" size="1316"/>
+            <version number="14" size="1356"/>
             <version number="17" size="1460"/>
             <version number="18" size="1464"/>
             <version number="19" size="1464"/>
@@ -1872,14 +1928,14 @@
             </field>
             <field name="emit_speed" type="FloatAnimationReferenceV0"/>
             <field name="emit_speed_random" type="FloatAnimationReferenceV0"/>
-            <field till_version="12" name="emit_speed_randomize" type="uint32"/>
+            <field till_version="14" name="emit_speed_randomize" type="uint32"/>
             <field name="emit_angle_x" type="FloatAnimationReferenceV0"/>
             <field name="emit_angle_y" type="FloatAnimationReferenceV0"/>
             <field name="emit_spread_x" type="FloatAnimationReferenceV0"/>
             <field name="emit_spread_y" type="FloatAnimationReferenceV0"/>
             <field name="lifespan" type="FloatAnimationReferenceV0"/>
             <field name="lifespan_random" type="FloatAnimationReferenceV0"/>
-            <field till_version="12" name="lifespan_randomize" type="uint32"/>
+            <field till_version="14" name="lifespan_randomize" type="uint32"/>
             <field name="distance_limit" type="float" default_value="0.0"/>
             <field name="unknownf21cc980" type="uint32" expected_value="0x00000000"/>
             <field name="unknown54b2bb52" type="uint32" expected_value="0x00000000"/>
@@ -1888,10 +1944,10 @@
             <field name="color_anim_mid" type="float" default_value="0.5" since_version="12"/>
             <field name="alpha_anim_mid" type="float" default_value="0.5" since_version="12"/>
             <field name="rotation_anim_mid" type="float" default_value="0.5" since_version="12"/>
-            <field name="size_hold" type="float" default_value="0.0" since_version="17"/>
-            <field name="color_hold" type="float" default_value="0.0" since_version="17"/>
-            <field name="alpha_hold" type="float" default_value="0.0" since_version="17"/>
-            <field name="rotation_hold" type="float" default_value="0.0" since_version="17"/>
+            <field name="size_hold" type="float" default_value="0.0" since_version="14"/>
+            <field name="color_hold" type="float" default_value="0.0" since_version="14"/>
+            <field name="alpha_hold" type="float" default_value="0.0" since_version="14"/>
+            <field name="rotation_hold" type="float" default_value="0.0" since_version="14"/>
             <field name="unknown5289d695" size="80" since_version="10" till_version="11"/> <!-- 2 animated props ; similar to particleSizes1 and rotationValues1, but doesn't match in size -->
             <field name="size" type="Vector3AnimationReferenceV0" since_version="12"/>
             <field name="rotation" type="Vector3AnimationReferenceV0" since_version="12"/>
@@ -1901,11 +1957,11 @@
             <field name="color_end" type="ColorAnimationReferenceV0"/>
             <!-- END - probably incorrect before v12 (although size of the block matches) -->
             <field name="drag" type="float"/>
-            <field name="mass_randomize" type="uint32" since_version="12" till_version="12"/>
+            <field name="mass_randomize" type="uint32" since_version="12" till_version="14"/>
             <field name="mass" type="float" default_value="0.001"/>
             <field name="mass2" type="float" default_value="1.0"/>
             <field name="unknownFloat2c" type="float" default_value="0.0" since_version="12"/>
-            <field name="world_space" type="uint32" till_version="12"/>
+            <field name="world_space" type="uint32" till_version="14"/>
             <field name="local_forces" type="uint16" default_value="0" since_version="12"/>
             <field name="world_forces" type="uint16" default_value="0" since_version="12"/>
             <field name="local_forces_fb" type="uint16" default_value="0" since_version="12"/>
@@ -1926,7 +1982,7 @@
             <field name="emit_shape_size_cutout" type="Vector3AnimationReferenceV0"/>
             <field name="emit_shape_radius" type="FloatAnimationReferenceV0"/>
             <field name="emit_shape_radius_cutout" type="FloatAnimationReferenceV0"/>
-            <field name="emit_shape_regions" type="Reference" ref_to="U32_" since_version="17"/>
+            <field name="emit_shape_regions" type="Reference" ref_to="U32_" since_version="14"/>
             <field name="emit_type" type="uint32"/>
             <field name="size_randomize" type="uint32"/>
             <field name="size2" type="Vector3AnimationReferenceV0"/>
@@ -1950,11 +2006,11 @@
             <field name="uv_flipbook_row_fraction" type="float" default_value="inf" since_version="12"/>
             <field name="bounce" type="float" default_value="0.0"/>
             <field name="friction" type="float" default_value="1.0"/>
-            <field name="unknown9" type="int32" default_value="-1"/> <!-- possibly collision particle system index? -->
-            <field name="collide_emit_min" type="uint32"/> <!-- Vulture_Ghost_DOM_Death.m3 uses collision particle emission -->
+            <field name="collide_system" type="int32" default_value="-1"/>
+            <field name="collide_emit_min" type="uint32"/>
             <field name="collide_emit_max" type="uint32"/>
-            <field name="unknown12" type="float"/> <!-- collide emission chance or energy %? -->
-            <field name="unknown13" type="float"/> <!-- collide emission chance or energy %? -->
+            <field name="collide_emit_chance" type="float"/>
+            <field name="collide_emit_energy" type="float"/>
             <field name="collide_events_cull" type="uint32"/>
             <field name="particle_type" type="uint32"/>
             <field name="instance_tail" type="float" default_value="1.0"/>
@@ -2040,9 +2096,9 @@
                 3: Linear Hold
                 4: Bezier Hold
             -->
-            <field name="color_smoothing" type="uint32" default_value="0" since_version="17"/>
-            <field name="size_smoothing" type="uint32" default_value="0" since_version="17"/>
-            <field name="rotation_smoothing" type="uint32" default_value="0" since_version="17"/>
+            <field name="color_smoothing" type="uint32" default_value="0" since_version="14"/>
+            <field name="size_smoothing" type="uint32" default_value="0" since_version="14"/>
+            <field name="rotation_smoothing" type="uint32" default_value="0" since_version="14"/>
             <field name="unknown22856fde" type="FloatAnimationReferenceV0" since_version="17"/>
             <field name="uv_ss_offset" type="Vector2AnimationReferenceV0" since_version="17"/>
             <field name="uv_ss_angle" type="Vector3AnimationReferenceV0" since_version="17"/>
@@ -2309,34 +2365,29 @@
             <field name="loops_count" type="uint32" since_version="2"/>
             <field name="unknown8d41b3f8" type="float" since_version="2"/>
             <field name="unknown56fece2" type="float" since_version="2"/>
-            <field name="unknown6f23bce8" type="Reference" ref_to="DMMN" since_version="2"/>
-            <field name="unknown9836ec85" type="Reference" ref_to="VEC4" since_version="2"/>
-            <!--<field name="unknownac0ac492" size="12" default_value="0x000000000000000000000000" since_version="2"/>-->
-            <field name="unknownac0ac492" type="uint32" since_version="2"/>
-            <field name="unknownac0ac493" type="uint32" since_version="2"/>
-            <field name="unknownac0ac494" type="uint32" since_version="2"/>
-            <field name="unknown90e72e22" type="Reference" ref_to="MT32" since_version="2"/>
-            <!--<field name="unknownd93ef965" size="12" default_value="0x000000000000000000000000" since_version="2"/>
-            <field name="unknown09823b6e" size="12" default_value="0x000000000000000000000000" since_version="2"/>
-            <field name="unknown2f8ad6d6" size="12" default_value="0x000000000000000000000000" since_version="2"/>-->
-            <field name="unknownd93ef965" type="uint32" since_version="2"/>
-            <field name="unknownd93ef966" type="uint32" since_version="2"/>
-            <field name="unknownd93ef967" type="uint32" since_version="2"/>
-            <field name="unknown09823b6e" type="uint32" since_version="2"/>
-            <field name="unknown09823b6f" type="uint32" since_version="2"/>
-            <field name="unknown09823b60" type="uint32" since_version="2"/>
-            <field name="unknown2f8ad6d6" type="uint32" since_version="2"/>
-            <field name="unknown2f8ad6d7" type="uint32" since_version="2"/>
-            <field name="unknown2f8ad6d8" type="uint32" since_version="2"/>
+            <field name="unknown6f23bce8" type="float" since_version="2"/>
+            <field name="unknown6f23bce9" type="float" since_version="2"/>
+            <field name="unknown6f23bce0" type="float" since_version="2"/>
+            <field name="unknown9836ec85" type="float" since_version="2" till_version="2"/>
+            <field name="unknown9836ec86" type="float" since_version="2" till_version="2"/>
+            <field name="unknown9836ec87" type="float" since_version="2" till_version="2"/>
+            <field name="unknownac0ac492" type="float" since_version="2" till_version="2"/>
+            <field name="unknownac0ac493" type="float" since_version="2" till_version="2"/>
+            <field name="unknownac0ac494" type="float" since_version="2" till_version="2"/>
+            <field name="unknown90e72e22" type="Reference" ref_to="DMMN" since_version="2"/>
+            <field name="unknownd93ef965" type="Reference" ref_to="VEC3" since_version="2"/>
+            <field name="unknown09823b6e" type="Reference" ref_to="DMMT" since_version="2"/>
+            <field name="unknown2f8ad6d6" type="Reference" ref_to="DMME" since_version="2"/>
+            <field name="unknown9836ec85" type="Reference" ref_to="VEC4" since_version="3"/>
+            <field name="unknownac0ac492" type="Reference" ref_to="MT16" since_version="3"/>
+            <field name="unknown90e72e22" type="Reference" ref_to="MT32" since_version="3"/>
+            <field name="dmmn_count" type="uint32" since_version="2"/>
+            <field name="vec3_count" type="uint32" since_version="2"/>
+            <field name="dmmt_count" type="uint32" since_version="2"/>
+            <field name="dmme_count" type="uint32" since_version="2"/>
             <field name="unknown9d115fa7" type="uint32" since_version="2"/>
-            <!-- unknown9aea956e is not a float and has strange content -->
-            <field name="unknown9aea956e" type="uint32" since_version="2"/>
-            <field name="unknown17c6f44e" type="uint32" expected_value="0x00000000" since_version="2"/>
-            <field name="unknowne444b392" type="uint32" since_version="2"/>
-            <field name="unknown32885641" type="uint32" default_value="0x00000000" since_version="2"/>
             <!-- unknown721b9a99 is not a float and has strange content-->
             <field name="unknown721b9a99" type="uint32" since_version="2"/>
-
             <!-- unknowna495c84b is not a float and has strange content-->
             <field name="unknowna495c84b" type="uint32" since_version="3"/>
             <!-- unknown12e15bc4 is not a float and has strange content-->
@@ -2794,6 +2845,7 @@
             <version number="20" size="748"/>
             <version number="21" size="760"/>
             <version number="23" size="784"/>
+            <version number="24" size="796"/>
             <version number="25" size="808"/>
             <version number="26" size="820"/>
             <version number="28" size="844"/>
@@ -2875,7 +2927,7 @@
             <field name="physics_joints" type="Reference" ref_to="PHYJ"/>
             <field name="physics_cloths" type="Reference" ref_to="PHCL" since_version="28"/>
             <field name="unknown_maybe_ref3" type="Reference"/>
-            <field name="unknownbd5657bd" type="Reference" since_version="25"/>
+            <field name="unknown_maybe_ref5" type="Reference" since_version="24"/>
             <field name="ik_joints" type="Reference" ref_to="IKJT"/>
             <field name="unknown_maybe_ref4" type="Reference"/>
             <field name="turret_parts" type="Reference" ref_to="PATU"/>

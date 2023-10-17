@@ -1814,6 +1814,10 @@ class Exporter():
             if system.emit_count_header.flags == -1:
                 m3_system.emit_count.header.flags = 0x6
 
+            collide_system = shared.m3_pointer_get(systems, system.collide_system)
+            if collide_system:
+                m3_system.trail_system = systems.index(collide_system)
+
             trail_system = shared.m3_pointer_get(systems, system.trail_system)
             if trail_system:
                 m3_system.trail_system = systems.index(trail_system)
@@ -1855,18 +1859,7 @@ class Exporter():
             m3_system.color_mid.null.a = 255
             m3_system.color_end.null.a = 255
 
-            if int(version) >= 17:
-                m3_system.unknown22856fde = self.init_anim_ref_float(192.0)
-                m3_system.unknownb35ad6e1 = self.init_anim_ref_vec2()
-                m3_system.unknown686e5943 = self.init_anim_ref_vec3()
-                m3_system.unknown18a90564 = self.init_anim_ref_vec2((1.0, 1.0))
-                m3_system.unknown18a90564.null = to_m3_vec2((1.0, 1.0))
-
-                m3_system.uv_ss_offset = self.init_anim_ref_vec2()
-                m3_system.uv_ss_angle = self.init_anim_ref_vec3()
-                m3_system.uv_ss_tiling = self.init_anim_ref_vec2((1.0, 1.0))
-                m3_system.uv_ss_tiling.null = to_m3_vec2((1.0, 1.0))
-
+            if int(version) >= 14:
                 if m3_system.emit_shape == 7:
                     region_indices = set()
                     for mesh_pointer in system.emit_shape_meshes:
@@ -1877,7 +1870,14 @@ class Exporter():
                         region_indices_section.content_add(*region_indices)
             else:
                 if m3_system.emit_shape >= 7:
-                    m3_system.shape = 0  # region emission invalid if version is below 17
+                    m3_system.shape = 0  # region emission invalid if version is below 14
+
+            if int(version) >= 17:
+                m3_system.unknown22856fde = self.init_anim_ref_float(192.0)
+                m3_system.uv_ss_offset = self.init_anim_ref_vec2()
+                m3_system.uv_ss_angle = self.init_anim_ref_vec3()
+                m3_system.uv_ss_tiling = self.init_anim_ref_vec2((1.0, 1.0))
+                m3_system.uv_ss_tiling.null = to_m3_vec2((1.0, 1.0))
 
             if int(version) >= 22:
                 m3_system.unknown8f507b52 = self.init_anim_ref_uint32()
@@ -2438,7 +2438,10 @@ class Exporter():
 
                 pe = mathutils.Vector((r, s, t, k))
                 pen = pe.normalized()
-                pen[3] = pe[3] * (pen[0] / pe[0])
+                try:
+                    pen[3] = pe[3] * (pen[0] / pe[0])
+                except ZeroDivisionError:
+                    pass
 
                 vec = face.calc_center_bounds()
                 polygon_medians.append(vec)
