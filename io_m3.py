@@ -19,8 +19,6 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-# * source of file - https://github.com/SC2Mapster/m3addon
-
 import struct
 from sys import stderr
 from xml.etree import ElementTree as ET
@@ -317,7 +315,7 @@ class M3FieldPrimitive(M3Field):
 
 
 class M3FieldBytes(M3FieldPrimitive):
-    ''' Inherits methods from M3FieldPrimitive, but is initialized as a M3Field '''
+    ''' Inherits methods from M3FieldPrimitive, but is initialized as an M3Field '''
 
     def __init__(self, name, size, since_version, till_version, default_value, expected_value):
         M3Field.__init__(self, name, since_version, till_version)

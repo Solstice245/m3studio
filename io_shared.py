@@ -377,7 +377,7 @@ def io_particle_system(processor):
     processor.bit('flags', 'collide_objects')
     processor.bit('flags', 'collide_emit')
     processor.bit('flags', 'emit_shape_cutout')
-    processor.bit('flags', 'inherit_emit_params')
+    # processor.bit('flags', 'inherit_emit_params')
     processor.bit('flags', 'inherit_parent_velocity')
     # processor.bit('flags', 'sort_height')  # ! handled by script
     processor.bit('flags', 'sort_reverse')
@@ -388,7 +388,7 @@ def io_particle_system(processor):
     # processor.bit('flags', 'old_size_bezier')  #! handled by script
     # processor.bit('flags', 'old_color_smooth')  #! handled by script
     # processor.bit('flags', 'old_color_bezier')  #! handled by script
-    processor.bit('flags', 'lit_parts')
+    # processor.bit('flags', 'lit_parts')  #! handled by script
     processor.bit('flags', 'random_uv_flipbook_start')
     processor.bit('flags', 'multiply_gravity')
     # processor.bit('flags', 'tail_clamp')  # ! handled by script
@@ -397,10 +397,10 @@ def io_particle_system(processor):
     processor.bit('flags', 'vertex_alpha')
     # processor.bit('flags', 'model_particles')  # ! handled by script
     processor.bit('flags', 'swap_yz_on_model_particles')
-    processor.bit('flags', 'scale_time_parent')
-    processor.bit('flags', 'local_time')
+    # processor.bit('flags', 'scale_time_parent')
+    # processor.bit('flags', 'local_time')
     processor.bit('flags', 'simulate_init')
-    processor.bit('flags', 'copy')
+    # processor.bit('flags', 'copy')
     processor.bit('rotation_flags', 'relative', since_version=18)
     processor.bit('rotation_flags', 'always_set', since_version=18)
     processor.float('wind_multiplier')
