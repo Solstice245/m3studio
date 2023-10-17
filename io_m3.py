@@ -171,17 +171,15 @@ class M3StructureDescription:
         return M3StructureData(self, buffer, offset)
 
     def instances(self, buffer, count):
-        vals = []
         if self.history.primitive:
-            struct_format = self.fields['value'].struct_format
-            for offset in range(0, count * self.size, self.size):
-                vals.append(struct_format.unpack(buffer[offset:offset + self.size])[0])
+            return struct.unpack('<' + self.fields['value'].struct_format.format[1:] * count, buffer)
         else:
+            vals = []
             instance_offset = 0
             for ii in range(count):
                 vals.append(self.instance(buffer=buffer, offset=instance_offset))
                 instance_offset += self.size
-        return vals
+            return vals
 
     def instance_validate(self, instance, instance_name):
         if self.history.primitive:
