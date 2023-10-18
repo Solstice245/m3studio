@@ -2099,7 +2099,7 @@
             <field name="color_smoothing" type="uint32" default_value="0" since_version="14"/>
             <field name="size_smoothing" type="uint32" default_value="0" since_version="14"/>
             <field name="rotation_smoothing" type="uint32" default_value="0" since_version="14"/>
-            <field name="unknown22856fde" type="FloatAnimationReferenceV0" since_version="17"/>
+            <field name="uv_ss_threshold" type="FloatAnimationReferenceV0" since_version="17"/>
             <field name="uv_ss_offset" type="Vector2AnimationReferenceV0" since_version="17"/>
             <field name="uv_ss_angle" type="Vector3AnimationReferenceV0" since_version="17"/>
             <field name="uv_ss_tiling" type="Vector2AnimationReferenceV0" since_version="17"/> <!-- with init=(1.0, 1.0) and null=(1.0, 1.0)-->
@@ -2617,12 +2617,11 @@
             </field>
             <field name="speed" type="FloatAnimationReferenceV0"/>
             <field name="unknown75e0b576" type="FloatAnimationReferenceV0"/>
-            <field till_version="6" name="unknownd30655aa" type="uint32" expected_value="0"/> <!-- haven't seen a Blizzard model where this wouldn't be 0 -->
+            <field name="unknownd30655aa" type="uint32" expected_value="0" till_version="6"/> <!-- haven't seen a Blizzard model where this wouldn't be 0 -->
 
             <!-- till v6: pitch then yaw -->
             <field name="pitch" type="FloatAnimationReferenceV0" till_version="6"/>
             <field name="yaw" type="FloatAnimationReferenceV0" till_version="6"/>
-
             <!-- since v8: yaw then pitch -->
             <field name="yaw" type="FloatAnimationReferenceV0" since_version="8"/>
             <field name="pitch" type="FloatAnimationReferenceV0" since_version="8"/>
@@ -2656,16 +2655,16 @@
 
             <field name="mass2" type="float" default_value="0.0" till_version="6"/>
             <field name="mass" type="float" default_value="1.0" till_version="6"/>
-            <field name="unknownc7004d01" type="float" default_value="0.0"/> <!-- almost always 0.0 on Blizzard models, few occurences where it's 10.0 ; could be some multiplier related to mass?? -->
 
-            <field name="unknown20683e1b" type="uint32" default_value="0" till_version="6"/> <!-- always 0 on Blizzard models expect 3 cases (LarvaPortrait.m3 OverlordPortrait.m3 HydraliskPortrait.m3) where it's 0x41200000 -->
+            <field name="unknown20683e1b" type="float" expected_value="0" till_version="6"/>
+            <field name="unknownc7004d01" type="float" default_value="0.0"/> <!-- almost always 0.0, few occurences where it's 10.0 (LarvaPortrait.m3 OverlordPortrait.m3 HydraliskPortrait.m3) could be some multiplier related to mass?? -->
             <field name="world_space" type="uint32" default_value="0" till_version="6"/>
             <field name="local_forces" type="uint16" default_value="0"/>
             <field name="world_forces" type="uint16" default_value="0"/>
             <field name="local_forces_fb" type="uint16" default_value="0"/>
             <field name="world_forces_fb" type="uint16" default_value="0"/>
 
-            <field name="unknownfb168d8c" type="uint32" expected_value="0" since_version="9"/> <!-- haven't seen a Blizzard model where this wouldn't be 0 -->
+            <field name="unknownfb168d8c" type="uint32" expected_value="0" since_version="9"/>
             <field name="noise_amplitude" type="float"/>
             <field name="noise_frequency" type="float"/>
             <field name="noise_cohesion" type="float"/>
@@ -2677,7 +2676,7 @@
             <field name="sides" type="uint32"/>
             <field name="star_ratio" type="float" default_value="0.5"/>
             <field name="length" type="FloatAnimationReferenceV0"/>
-            <field name="unknown3fbae7d6" type="int32" expected_value="0" till_version="6"/> <!-- haven't seen a Blizzard model where this wouldn't be 0 -->
+            <field name="unknown3fbae7d6" type="int32" expected_value="0" till_version="6"/>
             <field name="spline" type="Reference" ref_to="SRIB"/>
             <field name="active" type="UInt32AnimationReferenceV0"/>
             <field name="flags" type="uint32" default_value="0">
@@ -2695,11 +2694,13 @@
                     <bit mask="0x800" name="simulate_init"/>
                     <bit mask="0x1000" name="length_time"/>
                     <bit mask="0x2000" name="accurate_gpu_tangents"/>
+                    <bit mask="0x4000" name="unknown0x4000"/>
+                    <bit mask="0x8000" name="unknown0x8000"/>
                 </bits>
             </field>
             <field name="scale_smoothing" type="uint32" default_value="0"/>
             <field name="color_smoothing" type="uint32" default_value="0"/>
-            <field name="friction" type="float" default_value="1.0" since_version="8"/>
+            <field name="friction" type="float" default_value="0.0" since_version="8"/>
             <field name="bounce" type="float" default_value="0.0" since_version="8"/>
             <field name="lod_reduce" type="uint32" default_value="2"/>
             <field name="lod_cut" type="uint32" default_value="0"/>
@@ -2711,7 +2712,6 @@
             <field name="yaw_var_shape" type="uint32" till_version="6"/>
             <field name="yaw_var_amplitude" type="FloatAnimationReferenceV0" till_version="6"/>
             <field name="yaw_var_frequency" type="FloatAnimationReferenceV0" till_version="6"/>
-
             <!-- since v8: yaw then pitch -->
             <field name="yaw_var_shape" type="uint32" since_version="8"/>
             <field name="yaw_var_amplitude" type="FloatAnimationReferenceV0" since_version="8"/>

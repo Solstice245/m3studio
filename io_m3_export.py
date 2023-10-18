@@ -528,8 +528,8 @@ class Exporter():
         # used for later reference such as setting region flags
         self.region_section = None  # defined in the mesh export code
 
-        self.init_action = self.ob.animation_data.action
-        self.init_frame = self.scene.frame_current
+        user_action = self.ob.animation_data.action
+        user_frame = self.scene.frame_current
 
         self.warn_strings = []
 
@@ -919,6 +919,9 @@ class Exporter():
                         self.warn_strings.append(f'{str(ob)} has an armature modifier object which is not the parent armature object')
                     arm_mod.object = None
 
+        user_armature_position = self.ob.data.pose_position
+        self.ob.data.pose_position = 'POSE'
+
         self.depsgraph = bpy.context.evaluated_depsgraph_get()
 
         model_section = self.m3.section_for_reference(self.m3[0][0], 'model', version=self.ob.m3_model_version)
@@ -976,8 +979,9 @@ class Exporter():
         except IndexError:  # pass if any index value is out of range
             pass
 
-        self.ob.animation_data.action = self.init_action
-        self.scene.frame_current = self.init_frame
+        self.ob.data.pose_position = user_armature_position
+        self.ob.animation_data.action = user_action
+        self.scene.frame_current = user_frame
 
         # animation data is exported much faster while no armature modifiers point to them.
         # keep this below anything handling animation data.
@@ -1696,7 +1700,10 @@ class Exporter():
                     else:
 
                         if layer.video_channel != -1:
-                            m3_mat.bit_set('rtt_channels_used', 'channel' + str(layer.video_channel), True)
+                            try:
+                                m3_mat.bit_set('rtt_channels_used', 'channel' + str(layer.video_channel), True)
+                            except KeyError:  # invalid index given
+                                layer.video_channel = -1
 
                         if layer.bl_handle in handle_to_layer_section.keys():
                             handle_to_layer_section[layer.bl_handle].references.append(m3_layer_ref)
@@ -1965,6 +1972,10 @@ class Exporter():
             m3_ribbon.color_base.null.a = 0xFF
             m3_ribbon.color_mid.null.a = 0xFF
             m3_ribbon.color_tip.null.a = 0xFF
+
+            if int(version) >= 8:
+                m3_ribbon.bit_set('flags', 'unknown0x4000', True)
+                m3_ribbon.bit_set('flags', 'unknown0x8000', True)
 
             if ribbon.spline.handle not in handle_to_spline_sections.keys():
                 spline = shared.m3_pointer_get(self.ob.m3_ribbonsplines, ribbon.spline)

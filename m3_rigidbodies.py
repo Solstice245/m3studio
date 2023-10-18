@@ -76,24 +76,24 @@ def draw_shape_props(shape, layout):
 
 def draw_body_props(rigidbody, layout):
     shared.draw_prop_pointer_search(layout, rigidbody.physics_shape, rigidbody.id_data, 'm3_physicsshapes', text='Physics Body Shape', icon='LINKED')
-    col = layout.column()
-    col.prop(rigidbody, 'physical_material', text='Physical Material')
-    # col.prop(rigidbody, 'simulation_type', text='Simulation Type')  # unknown if effective
-    col.prop(rigidbody, 'mass', text='Mass')
-    col.prop(rigidbody, 'friction', text='Friction')
-    col.prop(rigidbody, 'bounce', text='Bounciness')
-    col.prop(rigidbody, 'damping_linear', text='Linear Damping')
-    col.prop(rigidbody, 'damping_angular', text='Angular Damping')
-    col.prop(rigidbody, 'gravity_factor', text='Gravity Factor')
-    col.prop(rigidbody, 'priority', text='Priority')
-    col = layout.column()
-    col.use_property_split = False
-    col.prop(rigidbody, 'local_forces', text='Local Forces')
-    col.label(text='World Forces:')
-    col = col.column_flow(align=True, columns=2)
-    col.use_property_split = False
+    layout.separator()
+    layout.prop(rigidbody, 'physical_material', text='Physical Material')
+    # layout.prop(rigidbody, 'simulation_type', text='Simulation Type')  # unknown if effective
+    layout.prop(rigidbody, 'mass', text='Mass')
+    layout.prop(rigidbody, 'friction', text='Friction')
+    layout.prop(rigidbody, 'bounce', text='Bounciness')
+    layout.prop(rigidbody, 'damping_linear', text='Linear Damping')
+    layout.prop(rigidbody, 'damping_angular', text='Angular Damping')
+    layout.prop(rigidbody, 'gravity_factor', text='Gravity Factor')
+    layout.prop(rigidbody, 'priority', text='Priority')
+    layout.separator()
+    row = shared.draw_prop_split(layout, text='Local Force Channels')
+    row.prop(rigidbody, 'local_forces', text='')
+    row = shared.draw_prop_split(layout, text='World Force Channels')
+    col = row.column_flow(align=True, columns=2)
     for ii, val in bl_enum.world_forces:
         col.prop(rigidbody, 'world_forces', index=ii, text=val)
+    layout.separator()
     col = layout.column_flow(align=True, columns=2)
     col.use_property_split = False
     col.label(text='Flags:')
@@ -132,8 +132,8 @@ class BodyProperties(shared.M3PropertyGroup):
     simulation_type: bpy.props.IntProperty(options=set())
     physical_material: bpy.props.EnumProperty(options=set(), items=bl_enum.physics_materials)
     mass: bpy.props.FloatProperty(options=set(), default=2400)
-    friction: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0, max=1, default=0.5)
-    bounce: bpy.props.FloatProperty(options=set(), default=0.1)
+    friction: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0.0, max=1.0, default=0.5)
+    bounce: bpy.props.FloatProperty(options=set(), subtype='FACTOR', default=0.1, soft_min=0.0, soft_max=1.0)
     damping_linear: bpy.props.FloatProperty(options=set(), default=0.001)
     damping_angular: bpy.props.FloatProperty(options=set(), default=0.001)
     gravity_factor: bpy.props.FloatProperty(options=set(), default=1)

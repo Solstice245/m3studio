@@ -109,11 +109,11 @@ def io_material_terrain(processor):
 
 
 def io_material_volume(processor):
-    processor.integer('unknown00')
-    processor.integer('unknown01')
+    # processor.integer('unknown00')  # ! not documented
+    # processor.integer('unknown01')  # ! not documented
     processor.anim_float('density')
-    processor.integer('unknown02')
-    processor.integer('unknown03')
+    # processor.integer('unknown02')  # ! not documented
+    # processor.integer('unknown03')  # ! not documented
 
 
 def io_material_volume_noise(processor):

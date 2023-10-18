@@ -85,132 +85,6 @@ def draw_spline_props(spline, layout):
     shared.draw_collection_list(layout.box(), spline.points, draw_point_props, menu_id=PointsMenu.bl_idname)
 
 
-def draw_ribbon_props(ribbon, layout):
-    layout.use_property_decorate = False
-    shared.draw_prop_pointer_search(layout, ribbon.bone, ribbon.id_data.data, 'bones', text='Bone', icon='BONE_DATA')
-    shared.draw_prop_pointer_search(layout, ribbon.material, ribbon.id_data, 'm3_materialrefs', text='Material', icon='MATERIAL')
-    shared.draw_prop_pointer_search(layout, ribbon.spline, ribbon.id_data, 'm3_ribbonsplines', text='Ribbon Spline', icon='LINKED')
-    col = layout.column(align=True)
-    col.prop(ribbon, 'ribbon_type', text='Ribbon Type')
-    if ribbon.ribbon_type == 'CYLINDER':
-        col.prop(ribbon, 'sides', text='Edges')
-    if ribbon.ribbon_type == 'STAR':
-        col.prop(ribbon, 'sides', text='Edges')
-        col.prop(ribbon, 'star_ratio', text='Cylinder/Planar Ratio')
-    layout.separator()
-    row = layout.row(align=True)
-    row.prop(ribbon, 'lod_reduce', text='LOD Reduction/Cutoff')
-    row.prop(ribbon, 'lod_cut', text='')
-    layout.separator()
-    layout.prop(ribbon, 'divisions', text='Segments Per Second')
-    layout.separator()
-    col = layout.column(align=True)
-    col.prop(ribbon, 'cull_method', text='Division Cull Type')
-    if ribbon.cull_method == 'TIME':
-        shared.draw_prop_anim(col, ribbon, 'lifespan', text=' ')
-    elif ribbon.cull_method == 'LENGTH':
-        shared.draw_prop_anim(col, ribbon, 'length', text='Length')
-        row = col.row(align=True, heading='Lifespan')
-        row.prop(ribbon, 'length_time', text='')
-        sub = row.column(align=True)
-        sub.active = ribbon.length_time
-        shared.draw_prop_anim(sub, ribbon, 'lifespan', text='')
-    layout.separator()
-    shared.draw_prop_anim(layout, ribbon, 'speed', text='Velocity')
-    row = shared.draw_prop_split(layout, text='Yaw/Pitch')
-    shared.draw_op_anim_prop(row, ribbon, 'yaw')
-    row.separator(factor=0.325)
-    shared.draw_op_anim_prop(row, ribbon, 'pitch')
-    shared.draw_prop_anim(layout, ribbon, 'active', text='Active')
-    layout.separator()
-    col = layout.column(align=True)
-    col.prop(ribbon, 'color_smoothing', text='Color Smoothing')
-    row = col.row(align=True)
-    row.prop(ribbon, 'color_anim_mid', text='Color/Alpha Midpoint')
-    row.prop(ribbon, 'alpha_anim_mid', text='')
-    if ribbon.color_smoothing in ('LINEARHOLD', 'BEZIERHOLD'):
-        row = col.row(align=True)
-        row.prop(ribbon, 'color_anim_mid_time', text='Color/Alpha Hold Time')
-        row.prop(ribbon, 'alpha_anim_mid_time', text='')
-    col = layout.column(align=True)
-    shared.draw_prop_anim(col, ribbon, 'color_base', text='Base')
-    shared.draw_prop_anim(col, ribbon, 'color_mid', text='Center')
-    shared.draw_prop_anim(col, ribbon, 'color_tip', text='Tip')
-    col.prop(ribbon, 'vertex_alpha', text='Vertex Alpha')
-    layout.separator()
-    row = shared.draw_prop_split(layout, text='Scale Smoothing')
-    sub = row.row(align=True)
-    sub.ui_units_x = 1
-    sub.prop(ribbon, 'scale_smoothing', text='')
-    row.separator(factor=0.325)
-    sub = row.row(align=True)
-    sub.ui_units_x = 1
-    sub.prop(ribbon, 'scale_anim_mid', text='')
-    if ribbon.scale_smoothing in ('LINEARHOLD', 'BEZIERHOLD'):
-        sub.prop(ribbon, 'scale_anim_mid_time', text='')
-    col = layout.column(align=True)
-    shared.draw_prop_anim(col, ribbon, 'scale', index=0, text='Base')
-    shared.draw_prop_anim(col, ribbon, 'scale', index=1, text='Center')
-    shared.draw_prop_anim(col, ribbon, 'scale', index=2, text='Tip')
-    layout.separator()
-    row = layout.row(align=True)
-    row.prop(ribbon, 'twist_anim_mid', text='Twist Midpoint')
-    # row.prop(ribbon, 'twist_anim_mid_time', text='Animation Center Time')
-    col = layout.column(align=True)
-    shared.draw_prop_anim(col, ribbon, 'twist', index=0, text='Base')
-    shared.draw_prop_anim(col, ribbon, 'twist', index=1, text='Center')
-    shared.draw_prop_anim(col, ribbon, 'twist', index=2, text='Tip')
-    layout.separator()
-    row = shared.draw_prop_split(layout, text='Parent Velocity')
-    row.prop(ribbon, 'inherit_parent_velocity', text='')
-    sub = row.row()
-    sub.active = ribbon.inherit_parent_velocity
-    shared.draw_op_anim_prop(sub, ribbon, 'parent_velocity')
-    layout.separator()
-    shared.draw_prop_anim(layout, ribbon, 'phase_shift', text='Phase Shift')
-    shared.draw_var_props(layout, ribbon, 'yaw', text='Yaw Variation')
-    shared.draw_var_props(layout, ribbon, 'pitch', text='Pitch')
-    shared.draw_var_props(layout, ribbon, 'length', text='Length')
-    shared.draw_var_props(layout, ribbon, 'scale', text='Scale')
-    shared.draw_var_props(layout, ribbon, 'alpha', text='Alpha')
-    layout.separator()
-    col = layout.column(align=True)
-    col.prop(ribbon, 'mass', text='Mass')
-    col.prop(ribbon, 'gravity', text='Gravity')
-    col.prop(ribbon, 'drag', text='Drag')
-    layout.separator()
-    col = layout.column(align=True)
-    row = col.row(align=True)
-    row.prop(ribbon, 'noise_amplitude', text='Noise Amplitude/Frequency')
-    row.prop(ribbon, 'noise_frequency', text='')
-    row = col.row(align=True)
-    row.prop(ribbon, 'noise_cohesion', text='Cohesion/Edge')
-    row.prop(ribbon, 'noise_edge', text='')
-    layout.separator()
-    col = shared.draw_prop_split(layout, text='Local Force Channels', sep=2.05)
-    col.prop(ribbon, 'local_forces', text='')
-    col = shared.draw_prop_split(layout, text='World Force Channels', sep=2.05)
-    col.prop(ribbon, 'world_forces', text='')
-    layout.separator()
-    col = layout.column_flow(align=True, columns=2)
-    col.use_property_split = False
-    col.prop(ribbon, 'force_cpu_sim', text='Force CPU Simulation')
-    col.prop(ribbon, 'accurate_gpu_tangents', text='Accurate GPU Tangents')
-    col.prop(ribbon, 'scale_time_parent', text='Scale Time By Parent')
-    col.prop(ribbon, 'local_time', text='Local Time')
-    col.prop(ribbon, 'world_space', text='World Space')
-    col.prop(ribbon, 'simulate_init', text='Simulate On Init')
-    col.prop(ribbon, 'edge_falloff', text='Edge Falloff')
-
-    # ! these values seem to be either deprecated or to not function as described
-    # ! col.prop(ribbon, 'friction', text='Friction')
-    # ! col.prop(ribbon, 'bounce', text='Bounciness')
-    # ! col.prop(ribbon, 'collide_terrain', text='Collide Terrain')
-    # ! col.prop(ribbon, 'collide_objects', text='Collide Objects')
-    # ! col.prop(ribbon, 'scale_smooth', text='Smooth Size')
-    # ! col.prop(ribbon, 'scale_bezier', text='Smooth Size Bezier')
-
-
 class SplinePointerProp(bpy.types.PropertyGroup):
     value: bpy.props.StringProperty(options=set(), get=shared.pointer_get_args('m3_ribbonsplines'), set=shared.pointer_set_args('m3_ribbonsplines', False))
     handle: bpy.props.StringProperty(options=set())
@@ -299,7 +173,7 @@ class RibbonProperties(shared.M3PropertyGroup):
     noise_amplitude: bpy.props.FloatProperty(options=set())
     noise_frequency: bpy.props.FloatProperty(options=set())
     noise_cohesion: bpy.props.FloatProperty(options=set())
-    noise_edge: bpy.props.FloatProperty(options=set())
+    noise_edge: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0.0, max=1.0, default=0.1)
     bounce: bpy.props.FloatProperty(options=set(), subtype='FACTOR', soft_min=0.0, soft_max=1.0)
     friction: bpy.props.FloatProperty(options=set(), subtype='FACTOR', soft_min=0.0, soft_max=1.0)
     drag: bpy.props.FloatProperty(options=set())
@@ -382,7 +256,189 @@ class RibbonPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Ribbons'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, context.object.m3_ribbons, draw_ribbon_props, menu_id=RibbonMenu.bl_idname)
+        shared.draw_collection_list(self.layout, context.object.m3_ribbons, None, menu_id=RibbonMenu.bl_idname)
+
+
+class RibbonSubPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
+    bl_parent_id = 'OBJECT_PT_M3_RIBBONS'
+
+    @classmethod
+    def poll(cls, context):
+        return context.object.m3_ribbons_index in range(len(context.object.m3_ribbons))
+
+
+class RibbonPanelEmitter(RibbonSubPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_M3_ribbons_emitter'
+    bl_label = 'Emitter'
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        ribbon = context.object.m3_ribbons[context.object.m3_ribbons_index]
+
+        shared.draw_prop_pointer_search(layout, ribbon.bone, ribbon.id_data.data, 'bones', text='Bone', icon='BONE_DATA')
+        shared.draw_prop_pointer_search(layout, ribbon.material, ribbon.id_data, 'm3_materialrefs', text='Material', icon='MATERIAL')
+        shared.draw_prop_pointer_search(layout, ribbon.spline, ribbon.id_data, 'm3_ribbonsplines', text='Ribbon Spline', icon='LINKED')
+        layout.separator()
+        layout.prop(ribbon, 'lod_reduce', text='LOD Reduction')
+        layout.prop(ribbon, 'lod_cut', text='Cutoff')
+        layout.separator()
+        col = layout.column(align=True)
+        col.prop(ribbon, 'ribbon_type', text='Ribbon Type')
+        if ribbon.ribbon_type == 'CYLINDER':
+            col.prop(ribbon, 'sides', text='Edges')
+        if ribbon.ribbon_type == 'STAR':
+            col.prop(ribbon, 'sides', text='Edges')
+            col.prop(ribbon, 'star_ratio', text='Cylinder/Planar Ratio')
+        layout.separator()
+        layout.prop(ribbon, 'divisions', text='Segments Per Second')
+        layout.prop(ribbon, 'simulate_init', text='Pre Pump')
+        layout.separator()
+        shared.draw_prop_anim(layout, ribbon, 'active', text='Active')
+        shared.draw_prop_anim(layout, ribbon, 'phase_shift', text='Phase Shift')
+        layout.separator()
+        layout.prop(ribbon, 'force_cpu_sim', text='Force CPU Simulation')
+        layout.prop(ribbon, 'accurate_gpu_tangents', text='Accurate GPU Tangents')
+        layout.prop(ribbon, 'scale_time_parent', text='Scale Time By Parent')
+        layout.prop(ribbon, 'local_time', text='Local Time')
+
+
+class RibbonPanelInstance(RibbonSubPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_M3_ribbons_instance'
+    bl_label = 'Instance'
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        ribbon = context.object.m3_ribbons[context.object.m3_ribbons_index]
+
+        layout.prop(ribbon, 'world_space', text='World Space')
+        col = layout.column(align=True)
+        col.prop(ribbon, 'cull_method', text='Instance Cull Type')
+        if ribbon.cull_method == 'TIME':
+            shared.draw_prop_anim(col, ribbon, 'lifespan', text=' ')
+        elif ribbon.cull_method == 'LENGTH':
+            shared.draw_prop_anim(col, ribbon, 'length', text='Length')
+            row = col.row(align=True, heading='Lifespan')
+            row.prop(ribbon, 'length_time', text='')
+            sub = row.column(align=True)
+            sub.active = ribbon.length_time
+            shared.draw_prop_anim(sub, ribbon, 'lifespan', text='')
+        layout.separator()
+        shared.draw_prop_anim(layout, ribbon, 'speed', text='Velocity')
+        row = shared.draw_prop_split(layout, text='Yaw/Pitch')
+        shared.draw_op_anim_prop(row, ribbon, 'yaw')
+        row.separator(factor=0.325)
+        shared.draw_op_anim_prop(row, ribbon, 'pitch')
+        layout.separator()
+        row = shared.draw_prop_split(layout, text='Parent Velocity')
+        row.prop(ribbon, 'inherit_parent_velocity', text='')
+        sub = row.row()
+        sub.active = ribbon.inherit_parent_velocity
+        shared.draw_op_anim_prop(sub, ribbon, 'parent_velocity')
+        layout.separator()
+        col = layout.column(align=True)
+        col.prop(ribbon, 'color_smoothing', text='Color Smoothing')
+        row = col.row(align=True)
+        row.prop(ribbon, 'color_anim_mid', text='Color/Alpha Midpoint')
+        row.prop(ribbon, 'alpha_anim_mid', text='')
+        if ribbon.color_smoothing in ('LINEARHOLD', 'BEZIERHOLD'):
+            row = col.row(align=True)
+            row.prop(ribbon, 'color_anim_mid_time', text='Color/Alpha Hold Time')
+            row.prop(ribbon, 'alpha_anim_mid_time', text='')
+        col = layout.column(align=True)
+        shared.draw_prop_anim(col, ribbon, 'color_base', text='Base')
+        shared.draw_prop_anim(col, ribbon, 'color_mid', text='Center')
+        shared.draw_prop_anim(col, ribbon, 'color_tip', text='Tip')
+        row = layout.row()
+        row.prop(ribbon, 'vertex_alpha', text='Vertex Alpha')
+        row.prop(ribbon, 'edge_falloff', text='Edge Falloff')
+        layout.separator()
+        row = shared.draw_prop_split(layout, text='Scale Smoothing')
+        sub = row.row(align=True)
+        sub.ui_units_x = 1
+        sub.prop(ribbon, 'scale_smoothing', text='')
+        row.separator(factor=0.325)
+        sub = row.row(align=True)
+        sub.ui_units_x = 1
+        sub.prop(ribbon, 'scale_anim_mid', text='')
+        if ribbon.scale_smoothing in ('LINEARHOLD', 'BEZIERHOLD'):
+            sub.prop(ribbon, 'scale_anim_mid_time', text='')
+        col = layout.column(align=True)
+        shared.draw_prop_anim(col, ribbon, 'scale', index=0, text='Base')
+        shared.draw_prop_anim(col, ribbon, 'scale', index=1, text='Center')
+        shared.draw_prop_anim(col, ribbon, 'scale', index=2, text='Tip')
+        layout.separator()
+        row = layout.row(align=True)
+        row.prop(ribbon, 'twist_anim_mid', text='Twist Midpoint')
+        # row.prop(ribbon, 'twist_anim_mid_time', text='Animation Center Time')
+        col = layout.column(align=True)
+        shared.draw_prop_anim(col, ribbon, 'twist', index=0, text='Base')
+        shared.draw_prop_anim(col, ribbon, 'twist', index=1, text='Center')
+        shared.draw_prop_anim(col, ribbon, 'twist', index=2, text='Tip')
+
+
+class RibbonPanelInstanceVariation(RibbonSubPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_M3_ribbons_instancevariation'
+    bl_label = 'Instance Variation'
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        ribbon = context.object.m3_ribbons[context.object.m3_ribbons_index]
+
+        shared.draw_var_props(layout, ribbon, 'yaw', text='Yaw')
+        shared.draw_var_props(layout, ribbon, 'pitch', text='Pitch')
+        shared.draw_var_props(layout, ribbon, 'length', text='Length')
+        shared.draw_var_props(layout, ribbon, 'scale', text='Scale')
+        shared.draw_var_props(layout, ribbon, 'alpha', text='Alpha')
+
+
+class RibbonPanelPhysics(RibbonSubPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_M3_ribbons_physics'
+    bl_label = 'Physics'
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        rib_ver = int(context.object.m3_ribbons_version)
+        ribbon = context.object.m3_ribbons[context.object.m3_ribbons_index]
+
+        layout.prop(ribbon, 'mass', text='Mass')
+        layout.prop(ribbon, 'gravity', text='Gravity')
+        layout.prop(ribbon, 'drag', text='Drag')
+        layout.separator()
+        if rib_ver >= 8:
+            row = layout.row()
+            row.prop(ribbon, 'collide_terrain', text='Collide Terrain')
+            row.prop(ribbon, 'collide_objects', text='Collide Objects')
+            layout.prop(ribbon, 'friction', text='Friction')
+            layout.prop(ribbon, 'bounce', text='Bounce')
+            layout.separator()
+        col = shared.draw_prop_split(layout, text='Local Force Channels', sep=2.05)
+        col.prop(ribbon, 'local_forces', text='')
+        col = shared.draw_prop_split(layout, text='World Force Channels', sep=2.05)
+        col.prop(ribbon, 'world_forces', text='')
+
+
+class RibbonPanelNoise(RibbonSubPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_M3_ribbons_noise'
+    bl_label = 'Noise'
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        ribbon = context.object.m3_ribbons[context.object.m3_ribbons_index]
+
+        layout.prop(ribbon, 'noise_amplitude', text='Amplitude')
+        layout.prop(ribbon, 'noise_frequency', text='Frequency')
+        layout.prop(ribbon, 'noise_cohesion', text='Cohesion')
+        layout.prop(ribbon, 'noise_edge', text='Edge')
 
 
 class SplinePanel(shared.ArmatureObjectPanel, bpy.types.Panel):
@@ -402,5 +458,10 @@ classes = (
     SplineMenu,
     RibbonMenu,
     RibbonPanel,
+    RibbonPanelEmitter,
+    RibbonPanelInstance,
+    RibbonPanelInstanceVariation,
+    RibbonPanelPhysics,
+    RibbonPanelNoise,
     SplinePanel,
 )

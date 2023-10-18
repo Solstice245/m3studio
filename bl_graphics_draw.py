@@ -275,6 +275,7 @@ def draw():
                     for ii, point in enumerate(item.emit_shape_spline):
                         coords.append(mathutils.Vector(point.location))
                         indices.append((ii, ii + 1))
+                    par_matrix = rot_fix_matrix_transpose
                     del indices[-1]
 
                 handle_to_par_data[item.bl_handle] = (coords, indices, par_matrix, par_cutout_matrix)

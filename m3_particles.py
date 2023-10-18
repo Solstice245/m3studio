@@ -58,10 +58,11 @@ def update_copy_collection_index(self, context):
 
 
 def draw_copy_props(copy, layout):
+    layout.use_property_decorate = False
     shared.draw_prop_pointer_search(layout, copy.bone, copy.id_data.data, 'bones', text='Bone', icon='BONE_DATA')
-    col = layout.column(align=True)
-    shared.draw_prop_anim(col, copy, 'emit_rate', text='Emission Rate')
-    shared.draw_prop_anim(col, copy, 'emit_count', text='Emission Amount')
+    layout.separator()
+    shared.draw_prop_anim(layout, copy, 'emit_rate', text='Emission Rate')
+    shared.draw_prop_anim(layout, copy, 'emit_count', text='Emit Quantity')
     layout.separator()
     box = layout.box()
     box.use_property_decorate = False
@@ -75,301 +76,6 @@ def draw_copy_props(copy, layout):
         op = row.operator('m3.handle_remove', text='', icon='X')
         op.collection = copy.systems.path_from_id()
         op.index = ii
-
-
-def draw_props(particle, layout):
-    layout.use_property_decorate = False
-    par_ver = int(particle.id_data.m3_particlesystems_version)
-
-    shared.draw_prop_pointer_search(layout, particle.bone, particle.id_data.data, 'bones', text='Bone', icon='BONE_DATA')
-    col = layout.column()
-    col.active = False if bool(particle.model_path) else True
-    shared.draw_prop_pointer_search(col, particle.material, particle.id_data, 'm3_materialrefs', text='Material', icon='MATERIAL')
-    layout.prop(particle, 'model_path', text='Model Path', icon='FILE_3D')
-    col = layout.column()
-    col.active = True if particle.model_path else False
-    col.prop(particle, 'swap_yz_on_model_particles', text='Swap Y-Z On Model Particles')
-    layout.separator()
-    row = layout.row(align=True)
-    row.prop(particle, 'lod_reduce', text='LOD Reduction/Cutoff')
-    row.prop(particle, 'lod_cut', text='')
-    row = layout.row(align=True)
-    row.prop(particle, 'emit_max', text='Particle Count/Distance Limit')
-    row.prop(particle, 'distance_limit', text='')
-    layout.separator()
-    row = shared.draw_prop_split(layout, text='Emission Rate/Count')
-    shared.draw_op_anim_prop(row, particle, 'emit_rate')
-    row.separator(factor=0.325)
-    shared.draw_op_anim_prop(row, particle, 'emit_count')
-    layout.separator()
-    col = layout.column(align=True)
-    shared.draw_prop_pointer_search(col, particle.trail_system, particle.id_data, 'm3_particlesystems', text='Trail System', icon='LINKED')
-    row = shared.draw_prop_split(col, text='Trail Chance/Emission Rate')
-    row.prop(particle, 'trail_chance', text='')
-    row.separator(factor=0.325)
-    shared.draw_op_anim_prop(row, particle, 'trail_rate')
-    layout.separator()
-    col = layout.column(align=True)
-    col.prop(particle, 'particle_type', text='Type')
-
-    if particle.particle_type in ('WORLD', 'SINGLE'):
-        row = col.row(align=True)
-        row.prop(particle, 'instance_yaw', text='Instance Yaw/Pitch')
-        row.prop(particle, 'instance_pitch', text='')
-    elif particle.particle_type in ('GROUND'):
-        col.prop(particle, 'instance_pitch', text='Instance Pitch')
-
-    if particle.particle_type in ('TAIL', 'GROUND_TAIL', 'TAIL_ALT'):
-        row = col.row(align=True)
-        row.prop(particle, 'instance_tail', text='Tail Length')
-        row.prop(particle, 'tail_type', text='')
-    layout.separator()
-    row = layout.row()
-    row.prop(particle, 'world_space', text='World Space')
-    row.prop(particle, 'simulate_init', text='Pre Pump')
-    layout.separator()
-    col = layout.column(align=True)
-    col.prop(particle, 'emit_type', text='Emission Vector')
-    row = col.row(align=True)
-    row.prop(particle, 'emit_shape', text='Area')
-    row.separator(factor=0.325)
-    row.prop(particle, 'emit_shape_cutout', text='Cutout')
-
-    if particle.emit_shape != 'POINT':
-        size_xy = particle.emit_shape in ['PLANE', 'CUBE']
-        size_z = particle.emit_shape in ['CUBE', 'CYLINDER']
-        size_r = particle.emit_shape in ['SPHERE', 'CYLINDER', 'DISC']
-        if size_xy or size_z or size_r:
-            if size_xy:
-                row = shared.draw_prop_split(col, text='X')
-                shared.draw_op_anim_prop(row, particle, 'emit_shape_size', index=0)
-                row.separator(factor=0.325)
-                sub = row.row(align=True)
-                sub.active = particle.emit_shape_cutout
-                shared.draw_op_anim_prop(sub, particle, 'emit_shape_size_cutout', index=0)
-
-                row = shared.draw_prop_split(col, text='Y')
-                shared.draw_op_anim_prop(row, particle, 'emit_shape_size', index=1, draw_op=False)
-                row.separator(factor=0.325)
-                sub = row.row(align=True)
-                sub.active = particle.emit_shape_cutout
-                shared.draw_op_anim_prop(sub, particle, 'emit_shape_size_cutout', index=1, draw_op=False)
-
-            if size_z:
-                row = shared.draw_prop_split(col, text='Z')
-                shared.draw_op_anim_prop(row, particle, 'emit_shape_size', index=2, draw_op=not size_xy)
-                row.separator(factor=0.325)
-                sub = row.row(align=True)
-                sub.active = particle.emit_shape_cutout
-                shared.draw_op_anim_prop(sub, particle, 'emit_shape_size_cutout', index=2, draw_op=not size_xy)
-
-            if size_r:
-                row = shared.draw_prop_split(col, text='R')
-                shared.draw_op_anim_prop(row, particle, 'emit_shape_radius', index=0)
-                row.separator(factor=0.325)
-                sub = row.row(align=True)
-                sub.active = particle.emit_shape_cutout
-                shared.draw_op_anim_prop(sub, particle, 'emit_shape_radius_cutout', index=0)
-
-        elif particle.emit_shape == 'SPLINE':
-            box = col.box()
-            box.use_property_split = False
-            op = box.operator('m3.collection_add', text='Add Spline Point')
-            op.collection = particle.emit_shape_spline.path_from_id()
-            for ii, item in enumerate(particle.emit_shape_spline):
-                row = box.row(align=True)
-                shared.draw_prop_anim(row, item, 'location', index=0, text='X')
-                shared.draw_prop_anim(row, item, 'location', index=1, text='Y')
-                shared.draw_prop_anim(row, item, 'location', index=2, text='Z')
-                row.separator()
-                op = row.operator('m3.collection_remove', icon='X', text='')
-                op.collection, op.index = (particle.emit_shape_spline.path_from_id(), ii)
-        elif particle.emit_shape == 'MESH':
-            box = col.box()
-            box.use_property_split = False
-            op = box.operator('m3.collection_add', text='Add Mesh Object')
-            op.collection = particle.emit_shape_meshes.path_from_id()
-            for ii, item in enumerate(particle.emit_shape_meshes):
-                row = box.row()
-                row.prop(item, 'bl_object', text='')
-                op = row.operator('m3.collection_remove', icon='X', text='')
-                op.collection, op.index = (particle.emit_shape_meshes.path_from_id(), ii)
-
-    layout.separator()
-    col = layout.column()
-    row = shared.draw_prop_split(col, text='Yaw/Pitch')
-    shared.draw_op_anim_prop(row, particle, 'emit_angle_x')
-    row.separator(factor=0.325)
-    shared.draw_op_anim_prop(row, particle, 'emit_angle_y')
-    row = shared.draw_prop_split(col, text='Spread XY')
-    shared.draw_op_anim_prop(row, particle, 'emit_spread_x')
-    row.separator(factor=0.325)
-    shared.draw_op_anim_prop(row, particle, 'emit_spread_y')
-    row = shared.draw_prop_split(col, text='Speed')
-    shared.draw_op_anim_prop(row, particle, 'emit_speed')
-    row.separator(factor=0.75)
-    row.prop(particle, 'emit_speed_randomize', text='')
-    sub = row.row(align=True)
-    sub.active = particle.emit_speed_randomize
-    shared.draw_op_anim_prop(sub, particle, 'emit_speed_random')
-    row = shared.draw_prop_split(col, text='Lifetime')
-    shared.draw_op_anim_prop(row, particle, 'lifespan')
-    row.separator(factor=0.75)
-    row.prop(particle, 'lifespan_randomize', text='')
-    sub = row.row(align=True)
-    sub.active = particle.lifespan_randomize
-    shared.draw_op_anim_prop(sub, particle, 'lifespan_random')
-    layout.separator()
-    col = layout.column(align=True)
-    if par_ver >= 17:
-        col.prop(particle, 'color_smoothing', text='Color Interpolation')
-    else:
-        col.prop(particle, 'old_color_smoothing', text='Color Interpolation')
-    row = col.row(align=True)
-    row.prop(particle, 'color_anim_mid', text='RGB/A Midpoint')
-    row.prop(particle, 'alpha_anim_mid', text='')
-    if par_ver >= 17 and (particle.color_smoothing == 'LINEARHOLD' or particle.color_smoothing == 'BEZIERHOLD'):
-        row = col.row(align=True)
-        row.prop(particle, 'color_hold', text='RGB/A Hold Time')
-        row.prop(particle, 'alpha_hold', text='')
-    row = shared.draw_prop_split(layout, text='Lifespan Colors')
-    sub = row.column(align=True)
-    shared.draw_op_anim_prop(sub, particle, 'color_init')
-    shared.draw_op_anim_prop(sub, particle, 'color_mid')
-    shared.draw_op_anim_prop(sub, particle, 'color_end')
-    row.separator(factor=0.75)
-    row.prop(particle, 'color_randomize', text='')
-    sub = row.column(align=True)
-    sub.active = particle.color_randomize
-    shared.draw_op_anim_prop(sub, particle, 'color2_init')
-    shared.draw_op_anim_prop(sub, particle, 'color2_mid')
-    shared.draw_op_anim_prop(sub, particle, 'color2_end')
-    layout.prop(particle, 'vertex_alpha', text='Use Vertex Alpha')
-    layout.separator()
-    row = shared.draw_prop_split(layout, text='Rotation Interpolation')
-    if par_ver >= 17:
-        sub = row.row()
-        sub.ui_units_x = 100
-        sub.prop(particle, 'rotation_smoothing', text='')
-    else:
-        sub = row.row()
-        sub.ui_units_x = 100
-        sub.prop(particle, 'old_rotation_smoothing', text='')
-    sub = row.row(align=True)
-    sub.ui_units_x = 100
-    sub.prop(particle, 'rotation_anim_mid', text='')
-    if par_ver >= 17 and (particle.rotation_smoothing == 'LINEARHOLD' or particle.rotation_smoothing == 'BEZIERHOLD'):
-        sub.prop(particle, 'rotation_hold', text='')
-    row = shared.draw_prop_split(layout, text='Lifespan Factor')
-    shared.draw_op_anim_prop(row, particle, 'rotation')
-    row.separator(factor=0.75)
-    row.prop(particle, 'rotation_randomize', text='')
-    sub = row.column(align=True)
-    sub.active = particle.rotation_randomize
-    shared.draw_op_anim_prop(sub, particle, 'rotation2')
-    if par_ver >= 18:
-        row = layout.row()
-        row.prop(particle, 'relative', text='Relative Rotation')
-        row.prop(particle, 'always_set', text='Always Set')
-    layout.separator()
-    row = shared.draw_prop_split(layout, text='Size Interpolation')
-    if par_ver >= 17:
-        sub = row.row()
-        sub.ui_units_x = 100
-        sub.prop(particle, 'size_smoothing', text='')
-    else:
-        sub = row.row()
-        sub.ui_units_x = 100
-        sub.prop(particle, 'old_size_smoothing', text='')
-    sub = row.row(align=True)
-    sub.ui_units_x = 100
-    sub.prop(particle, 'size_anim_mid', text='')
-    if par_ver >= 17 and (particle.size_smoothing == 'LINEARHOLD' or particle.size_smoothing == 'BEZIERHOLD'):
-        sub.prop(particle, 'size_hold', text='')
-    row = shared.draw_prop_split(layout, text='Lifespan Factor')
-    shared.draw_op_anim_prop(row, particle, 'size')
-    row.separator(factor=0.75)
-    row.prop(particle, 'size_randomize', text='')
-    sub = row.column()
-    sub.active = particle.size_randomize
-    shared.draw_op_anim_prop(sub, particle, 'size2')
-    layout.separator()
-    row = shared.draw_prop_split(layout, text='Parent Velocity')
-    row.prop(particle, 'inherit_parent_velocity', text='')
-    sub = shared.draw_op_anim_prop(row, particle, 'parent_velocity')
-    sub.active = particle.inherit_parent_velocity
-    layout.separator()
-    shared.draw_var_props(layout, particle, 'yaw', text='Yaw Variation')
-    shared.draw_var_props(layout, particle, 'pitch', text='Pitch Variation')
-    shared.draw_var_props(layout, particle, 'spread_x', text='Spread X Variation')
-    shared.draw_var_props(layout, particle, 'spread_y', text='Spread Y Variation')
-    shared.draw_var_props(layout, particle, 'speed', text='Speed Variation')
-    shared.draw_var_props(layout, particle, 'size', text='Size Variation')
-    shared.draw_var_props(layout, particle, 'alpha', text='Alpha Variation')
-    layout.separator()
-    col = layout.column(align=True)
-    row = col.row(align=True)
-    row.prop(particle, 'mass', text='Mass')
-    row.separator(factor=0.75)
-    row.prop(particle, 'mass_randomize', text='')
-    sub = row.row(align=True)
-    sub.active = particle.mass_randomize
-    sub.prop(particle, 'mass2', text='')
-    col.prop(particle, 'drag', text='Drag')
-    row = col.row(align=True)
-    row.prop(particle, 'gravity', text='Gravity')
-    row.separator()
-    row.prop(particle, 'multiply_gravity', text='Factor Map Gravity')
-    col.prop(particle, 'wind_multiplier', text='Wind Multiplier')
-    row = col.row(align=True)
-    row.prop(particle, 'friction', text='Friction/Bounce Factors')
-    row.prop(particle, 'bounce', text='')
-    row = layout.row(heading='Collision Flags')
-    row.prop(particle, 'collide_terrain', text='Terrain')
-    row.prop(particle, 'collide_objects', text='Objects')
-    row.prop(particle, 'collide_emit', text='Emit')
-    col = layout.column(align=True)
-    col.active = particle.collide_emit
-    shared.draw_prop_pointer_search(col, particle.collide_system, particle.id_data, 'm3_particlesystems', text='Collision System', icon='LINKED')
-    col.prop(particle, 'collide_emit_chance', text='Collision Emission Chance')
-    col.prop(particle, 'collide_emit_energy', text='Energy')
-    row = col.row(align=True)
-    row.prop(particle, 'collide_emit_min', text='Minimum/Maximum Emitted')
-    row.prop(particle, 'collide_emit_max', text='')
-    col.prop(particle, 'collide_events_cull', text='Maximum Events')
-    layout.separator()
-    col = layout.column(align=True)
-    sub = col.row(align=True)
-    sub.prop(particle, 'uv_flipbook_cols', text='Flipbook Columns/Rows')
-    sub.prop(particle, 'uv_flipbook_rows', text='')
-    col.prop(particle, 'random_uv_flipbook_start', text='Random Starting Frame')
-    sub = col.row(align=True)
-    sub.prop(particle, 'uv_flipbook_start_init_index', text='Phase 1 Start/End')
-    sub.prop(particle, 'uv_flipbook_start_stop_index', text='')
-    col.prop(particle, 'uv_flipbook_start_lifespan_factor', text='Phase 1 Lifespan')
-    sub = col.row(align=True)
-    sub.prop(particle, 'uv_flipbook_end_init_index', text='Phase 2 Start/End')
-    sub.prop(particle, 'uv_flipbook_end_stop_index', text='')
-    layout.separator()
-    # row = layout.row()
-    col = shared.draw_prop_split(layout, text='Local/World Force Channels', sep=2.05)
-    col.prop(particle, 'local_forces', text='')
-    col.separator()
-    # col = shared.draw_prop_split(row, text='World Force Channels', sep=2.05)
-    col.prop(particle, 'world_forces', text='')
-    layout.separator()
-    col = layout.column(align=True)
-    row = col.row(align=True)
-    row.prop(particle, 'noise_amplitude', text='Noise Amplitude/Frequency')
-    row.prop(particle, 'noise_frequency', text='')
-    row = col.row(align=True)
-    row.prop(particle, 'noise_cohesion', text='Cohesion/Edge')
-    row.prop(particle, 'noise_edge', text='')
-    layout.separator()
-    row = layout.row()
-    row.prop(particle, 'sort_method', text='Sort Method')
-    row.separator()
-    row.prop(particle, 'sort_reverse', text='Reverse')
 
 
 class SystemPointerProp(bpy.types.PropertyGroup):
@@ -507,7 +213,7 @@ class SystemProperties(shared.M3PropertyGroup):
     noise_amplitude: bpy.props.FloatProperty(options=set())
     noise_frequency: bpy.props.FloatProperty(options=set())
     noise_cohesion: bpy.props.FloatProperty(options=set())
-    noise_edge: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0.0, max=0.5, default=0.1)
+    noise_edge: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0.0, max=1.0, default=0.1)
     trail_system: bpy.props.PointerProperty(type=SystemPointerProp)
     trail_chance: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0.0, max=1.0, default=1.0)
     trail_rate: bpy.props.FloatProperty(name='Particle Trail Rate', min=0.0, default=0.0)
@@ -610,7 +316,381 @@ class SystemPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
     bl_label = 'M3 Particle Systems'
 
     def draw(self, context):
-        shared.draw_collection_list(self.layout, context.object.m3_particlesystems, draw_props, menu_id=SystemMenu.bl_idname)
+        shared.draw_collection_list(self.layout, context.object.m3_particlesystems, None, menu_id=SystemMenu.bl_idname)
+
+
+class SystemSubPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
+    bl_parent_id = 'OBJECT_PT_m3_particlesystems'
+
+    @classmethod
+    def poll(cls, context):
+        return context.object.m3_particlesystems_index in range(len(context.object.m3_particlesystems))
+
+
+class SystemPanelEmitterProperties(SystemSubPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_M3_particlesystems_emitterproperties'
+    bl_label = 'Emitter Properties'
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        particle = context.object.m3_particlesystems[context.object.m3_particlesystems_index]
+
+        shared.draw_prop_pointer_search(layout, particle.bone, particle.id_data.data, 'bones', text='Bone', icon='BONE_DATA')
+        col = layout.column()
+        col.active = False if bool(particle.model_path) else True
+        shared.draw_prop_pointer_search(col, particle.material, particle.id_data, 'm3_materialrefs', text='Material', icon='MATERIAL')
+        layout.prop(particle, 'model_path', text='Model Path', icon='FILE_3D')
+        col = layout.column()
+        col.active = True if particle.model_path else False
+        col.prop(particle, 'swap_yz_on_model_particles', text='Swap Y-Z On Model Particles')
+        layout.separator()
+        layout.prop(particle, 'lod_reduce', text='LOD Reduction')
+        layout.prop(particle, 'lod_cut', text='Cutoff')
+        layout.separator()
+        layout.prop(particle, 'emit_max', text='Instance Count Limit')
+        layout.prop(particle, 'distance_limit', text='Distance Limit')
+        row = layout.row()
+        row.prop(particle, 'sort_method', text='Sort Method')
+        row.separator()
+        row.prop(particle, 'sort_reverse', text='Reverse')
+        layout.separator()
+        row = shared.draw_prop_split(layout, text='Emission Rate')
+        shared.draw_op_anim_prop(row, particle, 'emit_rate')
+        layout.prop(particle, 'simulate_init', text='Pre Pump')
+        row = shared.draw_prop_split(layout, text='Emit Quantity')
+        shared.draw_op_anim_prop(row, particle, 'emit_count')
+
+
+class SystemPanelEmitterShape(SystemSubPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_M3_particlesystems_emittershape'
+    bl_label = 'Emitter Shape'
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        particle = context.object.m3_particlesystems[context.object.m3_particlesystems_index]
+
+        layout.prop(particle, 'emit_type', text='Emission Vector')
+        col = layout.column(align=True)
+        row = col.row(align=True)
+        row.prop(particle, 'emit_shape', text='Area')
+        row.separator(factor=0.325)
+        row.prop(particle, 'emit_shape_cutout', text='Cutout')
+
+        if particle.emit_shape != 'POINT':
+            size_xy = particle.emit_shape in ['PLANE', 'CUBE']
+            size_z = particle.emit_shape in ['CUBE', 'CYLINDER']
+            size_r = particle.emit_shape in ['SPHERE', 'CYLINDER', 'DISC']
+            if size_xy or size_z or size_r:
+                if size_xy:
+                    row = shared.draw_prop_split(col, text='X')
+                    shared.draw_op_anim_prop(row, particle, 'emit_shape_size', index=0)
+                    row.separator(factor=0.325)
+                    sub = row.row(align=True)
+                    sub.active = particle.emit_shape_cutout
+                    shared.draw_op_anim_prop(sub, particle, 'emit_shape_size_cutout', index=0)
+
+                    row = shared.draw_prop_split(col, text='Y')
+                    shared.draw_op_anim_prop(row, particle, 'emit_shape_size', index=1, draw_op=False)
+                    row.separator(factor=0.325)
+                    sub = row.row(align=True)
+                    sub.active = particle.emit_shape_cutout
+                    shared.draw_op_anim_prop(sub, particle, 'emit_shape_size_cutout', index=1, draw_op=False)
+
+                if size_z:
+                    row = shared.draw_prop_split(col, text='Z')
+                    shared.draw_op_anim_prop(row, particle, 'emit_shape_size', index=2, draw_op=not size_xy)
+                    row.separator(factor=0.325)
+                    sub = row.row(align=True)
+                    sub.active = particle.emit_shape_cutout
+                    shared.draw_op_anim_prop(sub, particle, 'emit_shape_size_cutout', index=2, draw_op=not size_xy)
+
+                if size_r:
+                    row = shared.draw_prop_split(col, text='R')
+                    shared.draw_op_anim_prop(row, particle, 'emit_shape_radius', index=0)
+                    row.separator(factor=0.325)
+                    sub = row.row(align=True)
+                    sub.active = particle.emit_shape_cutout
+                    shared.draw_op_anim_prop(sub, particle, 'emit_shape_radius_cutout', index=0)
+
+            elif particle.emit_shape == 'SPLINE':
+                box = col.box()
+                box.use_property_split = False
+                op = box.operator('m3.collection_add', text='Add Spline Point')
+                op.collection = particle.emit_shape_spline.path_from_id()
+                for ii, item in enumerate(particle.emit_shape_spline):
+                    row = box.row(align=True)
+                    shared.draw_prop_anim(row, item, 'location', index=0, text='X')
+                    shared.draw_prop_anim(row, item, 'location', index=1, text='Y')
+                    shared.draw_prop_anim(row, item, 'location', index=2, text='Z')
+                    row.separator()
+                    op = row.operator('m3.collection_remove', icon='X', text='')
+                    op.collection, op.index = (particle.emit_shape_spline.path_from_id(), ii)
+            elif particle.emit_shape == 'MESH':
+                box = col.box()
+                box.use_property_split = False
+                op = box.operator('m3.collection_add', text='Add Mesh Object')
+                op.collection = particle.emit_shape_meshes.path_from_id()
+                for ii, item in enumerate(particle.emit_shape_meshes):
+                    row = box.row()
+                    row.prop(item, 'bl_object', text='')
+                    op = row.operator('m3.collection_remove', icon='X', text='')
+                    op.collection, op.index = (particle.emit_shape_meshes.path_from_id(), ii)
+
+
+class SystemPanelInstance(SystemSubPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_M3_particlesystems_instance'
+    bl_label = 'Instance'
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        par_ver = int(context.object.m3_particlesystems_version)
+        particle = context.object.m3_particlesystems[context.object.m3_particlesystems_index]
+
+        col = layout.column(align=True)
+        col.prop(particle, 'particle_type', text='Type')
+
+        if particle.particle_type in ('WORLD', 'SINGLE'):
+            row = col.row(align=True)
+            row.prop(particle, 'instance_yaw', text='Instance Yaw/Pitch')
+            row.prop(particle, 'instance_pitch', text='')
+        elif particle.particle_type in ('GROUND'):
+            col.prop(particle, 'instance_pitch', text='Instance Pitch')
+
+        if particle.particle_type in ('TAIL', 'GROUND_TAIL', 'TAIL_ALT'):
+            row = col.row(align=True)
+            row.prop(particle, 'instance_tail', text='Tail Length')
+            row.prop(particle, 'tail_type', text='')
+        layout.separator()
+        row = layout.row()
+        row.prop(particle, 'world_space', text='World Space')
+        layout.separator()
+        col = layout.column()
+        row = shared.draw_prop_split(col, text='Yaw/Pitch')
+        shared.draw_op_anim_prop(row, particle, 'emit_angle_x')
+        row.separator(factor=0.325)
+        shared.draw_op_anim_prop(row, particle, 'emit_angle_y')
+        row = shared.draw_prop_split(col, text='Spread XY')
+        shared.draw_op_anim_prop(row, particle, 'emit_spread_x')
+        row.separator(factor=0.325)
+        shared.draw_op_anim_prop(row, particle, 'emit_spread_y')
+        row = shared.draw_prop_split(col, text='Speed')
+        shared.draw_op_anim_prop(row, particle, 'emit_speed')
+        row.separator(factor=0.75)
+        row.prop(particle, 'emit_speed_randomize', text='')
+        sub = row.row(align=True)
+        sub.active = particle.emit_speed_randomize
+        shared.draw_op_anim_prop(sub, particle, 'emit_speed_random')
+        row = shared.draw_prop_split(col, text='Lifetime')
+        shared.draw_op_anim_prop(row, particle, 'lifespan')
+        row.separator(factor=0.75)
+        row.prop(particle, 'lifespan_randomize', text='')
+        sub = row.row(align=True)
+        sub.active = particle.lifespan_randomize
+        shared.draw_op_anim_prop(sub, particle, 'lifespan_random')
+        layout.separator()
+        row = shared.draw_prop_split(layout, text='Parent Velocity')
+        row.prop(particle, 'inherit_parent_velocity', text='')
+        sub = shared.draw_op_anim_prop(row, particle, 'parent_velocity')
+        sub.active = particle.inherit_parent_velocity
+        layout.separator()
+        col = layout.column(align=True)
+        if par_ver >= 17:
+            col.prop(particle, 'color_smoothing', text='Color Interpolation')
+        else:
+            col.prop(particle, 'old_color_smoothing', text='Color Interpolation')
+        row = col.row(align=True)
+        row.prop(particle, 'color_anim_mid', text='RGB/A Midpoint')
+        row.prop(particle, 'alpha_anim_mid', text='')
+        if par_ver >= 17 and (particle.color_smoothing == 'LINEARHOLD' or particle.color_smoothing == 'BEZIERHOLD'):
+            row = col.row(align=True)
+            row.prop(particle, 'color_hold', text='RGB/A Hold Time')
+            row.prop(particle, 'alpha_hold', text='')
+        row = shared.draw_prop_split(layout, text='Lifespan Colors')
+        sub = row.column(align=True)
+        shared.draw_op_anim_prop(sub, particle, 'color_init')
+        shared.draw_op_anim_prop(sub, particle, 'color_mid')
+        shared.draw_op_anim_prop(sub, particle, 'color_end')
+        row.separator(factor=0.75)
+        row.prop(particle, 'color_randomize', text='')
+        sub = row.column(align=True)
+        sub.active = particle.color_randomize
+        shared.draw_op_anim_prop(sub, particle, 'color2_init')
+        shared.draw_op_anim_prop(sub, particle, 'color2_mid')
+        shared.draw_op_anim_prop(sub, particle, 'color2_end')
+        layout.prop(particle, 'vertex_alpha', text='Use Vertex Alpha')
+        layout.separator()
+        row = shared.draw_prop_split(layout, text='Rotation Interpolation')
+        if par_ver >= 17:
+            sub = row.row()
+            sub.ui_units_x = 100
+            sub.prop(particle, 'rotation_smoothing', text='')
+        else:
+            sub = row.row()
+            sub.ui_units_x = 100
+            sub.prop(particle, 'old_rotation_smoothing', text='')
+        sub = row.row(align=True)
+        sub.ui_units_x = 100
+        sub.prop(particle, 'rotation_anim_mid', text='')
+        if par_ver >= 17 and (particle.rotation_smoothing == 'LINEARHOLD' or particle.rotation_smoothing == 'BEZIERHOLD'):
+            sub.prop(particle, 'rotation_hold', text='')
+        row = shared.draw_prop_split(layout, text='Lifespan Factor')
+        shared.draw_op_anim_prop(row, particle, 'rotation')
+        row.separator(factor=0.75)
+        row.prop(particle, 'rotation_randomize', text='')
+        sub = row.column(align=True)
+        sub.active = particle.rotation_randomize
+        shared.draw_op_anim_prop(sub, particle, 'rotation2')
+        if par_ver >= 18:
+            row = layout.row()
+            row.prop(particle, 'relative', text='Relative Rotation')
+            row.prop(particle, 'always_set', text='Always Set')
+        layout.separator()
+        row = shared.draw_prop_split(layout, text='Size Interpolation')
+        if par_ver >= 17:
+            sub = row.row()
+            sub.ui_units_x = 100
+            sub.prop(particle, 'size_smoothing', text='')
+        else:
+            sub = row.row()
+            sub.ui_units_x = 100
+            sub.prop(particle, 'old_size_smoothing', text='')
+        sub = row.row(align=True)
+        sub.ui_units_x = 100
+        sub.prop(particle, 'size_anim_mid', text='')
+        if par_ver >= 17 and (particle.size_smoothing == 'LINEARHOLD' or particle.size_smoothing == 'BEZIERHOLD'):
+            sub.prop(particle, 'size_hold', text='')
+        row = shared.draw_prop_split(layout, text='Lifespan Factor')
+        shared.draw_op_anim_prop(row, particle, 'size')
+        row.separator(factor=0.75)
+        row.prop(particle, 'size_randomize', text='')
+        sub = row.column()
+        sub.active = particle.size_randomize
+        shared.draw_op_anim_prop(sub, particle, 'size2')
+
+
+class SystemPanelInstanceVariation(SystemSubPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_M3_particlesystems_instancevariation'
+    bl_label = 'Instance Variation'
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        particle = context.object.m3_particlesystems[context.object.m3_particlesystems_index]
+
+        shared.draw_var_props(layout, particle, 'yaw', text='Yaw Variation')
+        shared.draw_var_props(layout, particle, 'pitch', text='Pitch Variation')
+        shared.draw_var_props(layout, particle, 'spread_x', text='Spread X Variation')
+        shared.draw_var_props(layout, particle, 'spread_y', text='Spread Y Variation')
+        shared.draw_var_props(layout, particle, 'speed', text='Speed Variation')
+        shared.draw_var_props(layout, particle, 'size', text='Size Variation')
+        shared.draw_var_props(layout, particle, 'alpha', text='Alpha Variation')
+
+
+class SystemPanelPhysics(SystemSubPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_M3_particlesystems_physics'
+    bl_label = 'Physics'
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        particle = context.object.m3_particlesystems[context.object.m3_particlesystems_index]
+        col = layout.column()
+        row = col.row(align=True)
+        row.prop(particle, 'mass', text='Mass')
+        row.separator(factor=0.75)
+        row.prop(particle, 'mass_randomize', text='')
+        sub = row.row(align=True)
+        sub.active = particle.mass_randomize
+        sub.prop(particle, 'mass2', text='')
+        layout.prop(particle, 'drag', text='Drag')
+        layout.prop(particle, 'wind_multiplier', text='Wind')
+        layout.prop(particle, 'gravity', text='Gravity')
+        layout.prop(particle, 'multiply_gravity', text='Factor Map Gravity')
+        layout.separator()
+        row = layout.row(heading='Collision')
+        row.prop(particle, 'collide_terrain', text='Terrain')
+        row.prop(particle, 'collide_objects', text='Objects')
+        row.prop(particle, 'collide_emit', text='Emit')
+        layout.prop(particle, 'friction', text='Friction')
+        layout.prop(particle, 'bounce', text='Bounce')
+        col = layout.column()
+        col.active = particle.collide_emit
+        shared.draw_prop_pointer_search(col, particle.collide_system, particle.id_data, 'm3_particlesystems', text='Collision System', icon='LINKED')
+        col.prop(particle, 'collide_emit_chance', text='Emit Chance')
+        col.prop(particle, 'collide_emit_energy', text='Energy')
+        row = col.row(align=True)
+        row.prop(particle, 'collide_emit_min', text='Quantity Min/Max')
+        row.prop(particle, 'collide_emit_max', text='')
+        col.prop(particle, 'collide_events_cull', text='Maximum Events')
+        layout.separator()
+        col = shared.draw_prop_split(layout, text='Local Force Channels')
+        col.prop(particle, 'local_forces', text='')
+        col = shared.draw_prop_split(layout, text='World Force Channels')
+        col.prop(particle, 'world_forces', text='')
+
+
+class SystemPanelFlipbook(SystemSubPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_M3_particlesystems_flipbook'
+    bl_label = 'Flipbook'
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        particle = context.object.m3_particlesystems[context.object.m3_particlesystems_index]
+
+        row = layout.row(align=True)
+        row.prop(particle, 'uv_flipbook_cols', text='Flipbook Columns/Rows')
+        row.prop(particle, 'uv_flipbook_rows', text='')
+        layout.prop(particle, 'random_uv_flipbook_start', text='Random Starting Frame')
+        row = layout.row(align=True)
+        row.prop(particle, 'uv_flipbook_start_init_index', text='Phase 1 Start/End')
+        row.prop(particle, 'uv_flipbook_start_stop_index', text='')
+        layout.prop(particle, 'uv_flipbook_start_lifespan_factor', text='Phase 1 Lifespan')
+        row = layout.row(align=True)
+        row.prop(particle, 'uv_flipbook_end_init_index', text='Phase 2 Start/End')
+        row.prop(particle, 'uv_flipbook_end_stop_index', text='')
+
+
+class SystemPanelTrail(SystemSubPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_M3_particlesystems_trail'
+    bl_label = 'Trail'
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        particle = context.object.m3_particlesystems[context.object.m3_particlesystems_index]
+
+        shared.draw_prop_pointer_search(layout, particle.trail_system, particle.id_data, 'm3_particlesystems', text='Trail System', icon='LINKED')
+        col = layout.column()
+        col.active = bool(particle.trail_system.value)
+        col.prop(particle, 'trail_chance', text='Chance')
+        row = shared.draw_prop_split(col, text='Emission Rate')
+        shared.draw_op_anim_prop(row, particle, 'trail_rate')
+
+
+class SystemPanelNoise(SystemSubPanel, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_M3_particlesystems_noise'
+    bl_label = 'Noise'
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        particle = context.object.m3_particlesystems[context.object.m3_particlesystems_index]
+        layout.prop(particle, 'noise_amplitude', text='Amplitude')
+        layout.prop(particle, 'noise_frequency', text='Frequency')
+        layout.prop(particle, 'noise_cohesion', text='Cohesion')
+        layout.prop(particle, 'noise_edge', text='Edge')
 
 
 classes = (
@@ -622,5 +702,13 @@ classes = (
     SystemMenu,
     CopyMenu,
     SystemPanel,
+    SystemPanelEmitterProperties,
+    SystemPanelEmitterShape,
+    SystemPanelInstance,
+    SystemPanelInstanceVariation,
+    SystemPanelPhysics,
+    SystemPanelFlipbook,
+    SystemPanelTrail,
+    SystemPanelNoise,
     CopyPanel,
 )
