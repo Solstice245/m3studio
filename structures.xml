@@ -2033,12 +2033,12 @@
             <field name="alpha_var_shape" type="uint32"/>
             <field name="alpha_var_amplitude" type="FloatAnimationReferenceV0"/>
             <field name="alpha_var_frequency" type="FloatAnimationReferenceV0"/>
-            <field name="unknown9aa3bbb9" type="uint32"/> <!-- haven't found a use case for this -->
+            <field name="unknown9aa3bbb9" type="uint32" expected_value="0"/> <!-- haven't found a use case for this -->
             <field name="unknown485f7eea" type="FloatAnimationReferenceV0"/>
             <field name="unknown34b6f141" type="FloatAnimationReferenceV0"/>
-            <field name="unknownb69653a4" type="uint32"/> <!-- haven't found a use case for this -->
-            <field name="unknown89cdf966" type="FloatAnimationReferenceV0"/>
-            <field name="unknown4eefdfc1" type="FloatAnimationReferenceV0"/>
+            <field name="rotation_var_shape" type="uint32"/>
+            <field name="rotation_var_amplitude" type="FloatAnimationReferenceV0"/>
+            <field name="rotation_var_frequency" type="FloatAnimationReferenceV0"/>
             <field name="spread_x_var_shape" type="uint32"/>
             <field name="spread_x_var_amplitude" type="FloatAnimationReferenceV0"/>
             <field name="spread_x_var_frequency" type="FloatAnimationReferenceV0"/>
@@ -2112,12 +2112,12 @@
             <field name="trail_system" type="int32" default_value="-1"/>
             <field name="trail_chance" type="float" default_value="0.0"/>
             <field name="trail_rate" type="FloatAnimationReferenceV0"/>
-            <field name="unknownfdab7ff3" type="int32" default_value="-1"/> <!-- possibly collision projection index? -->
-            <field name="unknown7d4a9e6b" type="uint32" expected_value="0x00000000"/>
+            <field name="unknownfdab7ff3" type="int32" expected_value="-1"/> <!-- possibly collision projection index? -->
+            <field name="unknown7d4a9e6b" type="float" expected_value="0.0"/>
             <field name="model_paths" type="Reference" ref_to="SCHR"/>
             <field name="copy_indices" type="Reference" ref_to="U32_"/>
             <field name="unknown9a7afdf2" type="uint32" since_version="23"/>
-            <field name="unknown87d57a7a" type="int32" since_version="23"/> <!-- possibly collision projection index? -->
+            <field name="unknown87d57a7a" type="int32" expected_value="-1" since_version="23"/> <!-- possibly collision projection index? -->
         </fields>
     </structure>
 
