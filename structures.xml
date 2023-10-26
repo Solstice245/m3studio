@@ -1366,13 +1366,13 @@
             <field name="quat_up0" type="VEC4V0" since_version="4"/>
             <field name="quat_up1" type="VEC4V0" since_version="4"/>
             <field name="bone" type="uint16"/>
-            <field name="flags" type="uint8" default_value="0x0">
+            <field name="flags" type="uint8">
                 <bits>
                     <bit mask="0x1" name="main_part"/>
                 </bits>
             </field>
             <field name="group_id" type="uint8" default_value="1"/>
-            <field name="yaw_flags" type="uint32" default_value="0x2">
+            <field name="yaw_flags" type="uint32">
                 <bits>
                     <bit mask="0x2" name="yaw_limited"/>
                 </bits>
@@ -1380,7 +1380,7 @@
             <field name="yaw_min" type="float" default_value="0.0"/>
             <field name="yaw_max" type="float" default_value="0.0"/>
             <field name="yaw_weight" type="float" default_value="0.0" since_version="4"/>
-            <field name="pitch_flags" type="uint32" default_value="0x2">
+            <field name="pitch_flags" type="uint32">
                 <bits>
                     <bit mask="0x2" name="pitch_limited"/>
                 </bits>
@@ -1829,7 +1829,7 @@
            <field name="unk01" type="uint32" default_value="0"/>
            <field name="falloff_threshold" type="float" default_value="0"/>
            <field name="falloff_rate" type="float" default_value="1.0"/>
-           <field name="color" type="COL" default_value="0x80ffffff"/>
+           <field name="color" type="COL"/>
            <field name="face_source" type="uint32" default_value="0"/>
            <field name="unk02" type="float" default_value="0.0"/>
            <field name="unk03" type="float" default_value="0.0"/>
@@ -1918,7 +1918,7 @@
         <fields>
             <field name="bone" type="uint32"/>
             <field name="material_reference_index" type="uint32"/>
-            <field name="additional_flags" type="uint32" default_value="4" since_version="17">
+            <field name="additional_flags" type="uint32" since_version="17">
                 <bits>
                     <bit mask="0x1" name="emit_speed_randomize"/>
                     <bit mask="0x2" name="lifespan_randomize"/>
@@ -1937,8 +1937,8 @@
             <field name="lifespan_random" type="FloatAnimationReferenceV0"/>
             <field till_version="14" name="lifespan_randomize" type="uint32"/>
             <field name="distance_limit" type="float" default_value="0.0"/>
-            <field name="unknownf21cc980" type="uint32" expected_value="0x00000000"/>
-            <field name="unknown54b2bb52" type="uint32" expected_value="0x00000000"/>
+            <field name="unknownf21cc980" type="uint32" expected_value="0"/>
+            <field name="unknown54b2bb52" type="uint32" expected_value="0"/>
             <field name="gravity" type="float"/>
             <field name="size_anim_mid" type="float" default_value="0.5" since_version="12"/>
             <field name="color_anim_mid" type="float" default_value="0.5" since_version="12"/>
@@ -2017,7 +2017,7 @@
             <field name="instance_yaw" type="float"/>
             <field name="instance_pitch" type="float"/>
             <field name="unknownFloat7" type="float" default_value="1.0"/>
-            <field name="unknown5Addedv2" type="float" default_value="0.0" since_version="17"/> <!-- interacts with particle_type 9 in some way -->
+            <field name="unknown5Addedv2" type="float" default_value="1.0" since_version="17"/> <!-- interacts with particle_type 9 in some way -->
             <field name="pitch_var_shape" type="uint32"/>
             <field name="pitch_var_amplitude" type="FloatAnimationReferenceV0"/>
             <field name="pitch_var_frequency" type="FloatAnimationReferenceV0"/>
@@ -2083,7 +2083,7 @@
                     <!-- <bit mask="0x80000000" name="unknown_part_flag_3"> --> <!-- no immediate obvious effect -->
                 </bits>
             </field>
-            <field name="rotation_flags" type="uint32" default_value="4" since_version="18">
+            <field name="rotation_flags" type="uint32" since_version="18">
                 <bits>
                     <bit mask="0x2" name="relative"/>
                     <bit mask="0x4" name="always_set"/>
@@ -2365,33 +2365,46 @@
             <field name="loops_count" type="uint32" since_version="2"/>
             <field name="unknown8d41b3f8" type="float" since_version="2"/>
             <field name="unknown56fece2" type="float" since_version="2"/>
-            <field name="unknown6f23bce8" type="float" since_version="2"/>
-            <field name="unknown6f23bce9" type="float" since_version="2"/>
-            <field name="unknown6f23bce0" type="float" since_version="2"/>
-            <field name="unknown9836ec85" type="float" since_version="2" till_version="2"/>
-            <field name="unknown9836ec86" type="float" since_version="2" till_version="2"/>
-            <field name="unknown9836ec87" type="float" since_version="2" till_version="2"/>
-            <field name="unknownac0ac492" type="float" since_version="2" till_version="2"/>
-            <field name="unknownac0ac493" type="float" since_version="2" till_version="2"/>
-            <field name="unknownac0ac494" type="float" since_version="2" till_version="2"/>
-            <field name="unknown90e72e22" type="Reference" ref_to="DMMN" since_version="2"/>
-            <field name="unknownd93ef965" type="Reference" ref_to="VEC3" since_version="2"/>
-            <field name="unknown09823b6e" type="Reference" ref_to="DMMT" since_version="2"/>
-            <field name="unknown2f8ad6d6" type="Reference" ref_to="DMME" since_version="2"/>
+            <field name="unknown90e72e22" type="Reference" ref_to="DMMN" since_version="3"/>
             <field name="unknown9836ec85" type="Reference" ref_to="VEC4" since_version="3"/>
             <field name="unknownac0ac492" type="Reference" ref_to="MT16" since_version="3"/>
             <field name="unknown90e72e22" type="Reference" ref_to="MT32" since_version="3"/>
+            <field name="unknown6f23bce8" type="float" since_version="2"/>
+            <field name="unknown6f23bce9" type="float" since_version="2"/>
+            <field name="unknown6f23bce0" type="float" since_version="2"/>
+            <field name="unknown9836ec85" type="float" since_version="2"/>
+            <field name="unknown9836ec86" type="float" since_version="2"/>
+            <field name="unknown9836ec87" type="float" since_version="2"/>
+            <field name="unknownac0ac492" type="float" since_version="2"/>
+            <field name="unknownac0ac493" type="float" since_version="2"/>
+            <field name="unknownac0ac494" type="float" since_version="2"/>
+            <field name="unknown90e72e22" type="Reference" ref_to="DMMN" since_version="2" till_version="2"/>
+            <field name="unknownd93ef965" type="Reference" ref_to="VEC3" since_version="2" till_version="2"/>
+            <field name="unknown09823b6e" type="Reference" ref_to="DMMT" since_version="2" till_version="2"/>
+            <field name="unknown2f8ad6d6" type="Reference" ref_to="DMME" since_version="2" till_version="2"/>
             <field name="dmmn_count" type="uint32" since_version="2"/>
-            <field name="vec3_count" type="uint32" since_version="2"/>
-            <field name="dmmt_count" type="uint32" since_version="2"/>
-            <field name="dmme_count" type="uint32" since_version="2"/>
-            <field name="unknown9d115fa7" type="uint32" since_version="2"/>
-            <!-- unknown721b9a99 is not a float and has strange content-->
-            <field name="unknown721b9a99" type="uint32" since_version="2"/>
-            <!-- unknowna495c84b is not a float and has strange content-->
-            <field name="unknowna495c84b" type="uint32" since_version="3"/>
-            <!-- unknown12e15bc4 is not a float and has strange content-->
-            <field name="unknown12e15bc4" type="uint32" since_version="3"/>
+            <field name="vec3_count" type="uint32" since_version="2" till_version="2"/>
+            <field name="dmmt_count" type="uint32" since_version="2" till_version="2"/>
+            <field name="dmme_count" type="uint32" since_version="2" till_version="2"/>
+            <field name="vec4_count" type="uint32" since_version="3"/>
+            <field name="unknown00_count" type="uint32" since_version="3"/>
+            <field name="unknown01_count" type="uint32" since_version="3"/>
+            <field name="mt16_count" type="uint32" since_version="3"/>
+            <field name="mt32_count" type="uint32" since_version="3"/>
+            <field name="unknown02_count" type="uint32" since_version="3"/>
+            <field name="unknown9d115fa7" type="float" since_version="3"/>
+            <field name="unknown721b9a99" type="float" since_version="3"/>
+            <field name="unknown03_count" type="uint32" since_version="2"/>
+            <field name="unknown04_count" type="uint32" since_version="2"/>
+            <field name="unknown9d115fb0" type="uint16" since_version="3"/>
+            <field name="unknown9d115fb1" type="uint16" since_version="3"/>
+            <field name="unknown9d115fb2" type="uint32" since_version="3"/>
+            <field name="unknown9d115fc0" type="uint16" since_version="3"/>
+            <field name="unknown9d115fc1" type="uint16" since_version="3"/>
+            <field name="unknown9d115fc2" type="uint32" since_version="3"/>
+            <field name="unknown9d115fd0" type="uint16" since_version="3"/>
+            <field name="unknown9d115fd1" type="uint16" since_version="3"/>
+            <field name="unknown9d115fd2" type="uint32" since_version="3"/>
         </fields>
     </structure>
 
@@ -2407,8 +2420,8 @@
             <!-- Minimized: unknown0 fields seem to have no perceptible effect -->
             <field till_version="2" name="unknown0" size="60"/>
             <field till_version="2" name="bone" type="uint16"/>
-            <field till_version="2" name="bone_fb" type="uint16" default_value="0x0"/> <!-- Matches bone, but doesn't seem to be used? -->
-            <field till_version="2" name="unknown64" size="16" default_value="0x00000000000000000000000000000000"/>
+            <field till_version="2" name="bone_fb" type="uint16"/> <!-- Matches bone, but doesn't seem to be used? -->
+            <field till_version="2" name="unknown64" size="16"/>
 
             <field name="simulation_type" type="uint16" default_value="1" since_version="3"/>
             <field name="bone" type="uint16" since_version="3"/>
@@ -2425,7 +2438,7 @@
             <field name="unknown57796a4d" type="float" default_value="1.0" since_version="4"/>
 
             <field name="physics_shape" type="Reference" ref_to="PHSH"/>
-            <field name="flags" type="uint32" default_value="0x1">
+            <field name="flags" type="uint32">
                 <bits>
                     <bit mask="0x1" name="collidable"/>
                     <bit mask="0x2" name="walkable"/>
@@ -2436,7 +2449,7 @@
                     <bit mask="0x80" name="no_simulation"/>
                 </bits>
             </field>
-            <field name="local_forces" type="uint16" default_value="0x0">
+            <field name="local_forces" type="uint16">
                 <bits>
                     <bit mask="0x1" name="1"/>
                     <bit mask="0x2" name="2"/>
@@ -2456,7 +2469,7 @@
                     <bit mask="0x8000" name="16"/>
                 </bits>
             </field>
-            <field name="world_forces" type="uint16" default_value="0x0">
+            <field name="world_forces" type="uint16">
                 <bits>
                     <bit mask="0x1" name="wind"/>
                     <bit mask="0x2" name="explosion"/>
@@ -2610,7 +2623,7 @@
             <field name="bone" type="uint16"/>
             <field name="bone_fb" type="uint16" expected_value="0"/>
             <field name="material_reference_index" type="uint32"/>
-            <field name="additional_flags" type="uint32" default_value="0x8" since_version="8">
+            <field name="additional_flags" type="uint32" since_version="8">
                 <bits>
                     <bit mask="0x8" name="world_space"/>
                 </bits>
@@ -2806,9 +2819,9 @@
             <version number="1" size="132"/>
         </versions>
         <fields>
-            <field name="unknown861f507b" size="4" expected_value="0x00000000"/>
+            <field name="unknown861f507b" type="uint32" expected_value="0"/>
             <field name="bone" type="uint32"/>
-            <field name="unknowncf03b856" size="4" expected_value="0x00000000"/>
+            <field name="unknowncf03b856" type="uint32" expected_value="0"/>
             <field name="radius" type="FloatAnimationReferenceV0"/>
             <field name="unknown9306aac0" type="FloatAnimationReferenceV0"/>
             <field name="compression_strength" type="FloatAnimationReferenceV0"/>

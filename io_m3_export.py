@@ -500,7 +500,7 @@ class Exporter():
 
         self.ob = ob
         self.scene = bpy.context.scene
-        self.m3 = io_m3.M3SectionList(init_header=True)
+        self.m3 = io_m3.M3SectionList()
 
         self.anim_id_count = 0
         self.uv_count = 1
