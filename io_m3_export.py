@@ -724,7 +724,7 @@ class Exporter():
                     self.export_required_bones.add(part_bone)
                     if part.main_part:
                         self.export_turret_parts.insert(0, part)
-                        if not group_id_to_part[part.group_id]:
+                        if not group_id_to_part.get(part.group_id, None):
                             group_id_to_part[part.group_id] = part
                         else:
                             self.warn_strings.append(f'Turret group {part.group_id} has more than one main part, but it should have only one')
