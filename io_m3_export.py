@@ -540,6 +540,14 @@ class Exporter():
                 arm_mod = sc_ob.modifiers.new('Armature', 'ARMATURE')
                 arm_mod.object = self.ob
 
+    def report_warnings(self):
+        if len(self.warn_strings):
+            warning = f'The following warnings were given during the M3 export operation of {self.ob.name}:\n' + '\n'.join(self.warn_strings)
+            print(warning)  # not for debugging
+            if self.bl_op:
+                self.bl_op.report({"WARNING"}, warning)
+        self.warn_strings = []  # reset warnings
+
     def get_validated_data(self, ob):
         # TODO look for duplicate animation header ids and warn that they need to be resolved
 
@@ -847,12 +855,6 @@ class Exporter():
                     arm_mod = modifier
                     if arm_mod.object != ob:
                         self.warn_strings.append(f'{str(mesh_ob)} has an armature modifier object which is not the parent armature object')
-
-        if len(self.warn_strings):
-            warning = f'The following warnings were given during the M3 export operation of {self.ob.name}:\n' + '\n'.join(self.warn_strings)
-            print(warning)  # not for debugging
-            if self.bl_op:
-                self.bl_op.report({"WARNING"}, warning)
 
         return {
             'sequences': export_sequences, 'bones': export_bones, 'regions': export_regions, 'attachment_points': export_attachment_points,
@@ -2668,3 +2670,4 @@ def m3_export(ob, filename, bl_op=None):
         io_m3.section_list_save(sections, filename)
     finally:
         exporter.scene_restore()
+        exporter.report_warnings()
