@@ -485,57 +485,69 @@ class Exporter():
 
     def __init__(self, bl_op=None):
         self.bl_op = bl_op
-
-    def m3_export(self, ob, filename):
-        assert ob.type == 'ARMATURE'
-
-        bpy.context.view_layer.objects.active = ob
-        bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
-
-        if not ob.animation_data:
-            ob.animation_data_create()
-
-        self.unused_val = -1
-        self.unanimated_init = True
-
-        self.ob = ob
-        self.scene = bpy.context.scene
-        self.m3 = io_m3.M3SectionList()
-
-        self.anim_id_count = 0
-        self.uv_count = 1
-        self.skinned_bones = []
-        self.mesh_to_basic_volume_sections = {}
-        self.mesh_to_physics_volume_sections = {}
-
-        self.export_required_regions = set()
-        self.export_required_material_references = set()
-        self.export_required_bones = set()
-
-        self.exported_anims = []
-        self.action_frame_range = {}
-        self.action_to_anim_data = {}
-        self.action_to_sdmb_user = {}
-        self.action_abs_pose_matrices = {}
-        self.action_to_stc = {}
-        self.stc_to_anim_group = {}  # only have 'full' or primary anims as keys
-
-        # used to calculate exact positions of later sections in the section list
-        self.stc_section = None  # defined in the sequence export
-        self.stc_to_name_section = {}  # defined in the sequence export
-        self.stg_last_indice_section = None  # defined in the sequence export
-
-        # used for later reference such as setting region flags
-        self.region_section = None  # defined in the mesh export code
-
-        user_action = self.ob.animation_data.action
-        user_frame = self.scene.frame_current
-
         self.warn_strings = []
 
+    def scene_prepare(self, ob):
+        self.ob = ob
+        self.scene = bpy.context.scene
+
+        self.user_armature_position = self.ob.data.pose_position
+        self.user_action = self.ob.animation_data.action
+        self.user_frame = self.scene.frame_current
+
+        self.ob_arm_mod_config = {}
+
+        # make sure mesh objects are in their rest position
+        for sc_ob in self.scene.collection.all_objects:
+            if not sc_ob.type == 'MESH':
+                continue
+            self.ob_arm_mod_config[sc_ob] = {}
+            for modifier in sc_ob.modifiers:
+                if modifier.type == 'ARMATURE':
+                    self.ob_arm_mod_config[sc_ob][modifier] = modifier.object
+                    modifier.object = None
+
+        self.ob.data.pose_position = 'POSE'
+
+    def scene_restore(self):
+        try:  # place armature back into the pose that it was before
+            if self.ob.m3_animation_groups_index > -1:
+                anim_group = self.ob.m3_animation_groups[self.ob.m3_animation_groups_index]
+                anim = anim_group.animations[anim_group.animations_index]
+                ob_anim_data_set(self.scene, self.ob, anim.action)
+        except IndexError:  # pass if any index value is out of range
+            pass
+
+        self.ob.data.pose_position = self.user_armature_position
+        self.ob.animation_data.action = self.user_action
+        self.scene.frame_current = self.user_frame
+
+        # animation data is exported much faster while no armature modifiers point to them.
+        # keep this below anything handling animation data.
+        for sc_ob in self.scene.collection.all_objects:
+            if not sc_ob.type == 'MESH':
+                continue
+            arm_mod = None
+            for modifier in sc_ob.modifiers:
+                if modifier.type == 'ARMATURE':
+                    arm_mod = modifier
+                    try:
+                        arm_mod.object = self.ob_arm_mod_config[sc_ob][modifier]
+                    except KeyError:
+                        pass
+            # auto generate armature modifier if one does not already exist
+            if arm_mod is None:
+                arm_mod = sc_ob.modifiers.new('Armature', 'ARMATURE')
+                arm_mod.object = self.ob
+
+    def get_validated_data(self, ob):
         # TODO look for duplicate animation header ids and warn that they need to be resolved
 
-        def valid_collections_and_requirements(collection):
+        required_regions = set()
+        required_material_references = set()
+        required_bones = set()
+
+        def valid_collections_and_requirements(collection, required_regions, required_material_references, required_bones):
             # TODO have second unexposed export custom prop for auto-culling such as invalid attachment point name
             export_items = []
             for item in collection:
@@ -552,39 +564,38 @@ class Exporter():
                 if hasattr(item, 'material'):
                     matref = shared.m3_pointer_get(ob.m3_materialrefs, item.material)
                     if matref:
-                        self.export_required_material_references.add(matref)
+                        required_material_references.add(matref)
                     else:
                         self.warn_strings.append(f'{str(item)} has no material assigned to it and will not be exported')
                         continue
-                self.export_required_bones = self.export_required_bones.union(item_bones)
+                required_bones |= item_bones
                 export_items.append(item)
             return export_items
 
-        self.export_sequences = []  # handled specially
-        export_attachment_points = valid_collections_and_requirements(ob.m3_attachmentpoints)
-        export_lights = valid_collections_and_requirements(ob.m3_lights)
-        export_shadow_boxes = valid_collections_and_requirements(ob.m3_shadowboxes)
-        export_cameras = valid_collections_and_requirements(ob.m3_cameras)
+        export_sequences = []  # handled specially
+        export_bones = []  # handled specially
+        export_regions = []  # handled specially
+        export_attachment_points = valid_collections_and_requirements(ob.m3_attachmentpoints, required_regions, required_material_references, required_bones)
+        export_lights = valid_collections_and_requirements(ob.m3_lights, required_regions, required_material_references, required_bones)
+        export_shadow_boxes = valid_collections_and_requirements(ob.m3_shadowboxes, required_regions, required_material_references, required_bones)
+        export_cameras = valid_collections_and_requirements(ob.m3_cameras, required_regions, required_material_references, required_bones)
         export_material_references = []  # handled specially
-        export_particle_systems = valid_collections_and_requirements(ob.m3_particlesystems)
+        export_particle_systems = valid_collections_and_requirements(ob.m3_particlesystems, required_regions, required_material_references, required_bones)
         export_particle_copies = []  # handled specially
-        export_ribbons = valid_collections_and_requirements(ob.m3_ribbons)
+        export_ribbons = valid_collections_and_requirements(ob.m3_ribbons, required_regions, required_material_references, required_bones)
         export_ribbon_splines = []  # handled specially
-        export_projections = valid_collections_and_requirements(ob.m3_projections)
-        export_forces = valid_collections_and_requirements(ob.m3_forces)
-        export_warps = valid_collections_and_requirements(ob.m3_warps)
+        export_projections = valid_collections_and_requirements(ob.m3_projections, required_regions, required_material_references, required_bones)
+        export_forces = valid_collections_and_requirements(ob.m3_forces, required_regions, required_material_references, required_bones)
+        export_warps = valid_collections_and_requirements(ob.m3_warps, required_regions, required_material_references, required_bones)
         export_physics_bodies = []  # handled specially
         export_physics_joints = []  # handled specially
         export_physics_cloths = []  # handled specially
         export_ik_joints = []  # handled specially
         export_turrets = []  # handled specially
-        export_hittests = valid_collections_and_requirements(ob.m3_hittests)
+        export_hittests = valid_collections_and_requirements(ob.m3_hittests, required_regions, required_material_references, required_bones)
         export_attachment_volumes = []  # handled specially
         export_billboards = []  # handled specially
         export_tmd_data = []  # handled specially
-
-        self.vertex_color_mats = set()
-        self.vertex_alpha_mats = set()
 
         for anim_group in ob.m3_animation_groups:
             # TODO all anim groups must have unique name.
@@ -593,25 +604,16 @@ class Exporter():
 
             for anim in anim_group.animations:
                 if anim.action:
-                    self.export_sequences.append(anim_group)
+                    export_sequences.append(anim_group)
                     break
-
-        for system in export_particle_systems:
-            self.vertex_color_mats.add(system.material.handle)
-            if system.vertex_alpha:
-                self.vertex_alpha_mats.add(system.material.handle)
-
-        for ribbon in export_ribbons:
-            self.vertex_color_mats.add(ribbon.material.handle)
-            if ribbon.vertex_alpha:
-                self.vertex_alpha_mats.add(ribbon.material.handle)
 
         for particle_copy in ob.m3_particlecopies:
             if not particle_copy.m3_export:
                 continue
             particle_copy_bone = shared.m3_pointer_get(ob.pose.bones, particle_copy.bone)
+            # TODO check that at least one system in the copy's list is valid
             if len(particle_copy.systems) and particle_copy_bone and particle_copy.m3_export:
-                self.export_required_bones.add(particle_copy_bone)
+                required_bones.add(particle_copy_bone)
                 export_particle_copies.append(particle_copy)
 
         for spline in ob.m3_ribbonsplines:
@@ -619,14 +621,13 @@ class Exporter():
             for point in spline.points:
                 point_bone = shared.m3_pointer_get(ob.pose.bones, point.bone)
                 if point_bone:
-                    self.export_required_bones.add(point_bone)
+                    required_bones.add(point_bone)
                     export_spline_points.append(point)
                 else:
                     self.warn_strings.append(f'{str(point)} has no bone assigned to it and will not be exported')
             if len(export_spline_points):
                 export_ribbon_splines.append(spline)
 
-        self.physics_shapes_handle_to_shape = {}
         self.physics_shape_handle_to_volumes = {}
         physics_shape_used_bones = []
         for physics_body in ob.m3_rigidbodies:
@@ -667,28 +668,21 @@ class Exporter():
             if body1 and body2:
                 export_physics_joints.append(physics_joint)
 
-        self.physics_cloth_constraint_handle_to_volumes = {}
         # TODO assert that any given object is only used once in physics cloths.
         # TODO assert that the objects vertex group name sets match.
         for physics_cloth in ob.m3_cloths:
             if physics_cloth.m3_export:
                 if physics_cloth.mesh_object and physics_cloth.simulator_object:
-                    self.export_required_regions.add(physics_cloth.mesh_object)
-                    self.export_required_regions.add(physics_cloth.simulator_object)
+                    required_regions.add(physics_cloth.mesh_object)
+                    required_regions.add(physics_cloth.simulator_object)
                     export_physics_cloths.append(physics_cloth)
 
                     constraint_set = shared.m3_pointer_get(ob.m3_clothconstraintsets, physics_cloth.constraint_set)
-                    valid_volumes = []
                     for constraint in constraint_set.constraints:
                         bone = shared.m3_pointer_get(ob.pose.bones, constraint.bone)
                         if constraint.m3_export and bone:
-                            self.export_required_bones.add(bone)
-                            valid_volumes.append(constraint)
-                    if len(valid_volumes):
-                        self.physics_cloth_constraint_handle_to_volumes[constraint_set.bl_handle] = valid_volumes
+                            required_bones.add(bone)
 
-        self.ik_bones = []
-        self.export_ik_joint_bones = []
         for ik_joint in ob.m3_ikjoints:
             if not ik_joint.m3_export:
                 continue
@@ -699,18 +693,13 @@ class Exporter():
                 for ii in range(0, ik_joint.joint_length):
                     if bone_parent.parent:
                         bone_parent = bone_parent.parent if bone_parent else bone_parent
-                        self.ik_bones.append(bone_parent)
                     else:
                         self.warn_strings.append(f'{str(ik_joint)} joint length exceeds the length of the target bone\'s heirarchy')
                         # ???? warn if ik joints have any collisions?
                 if bone_parent != bone:
                     export_ik_joints.append(ik_joint)
-                    self.ik_bones.append(bone_parent)
-                    self.export_ik_joint_bones.append([bone, bone_parent])
-                    self.export_required_bones.add(bone)
-                    self.export_required_bones.add(bone_parent)
-
-        self.export_turret_parts = []
+                    required_bones.add(bone)
+                    required_bones.add(bone_parent)
 
         group_id_to_part = {}
         for turret in ob.m3_turrets:
@@ -721,15 +710,12 @@ class Exporter():
                 part_bone = shared.m3_pointer_get(ob.pose.bones, part.bone)
                 if part_bone:
                     turret_has_parts = True
-                    self.export_required_bones.add(part_bone)
+                    required_bones.add(part_bone)
                     if part.main_part:
-                        self.export_turret_parts.insert(0, part)
                         if not group_id_to_part.get(part.group_id, None):
                             group_id_to_part[part.group_id] = part
                         else:
                             self.warn_strings.append(f'Turret group {part.group_id} has more than one main part, but it should have only one')
-                    else:
-                        self.export_turret_parts.append(part)
                 else:
                     self.warn_strings.append(f'{str(part)} has no bone assigned to it and will not be exported')
             if turret_has_parts:
@@ -737,13 +723,17 @@ class Exporter():
 
         hittest_bone = shared.m3_pointer_get(ob.pose.bones, ob.m3_hittest_tight.bone)
         if hittest_bone:
-            self.export_required_bones.add(hittest_bone)
+            required_bones.add(hittest_bone)
+        for fuzzy in ob.m3_hittests:
+            bone = shared.m3_pointer_get(ob.pose.bones, fuzzy.bone)
+            if bone:
+                required_bones.add(bone)
 
         self.attachment_bones = []
         for attachment in export_attachment_points:
             attachment_point_bone = shared.m3_pointer_get(ob.pose.bones, attachment.bone)
             if attachment_point_bone:
-                self.export_required_bones.add(attachment_point_bone)
+                required_bones.add(attachment_point_bone)
                 for volume in attachment.volumes:
                     export_attachment_volumes.append(volume)
                     self.attachment_bones.append(attachment_point_bone)
@@ -754,45 +744,41 @@ class Exporter():
             if m3_tmd.m3_export:
                 export_tmd_data.append(m3_tmd)
 
-        self.export_regions = []
-        self.ob_to_region_index = []
-
         mesh_matrefs = set()
 
         for child in ob.children:
-            if child.type == 'MESH' and (child.m3_mesh_export or child in self.export_required_regions):
-                me = child.data
-                me.calc_loop_triangles()
+            if child.type == 'MESH' and (child.m3_mesh_export or child in required_regions):
+                child.data.calc_loop_triangles()
+                if len(child.data.loop_triangles) == 0:
+                    self.warn_strings.append(f'{str(child)} has no geometry data and will not ignored')
+                    continue
 
-                if len(me.loop_triangles) > 0:
-                    valid_mesh_batches = 0
-                    for mesh_batch in child.m3_mesh_batches:
-                        matref = shared.m3_pointer_get(ob.m3_materialrefs, mesh_batch.material)
-                        if matref:
-                            self.export_required_material_references.add(matref)
-                            mesh_matrefs.add(matref)
-                            valid_mesh_batches += 1
+                valid_mesh_batches = 0
+                for mesh_batch in child.m3_mesh_batches:
+                    matref = shared.m3_pointer_get(ob.m3_materialrefs, mesh_batch.material)
+                    if matref:
+                        required_material_references.add(matref)
+                        mesh_matrefs.add(matref)
+                        valid_mesh_batches += 1
 
-                    if valid_mesh_batches == 0:
-                        self.warn_strings.append(f'{str(child)} has no valid material assignments and will not be exported')
-                        continue
+                if valid_mesh_batches == 0:
+                    self.warn_strings.append(f'{str(child)} has no valid material assignments and will not be exported')
+                    continue
 
-                    skin_vertex_groups = 0
-                    for vertex_group in child.vertex_groups:
-                        group_bone = ob.data.bones.get(vertex_group.name)
-                        if group_bone:
-                            skin_vertex_groups += 1
-                            self.export_required_bones.add(group_bone)
-                            self.skinned_bones.append(group_bone)
+                skin_vertex_groups = 0
+                for vertex_group in child.vertex_groups:
+                    group_bone = ob.pose.bones.get(vertex_group.name)
+                    if group_bone:
+                        skin_vertex_groups += 1
+                        required_bones.add(group_bone)
 
-                    if skin_vertex_groups == 0:
-                        self.warn_strings.append(f'{str(child)} has no vertex groups skinned to a bone and will not be exported')
-                        continue
+                if skin_vertex_groups == 0:
+                    self.warn_strings.append(f'{str(child)} has no vertex groups skinned to a bone and will not be exported')
+                    continue
 
-                    self.export_regions.append(child)
+                export_regions.append(child)
 
-                    for ii in range(valid_mesh_batches):
-                        self.ob_to_region_index.append(child)
+        # TODO exclude materials if their type cannot be exported in model version
 
         materials_used_by_particle = set()
         materials_used_by_not_particle = set()
@@ -808,11 +794,7 @@ class Exporter():
             matref = shared.m3_pointer_get(ob.m3_materialrefs, item.material)
             materials_used_by_not_particle.add(matref)
 
-        def recurse_composite_materials(matref, force_color, force_alpha):
-            if force_color:
-                self.vertex_color_mats.add(matref.bl_handle)
-            if force_alpha:
-                self.vertex_alpha_mats.add(matref.bl_handle)
+        def recurse_composite_materials(matref, materials_used_by_particle, materials_used_by_not_particle):
             if matref.mat_type == 'm3_materials_composite':
                 mat = shared.m3_pointer_get(getattr(self.ob, matref.mat_type), matref.mat_handle)
                 for section in mat.sections:
@@ -822,16 +804,206 @@ class Exporter():
                             materials_used_by_particle.add(section_matref)
                         if matref in materials_used_by_not_particle:
                             materials_used_by_not_particle.add(section_matref)
-                        self.export_required_material_references.add(section_matref)
-                        recurse_composite_materials(section_matref, matref.bl_handle in self.vertex_color_mats, matref.bl_handle in self.vertex_alpha_mats)
+                        required_material_references.add(section_matref)
+                        recurse_composite_materials(section_matref, materials_used_by_particle, materials_used_by_not_particle)
 
-        for matref in self.export_required_material_references.copy():
-            recurse_composite_materials(matref, matref.bl_handle in self.vertex_color_mats, matref.bl_handle in self.vertex_alpha_mats)
+        for matref in required_material_references.copy():
+            recurse_composite_materials(matref, materials_used_by_particle, materials_used_by_not_particle)
+
+        for matref in ob.m3_materialrefs:
+            if matref in required_material_references:
+                export_material_references.append(matref)
+
+        # TODO warning if layers have rtt channel in non-standard material
+
+        for matref in materials_used_by_particle & materials_used_by_not_particle:
+            mat = shared.m3_pointer_get(getattr(ob, matref.mat_type), matref.mat_handle)
+            self.warn_strings.append(f'M3 Material "{mat.name}" being used by non-particles while being used by particles can break them')
+
+        for bone in ob.pose.bones:
+
+            if (not bone.m3_export_cull) or bone in required_bones:
+                export_bones.append(bone)
+                continue
+
+            for child_bone in bone.children_recursive:
+                if (not child_bone.m3_export_cull) or child_bone in required_bones:
+                    export_bones.append(bone)
+                    break
+
+        # billboards will not require bones, instead the billboard will be culled if the bone is not required
+        for billboard in ob.m3_billboards:
+            billboard_bone = shared.m3_pointer_get(ob.pose.bones, billboard.bone)
+            if billboard.m3_export and billboard_bone and billboard_bone in export_bones:
+                export_billboards.append(billboard)
+
+        # make sure mesh objects are in their rest position
+        for mesh_ob in export_regions:
+            arm_mod = None
+            for modifier in mesh_ob.modifiers:
+                if modifier.type == 'ARMATURE':
+                    if arm_mod:
+                        self.warn_strings.append(f'{str(mesh_ob)} has more than one armature modifier')
+                    arm_mod = modifier
+                    if arm_mod.object != ob:
+                        self.warn_strings.append(f'{str(mesh_ob)} has an armature modifier object which is not the parent armature object')
+
+        if len(self.warn_strings):
+            warning = f'The following warnings were given during the M3 export operation of {self.ob.name}:\n' + '\n'.join(self.warn_strings)
+            print(warning)  # not for debugging
+            if self.bl_op:
+                self.bl_op.report({"WARNING"}, warning)
+
+        return {
+            'sequences': export_sequences, 'bones': export_bones, 'regions': export_regions, 'attachment_points': export_attachment_points,
+            'lights': export_lights, 'shadow_boxes': export_shadow_boxes, 'cameras': export_cameras,
+            'material_references': export_material_references, 'particle_systems': export_particle_systems,
+            'particle_copies': export_particle_copies, 'ribbons': export_ribbons, 'ribbon_splines': export_ribbon_splines,
+            'projections': export_projections, 'forces': export_forces, 'warps': export_warps,
+            'physics_bodies': export_physics_bodies, 'physics_joints': export_physics_joints, 'physics_cloths': export_physics_cloths,
+            'ik_joints': export_ik_joints, 'turrets': export_turrets, 'hittests': export_hittests,
+            'attachment_volumes': export_attachment_volumes, 'billboards': export_billboards, 'tmd': export_tmd_data
+        }
+
+    def m3_export(self, ob, valid_collections, filename):
+
+        bpy.context.view_layer.objects.active = ob
+        bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
+
+        if not ob.animation_data:
+            ob.animation_data_create()
+
+        self.unused_val = -1
+        self.unanimated_init = True
+
+        self.m3 = io_m3.M3SectionList()
+
+        self.anim_id_count = 0
+        self.uv_count = 1
+        self.skinned_bones = []
+        self.use_sdmb = not not len(valid_collections['regions'])
+        self.mesh_to_basic_volume_sections = {}
+        self.mesh_to_physics_volume_sections = {}
+
+        self.export_required_regions = set()
+        self.export_required_material_references = set()
+        self.export_required_bones = set()
+
+        self.exported_anims = []
+        self.action_frame_range = {}
+        self.action_to_anim_data = {}
+        self.action_to_sdmb_user = {}
+        self.action_abs_pose_matrices = {}
+        self.action_to_stc = {}
+        self.stc_to_anim_group = {}  # only have 'full' or primary anims as keys
+
+        # used to calculate exact positions of later sections in the section list
+        self.stc_section = None  # defined in the sequence export
+        self.stc_to_name_section = {}  # defined in the sequence export
+        self.stg_last_indice_section = None  # defined in the sequence export
+
+        # used for later reference such as setting region flags
+        self.region_section = None  # defined in the mesh export code
+
+        self.vertex_color_mats = set()
+        self.vertex_alpha_mats = set()
+
+        for system in valid_collections['particle_systems']:
+            self.vertex_color_mats.add(system.material.handle)
+            if system.vertex_alpha:
+                self.vertex_alpha_mats.add(system.material.handle)
+
+        for ribbon in valid_collections['ribbons']:
+            self.vertex_color_mats.add(ribbon.material.handle)
+            if ribbon.vertex_alpha:
+                self.vertex_alpha_mats.add(ribbon.material.handle)
+
+        self.physics_shape_handle_to_volumes = {}
+        physics_shape_used_bones = []
+        for physics_body in valid_collections['physics_bodies']:
+            if not physics_body.m3_export:
+                continue
+            bone = shared.m3_pointer_get(ob.pose.bones, physics_body.bone)
+            if bone and bone not in physics_shape_used_bones:
+                physics_shape_used_bones.append(bone)
+                physics_shape = shared.m3_pointer_get(ob.m3_physicsshapes, physics_body.physics_shape)
+                if physics_shape:
+                    if physics_shape.bl_handle not in self.physics_shape_handle_to_volumes.keys():
+                        valid_volumes = []
+                        for volume in physics_shape.volumes:
+                            if volume.shape == 'MESH' or volume.shape == 'CONVEXHULL':
+                                if volume.mesh_object:
+                                    valid_volumes.append(volume)
+                            else:
+                                valid_volumes.append(volume)
+                        if len(valid_volumes):
+                            self.physics_shape_handle_to_volumes[physics_shape.bl_handle] = valid_volumes
+
+        self.physics_cloth_constraint_handle_to_volumes = {}
+        for physics_cloth in valid_collections['physics_cloths']:
+            valid_volumes = []
+            for constraint in constraint_set.constraints:
+                bone = shared.m3_pointer_get(ob.pose.bones, constraint.bone)
+                if constraint.m3_export and bone:
+                    valid_volumes.append(constraint)
+            if len(valid_volumes):
+                self.physics_cloth_constraint_handle_to_volumes[constraint_set.bl_handle] = valid_volumes
+
+        self.ik_bones = []
+        self.export_ik_joint_bones = []
+        for ik_joint in valid_collections['ik_joints']:
+            bone = shared.m3_pointer_get(ob.pose.bones, ik_joint.bone)
+
+            bone_parent = bone
+            for ii in range(0, ik_joint.joint_length):
+                if bone_parent.parent:
+                    bone_parent = bone_parent.parent if bone_parent else bone_parent
+                    self.ik_bones.append(bone_parent)
+            if bone_parent != bone:
+                self.ik_bones.append(bone_parent)
+                self.export_ik_joint_bones.append([bone, bone_parent])
+
+        self.export_turret_parts = []
+        group_id_to_part = {}
+        for turret in valid_collections['turrets']:
+            for part in turret.parts:
+                part_bone = shared.m3_pointer_get(ob.pose.bones, part.bone)
+                if part_bone:
+                    if part.main_part:
+                        self.export_turret_parts.insert(0, part)
+                        if not group_id_to_part.get(part.group_id, None):
+                            group_id_to_part[part.group_id] = part
+                    else:
+                        self.export_turret_parts.append(part)
+
+        self.attachment_bones = []
+        for attachment in valid_collections['attachment_points']:
+            attachment_point_bone = shared.m3_pointer_get(ob.pose.bones, attachment.bone)
+            if attachment_point_bone:
+                for volume in attachment.volumes:
+                    self.attachment_bones.append(attachment_point_bone)
+
+        self.ob_to_region_index = []
+
+        for mesh_ob in valid_collections['regions']:
+            valid_mesh_batches = 0
+            for mesh_batch in mesh_ob.m3_mesh_batches:
+                matref = shared.m3_pointer_get(ob.m3_materialrefs, mesh_batch.material)
+                if matref:
+                    valid_mesh_batches += 1
+
+            for vertex_group in mesh_ob.vertex_groups:
+                group_bone = ob.pose.bones.get(vertex_group.name)
+                if group_bone:
+                    self.skinned_bones.append(group_bone)
+
+            for ii in range(valid_mesh_batches):
+                self.ob_to_region_index.append(mesh_ob)
 
         # TODO exclude materials if their type cannot be exported in model version
         # TODO warning if layers have rtt channel in non-standard material
 
-        for matref in self.export_required_material_references:
+        for matref in valid_collections['material_references']:
             mat = shared.m3_pointer_get(getattr(ob, matref.mat_type), matref.mat_handle)
             for layer_name in shared.material_type_to_layers[shared.material_collections.index(matref.mat_type)]:
                 layer = shared.m3_pointer_get(self.ob.m3_materiallayers, getattr(mat, f'layer_{layer_name}'))
@@ -844,42 +1016,6 @@ class Exporter():
                             self.uv_count = 3
                         elif layer.uv_source == 'UV1' and self.uv_count < 2:
                             self.uv_count = 2
-
-        for matref in materials_used_by_particle & materials_used_by_not_particle:
-            mat = shared.m3_pointer_get(getattr(ob, matref.mat_type), matref.mat_handle)
-            self.warn_strings.append(f'M3 Material "{mat.name}" being used by non-particles while being used by particles can break them')
-
-        def export_bone_bool(bone):
-            result = False
-            if bone.m3_export_cull:
-                result = True
-            elif bone in self.export_required_bones:
-                result = True
-
-            # if result is True:
-            #     db = ob.data.bones.get(bone.name)
-            #     assert db.use_inherit_location and db.use_inherit_rotation and db.use_inherit_scale
-
-            return result
-
-        self.bones = []
-        for bone in ob.pose.bones:
-            if export_bone_bool(bone):
-                self.bones.append(bone)
-                continue
-
-            for child_bone in bone.children_recursive:
-                if export_bone_bool(child_bone):
-                    self.bones.append(bone)
-                    break
-
-        self.billboard_bones = []
-        # billboards will not require bones, instead the billboard will be culled if the bone is not required
-        for billboard in ob.m3_billboards:
-            billboard_bone = shared.m3_pointer_get(ob.pose.bones, billboard.bone)
-            if billboard.m3_export and billboard_bone and billboard_bone in self.bones and billboard_bone not in self.billboard_bones:
-                self.billboard_bones.append(billboard_bone)
-                export_billboards.append(billboard)
 
         material_versions = {
             1: ob.m3_materials_standard_version,
@@ -895,32 +1031,15 @@ class Exporter():
             12: 1,
         }
 
-        self.bone_name_indices = {bone.name: ii for ii, bone in enumerate(self.bones)}
+        self.bone_name_indices = {bone.name: ii for ii, bone in enumerate(valid_collections['bones'])}
         self.bone_to_correction_matrices = {}
         self.bone_to_iref = {}
         self.bone_to_abs_pose_matrix = {}
         self.bone_bound_vecs = None  # defined later
 
         self.matref_handle_indices = {}
-        for matref in ob.m3_materialrefs:
-            if matref in self.export_required_material_references:
-                self.matref_handle_indices[matref.bl_handle] = len(self.matref_handle_indices.keys())
-                export_material_references.append(matref)
-
-        # make sure mesh objects are in their rest position
-        for ob in self.export_regions:
-            arm_mod = None
-            for modifier in ob.modifiers:
-                if modifier.type == 'ARMATURE':
-                    if arm_mod:
-                        self.warn_strings.append(f'{str(ob)} has more than one armature modifier')
-                    arm_mod = modifier
-                    if arm_mod.object != self.ob:
-                        self.warn_strings.append(f'{str(ob)} has an armature modifier object which is not the parent armature object')
-                    arm_mod.object = None
-
-        user_armature_position = self.ob.data.pose_position
-        self.ob.data.pose_position = 'POSE'
+        for matref in valid_collections['material_references']:
+            self.matref_handle_indices[matref.bl_handle] = len(self.matref_handle_indices.keys())
 
         self.depsgraph = bpy.context.evaluated_depsgraph_get()
 
@@ -934,68 +1053,36 @@ class Exporter():
         self.bounds_max = mathutils.Vector((self.ob.m3_bounds.right, self.ob.m3_bounds.front, self.ob.m3_bounds.top))
         model.boundings = to_m3_bnds((self.bounds_min, self.bounds_max))
 
-        self.create_sequences(model, self.export_sequences)
-        self.create_bones(model)
-        self.create_division(model, self.export_regions, regn_version=self.ob.m3_mesh_version)
-        self.create_attachment_points(model, export_attachment_points)  # TODO should exclude attachments with same bone as other attachments
-        self.create_lights(model, export_lights)
-        self.create_shadow_boxes(model, export_shadow_boxes)
-        self.create_cameras(model, export_cameras)
-        self.create_materials(model, export_material_references, material_versions)  # TODO test volume, volume noise and stb material types
-        self.create_particle_systems(model, export_particle_systems, export_particle_copies, version=self.ob.m3_particlesystems_version)
-        self.create_ribbons(model, export_ribbons, export_ribbon_splines, version=self.ob.m3_ribbons_version)
-        self.create_projections(model, export_projections)
-        self.create_forces(model, export_forces, version=self.ob.m3_forces_version)
-        self.create_warps(model, export_warps)
+        self.create_sequences(model, valid_collections['sequences'])
+        self.create_bones(model, valid_collections['bones'], valid_collections['sequences'])
+        self.create_division(model, valid_collections['regions'], valid_collections['bones'], regn_version=self.ob.m3_mesh_version)
+        self.create_attachment_points(model, valid_collections['attachment_points'])  # TODO should exclude attachments with same bone as other attachments
+        self.create_lights(model, valid_collections['lights'])
+        self.create_shadow_boxes(model, valid_collections['shadow_boxes'])
+        self.create_cameras(model, valid_collections['cameras'])
+        self.create_materials(model, valid_collections['material_references'], material_versions)  # TODO test volume, volume noise and stb material types
+        self.create_particle_systems(model, valid_collections['particle_systems'], valid_collections['particle_copies'], version=self.ob.m3_particlesystems_version)
+        self.create_ribbons(model, valid_collections['ribbons'], valid_collections['ribbon_splines'], version=self.ob.m3_ribbons_version)
+        self.create_projections(model, valid_collections['projections'])
+        self.create_forces(model, valid_collections['forces'], version=self.ob.m3_forces_version)
+        self.create_warps(model, valid_collections['warps'])
         # TODO PHSH 2/3 polygon shapes are buggy
-        self.create_physics_bodies(model, export_physics_bodies, body_version=self.ob.m3_rigidbodies_version, shape_version=self.ob.m3_physicsshapes_version)
-        self.create_physics_joints(model, export_physics_bodies, export_physics_joints)
-        self.create_physics_cloths(model, export_physics_cloths, version=self.ob.m3_cloths_version)  # TODO simulation rigging
-        self.create_ik_joints(model, export_ik_joints)
-        self.create_turrets(model, export_turrets, part_version=self.ob.m3_turrets_part_version)
-        self.create_irefs(model)
-        self.create_hittests(model, export_hittests)
-        self.create_attachment_volumes(model, export_attachment_volumes)
-        self.create_billboards(model, export_billboards)
-        # self.create_tmd_data(model, export_tmd_data)  # ! not supported in modern SC2 client
+        self.create_physics_bodies(model, valid_collections['physics_bodies'], body_version=self.ob.m3_rigidbodies_version, shape_version=self.ob.m3_physicsshapes_version)
+        self.create_physics_joints(model, valid_collections['physics_bodies'], valid_collections['physics_joints'])
+        self.create_physics_cloths(model, valid_collections['physics_cloths'], version=self.ob.m3_cloths_version)  # TODO simulation rigging
+        self.create_ik_joints(model, valid_collections['ik_joints'])
+        self.create_turrets(model, valid_collections['turrets'], part_version=self.ob.m3_turrets_part_version)
+        self.create_irefs(model, valid_collections['bones'])
+        self.create_hittests(model, valid_collections['hittests'])
+        self.create_attachment_volumes(model, valid_collections['attachment_volumes'])
+        self.create_billboards(model, valid_collections['billboards'])
+        # self.create_tmd_data(model, valid_collections['tmd_data'])  # ! not supported in modern SC2 client
 
         self.finalize_anim_data(model)
-
-        if len(self.warn_strings):
-            warning = f'The following warnings were given during the M3 export operation of {self.ob.name}:\n' + '\n'.join(self.warn_strings)
-            print(warning)  # not for debugging
-            if self.bl_op:
-                self.bl_op.report({"WARNING"}, warning)
 
         self.m3.validate()
         self.m3.resolve()
         self.m3.to_index()
-
-        try:  # place armature back into the pose that it was before
-            if self.ob.m3_animation_groups_index > -1:
-                anim_group = self.ob.m3_animation_groups[self.ob.m3_animation_groups_index]
-                anim = anim_group.animations[anim_group.animations_index]
-                ob_anim_data_set(self.scene, self.ob, anim.action)
-        except IndexError:  # pass if any index value is out of range
-            pass
-
-        self.ob.data.pose_position = user_armature_position
-        self.ob.animation_data.action = user_action
-        self.scene.frame_current = user_frame
-
-        # animation data is exported much faster while no armature modifiers point to them.
-        # keep this below anything handling animation data.
-        for ob in self.export_regions:
-            arm_mod = None
-            for modifier in ob.modifiers:
-                if modifier.type == 'ARMATURE':
-                    arm_mod = modifier
-                    arm_mod.object = self.ob
-
-            # auto generate armature modifier if one does not already exist
-            if arm_mod is None:
-                arm_mod = ob.modifiers.new('Armature', 'ARMATURE')
-                arm_mod.object = self.ob
 
         return self.m3
 
@@ -1084,7 +1171,7 @@ class Exporter():
         for action, stc_list in self.action_to_stc.items():
 
             # do not calculate bounds if action which has no bone animation data, or there is no mesh data in general
-            if self.action_to_sdmb_user.get(action) and len(self.export_regions):
+            if self.action_to_sdmb_user.get(action) and self.use_sdmb:
                 self.action_to_anim_data[action]['SDMB'][BNDS_ANIM_ID] = [[], []]
                 bnds_data = self.action_to_anim_data[action]['SDMB'][BNDS_ANIM_ID]
 
@@ -1198,8 +1285,8 @@ class Exporter():
                 sts_ids_section.content = stc_ids_section[stc].content
                 section_pos += 1
 
-    def create_bones(self, model):
-        if not self.bones:
+    def create_bones(self, model, bones, sequences):
+        if not bones:
             return
 
         # place armature in the default pose so that bones are in their default pose
@@ -1211,7 +1298,7 @@ class Exporter():
 
         bone_to_m3_bone = {}
 
-        for pose_bone in self.bones:
+        for pose_bone in bones:
             data_bone = self.ob.data.bones.get(pose_bone.name)
             m3_bone_parent = bone_to_m3_bone.get(pose_bone.parent, None) if pose_bone.parent else None
             m3_bone = bone_section.content_add()
@@ -1270,7 +1357,7 @@ class Exporter():
             self.bone_to_abs_pose_matrix[pose_bone] = abs_pose_matrix @ self.bone_to_iref[pose_bone]
 
         calc_actions = []
-        for anim_group in self.export_sequences:
+        for anim_group in sequences:
             for anim in anim_group.animations:
                 if anim.action is None or anim.action in calc_actions:
                     continue
@@ -1287,19 +1374,19 @@ class Exporter():
                 frames_range = range(self.action_frame_range[anim.action][0], self.action_frame_range[anim.action][1] + 1)
                 frames = list(frames_range)
 
-                bone_to_pose_matrices = {bone: [] for bone in self.bones}
+                bone_to_pose_matrices = {bone: [] for bone in bones}
                 frame_to_bone_abs_pose_matrix = {frame: {} for frame in frames}
                 self.action_abs_pose_matrices[anim.action] = frame_to_bone_abs_pose_matrix
 
                 for frame in frames:
                     self.scene.frame_set(frame)
 
-                    for pb in self.bones:
+                    for pb in bones:
                         bone_to_pose_matrices[pb].append(self.ob.convert_space(pose_bone=pb, matrix=pb.matrix, from_space='POSE', to_space='LOCAL'))
 
-                bone_m3_pose_matrices = {bone: [] for bone in self.bones}
+                bone_m3_pose_matrices = {bone: [] for bone in bones}
 
-                for pose_bone in self.bones:
+                for pose_bone in bones:
                     data_bone = self.ob.data.bones.get(pose_bone.name)
                     m3_bone = bone_to_m3_bone[pose_bone]
                     left_correction_matrix, right_correction_matrix = self.bone_to_correction_matrices[pose_bone]
@@ -1350,7 +1437,7 @@ class Exporter():
 
                 # calculate absolute pose matrices only if needed for boundings
                 if self.action_to_sdmb_user[anim.action]:
-                    for bone in self.bones:
+                    for bone in bones:
                         for jj, m3_pose_matrix in enumerate(bone_m3_pose_matrices[bone]):
 
                             if bone.parent is not None:
@@ -1365,7 +1452,7 @@ class Exporter():
         ob_anim_data_set(self.scene, self.ob, None)
         self.scene.frame_set(0)
 
-    def create_division(self, model, mesh_objects, regn_version):
+    def create_division(self, model, mesh_objects, bones, regn_version):
         model.bit_set('flags', 'has_mesh', len(mesh_objects) > 0)
 
         if not len(mesh_objects):
@@ -1412,7 +1499,7 @@ class Exporter():
         m3_faces = []
         m3_lookup = []
 
-        bone_bounding_points = {bone: [] for bone in self.bones}
+        bone_bounding_points = {bone: [] for bone in bones}
 
         for ob_index, ob in enumerate(mesh_objects):
             bm = bmesh.new(use_operators=True)
@@ -1476,7 +1563,7 @@ class Exporter():
                         lookup_ii = group_to_lookup_ii.get(deformation[0])
                         if lookup_ii is not None and deformation[1]:
                             deformations.append([lookup_ii, deformation[1]])
-                            bone_bounding_points[self.bones[region_lookup[lookup_ii]]].append(co.copy())
+                            bone_bounding_points[bones[region_lookup[lookup_ii]]].append(co.copy())
 
                     deformations.sort(key=lambda x: x[1])
                     deformations = deformations[0:min(4, len(deformations))]
@@ -1567,7 +1654,7 @@ class Exporter():
 
         self.bone_bound_vecs = {}
 
-        for bone in self.bones:
+        for bone in bones:
             if not bone_bounding_points[bone]:
                 continue
             x_cos, y_cos, z_cos = zip(*bone_bounding_points[bone])
@@ -2298,10 +2385,10 @@ class Exporter():
                 except ValueError:
                     pass  # part is not in self.export_turret_parts
 
-    def create_irefs(self, model):
+    def create_irefs(self, model, bones):
         iref_section = self.m3.section_for_reference(model, 'bone_rests')
 
-        for bone in self.bones:
+        for bone in bones:
             iref = iref_section.content_add()
             iref.matrix = to_m3_matrix(self.bone_to_iref[bone])
 
@@ -2364,7 +2451,8 @@ class Exporter():
     def create_billboards(self, model, billboards):
         billboard_section = self.m3.section_for_reference(model, 'billboards')
 
-        for billboard, bone in zip(billboards, self.billboard_bones):
+        for billboard in billboards:
+            bone = shared.m3_pointer_get(self.ob.pose.bones, billboard.bone)
             m3_billboard = billboard_section.content_add()
             m3_billboard.bone = self.bone_name_indices[bone.name]
             processor = M3OutputProcessor(self, billboard, m3_billboard)
@@ -2569,8 +2657,14 @@ class Exporter():
 
 
 def m3_export(ob, filename, bl_op=None):
+    assert ob.type == 'ARMATURE'
     if not (filename.endswith('.m3') or filename.endswith('.m3a')):
         filename = filename.rsplit('.', 1)[0] + '.m3'
     exporter = Exporter(bl_op=bl_op)
-    sections = exporter.m3_export(ob, filename,)
-    io_m3.section_list_save(sections, filename)
+    valid_collections = exporter.get_validated_data(ob)
+    exporter.scene_prepare(ob)
+    try:
+        sections = exporter.m3_export(ob, valid_collections, filename)
+        io_m3.section_list_save(sections, filename)
+    finally:
+        exporter.scene_restore()
