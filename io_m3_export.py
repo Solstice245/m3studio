@@ -1170,6 +1170,9 @@ class Exporter():
         ids_sections = []  # for collecting anim_id sections to copy later
         stc_ids_section = {}
 
+        if not len(self.action_to_stc):
+            return
+
         for action, stc_list in self.action_to_stc.items():
 
             # do not calculate bounds if action which has no bone animation data, or there is no mesh data in general
