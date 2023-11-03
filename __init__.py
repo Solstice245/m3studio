@@ -48,7 +48,7 @@ from . import bl_graphics_draw
 bl_info = {
     'name': 'M3: Used by Blizzard\'s StarCraft 2 and Heroes of the Storm',
     'author': 'Solstice245',
-    'version': (0, 1, 0),
+    'version': (0, 2, 0),
     'blender': (3, 0, 0),
     'location': 'Properties Editor -> Object Data -> M3 Panels',
     'description': 'Allows import and export of models in the M3 format.',
