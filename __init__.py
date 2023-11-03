@@ -115,6 +115,8 @@ class M3ExportOperator(bpy.types.Operator):
     filter_glob: bpy.props.StringProperty(options={'HIDDEN'}, default='*.m3;*.m3a')
     filepath: bpy.props.StringProperty(name='File Path', description='File path for export operation', maxlen=1023, default='')
 
+    output_anims: bpy.props.BoolProperty(default=True, name='Output Animations', description='Include animations in the resulting m3 file. (Unchecked does not apply when exporting as m3a)')
+
     @classmethod
     def poll(cls, context):
         return (context.object and context.object.type == 'ARMATURE')
@@ -126,7 +128,7 @@ class M3ExportOperator(bpy.types.Operator):
         return {'RUNNING_MODAL'}
 
     def execute(self, context):
-        io_m3_export.m3_export(ob=context.active_object, filename=self.filepath, bl_op=self)
+        io_m3_export.m3_export(ob=context.active_object, filename=self.filepath, bl_op=self, output_anims=self.output_anims)
         context.active_object.m3_filepath_export = self.filepath
         return {'FINISHED'}
 
@@ -139,7 +141,7 @@ def top_bar_export(self, context):
     col = self.layout.column()
     if not context.object or (context.object and context.object.type != 'ARMATURE'):
         col.active = False
-    col.operator('m3.export', text='StarCraft 2 Model (.m3)')
+    col.operator('m3.export', text='StarCraft 2 Model (.m3, .m3a)')
 
 
 m3_modules = (

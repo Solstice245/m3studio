@@ -1296,7 +1296,7 @@
             <field name="batches" type="Reference" ref_to="BAT_"/>
             <field name="msec" type="Reference" ref_to="MSEC"/>
             <!-- m3: 1, m3a: 0 -->
-            <field name="unknown00" type="uint32" default_value="1"/>
+            <field name="draw" type="uint32" default_value="1"/>
         </fields>
     </structure>
 

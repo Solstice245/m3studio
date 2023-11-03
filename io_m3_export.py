@@ -867,7 +867,7 @@ class Exporter():
             'attachment_volumes': export_attachment_volumes, 'billboards': export_billboards, 'tmd': export_tmd_data
         }
 
-    def m3_export(self, ob, valid_collections, filename):
+    def m3_export(self, ob, valid_collections, filename, output_anims):
 
         bpy.context.view_layer.objects.active = ob
         bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
@@ -879,6 +879,8 @@ class Exporter():
         self.unanimated_init = True
 
         self.m3 = io_m3.M3SectionList()
+        self.is_m3a = filename.endswith('m3a')
+        self.output_anims = output_anims
 
         self.anim_id_count = 0
         self.uv_count = 1
@@ -1055,7 +1057,8 @@ class Exporter():
         self.bounds_max = mathutils.Vector((self.ob.m3_bounds.right, self.ob.m3_bounds.front, self.ob.m3_bounds.top))
         model.boundings = to_m3_bnds((self.bounds_min, self.bounds_max))
 
-        self.create_sequences(model, valid_collections['sequences'])
+        if self.output_anims or self.is_m3a:
+            self.create_sequences(model, valid_collections['sequences'])
         self.create_bones(model, valid_collections['bones'], valid_collections['sequences'])
         self.create_division(model, valid_collections['regions'], valid_collections['bones'], regn_version=self.ob.m3_mesh_version)
         self.create_attachment_points(model, valid_collections['attachment_points'])  # TODO should exclude attachments with same bone as other attachments
@@ -1080,7 +1083,8 @@ class Exporter():
         self.create_billboards(model, valid_collections['billboards'])
         # self.create_tmd_data(model, valid_collections['tmd_data'])  # ! not supported in modern SC2 client
 
-        self.finalize_anim_data(model)
+        if self.output_anims or self.is_m3a:
+            self.finalize_anim_data(model)
 
         self.m3.validate()
         self.m3.resolve()
@@ -1362,6 +1366,10 @@ class Exporter():
             self.bone_to_abs_pose_matrix[pose_bone] = abs_pose_matrix @ self.bone_to_iref[pose_bone]
 
         calc_actions = []
+
+        if not (self.output_anims or self.is_m3a):
+            return
+
         for anim_group in sequences:
             for anim in anim_group.animations:
                 if anim.action is None or anim.action in calc_actions:
@@ -1464,6 +1472,7 @@ class Exporter():
             model.skin_bone_count = 0
             div_section = self.m3.section_for_reference(model, 'divisions', version=2)
             div = div_section.content_add()
+            div.draw = 0
 
             msec_section = self.m3.section_for_reference(div, 'msec', version=1)
             msec = msec_section.content_add()
@@ -1490,15 +1499,16 @@ class Exporter():
 
         m3_vertex_desc = io_m3.structures['VertexFormat' + hex(model.vertex_flags)].get_version(0)
 
-        vertex_section = self.m3.section_for_reference(model, 'vertices')
+        vertex_section = self.m3.section_for_reference(model, 'vertices', pos=None if self.is_m3a else -1)
 
         div_section = self.m3.section_for_reference(model, 'divisions', version=2)
         div = div_section.content_add()
+        div.draw = 1 if not self.is_m3a else 0
 
-        face_section = self.m3.section_for_reference(div, 'faces')
+        face_section = self.m3.section_for_reference(div, 'faces', pos=None if self.is_m3a else -1)
 
-        region_section = self.m3.section_for_reference(div, 'regions', version=regn_version)
-        batch_section = self.m3.section_for_reference(div, 'batches', version=1)
+        region_section = self.m3.section_for_reference(div, 'regions', version=regn_version, pos=None if self.is_m3a else -1)
+        batch_section = self.m3.section_for_reference(div, 'batches', version=1, pos=None if self.is_m3a else -1)
 
         m3_vertices = []
         m3_faces = []
@@ -2666,7 +2676,7 @@ class Exporter():
         return anim_ref
 
 
-def m3_export(ob, filename, bl_op=None):
+def m3_export(ob, filename, bl_op=None, output_anims=None):
     assert ob.type == 'ARMATURE'
     if not (filename.endswith('.m3') or filename.endswith('.m3a')):
         filename = filename.rsplit('.', 1)[0] + '.m3'
@@ -2674,7 +2684,7 @@ def m3_export(ob, filename, bl_op=None):
     valid_collections = exporter.get_validated_data(ob)
     exporter.scene_prepare(ob)
     try:
-        sections = exporter.m3_export(ob, valid_collections, filename)
+        sections = exporter.m3_export(ob, valid_collections, filename, output_anims)
         io_m3.section_list_save(sections, filename)
     finally:
         exporter.scene_restore()
