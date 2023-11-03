@@ -89,12 +89,12 @@ class M3ImportOperator(bpy.types.Operator):
             layout.separator()
             layout.label(text='Import Options')
             col = layout.column()
+            col.prop(self, 'get_mesh')
+            col.prop(self, 'get_effects')
             col.prop(self, 'get_rig')
             row = col.row()
             row.active = self.get_rig
             row.prop(self, 'get_anims')
-            col.prop(self, 'get_mesh')
-            col.prop(self, 'get_effects')
 
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)

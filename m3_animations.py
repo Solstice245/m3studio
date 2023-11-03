@@ -75,11 +75,12 @@ def set_default_value(action, path, index, value):
 
 
 def anim_update(self, context):
-    anim_group = context.object.m3_animation_groups[context.object.m3_animation_groups_index]
     if context.object.m3_options.update_anim_data:
         anim = None
-        if anim_group.animations_index in range(len(anim_group.animations)):
-            anim = anim_group.animations[anim_group.animations_index]
+        if context.object.m3_animation_groups_index in range(len(context.object.m3_animation_groups)):
+            anim_group = context.object.m3_animation_groups[context.object.m3_animation_groups_index]
+            if anim_group.animations_index in range(len(anim_group.animations)):
+                anim = anim_group.animations[anim_group.animations_index]
         ob_anim_data_set(context.scene, context.object, anim.action if anim else None)
 
 
@@ -108,6 +109,7 @@ def draw_animation_props(animation, layout):
 
 
 def draw_group_props(anim_group, layout):
+    # layout.prop(anim_group, 'm3_export', text='Export')
     row = layout.row(align=True)
     row.prop(anim_group, 'frame_start', text='Frame Range')
     row.prop(anim_group, 'frame_end', text='')
