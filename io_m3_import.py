@@ -326,9 +326,23 @@ def armature_object_new():
 
 class Importer:
 
-    def m3_import(self, filename, ob=None, anims=True, rig=True, effects=True, mesh=True):
+    def __init__(self, bl_op=None):
+        self.bl_op = bl_op
+        self.warn_strings = []
+
+    def report_warnings(self):
+        if len(self.warn_strings):
+            warning = f'The following warnings were given during the M3 import operation of {self.ob.name}:\n' + '\n'.join(self.warn_strings)
+            print(warning)  # not for debugging
+            if self.bl_op:
+                self.bl_op.report({"WARNING"}, warning)
+        self.warn_strings = []  # reset warnings
+
+    def m3_import(self, filename, ob=None, opts=None):
         # TODO make fps an import option
         bpy.context.scene.render.fps = FRAME_RATE
+
+        self.get_rig, self.get_anims, self.get_mesh, self.get_effects = opts if opts != None else [True] * 4
 
         self.m3 = io_m3.section_list_load(filename)
         self.m3_model = self.m3[self.m3[0][0].model][0]
@@ -349,8 +363,8 @@ class Importer:
 
         self.m3_struct_version_set_from_ref('m3_model_version', self.m3[0][0].model)
 
-        if rig:
-            if anims:
+        if self.get_rig:
+            if self.get_anims:
                 self.create_animations()
 
             self.create_bones()
@@ -363,19 +377,21 @@ class Importer:
             self.create_ik_joints()
             self.create_turrets()
             self.create_shadow_boxes()
-
-        if rig and mesh:
-            self.create_bounding()
-
-        if mesh or effects:
-            self.create_materials()
-
-        if mesh:
-            self.create_mesh()
-            self.create_cloths()
             self.create_tmd()
 
-        if effects:
+        if self.get_rig and self.get_mesh:
+            self.create_bounding()
+
+        if self.get_mesh or self.get_effects:
+            self.create_materials()
+
+        if self.get_mesh:
+            self.create_mesh()
+
+        if self.get_mesh and self.get_rig:
+            self.create_cloths()
+
+        if self.get_effects:
             self.create_lights()
             self.create_particles()
             self.create_ribbons()
@@ -387,6 +403,13 @@ class Importer:
             ob_anim_data_set(bpy.context.scene, self.ob, None)
             bpy.context.view_layer.objects.active = self.ob
             self.ob.select_set(True)
+
+        # lazy way to filter out materials unused by the imported data, but it works
+        user_matref_index = self.ob.m3_materialrefs_index
+        for ii in reversed(range(len(self.ob.m3_materialrefs))[matref_len:]):
+            self.ob.m3_materialrefs_index = ii
+            bpy.ops.m3.material_remove('INVOKE_DEFAULT', quiet=True)
+        self.ob.m3_materialrefs_index = user_matref_index
 
     def m3a_import(self, filename, ob):
 
@@ -890,7 +913,17 @@ class Importer:
     def create_materials(self):
         ob = self.ob
 
+        standard_m3_version = self.m3[self.m3_model.materials_standard].desc.version
+        standard_bl_version = int(self.ob.m3_materials_standard_version)
+
+        if standard_m3_version > 16 and standard_bl_version <= 16:
+            for mat in self.ob.m3_materials_standard:
+                mat.geometry_visible = True
+                self.warn_strings.append(f'Existing material {mat.name} "Geometry Visible" flag automatically checked, due to material version upgrade.')
+
         self.m3_struct_version_set_from_ref('m3_materials_standard_version', self.m3_model.materials_standard)
+
+        standard_bl_version = int(self.ob.m3_materials_standard_version)
 
         if hasattr(self.m3_model, 'materials_reflection'):
             self.m3_struct_version_set_from_ref('m3_materials_reflection_version', self.m3_model.materials_reflection)
@@ -909,13 +942,17 @@ class Importer:
             matref.mat_type = 'm3_' + shared.material_type_to_model_reference[m3_matref.type]
             matref.mat_handle = mat.bl_handle
 
-            if m3_matref.type == 3:
+            if m3_matref.type == 1:  # standard materials
+                if standard_m3_version <= 16 and standard_bl_version > 16:
+                    mat.geometry_visible = True
+                    self.warn_strings.append(f'Imported material {matref.name} "Geometry Visible" flag automatically checked, due to material version upgrade.')
+            if m3_matref.type == 3:  # composite materials
                 for m3_section in self.m3[m3_mat.sections]:
                     section = shared.m3_item_add(mat.sections)
                     section.material.handle = ob.m3_materialrefs[self.matref_index(m3_section.material_reference_index)].bl_handle
                     processor = M3InputProcessor(self, section, m3_section)
                     io_shared.io_material_composite_section(processor)
-            elif m3_matref.type == 11:
+            elif m3_matref.type == 11:  # lens flare materials
                 for m3_starburst in self.m3[m3_mat.starbursts]:
                     starburst = shared.m3_item_add(mat.starbursts)
                     processor = M3InputProcessor(self, starburst, m3_starburst)
@@ -1242,7 +1279,10 @@ class Importer:
             if hasattr(m3_system, 'emit_shape_regions'):
                 for region_indice in self.m3[m3_system.emit_shape_regions]:
                     mesh_object_pointer = system.emit_shape_meshes.add()
-                    mesh_object_pointer.bl_object = self.m3_bl_ref.get(self.m3_division.regions.index)[region_indice]
+                    try:
+                        mesh_object_pointer.bl_object = self.m3_bl_ref.get(self.m3_division.regions.index)[region_indice]
+                    except TypeError:  # for when get() returns None
+                        self.warn_strings.append(f'No matching mesh found for particle system {system}. Unable to assign mesh shape emitter {region_indice}.')
 
             for m3_point in self.m3[m3_system.emit_shape_spline]:
                 point = system.emit_shape_spline.add()
@@ -1686,11 +1726,14 @@ class Importer:
         return me_ob
 
 
-def m3_import(filename, ob=None):
-    importer = Importer()
-    if ob and filename.endswith('.m3a'):
-        importer.m3a_import(filename, ob)
-    elif ob:
-        importer.m3_import(filename, ob, anims=False, rig=False)  # TODO options
-    else:
-        importer.m3_import(filename, ob)
+def m3_import(filename, ob=None, bl_op=None, opts=None):
+    importer = Importer(bl_op)
+    try:
+        if ob and filename.endswith('.m3a'):
+            importer.m3a_import(filename, ob)
+        elif ob:
+            importer.m3_import(filename, ob, opts=opts)
+        else:
+            importer.m3_import(filename, ob)
+    finally:
+        importer.report_warnings()

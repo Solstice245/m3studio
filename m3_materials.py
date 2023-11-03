@@ -744,6 +744,8 @@ class M3MaterialOpRemove(bpy.types.Operator):
     bl_description = 'Removes the active item from the collection'
     bl_options = {'UNDO'}
 
+    quiet: bpy.props.BoolProperty(default=False)
+
     def invoke(self, context, event):
         ob = context.object
         matrefs = ob.m3_materialrefs
@@ -769,7 +771,8 @@ class M3MaterialOpRemove(bpy.types.Operator):
                     user_strings.append(f'The mesh object {child.name} is using this material')
 
         if user_strings:
-            self.report({"ERROR"}, 'Deletion cancelled due to the following reason(s):\n' + '\n'.join(user_strings))
+            if not self.quiet:
+                self.report({"ERROR"}, 'Deletion cancelled due to the following reason(s):\n' + '\n'.join(user_strings))
             return {'CANCELLED'}
 
         mat_col = getattr(ob, matref.mat_type)

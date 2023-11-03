@@ -1851,6 +1851,11 @@ class Exporter():
                             m3_layer.unknowna44bf452.null = 1.0
 
                 if type_ii == 1:  # standard material
+
+                    if int(versions[type_ii]) > 16:  # MAT_V17+ when unfogged AND transparent_shadows are checked, it crashes the game
+                        if m3_mat.bit_get('flags', 'transparent_shadows'):
+                            m3_mat.bit_set('flags', 'unfogged', False)
+
                     m3_mat.bit_set('additional_flags', 'depth_blend_falloff', mat.depth_blend_falloff != 0.0)
                     m3_mat.bit_set('additional_flags', 'vertex_color', mat.vertex_color or matref.bl_handle in self.vertex_color_mats)
                     m3_mat.bit_set('additional_flags', 'vertex_alpha', mat.vertex_alpha or matref.bl_handle in self.vertex_alpha_mats)

@@ -74,14 +74,35 @@ class M3ImportOperator(bpy.types.Operator):
     filename_ext = '.m3'
     filter_glob: bpy.props.StringProperty(options={'HIDDEN'}, default='*.m3;*.m3a')
     filepath: bpy.props.StringProperty(name='File Path', description='File path for import operation', maxlen=1023, default='')
-    id_name: bpy.props.EnumProperty(items=m3_import_id_names, name='Armature Object')
+    id_name: bpy.props.EnumProperty(items=m3_import_id_names, name='Armature Object', description='The armature object to add m3 data into. Select an existing armature object to import m3 data directly into it')
+
+    get_mesh: bpy.props.BoolProperty(default=True, name='Mesh Data', description='Imports mesh data and their associated materials. Applies only to m3 (not m3a) import')
+    get_effects: bpy.props.BoolProperty(default=False, name='Effects', description='Imports effect data, such as particle systems or ribbons, and their associated materials. Applies only to m3 (not m3a) import')
+    get_rig: bpy.props.BoolProperty(default=False, name='Rig', description='Imports bones and various bone related data. (Attachment points, hit test volumes, etc.) Applies only to m3 (not m3a) import')
+    get_anims: bpy.props.BoolProperty(default=False, name='Animations', description='Imports animation data. Applies only to m3 (not m3a) import')
+
+    def draw(self, context):
+        layout = self.layout
+        layout.label(text='Armature Object')
+        layout.prop(self, 'id_name', text='')
+        if self.id_name != '(New Object)':
+            layout.separator()
+            layout.label(text='Import Options')
+            col = layout.column()
+            col.prop(self, 'get_rig')
+            row = col.row()
+            row.active = self.get_rig
+            row.prop(self, 'get_anims')
+            col.prop(self, 'get_mesh')
+            col.prop(self, 'get_effects')
 
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
 
     def execute(self, context):
-        io_m3_import.m3_import(self.filepath, bpy.data.objects.get(self.id_name))
+        opts = (self.get_rig, self.get_anims, self.get_mesh, self.get_effects)
+        io_m3_import.m3_import(filename=self.filepath, ob=bpy.data.objects.get(self.id_name), bl_op=self, opts=opts)
         return {'FINISHED'}
 
 
@@ -105,7 +126,7 @@ class M3ExportOperator(bpy.types.Operator):
         return {'RUNNING_MODAL'}
 
     def execute(self, context):
-        io_m3_export.m3_export(context.active_object, self.filepath, self)
+        io_m3_export.m3_export(ob=context.active_object, filename=self.filepath, bl_op=self)
         context.active_object.m3_filepath_export = self.filepath
         return {'FINISHED'}
 

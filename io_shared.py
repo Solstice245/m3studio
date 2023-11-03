@@ -70,7 +70,7 @@ def io_material_standard(processor):
     processor.bit('flags', 'depth_prepass_low_required')
     processor.bit('flags', 'no_highlighting')
     processor.bit('flags', 'clamp_output')
-    processor.bit('flags', 'geometry_visible')
+    processor.bit('flags', 'geometry_visible', since_version=17)
     processor.enum('blend_mode')
     processor.integer('priority')
     processor.float('specularity')
