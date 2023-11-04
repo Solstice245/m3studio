@@ -1175,7 +1175,7 @@ class Importer:
                     plist.insert(ii, origin)
 
             for origin in edge_match_dict:
-                print('origin', origin.index, edge_match_dict[origin])
+                # print('origin', origin.index, edge_match_dict[origin])
                 for target in edge_match_dict[origin]:
                     if not edge_match_dict[origin][target]:
                         if doubles.get(origin) == target and doubles.get(target) != origin:
