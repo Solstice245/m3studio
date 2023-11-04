@@ -1127,6 +1127,14 @@ class Importer:
 
             bm.faces.ensure_lookup_table()
 
+            def get_matching_edge(origin, target):
+                for oedge in origin.link_edges:
+                    for tedge in target.link_edges:
+                        # print(set((tuple(oedge.verts[0].co), tuple(oedge.verts[1].co), tuple(tedge.verts[0].co), tuple(tedge.verts[1].co))))
+                        if len(set((tuple(oedge.verts[0].co), tuple(oedge.verts[1].co), tuple(tedge.verts[0].co), tuple(tedge.verts[1].co)))) == 2:
+                            return True
+                return False
+
             doubles = bmesh.ops.find_doubles(bm, verts=bm.verts, dist=0.00001)['targetmap']
             for origin in list(doubles.keys()):
                 target = doubles[origin]
@@ -1134,6 +1142,62 @@ class Importer:
                 for edge in [*origin.link_edges, *target.link_edges]:
                     if len(edge.link_faces) == 1:
                         edge.smooth = False
+
+            doubles_inverse = {}
+            for key in doubles:
+                try:
+                    doubles_inverse[doubles[key]].append(key)
+                except KeyError:
+                    doubles_inverse[doubles[key]] = [key]
+
+            point_lists = []
+            for key in doubles:
+                key_assigned = False
+                for plist in point_lists:
+                    if doubles[key] in plist:
+                        plist.append(key)
+                        key_assigned = True
+                        break
+                    elif doubles_inverse.get(key):
+                        for val in doubles_inverse[key]:
+                            if val in plist:
+                                plist.append(key)
+                                key_assigned = True
+                                break
+                if not key_assigned:
+                    point_lists.append([key, doubles[key]])
+
+            edge_match_dict = {}
+            for plist in point_lists:
+                for ii, origin in enumerate(plist):
+                    plist.pop(ii)
+                    edge_match_dict[origin] = {target: get_matching_edge(origin, target) for target in plist}
+                    plist.insert(ii, origin)
+
+            for origin in edge_match_dict:
+                print('origin', origin.index, edge_match_dict[origin])
+                for target in edge_match_dict[origin]:
+                    if not edge_match_dict[origin][target]:
+                        if doubles.get(origin) == target and doubles.get(target) != origin:
+                            common_keys = list(set(edge_match_dict[origin].keys()).intersection(edge_match_dict[target].keys()))
+                            common_dict = {key: edge_match_dict[target][key] for key in common_keys}
+                            if True not in common_dict.values():
+                                doubles.pop(origin, None)
+                                origin.select = True
+                                # print('origin', origin.index)
+                                # print(common_dict)
+                        elif doubles.get(target) == origin and doubles.get(origin) != target:
+                            common_keys = list(set(edge_match_dict[origin].keys()).intersection(edge_match_dict[target].keys()))
+                            common_dict = {key: edge_match_dict[target][key] for key in common_keys}
+                            if True not in common_dict.values():
+                                doubles.pop(target, None)
+                                target.select = True
+                                # print('target', target.index, edge_match_dict[target])
+                                # print(common_dict)
+                # print()
+
+            for origin in list(doubles.keys()):
+                target = doubles[origin]
 
                 m3v0 = vert_to_m3_vert[origin]
                 m3v1 = vert_to_m3_vert[target]
