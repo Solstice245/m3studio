@@ -1183,7 +1183,7 @@ class Importer:
                             common_dict = {key: edge_match_dict[target][key] for key in common_keys}
                             if True not in common_dict.values():
                                 doubles.pop(origin, None)
-                                origin.select = True
+                                # origin.select = True
                                 # print('origin', origin.index)
                                 # print(common_dict)
                         elif doubles.get(target) == origin and doubles.get(origin) != target:
@@ -1191,7 +1191,7 @@ class Importer:
                             common_dict = {key: edge_match_dict[target][key] for key in common_keys}
                             if True not in common_dict.values():
                                 doubles.pop(target, None)
-                                target.select = True
+                                # target.select = True
                                 # print('target', target.index, edge_match_dict[target])
                                 # print(common_dict)
                 # print()
