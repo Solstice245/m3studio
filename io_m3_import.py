@@ -1130,9 +1130,8 @@ class Importer:
             def get_matching_edge(origin, target):
                 for oedge in origin.link_edges:
                     for tedge in target.link_edges:
-                        # print(set((tuple(oedge.verts[0].co), tuple(oedge.verts[1].co), tuple(tedge.verts[0].co), tuple(tedge.verts[1].co))))
                         if len(set((tuple(oedge.verts[0].co), tuple(oedge.verts[1].co), tuple(tedge.verts[0].co), tuple(tedge.verts[1].co)))) == 2:
-                            return True
+                            return not tedge.smooth  # return False if the edge is smooth
                 return False
 
             doubles = bmesh.ops.find_doubles(bm, verts=bm.verts, dist=0.00001)['targetmap']
@@ -1175,7 +1174,6 @@ class Importer:
                     plist.insert(ii, origin)
 
             for origin in edge_match_dict:
-                # print('origin', origin.index, edge_match_dict[origin])
                 for target in edge_match_dict[origin]:
                     if not edge_match_dict[origin][target]:
                         if doubles.get(origin) == target and doubles.get(target) != origin:
@@ -1183,18 +1181,11 @@ class Importer:
                             common_dict = {key: edge_match_dict[target][key] for key in common_keys}
                             if True not in common_dict.values():
                                 doubles.pop(origin, None)
-                                # origin.select = True
-                                # print('origin', origin.index)
-                                # print(common_dict)
                         elif doubles.get(target) == origin and doubles.get(origin) != target:
                             common_keys = list(set(edge_match_dict[origin].keys()).intersection(edge_match_dict[target].keys()))
                             common_dict = {key: edge_match_dict[target][key] for key in common_keys}
                             if True not in common_dict.values():
                                 doubles.pop(target, None)
-                                # target.select = True
-                                # print('target', target.index, edge_match_dict[target])
-                                # print(common_dict)
-                # print()
 
             for origin in list(doubles.keys()):
                 target = doubles[origin]
