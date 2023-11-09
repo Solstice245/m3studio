@@ -1977,7 +1977,7 @@ class Exporter():
                 if m3_system.emit_shape == 7:
                     region_indices = set()
                     for mesh_pointer in system.emit_shape_meshes:
-                        if mesh_pointer.bl_object in self.export_regions:
+                        if mesh_pointer.bl_object in self.ob_to_region_index:
                             region_indices.add(self.ob_to_region_index.index(mesh_pointer.bl_object))
                     if len(region_indices):
                         region_indices_section = self.m3.section_for_reference(m3_system, 'emit_shape_regions')

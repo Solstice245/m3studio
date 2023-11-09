@@ -342,12 +342,10 @@ def draw_standard_props(matref, layout):
     layout.separator()
     col = layout.column(align=True)
     col.prop(material, 'blend_mode', text='Material Blend')
-    if material.blend_mode == 'OPAQUE':
-        col.prop(material, 'alpha_test_threshold', text='Alpha Test Threshold')
-    else:
+    col.prop(material, 'alpha_test_threshold', text='Alpha Test Threshold')
+    if material.blend_mode != 'OPAQUE':
         col.prop(material, 'priority', text='Priority')
         col.prop(material, 'depth_blend_falloff', text='Depth Blend')
-
     col.separator()
     col.prop(material, 'blend_mode_layer', text='Layer Blend')
     col.prop(material, 'blend_mode_emis1', text='Emissive 1 Blend')
@@ -356,8 +354,8 @@ def draw_standard_props(matref, layout):
     # col.prop(material, 'spec_mode', text='Specular Mode')  # * does this actually do anything?
     col.prop(material, 'specularity', text='Specularity')
     col.separator()
-    col.prop(material, 'hdr_emis', text='Emissive HDR')
     col.prop(material, 'hdr_spec', text='Specular HDR')
+    col.prop(material, 'hdr_emis', text='Emissive HDR')
     col.separator()
 
     if version >= 20:
