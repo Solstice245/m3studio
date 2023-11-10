@@ -492,7 +492,11 @@ class Exporter():
         self.scene = bpy.context.scene
 
         self.user_armature_position = self.ob.data.pose_position
-        self.user_action = self.ob.animation_data.action
+        try:
+            self.user_action = self.ob.animation_data.action
+        except AttributeError:  # animation data is not initialized
+            self.ob.animation_data_create()
+            self.user_action = self.ob.animation_data.action
         self.user_frame = self.scene.frame_current
 
         self.ob_arm_mod_config = {}
