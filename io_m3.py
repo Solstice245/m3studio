@@ -445,8 +445,8 @@ class M3Section:
         self.content = [ord(c) for c in string] + [0x00]
 
 
-def section_list_load(filename):
-    with open(filename, 'rb') as f:
+def section_list_load(filepath):
+    with open(filepath, 'rb') as f:
         md_tag = f.read(4)[::-1].decode('ascii')
         md_version = int(md_tag[2:])
         f.seek(0)
@@ -463,8 +463,8 @@ def section_list_load(filename):
     return sections
 
 
-def section_list_save(sections: M3SectionList, filename):
-    with open(filename, 'w+b') as f:
+def section_list_save(sections: M3SectionList, filepath):
+    with open(filepath, 'w+b') as f:
         index_buffer = bytearray(16 * len(sections))
         prev_section = None
         for ii, section in enumerate(sections):

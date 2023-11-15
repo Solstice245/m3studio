@@ -184,7 +184,7 @@ def quat_equal(val0, val1):
     return dist < 0.00000001
 
 
-def simplify_anim_data_with_interp(keys, vals, interp_func, equal_func):
+def simplify_anim_data_with_interp(keys, keyframes, vals, interp_func, equal_func):
     if len(vals) < 2:
         return keys, vals
 
@@ -194,6 +194,17 @@ def simplify_anim_data_with_interp(keys, vals, interp_func, equal_func):
     new_vals = [left_val]
 
     for right_key, right_val in zip(keys[2:], vals[2:]):
+
+        # include key if it was manually set, even if it can be interpolated
+        if right_key in keyframes:
+            new_keys.append(curr_key)
+            new_vals.append(curr_val)
+            left_key = curr_key
+            left_val = curr_val
+            curr_key = right_key
+            curr_val = right_val
+            continue
+
         interpolated_val = interp_func(left_val, right_val, (curr_key - left_key) / (right_key - left_key))
         if equal_func(interpolated_val, curr_val):
             pass  # ignore current value since since it matches the given interpolation
@@ -808,7 +819,7 @@ class Exporter():
 
         def recurse_composite_materials(matref, materials_used_by_particle, materials_used_by_not_particle):
             if matref.mat_type == 'm3_materials_composite':
-                mat = shared.m3_pointer_get(getattr(self.ob, matref.mat_type), matref.mat_handle)
+                mat = shared.m3_pointer_get(getattr(ob, matref.mat_type), matref.mat_handle)
                 for section in mat.sections:
                     section_matref = shared.m3_pointer_get(ob.m3_materialrefs, section.material.handle)
                     if section_matref:
@@ -1412,6 +1423,30 @@ class Exporter():
                     anim_rots = []
                     anim_scls = []
 
+                    loc_fcurves = [anim.action.fcurves.find(pose_bone.path_from_id('location'), index=ii) for ii in range(3)]
+                    loc_keyframes = []
+                    for ii, fcurve in enumerate(loc_fcurves):
+                        if fcurve:
+                            fcurve.keyframe_points.foreach_get('co', coords := [0] * (len(fcurve.keyframe_points) * 2))
+                            loc_keyframes.extend(coords[0::1])
+                    loc_keyframes = set(loc_keyframes)
+
+                    rot_fcurves = [anim.action.fcurves.find(pose_bone.path_from_id('rotation_quaternion'), index=ii) for ii in range(4)]
+                    rot_keyframes = []
+                    for ii, fcurve in enumerate(rot_fcurves):
+                        if fcurve:
+                            fcurve.keyframe_points.foreach_get('co', coords := [0] * (len(fcurve.keyframe_points) * 2))
+                            rot_keyframes.extend(coords[0::1])
+                    rot_keyframes = set(rot_keyframes)
+
+                    scl_fcurves = [anim.action.fcurves.find(pose_bone.path_from_id('scale'), index=ii) for ii in range(3)]
+                    scl_keyframes = []
+                    for ii, fcurve in enumerate(scl_fcurves):
+                        if fcurve:
+                            fcurve.keyframe_points.foreach_get('co', coords := [0] * (len(fcurve.keyframe_points) * 2))
+                            scl_keyframes.extend(coords[0::1])
+                    scl_keyframes = set(scl_keyframes)
+
                     frame_start = self.action_frame_range[anim.action][0]
 
                     for pose_matrix in bone_to_pose_matrices[pose_bone]:
@@ -1424,20 +1459,20 @@ class Exporter():
                         anim_scls.append(m3_pose[2])
 
                     if vec_list_contains_not_only(anim_locs, m3_bone_defaults[m3_bone][0]):
-                        keys, values = simplify_anim_data_with_interp(frames, anim_locs, vec_interp, vec_equal)
+                        keys, values = simplify_anim_data_with_interp(frames, loc_keyframes, anim_locs, vec_interp, vec_equal)
                         self.action_to_anim_data[anim.action]['SD3V'][m3_bone.location.header.id] = (keys, [to_m3_vec3(val) for val in values])
                         self.action_to_sdmb_user[anim.action] = True
                         m3_bone.bit_set('flags', 'animated', True)
 
                     if quat_list_contains_not_only(anim_rots, m3_bone_defaults[m3_bone][1]):
                         quats_compatibility(anim_rots)
-                        keys, values = simplify_anim_data_with_interp(frames, anim_rots, quat_interp, quat_equal)
+                        keys, values = simplify_anim_data_with_interp(frames, rot_keyframes, anim_rots, quat_interp, quat_equal)
                         self.action_to_anim_data[anim.action]['SD4Q'][m3_bone.rotation.header.id] = (keys, [to_m3_quat(val) for val in values])
                         self.action_to_sdmb_user[anim.action] = True
                         m3_bone.bit_set('flags', 'animated', True)
 
                     if vec_list_contains_not_only(anim_scls, m3_bone_defaults[m3_bone][2]):
-                        keys, values = simplify_anim_data_with_interp(frames, anim_scls, vec_interp, vec_equal)
+                        keys, values = simplify_anim_data_with_interp(frames, scl_keyframes, anim_scls, vec_interp, vec_equal)
                         self.action_to_anim_data[anim.action]['SD3V'][m3_bone.scale.header.id] = (keys, [to_m3_vec3(val) for val in values])
                         self.action_to_sdmb_user[anim.action] = True
                         m3_bone.bit_set('flags', 'animated', True)

@@ -946,12 +946,6 @@ class Importer:
                 if standard_m3_version <= 16 and standard_bl_version > 16:
                     mat.geometry_visible = True
                     self.warn_strings.append(f'Imported material {matref.name} "Geometry Visible" flag automatically checked, due to material version upgrade.')
-            if m3_matref.type == 3:  # composite materials
-                for m3_section in self.m3[m3_mat.sections]:
-                    section = shared.m3_item_add(mat.sections)
-                    section.material.handle = ob.m3_materialrefs[self.matref_index(m3_section.material_reference_index)].bl_handle
-                    processor = M3InputProcessor(self, section, m3_section)
-                    io_shared.io_material_composite_section(processor)
             elif m3_matref.type == 11:  # lens flare materials
                 for m3_starburst in self.m3[m3_mat.starbursts]:
                     starburst = shared.m3_item_add(mat.starbursts)
@@ -990,6 +984,16 @@ class Importer:
 
                 layer_section_to_index[m3_layer_field.index] = len(ob.m3_materiallayers) - 1
                 setattr(mat, 'layer_' + layer_name, layer.bl_handle)
+
+        for matref, m3_matref in zip(ob.m3_materialrefs, self.m3[self.m3_model.material_references]):
+            mat = shared.m3_pointer_get(getattr(self.ob, matref.mat_type), matref.mat_handle)
+            m3_mat = self.m3[getattr(self.m3_model, shared.material_type_to_model_reference[m3_matref.type])][m3_matref.material_index]
+            if m3_matref.type == 3:  # composite materials
+                for m3_section in self.m3[m3_mat.sections]:
+                    section = shared.m3_item_add(mat.sections)
+                    section.material.handle = ob.m3_materialrefs[self.matref_index(m3_section.material_reference_index)].bl_handle
+                    processor = M3InputProcessor(self, section, m3_section)
+                    io_shared.io_material_composite_section(processor)
 
     def create_mesh(self):
         ob = self.ob

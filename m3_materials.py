@@ -767,6 +767,12 @@ class M3MaterialOpRemove(bpy.types.Operator):
             for mesh_batch in child.m3_mesh_batches:
                 if mesh_batch.material.value == matref.name:
                     user_strings.append(f'The mesh object {child.name} is using this material')
+        for c_matref in matrefs:
+            mat = m3_material_get(c_matref)
+            if c_matref.mat_type == 'm3_materials_composite':
+                for section in mat.sections:
+                    if section.material.value == matref.name:
+                        user_strings.append(f'The material {c_matref.name} is using this material')
 
         if user_strings:
             if not self.quiet:
