@@ -2112,12 +2112,12 @@
             <field name="trail_system" type="int32" default_value="-1"/>
             <field name="trail_chance" type="float" default_value="0.0"/>
             <field name="trail_rate" type="FloatAnimationReferenceV0"/>
-            <field name="unknownfdab7ff3" type="int32" expected_value="-1"/> <!-- possibly collision projection index? -->
-            <field name="unknown7d4a9e6b" type="float" expected_value="0.0"/>
+            <field name="unknownfdab7ff3" type="int32" default_value="-1"/> <!-- possibly collision projection index? -->
+            <field name="unknown7d4a9e6b" type="float" default_value="0.0"/>
             <field name="model_paths" type="Reference" ref_to="SCHR"/>
             <field name="copy_indices" type="Reference" ref_to="U32_"/>
             <field name="unknown9a7afdf2" type="uint32" since_version="23"/>
-            <field name="unknown87d57a7a" type="int32" expected_value="-1" since_version="23"/> <!-- possibly collision projection index? -->
+            <field name="unknown87d57a7a" type="int32" default_value="-1" since_version="23"/> <!-- possibly collision projection index? -->
         </fields>
     </structure>
 
