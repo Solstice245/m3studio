@@ -56,7 +56,7 @@ def draw_constraint_set_props(constraint_set, layout):
 
 
 def draw_cloth_props(cloth, layout):
-    version = str(cloth.id_data.m3_cloths_version)
+    version = int(cloth.id_data.m3_cloths_version)
 
     layout.prop(cloth, 'mesh_object', text='Mesh Object')
     layout.prop(cloth, 'simulator_object', text='Simulator Object')

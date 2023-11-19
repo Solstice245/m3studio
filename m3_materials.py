@@ -38,6 +38,7 @@ def register_props():
     bpy.types.Object.m3_materials_lensflare = bpy.props.CollectionProperty(type=LensFlareProperties)
     # bpy.types.Object.m3_materials_lensflare_version = bpy.props.EnumProperty(options=set(), items=lensflare_versions)
     # ^^ include this once LFLR version 2 is sufficiently documented
+    bpy.types.Object.m3_materials_buffer = bpy.props.CollectionProperty(type=BufferProperties)
 
 
 standard_versions = (
@@ -266,6 +267,20 @@ class LensFlareProperties(shared.M3PropertyGroup):
     uniform_scale_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     color: bpy.props.FloatVectorProperty(name='Color', subtype='COLOR', size=4, min=0, max=1, default=(1, 1, 1, 1))
     color_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
+
+
+def get_name(self):
+    return self.get('name')
+
+
+class BufferTexturePath(bpy.types.PropertyGroup):
+    name: bpy.props.StringProperty(options=set(), get=get_name)
+
+
+class BufferProperties(shared.M3PropertyGroup):
+    name: bpy.props.StringProperty(options=set(), get=get_material_name)
+    texture_paths: bpy.props.CollectionProperty(type=BufferTexturePath)
+    texture_paths_index: bpy.props.IntProperty(options=set(), default=-1)
 
 
 def m3_material_get(matref):
@@ -558,6 +573,20 @@ def draw_lensflare_props(matref, layout):
     shared.draw_collection_list(layout.box(), material.starbursts, draw_lensflare_starburst_props, label='Starbursts:')
 
 
+def draw_buffer_props(matref, layout):
+    material = m3_material_get(matref)
+    layout.label(text='"Buffer" material type is not supported. Convert to other materials.')
+    layout.label(text='Listing texture paths used.')
+
+    uilist_rows = 5 if len(material.texture_paths) else 3
+    row = layout.row()
+    row.template_list(
+        'UI_UL_list', 'texture_paths', material,
+        'texture_paths', material, 'texture_paths_index',
+        rows=uilist_rows,
+    )
+
+
 mat_type_dict = {
     'm3_materials_standard': {'name': 'Standard', 'draw': draw_standard_props},
     'm3_materials_displacement': {'name': 'Displacement', 'draw': draw_displacement_props},
@@ -569,6 +598,7 @@ mat_type_dict = {
     'm3_materials_stb': {'name': 'Splat Terrain Bake', 'draw': draw_stb_props},
     'm3_materials_reflection': {'name': 'Reflection', 'draw': draw_reflection_props},
     'm3_materials_lensflare': {'name': 'Lens Flare', 'draw': draw_lensflare_props},
+    'm3_materials_buffer': {'name': 'Buffer', 'draw': draw_buffer_props},
 }
 
 
@@ -856,6 +886,8 @@ classes = (
     ReflectionProperties,
     LensFlareStarburstProperties,
     LensFlareProperties,
+    BufferTexturePath,
+    BufferProperties,
     ReferenceProperties,
     MaterialList,
     MaterialMenu,

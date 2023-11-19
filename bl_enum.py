@@ -577,8 +577,9 @@ matref_type = (
     ('m3_materials_volume', 'Volume', 'Used to draw volumetric shapes'),
     ('m3_materials_volumenoise', 'Volume Noise (MV25+)', 'Used to draw volumetric shapes. Has additional functionality compared to the Volume material type'),
     ('m3_materials_stb', 'Splat Terrain Bake (MV26+)', 'Used typically for static shapes drawn over terrain'),
-    ('m3_materials_reflection', 'Reflection (MV28+)', 'Used for special reflection effects. Currently not supported'),
-    ('m3_materials_lensflare', 'Lens Flare (MV29+)', 'Used for lens flare effects. Currently not supported'),
+    ('m3_materials_reflection', 'Reflection (MV28+)', 'Used for special reflection effects.'),
+    ('m3_materials_lensflare', 'Lens Flare (MV29+)', 'Used for lens flare effects.'),
+    ('m3_materials_buffer', 'Buffer (MADD) (MV30+)', 'Used by newer HotS models. Not currently supported by the addon, and is also unsupported by SC2 itself')
 )
 
 mat_blend = (

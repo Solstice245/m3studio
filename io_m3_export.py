@@ -20,6 +20,7 @@ import bpy
 import bmesh
 import mathutils
 import os
+import traceback
 import math
 from . import io_m3
 from . import io_shared
@@ -497,6 +498,7 @@ class Exporter():
     def __init__(self, bl_op=None):
         self.bl_op = bl_op
         self.warn_strings = []
+        self.abort = False
 
     def scene_prepare(self, ob):
         self.ob = ob
@@ -556,11 +558,13 @@ class Exporter():
                 arm_mod.object = self.ob
 
     def report_warnings(self):
+        report_level = 'ERROR' if self.abort else 'WARNING'
+        report_level_str = 'errors'  if self.abort else 'warnings'
         if len(self.warn_strings):
-            warning = f'The following warnings were given during the M3 export operation of {self.ob.name}:\n' + '\n'.join(self.warn_strings)
+            warning = f'The following {report_level_str} were given during the M3 export operation of {self.ob.name}:\n' + '\n'.join(self.warn_strings)
             print(warning)  # not for debugging
             if self.bl_op:
-                self.bl_op.report({"WARNING"}, warning)
+                self.bl_op.report({report_level}, warning)
         self.warn_strings = []  # reset warnings
 
     def get_validated_data(self, ob):
@@ -782,6 +786,9 @@ class Exporter():
                     if matref:
                         required_material_references.add(matref)
                         mesh_matrefs.add(matref)
+                        batch_bone = ob.pose.bones.get(mesh_batch.bone.value)
+                        if batch_bone:
+                            required_bones.add(batch_bone)
                         valid_mesh_batches += 1
 
                 if valid_mesh_batches == 0:
@@ -886,6 +893,13 @@ class Exporter():
 
         bpy.context.view_layer.objects.active = ob
         bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
+
+        for matref in valid_collections['material_references']:
+            if matref.mat_type == 'm3_materials_buffer':
+                self.warn_strings.append(f'Material {matref.name} is using the Buffer (MADD) type, which is not supported')
+                self.abort = True
+        if self.abort:
+            raise AssertionError()
 
         if not ob.animation_data:
             ob.animation_data_create()
@@ -2725,6 +2739,9 @@ def m3_export(ob, filename, bl_op=None, output_anims=None):
     try:
         sections = exporter.m3_export(ob, valid_collections, filename, output_anims)
         io_m3.section_list_save(sections, filename)
+    except Exception as e:
+        if type(e) != AssertionError:
+            print(traceback.format_exc())
     finally:
         exporter.scene_restore()
         exporter.report_warnings()

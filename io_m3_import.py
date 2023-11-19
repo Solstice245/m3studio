@@ -17,6 +17,7 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import math
+import traceback
 import bpy
 import bmesh
 import mathutils
@@ -711,7 +712,7 @@ class Importer:
                                 anim_group['simulate'] = True
                                 anim_group['simulate_frame'] = frame
 
-            anim_group['animations_index'] = 0
+            anim_group['animations_index'] = len(anim_group.animations) - 1
 
     def create_bones(self):
 
@@ -913,13 +914,14 @@ class Importer:
     def create_materials(self):
         ob = self.ob
 
-        standard_m3_version = self.m3[self.m3_model.materials_standard].desc.version
-        standard_bl_version = int(self.ob.m3_materials_standard_version)
+        if self.m3[self.m3_model.materials_standard]:
+            standard_m3_version = self.m3[self.m3_model.materials_standard].desc.version
+            standard_bl_version = int(self.ob.m3_materials_standard_version)
 
-        if standard_m3_version > 16 and standard_bl_version <= 16:
-            for mat in self.ob.m3_materials_standard:
-                mat.geometry_visible = True
-                self.warn_strings.append(f'Existing material {mat.name} "Geometry Visible" flag automatically checked, due to material version upgrade.')
+            if standard_m3_version > 16 and standard_bl_version <= 16:
+                for mat in self.ob.m3_materials_standard:
+                    mat.geometry_visible = True
+                    self.warn_strings.append(f'Existing material {mat.name} "Geometry Visible" flag automatically checked, due to material version upgrade.')
 
         self.m3_struct_version_set_from_ref('m3_materials_standard_version', self.m3_model.materials_standard)
 
@@ -931,9 +933,8 @@ class Importer:
         layer_section_to_index = {}
         for m3_matref in self.m3[self.m3_model.material_references]:
             m3_mat = self.m3[getattr(self.m3_model, shared.material_type_to_model_reference[m3_matref.type])][m3_matref.material_index]
-
-            matref = shared.m3_item_add(ob.m3_materialrefs, item_name=self.m3[m3_mat.name].content_to_string())
             mat_col = getattr(ob, 'm3_' + shared.material_type_to_model_reference[m3_matref.type])
+            matref = shared.m3_item_add(ob.m3_materialrefs, item_name=self.m3[m3_mat.name].content_to_string())
             mat = shared.m3_item_add(mat_col, item_name=matref.name)
 
             processor = M3InputProcessor(self, mat, m3_mat)
@@ -951,6 +952,13 @@ class Importer:
                     starburst = shared.m3_item_add(mat.starbursts)
                     processor = M3InputProcessor(self, starburst, m3_starburst)
                     io_shared.io_starburst(processor)
+            elif m3_matref.type == 12:  # buffer (madd) materials
+                print(mat)
+                print(mat.texture_paths)
+                for schr in self.m3[m3_mat.texture_paths]:
+                    texture_path = mat.texture_paths.add()
+                    texture_path['name'] = self.m3[schr.path].content_to_string()
+                    print(texture_path)
 
             for layer_name in shared.material_type_to_layers[m3_matref.type]:
                 m3_layer_field = getattr(m3_mat, 'layer_' + layer_name, None)
@@ -1574,9 +1582,11 @@ class Importer:
                         constraint.scale = md[2]
                     self.m3_bl_ref[m3_cloth.constraints.index] = constraint_set
 
-            m3_cloth_objects = self.m3[m3_cloth.influence_map][0]
-            cloth.mesh_object = self.m3_bl_ref.get(self.m3_division.regions.index)[m3_cloth_objects.influenced_region_index]
-            cloth.simulator_object = self.m3_bl_ref.get(self.m3_division.regions.index)[m3_cloth_objects.simulation_region_index]
+            # seems not all cloth behaviors have cloth meshes of their own. perhaps to hold constraints which interact with cloths of other models?
+            if self.m3[m3_cloth.influence_map]:
+                m3_cloth_objects = self.m3[m3_cloth.influence_map][0]
+                cloth.mesh_object = self.m3_bl_ref.get(self.m3_division.regions.index)[m3_cloth_objects.influenced_region_index]
+                cloth.simulator_object = self.m3_bl_ref.get(self.m3_division.regions.index)[m3_cloth_objects.simulation_region_index]
 
             # because create_mesh() can perform destructive operations, cloth vertex data can possibly become corrupted.
             # if problems occur it may be necessary to make the new/old vertex data maps accessible outside of the create_mesh() function.
@@ -1794,5 +1804,8 @@ def m3_import(filename, ob=None, bl_op=None, opts=None):
             importer.m3_import(filename, ob, opts=opts)
         else:
             importer.m3_import(filename, ob)
+    except Exception as e:
+        if type(e) != AssertionError:
+            print(traceback.format_exc())
     finally:
         importer.report_warnings()

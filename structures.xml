@@ -2843,7 +2843,7 @@
             <field name="unknown2" type="Reference" ref_to="U32_"/>
             <field name="unknown3" type="Reference" ref_to="U32_" since_version="2"/>
             <field name="unknown4" type="Reference" ref_to="CHAR"/> <!-- some arbitrary binary data -->
-            <field name="unknown5" type="Reference" ref_to="SCHR"/>
+            <field name="texture_paths" type="Reference" ref_to="SCHR"/>
             <field name="unknown20b7712d" size="92"/>
             <field name="unknownb9c70ff0" size="8" since_version="3"/>
         </fields>
