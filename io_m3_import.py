@@ -133,7 +133,9 @@ class M3InputProcessor:
             return
         setattr(self.bl, field, to_bl_color(getattr(self.m3, field)))
 
-    def enum(self, field, since_version=None):
+    def enum(self, field, since_version=None, till_version=None):
+        if (till_version is not None) and (self.version > till_version):
+            return
         if (since_version is not None) and (self.version < since_version):
             return
         if getattr(self.m3, field) == 0xFFFFFFFF:

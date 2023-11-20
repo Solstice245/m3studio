@@ -559,7 +559,7 @@ class Exporter():
 
     def report_warnings(self):
         report_level = 'ERROR' if self.abort else 'WARNING'
-        report_level_str = 'errors'  if self.abort else 'warnings'
+        report_level_str = 'errors' if self.abort else 'warnings'
         if len(self.warn_strings):
             warning = f'The following {report_level_str} were given during the M3 export operation of {self.ob.name}:\n' + '\n'.join(self.warn_strings)
             print(warning)  # not for debugging

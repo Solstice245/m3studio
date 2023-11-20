@@ -167,6 +167,8 @@ class RibbonProperties(shared.M3PropertyGroup):
     scale_anim_mid_time: bpy.props.FloatProperty(options=set(), min=0)
     color_anim_mid_time: bpy.props.FloatProperty(options=set(), min=0)
     alpha_anim_mid_time: bpy.props.FloatProperty(options=set(), min=0)
+    scale_smoothing_fac: bpy.props.FloatProperty(options=set(), subtype='FACTOR', soft_min=0.0, soft_max=1.0, default=0.0)
+    color_smoothing_fac: bpy.props.FloatProperty(options=set(), subtype='FACTOR', soft_min=0.0, soft_max=1.0, default=0.0)
     scale_smoothing: bpy.props.EnumProperty(options=set(), items=bl_enum.anim_smoothing)
     color_smoothing: bpy.props.EnumProperty(options=set(), items=bl_enum.anim_smoothing)
     gravity: bpy.props.FloatProperty(options=set())
@@ -312,6 +314,7 @@ class RibbonPanelInstance(RibbonSubPanel, bpy.types.Panel):
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False
+        rib_ver = int(context.object.m3_ribbons_version)
         ribbon = context.object.m3_ribbons[context.object.m3_ribbons_index]
 
         layout.prop(ribbon, 'world_space', text='World Space')
@@ -340,11 +343,11 @@ class RibbonPanelInstance(RibbonSubPanel, bpy.types.Panel):
         shared.draw_op_anim_prop(sub, ribbon, 'parent_velocity')
         layout.separator()
         col = layout.column(align=True)
-        col.prop(ribbon, 'color_smoothing', text='Color Smoothing')
+        col.prop(ribbon, 'color_smoothing' if rib_ver >= 8 else 'color_smoothing_fac', text='Color Smoothing')
         row = col.row(align=True)
         row.prop(ribbon, 'color_anim_mid', text='Color/Alpha Midpoint')
         row.prop(ribbon, 'alpha_anim_mid', text='')
-        if ribbon.color_smoothing in ('LINEARHOLD', 'BEZIERHOLD'):
+        if ribbon.color_smoothing in ('LINEARHOLD', 'BEZIERHOLD') and rib_ver >= 8:
             row = col.row(align=True)
             row.prop(ribbon, 'color_anim_mid_time', text='Color/Alpha Hold Time')
             row.prop(ribbon, 'alpha_anim_mid_time', text='')
@@ -359,12 +362,12 @@ class RibbonPanelInstance(RibbonSubPanel, bpy.types.Panel):
         row = shared.draw_prop_split(layout, text='Scale Smoothing')
         sub = row.row(align=True)
         sub.ui_units_x = 1
-        sub.prop(ribbon, 'scale_smoothing', text='')
+        sub.prop(ribbon, 'scale_smoothing' if rib_ver >= 8 else 'scale_smoothing_fac', text='')
         row.separator(factor=0.325)
         sub = row.row(align=True)
         sub.ui_units_x = 1
         sub.prop(ribbon, 'scale_anim_mid', text='')
-        if ribbon.scale_smoothing in ('LINEARHOLD', 'BEZIERHOLD'):
+        if ribbon.scale_smoothing in ('LINEARHOLD', 'BEZIERHOLD') and rib_ver >= 8:
             sub.prop(ribbon, 'scale_anim_mid_time', text='')
         col = layout.column(align=True)
         shared.draw_prop_anim(col, ribbon, 'scale', index=0, text='Base')

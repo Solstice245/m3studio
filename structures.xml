@@ -2711,8 +2711,10 @@
                     <bit mask="0x8000" name="unknown0x8000"/>
                 </bits>
             </field>
-            <field name="scale_smoothing" type="uint32" default_value="0"/>
-            <field name="color_smoothing" type="uint32" default_value="0"/>
+            <field name="scale_smoothing_fac" type="float" default_value="0" till_version="6"/>
+            <field name="color_smoothing_fac" type="float" default_value="0" till_version="6"/>
+            <field name="scale_smoothing" type="uint32" default_value="0" since_version="8"/>
+            <field name="color_smoothing" type="uint32" default_value="0" since_version="8"/>
             <field name="friction" type="float" default_value="0.0" since_version="8"/>
             <field name="bounce" type="float" default_value="0.0" since_version="8"/>
             <field name="lod_reduce" type="uint32" default_value="2"/>
