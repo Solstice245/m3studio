@@ -680,6 +680,7 @@ class Exporter():
                         if len(valid_volumes):
                             self.physics_shape_handle_to_volumes[physics_shape.bl_handle] = valid_volumes
                             export_physics_bodies.append(physics_body)
+                            required_bones.add(bone)
                         else:
                             self.warn_strings.append(f'{str(physics_shape)} has a volume shape collection, but no shapes')
                 else:
