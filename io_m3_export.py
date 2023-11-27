@@ -2151,6 +2151,7 @@ class Exporter():
                         processor = M3OutputProcessor(self, point, m3_point)
                         io_shared.io_ribbon_spline(processor)
 
+                        m3_point.velocity.unused = 0  # spline point will not work if this is given any other value
                         m3_point.unknown3 = self.init_anim_ref_float(1.0)
                         m3_point.unknown4 = self.init_anim_ref_float(1.0)
             else:
