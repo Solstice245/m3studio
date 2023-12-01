@@ -1704,7 +1704,7 @@ class Exporter():
             # TODO mesh flags for versions 4+
             for ii, batch in enumerate(ob.m3_mesh_batches):
 
-                if not self.matref_handle_indices.get():
+                if not self.matref_handle_indices.get(batch.material.handle):
                     continue
 
                 first_face_index = len(m3_faces)
