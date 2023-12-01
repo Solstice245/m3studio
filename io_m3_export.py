@@ -682,11 +682,11 @@ class Exporter():
                             export_physics_bodies.append(physics_body)
                             required_bones.add(bone)
                         else:
-                            self.warn_strings.append(f'{str(physics_shape)} has a volume shape collection, but no shapes')
+                            self.warn_strings.append(f'{str(physics_body)} has a volume shape collection, but no shapes')
                 else:
-                    self.warn_strings.append(f'{str(physics_shape)} has no volume shape collection')
+                    self.warn_strings.append(f'{str(physics_body)} has no volume shape collection')
             else:
-                self.warn_strings.append(f'{str(physics_shape)} has no corrosponding bone or the bone is already used by a physics body')
+                self.warn_strings.append(f'{str(physics_body)} has no corrosponding bone or the bone is already used by a physics body')
 
         for physics_joint in ob.m3_physicsjoints:
             if not physics_joint.m3_export:
