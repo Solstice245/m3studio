@@ -332,14 +332,21 @@ class Importer:
     def __init__(self, bl_op=None):
         self.bl_op = bl_op
         self.warn_strings = []
+        self.exception_trace = ''
 
-    def report_warnings(self):
+    def do_report(self):
         if len(self.warn_strings):
             warning = f'The following warnings were given during the M3 import operation of {self.ob.name}:\n' + '\n'.join(self.warn_strings)
             print(warning)  # not for debugging
             if self.bl_op:
                 self.bl_op.report({"WARNING"}, warning)
         self.warn_strings = []  # reset warnings
+
+        if self.exception_trace:
+            print(self.exception_trace)
+            if self.bl_op:
+                self.bl_op.report({"ERROR"}, self.exception_trace)
+        self.exception_trace = ''
 
     def m3_import(self, filename, ob=None, opts=None):
         # TODO make fps an import option
@@ -1514,9 +1521,9 @@ class Importer:
             joint = shared.m3_item_add(ob.m3_physicsjoints, item_name=(pose_bone1.name if pose_bone1 else '') + '_joint')
 
             for rb in ob.m3_rigidbodies:
-                if pose_bone1 and rb.bone == pose_bone1.bl_handle:
+                if pose_bone1 and rb.bone.handle == pose_bone1.bl_handle:
                     joint.rigidbody1.handle = rb.bl_handle
-                if pose_bone2 and rb.bone == pose_bone2.bl_handle:
+                if pose_bone2 and rb.bone.handle == pose_bone2.bl_handle:
                     joint.rigidbody2.handle = rb.bl_handle
 
             processor = M3InputProcessor(self, joint, m3_joint)
@@ -1808,6 +1815,6 @@ def m3_import(filename, ob=None, bl_op=None, opts=None):
             importer.m3_import(filename, ob)
     except Exception as e:
         if type(e) != AssertionError:
-            print(traceback.format_exc())
+            importer.exception_trace = traceback.format_exc()
     finally:
-        importer.report_warnings()
+        importer.do_report()
