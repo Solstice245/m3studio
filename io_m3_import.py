@@ -140,8 +140,11 @@ class M3InputProcessor:
             return
         if getattr(self.m3, field) == 0xFFFFFFFF:
             return
-        value = self.bl.bl_rna.properties[field].enum_items[getattr(self.m3, field)].identifier
-        setattr(self.bl, field, value)
+        try:
+            value = self.bl.bl_rna.properties[field].enum_items[getattr(self.m3, field)].identifier
+            setattr(self.bl, field, value)
+        except IndexError:
+            self.importer.warn_strings.append(f'Could not set {self.bl}.{field} due to the m3 value ({getattr(self.m3, field)}) being out of range ({len(self.bl.bl_rna.properties[field].enum_items)})')
 
     def anim_boolean_flag(self, field):
         self.anim_integer(field)
@@ -330,13 +333,14 @@ def armature_object_new():
 class Importer:
 
     def __init__(self, bl_op=None):
+        self.filename = ''
         self.bl_op = bl_op
         self.warn_strings = []
         self.exception_trace = ''
 
     def do_report(self):
         if len(self.warn_strings):
-            warning = f'The following warnings were given during the M3 import operation of {self.ob.name}:\n' + '\n'.join(self.warn_strings)
+            warning = f'The following warnings were given during the M3 import operation of {self.filename}:\n' + '\n'.join(self.warn_strings)
             print(warning)  # not for debugging
             if self.bl_op:
                 self.bl_op.report({"WARNING"}, warning)
@@ -349,6 +353,7 @@ class Importer:
         self.exception_trace = ''
 
     def m3_import(self, filename, ob=None, opts=None):
+        self.filename = filename
         # TODO make fps an import option
         bpy.context.scene.render.fps = FRAME_RATE
 
