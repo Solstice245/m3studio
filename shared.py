@@ -67,7 +67,7 @@ material_type_to_model_reference = {
     5: 'materials_volume',
     7: 'materials_creep',
     8: 'materials_volumenoise',
-    9: 'materials_stb',
+    9: 'materials_splatterrainbake',
     10: 'materials_reflection',
     11: 'materials_lensflare',
     12: 'materials_buffer',
