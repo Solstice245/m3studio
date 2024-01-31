@@ -162,7 +162,7 @@ class CompositeProperties(shared.M3PropertyGroup):
     name: bpy.props.StringProperty(options=set(), get=get_material_name)
     sections: bpy.props.CollectionProperty(type=CompositeSectionProperties)
     sections_index: bpy.props.IntProperty(options=set(), default=-1)
-    priority: bpy.props.IntProperty(options=set(), min=0)
+    priority: bpy.props.IntProperty(options=set())
 
 
 class TerrainProperties(shared.M3PropertyGroup):

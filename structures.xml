@@ -1710,7 +1710,7 @@
         </versions>
         <fields>
             <field name="name" type="Reference" ref_to="CHAR"/>
-            <field name="priority" type="uint32" default_value="0"/> <!-- See: SM_MarSaraBar_00.m3 -->
+            <field name="priority" type="int32" default_value="0"/> <!-- See: SM_MarSaraBar_00.m3 -->
             <field name="sections" type="Reference" ref_to="CMS_"/>
         </fields>
     </structure>
