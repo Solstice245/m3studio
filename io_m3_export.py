@@ -624,6 +624,10 @@ class Exporter():
         export_billboards = []  # handled specially
         export_tmd_data = []  # handled specially
 
+        # do not cull bones when exporting as m3a
+        if self.is_m3a:
+            required_bones = set(ob.pose.bones)
+
         for anim_group in ob.m3_animation_groups:
             # TODO all anim groups must have unique name.
             if not anim_group.m3_export:
@@ -909,7 +913,6 @@ class Exporter():
         self.unanimated_init = True
 
         self.m3 = io_m3.M3SectionList()
-        self.is_m3a = filename.endswith('m3a')
         self.output_anims = output_anims
 
         self.anim_id_count = 0
@@ -2740,6 +2743,7 @@ def m3_export(ob, filename, bl_op=None, output_anims=None):
     if not (filename.endswith('.m3') or filename.endswith('.m3a')):
         filename = filename.rsplit('.', 1)[0] + '.m3'
     exporter = Exporter(bl_op=bl_op)
+    exporter.is_m3a = filename.endswith('m3a')
     valid_collections = exporter.get_validated_data(ob)
     exporter.scene_prepare(ob)
     try:
