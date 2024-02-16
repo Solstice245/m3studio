@@ -83,7 +83,7 @@ material_type_to_layers = {
     5: ['color', 'unknown1', 'unknown2'],
     7: ['creep'],
     8: ['color', 'noise1', 'noise2'],
-    9: ['diff', 'spec', 'normal'],
+    9: ['diff', 'spec', 'norm'],
     10: ['norm', 'strength', 'blur'],
     11: ['color', 'unknown'],
     12: []

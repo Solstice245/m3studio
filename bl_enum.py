@@ -498,6 +498,8 @@ projection_layer = (
     ('UI', 'UI', 'Used for in-world effects that are part of the user interface, such as selection circles'),
     ('UNDERCREEP', 'Under Creep', 'Is a general use layer that occurs below creep. Is most often used for effects that appear above roads, but below creep'),
     ('HARDTILE', 'Hardtile', 'Is the most common layer for terrain decoration. Roads are also drawn on this layer'),
+    ('BAKED1', 'Baked 1', 'Is a layer commonly used by "terrain baked" doodads, which are intended to appear over only terrain textures'),
+    ('BAKED2', 'Baked 2', 'Is a layer commonly used by "terrain baked" doodads, which are intended to appear over only terrain textures'),
 )
 
 physics_materials = (

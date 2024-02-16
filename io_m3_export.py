@@ -1836,7 +1836,7 @@ class Exporter():
             if not matrefs:
                 continue
             mat_section = self.m3.section_for_reference(model, shared.material_type_to_model_reference[type_ii], version=versions[type_ii])
-            mat_collection = getattr(self.ob, 'm3_' + shared.material_type_to_model_reference[type_ii])
+            mat_collection = getattr(self.ob, shared.material_collections[type_ii])
             for matref in matrefs:
                 mat = shared.m3_pointer_get(mat_collection, matref.mat_handle)
                 m3_mat = mat_section.content_add()
