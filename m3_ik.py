@@ -43,6 +43,10 @@ def draw_props(joint, layout):
 
 
 class Properties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 IK Joint'
+
     bone: bpy.props.PointerProperty(type=shared.M3BonePointerPropExclusive)
     joint_length: bpy.props.IntProperty(options=set(), min=1)
     search_up: bpy.props.FloatProperty(options=set(), default=1)

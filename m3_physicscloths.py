@@ -103,6 +103,10 @@ class ConstraintSetPointerProp(bpy.types.PropertyGroup):
 
 
 class ConstraintProperties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Physics Constraint Volume'
+
     bone: bpy.props.PointerProperty(type=shared.M3BonePointerProp)
     location: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3)
     rotation: bpy.props.FloatVectorProperty(options=set(), subtype='EULER', unit='ROTATION', size=3)
@@ -112,11 +116,19 @@ class ConstraintProperties(shared.M3PropertyGroup):
 
 
 class ConstraintSetProperties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Physics Constraint Set'
+
     constraints: bpy.props.CollectionProperty(type=ConstraintProperties)
     constraints_index: bpy.props.IntProperty(options=set(), default=-1, update=update_constraints_collection_index)
 
 
 class ClothProperties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Cloth Simulator'
+
     mesh_object: bpy.props.PointerProperty(type=bpy.types.Object)
     simulator_object: bpy.props.PointerProperty(type=bpy.types.Object)
     constraint_set: bpy.props.PointerProperty(type=ConstraintSetPointerProp)

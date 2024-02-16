@@ -70,6 +70,10 @@ class RigidBodyPointerProp(bpy.types.PropertyGroup):
 
 
 class Properties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Physics Body Joint'
+
     rigidbody1: bpy.props.PointerProperty(type=RigidBodyPointerProp)
     rigidbody2: bpy.props.PointerProperty(type=RigidBodyPointerProp)
     location1: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3)

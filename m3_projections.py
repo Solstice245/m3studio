@@ -79,6 +79,10 @@ def draw_props(projection, layout):
 
 
 class Properties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Projection'
+
     bone: bpy.props.PointerProperty(type=shared.M3BonePointerProp)
     material: bpy.props.PointerProperty(type=shared.M3MatRefPointerProp)
     projection_type: bpy.props.EnumProperty(options=set(), items=bl_enum.projection_type)

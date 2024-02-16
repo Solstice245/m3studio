@@ -112,6 +112,10 @@ class ShapePointerProp(bpy.types.PropertyGroup):
 
 
 class VolumeProperties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Physics Shape Volume'
+
     shape: bpy.props.EnumProperty(options=set(), items=bl_enum.physics_shape)
     size: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0, default=(1, 1, 1))
     location: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3)
@@ -121,11 +125,19 @@ class VolumeProperties(shared.M3PropertyGroup):
 
 
 class ShapeProperties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Physics Shape'
+
     volumes: bpy.props.CollectionProperty(type=VolumeProperties)
     volumes_index: bpy.props.IntProperty(options=set(), default=-1)
 
 
 class BodyProperties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Physics Body'
+
     name: bpy.props.StringProperty(options=set(), get=shared.get_bone_value)
     bone: bpy.props.PointerProperty(type=shared.M3BonePointerPropExclusive)
     physics_shape: bpy.props.PointerProperty(type=ShapePointerProp)

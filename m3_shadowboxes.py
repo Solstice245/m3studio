@@ -40,6 +40,10 @@ def draw_props(shbx, layout):
 
 
 class Properties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Shadow Box'
+
     bone: bpy.props.PointerProperty(type=shared.M3BonePointerProp)
     length: bpy.props.FloatProperty(name='M3 Shadow Box Length', min=0, default=1)
     length_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)

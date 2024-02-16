@@ -129,6 +129,10 @@ def draw_props(layer, layout):
 
 
 class Properties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Material Layer'
+
     name: bpy.props.StringProperty(options=set(), )
     color_type: bpy.props.EnumProperty(items=bl_enum.material_layer_type, options=set())
     color_bitmap: bpy.props.StringProperty(default='', options=set())

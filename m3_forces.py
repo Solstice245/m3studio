@@ -73,6 +73,10 @@ def draw_props(force, layout):
 
 
 class Properties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Force'
+
     bone: bpy.props.PointerProperty(type=shared.M3BonePointerProp)
     force_type: bpy.props.EnumProperty(options=set(), items=bl_enum.force_type)
     shape: bpy.props.EnumProperty(options=set(), items=bl_enum.force_shape)

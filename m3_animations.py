@@ -131,12 +131,20 @@ def draw_group_props(anim_group, layout):
 
 
 class AnimationProperties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Anim Sequence'
+
     action: bpy.props.PointerProperty(type=bpy.types.Action, update=anim_update)
     priority: bpy.props.IntProperty(options=set(), min=0)
     concurrent: bpy.props.BoolProperty(options=set())
 
 
 class GroupProperties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Anim Group'
+
     animations: bpy.props.CollectionProperty(type=AnimationProperties)
     animations_index: bpy.props.IntProperty(options=set(), default=-1, update=anim_update)
     frame_start: bpy.props.IntProperty(options=set(), min=0, update=anim_group_frame_update)

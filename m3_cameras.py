@@ -60,6 +60,10 @@ def draw_props(camera, layout):
 
 
 class Properties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Camera'
+
     bone: bpy.props.PointerProperty(type=shared.M3BonePointerProp)
     field_of_view: bpy.props.FloatProperty(name='M3 Camera Field Of View', default=0.5)
     field_of_view_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)

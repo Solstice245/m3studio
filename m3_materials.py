@@ -70,6 +70,10 @@ def get_material_name(self):
 
 
 class StandardProperties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Standard Material'
+
     name: bpy.props.StringProperty(options=set(), get=get_material_name)
     layer_diff: bpy.props.StringProperty(options=set())
     layer_decal: bpy.props.StringProperty(options=set())
@@ -144,6 +148,10 @@ class StandardProperties(shared.M3PropertyGroup):
 
 
 class DisplacementProperties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Displacement Material'
+
     name: bpy.props.StringProperty(options=set(), get=get_material_name)
     layer_norm: bpy.props.StringProperty(options=set())
     layer_strength: bpy.props.StringProperty(options=set())
@@ -153,12 +161,20 @@ class DisplacementProperties(shared.M3PropertyGroup):
 
 
 class CompositeSectionProperties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Composite Material Section'
+
     material: bpy.props.PointerProperty(type=shared.M3MatRefPointerProp)
     alpha_factor: bpy.props.FloatProperty(name='Alpha Factor', default=1)
     alpha_factor_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
 
 
 class CompositeProperties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Composite Material'
+
     name: bpy.props.StringProperty(options=set(), get=get_material_name)
     sections: bpy.props.CollectionProperty(type=CompositeSectionProperties)
     sections_index: bpy.props.IntProperty(options=set(), default=-1)
@@ -166,11 +182,19 @@ class CompositeProperties(shared.M3PropertyGroup):
 
 
 class TerrainProperties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Terrain Material'
+
     name: bpy.props.StringProperty(options=set(), get=get_material_name)
     layer_terrain: bpy.props.StringProperty(options=set())
 
 
 class VolumeProperties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Volumetric Material'
+
     name: bpy.props.StringProperty(options=set(), get=get_material_name)
     layer_color: bpy.props.StringProperty(options=set())
     layer_unknown1: bpy.props.StringProperty(options=set())
@@ -180,6 +204,10 @@ class VolumeProperties(shared.M3PropertyGroup):
 
 
 class VolumeNoiseProperties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Volumetric Noise Material'
+
     name: bpy.props.StringProperty(options=set(), get=get_material_name)
     layer_color: bpy.props.StringProperty(options=set())
     layer_noise1: bpy.props.StringProperty(options=set())
@@ -203,11 +231,19 @@ class VolumeNoiseProperties(shared.M3PropertyGroup):
 
 
 class CreepProperties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Creep Material'
+
     name: bpy.props.StringProperty(options=set(), get=get_material_name)
     layer_creep: bpy.props.StringProperty(options=set())
 
 
 class SplatTerrainBakeProperties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Splat Terrain Bake Material'
+
     name: bpy.props.StringProperty(options=set(), get=get_material_name)
     layer_diff: bpy.props.StringProperty(options=set())
     layer_norm: bpy.props.StringProperty(options=set())
@@ -215,6 +251,10 @@ class SplatTerrainBakeProperties(shared.M3PropertyGroup):
 
 
 class ReflectionProperties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Reflection Material'
+
     name: bpy.props.StringProperty(options=set(), get=get_material_name)
     layer_norm: bpy.props.StringProperty(options=set())
     layer_strength: bpy.props.StringProperty(options=set())
@@ -237,6 +277,10 @@ class ReflectionProperties(shared.M3PropertyGroup):
 
 
 class LensFlareStarburstProperties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Lens Flare Material Starburst'
+
     name: bpy.props.StringProperty(options=set(), get=get_material_name)
     uv_index: bpy.props.IntProperty(options=set(), min=0)
     distance_factor: bpy.props.FloatProperty(options=set(), default=1)
@@ -251,6 +295,10 @@ class LensFlareStarburstProperties(shared.M3PropertyGroup):
 
 
 class LensFlareProperties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Lens Flare Material'
+
     name: bpy.props.StringProperty(options=set(), get=get_material_name)
     layer_color: bpy.props.StringProperty(options=set())
     layer_unknown: bpy.props.StringProperty(options=set())
@@ -278,6 +326,10 @@ class BufferTexturePath(bpy.types.PropertyGroup):
 
 
 class BufferProperties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Buffer Material'
+
     name: bpy.props.StringProperty(options=set(), get=get_material_name)
     texture_paths: bpy.props.CollectionProperty(type=BufferTexturePath)
     texture_paths_index: bpy.props.IntProperty(options=set(), default=-1)
@@ -603,6 +655,10 @@ mat_type_dict = {
 
 
 class ReferenceProperties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Material Reference'
+
     mat_type: bpy.props.EnumProperty(options=set(), items=bl_enum.matref_type)
     mat_handle: bpy.props.StringProperty(options=set())
 

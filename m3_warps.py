@@ -38,6 +38,10 @@ def draw_props(warp, layout):
 
 
 class Properties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Vertex Warper'
+
     bone: bpy.props.PointerProperty(type=shared.M3BonePointerProp)
     radius: bpy.props.FloatProperty(name='M3 Warp Radius', min=0, default=1)
     radius_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)

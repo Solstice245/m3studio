@@ -112,6 +112,10 @@ def turret_part_group_id_set(self, value):
 
 
 class PartProperties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Turret Part'
+
     bone: bpy.props.PointerProperty(type=shared.M3BonePointerPropExclusive)
     forward: bpy.props.FloatVectorProperty(options=set(), size=3, subtype='EULER', unit='ROTATION', default=(0, 0, 0))
     main_part: bpy.props.BoolProperty(options=set(), get=turret_part_main_get, set=turret_part_main_set)
@@ -127,6 +131,10 @@ class PartProperties(shared.M3PropertyGroup):
 
 
 class Properties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Turret'
+
     parts: bpy.props.CollectionProperty(type=PartProperties)
     parts_index: bpy.props.IntProperty(options=set(), default=-1, update=update_parts_collection_index)
 

@@ -89,11 +89,19 @@ class CopySystemPointerProp(bpy.types.PropertyGroup):
 
 
 class SplinePointProperties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Particle Spline Point'
+
     location: bpy.props.FloatVectorProperty(name='Location', subtype='XYZ', size=3)
     location_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
 
 
 class CopyProperties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Particle Copy'
+
     bone: bpy.props.PointerProperty(type=shared.M3BonePointerProp)
     systems: bpy.props.CollectionProperty(type=CopySystemPointerProp)
     emit_rate: bpy.props.FloatProperty(name='Particle Copy Emission Rate', min=0)
@@ -119,6 +127,10 @@ def sort_method_set(self, value):
 
 
 class SystemProperties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Particle System'
+
     bone: bpy.props.PointerProperty(type=shared.M3BonePointerProp)
     material: bpy.props.PointerProperty(type=shared.M3MatRefPointerProp)
     particle_type: bpy.props.EnumProperty(options=set(), items=bl_enum.particle_type)

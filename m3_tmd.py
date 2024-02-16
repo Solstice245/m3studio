@@ -36,10 +36,18 @@ def draw_props(tmd, layout):
 
 
 class VecProperties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Vector'
+
     vector: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3)
 
 
 class Properties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 TMD'
+
     vectors: bpy.props.CollectionProperty(type=VecProperties)
     unknownd3f6c7b8: bpy.props.FloatProperty(options=set())
     unknown74229b33: bpy.props.FloatProperty(options=set())

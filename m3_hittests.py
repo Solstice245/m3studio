@@ -38,6 +38,10 @@ def draw_props(hittest, layout):
 
 
 class Properties(shared.M3VolumePropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Hit Test Volume'
+
     bone: bpy.props.PointerProperty(type=shared.M3BonePointerProp)
 
 

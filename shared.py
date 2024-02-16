@@ -409,6 +409,13 @@ class M3AnimHeaderProp(bpy.types.PropertyGroup):
 
 
 class M3PropertyGroup(bpy.types.PropertyGroup):
+
+    def __str__(self):
+        if self._get_identifier:
+            return f'{self._get_identifier()}["{self.name}"]'
+        else:
+            return super(M3PropertyGroup, self).__str__()
+
     bl_handle: bpy.props.StringProperty(options=set())
     m3_export: bpy.props.BoolProperty(options=set(), default=True)
     name: bpy.props.StringProperty(options=set())

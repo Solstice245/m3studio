@@ -39,6 +39,10 @@ def draw_props(billboard, layout):
 
 
 class Properties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Billboard'
+
     bone: bpy.props.PointerProperty(type=shared.M3BonePointerPropExclusive)
     billboard_type: bpy.props.EnumProperty(options=set(), items=bl_enum.billboard_type, default='FULL')
     camera_look_at: bpy.props.BoolProperty(options=set())

@@ -57,6 +57,10 @@ def draw_props(light, layout):
 
 
 class Properties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Light'
+
     bone: bpy.props.PointerProperty(type=shared.M3BonePointerProp)
     shape: bpy.props.EnumProperty(options=set(), items=bl_enum.light_shape, default='POINT')
     color: bpy.props.FloatVectorProperty(name='M3 Light Color', subtype='COLOR', size=3, min=0, max=1, default=(1, 1, 1))

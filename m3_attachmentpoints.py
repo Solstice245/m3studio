@@ -79,6 +79,10 @@ class PointMenu(bpy.types.Menu):
 
 
 class Properties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Attachment Point'
+
     bone: bpy.props.PointerProperty(type=shared.M3BonePointerProp)
     volumes: bpy.props.CollectionProperty(type=shared.M3VolumePropertyGroup)
     volumes_index: bpy.props.IntProperty(options=set(), default=-1)

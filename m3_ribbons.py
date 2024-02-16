@@ -91,6 +91,10 @@ class SplinePointerProp(bpy.types.PropertyGroup):
 
 
 class PointProperties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Ribbon Spline Point'
+
     bone: bpy.props.PointerProperty(type=shared.M3BonePointerProp)
     emission_offset: bpy.props.FloatVectorProperty(options=set(), size=3, subtype='XYZ')
     emission_vector: bpy.props.FloatVectorProperty(options=set(), size=3, subtype='XYZ')
@@ -122,11 +126,19 @@ class PointProperties(shared.M3PropertyGroup):
 
 
 class SplineProperties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Ribbon Spline'
+
     points: bpy.props.CollectionProperty(type=PointProperties)
     points_index: bpy.props.IntProperty(options=set(), default=-1, update=update_point_collection_index)
 
 
 class RibbonProperties(shared.M3PropertyGroup):
+
+    def _get_identifier(self):
+        return 'M3 Ribbon'
+
     bone: bpy.props.PointerProperty(type=shared.M3BonePointerProp)
     material: bpy.props.PointerProperty(type=shared.M3MatRefPointerProp)
     spline: bpy.props.PointerProperty(type=SplinePointerProp)
