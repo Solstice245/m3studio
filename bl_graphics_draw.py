@@ -461,7 +461,7 @@ def draw():
                     continue
 
                 bone_parent = bone
-                for ii in range(0, item.joint_length):
+                for jj in range(0, item.joint_length):
                     if bone_parent.parent:
                         bone_parent = bone_parent.parent if bone_parent else bone_parent
                 if bone_parent is not bone:

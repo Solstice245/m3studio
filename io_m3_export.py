@@ -1479,20 +1479,20 @@ class Exporter():
                     if vec_list_contains_not_only(anim_locs, m3_bone_defaults[m3_bone][0]):
                         keys, values = simplify_anim_data_with_interp(frames, loc_keyframes, anim_locs, vec_interp, vec_equal)
                         self.action_to_anim_data[anim.action]['SD3V'][m3_bone.location.header.id] = (keys, [to_m3_vec3(val) for val in values])
-                        self.action_to_sdmb_user[anim.action] = True
+                        self.action_to_sdmb_user[anim.action] = not anim.concurrent
                         m3_bone.bit_set('flags', 'animated', True)
 
                     if quat_list_contains_not_only(anim_rots, m3_bone_defaults[m3_bone][1]):
                         quats_compatibility(anim_rots)
                         keys, values = simplify_anim_data_with_interp(frames, rot_keyframes, anim_rots, quat_interp, quat_equal)
                         self.action_to_anim_data[anim.action]['SD4Q'][m3_bone.rotation.header.id] = (keys, [to_m3_quat(val) for val in values])
-                        self.action_to_sdmb_user[anim.action] = True
+                        self.action_to_sdmb_user[anim.action] = not anim.concurrent
                         m3_bone.bit_set('flags', 'animated', True)
 
                     if vec_list_contains_not_only(anim_scls, m3_bone_defaults[m3_bone][2]):
                         keys, values = simplify_anim_data_with_interp(frames, scl_keyframes, anim_scls, vec_interp, vec_equal)
                         self.action_to_anim_data[anim.action]['SD3V'][m3_bone.scale.header.id] = (keys, [to_m3_vec3(val) for val in values])
-                        self.action_to_sdmb_user[anim.action] = True
+                        self.action_to_sdmb_user[anim.action] = not anim.concurrent
                         m3_bone.bit_set('flags', 'animated', True)
 
                     # export animated batching property

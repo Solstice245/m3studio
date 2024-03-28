@@ -17,6 +17,7 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import bpy
+from . import bl_enum
 from . import shared
 
 
@@ -37,12 +38,18 @@ def draw_props(hittest, layout):
     shared.draw_volume_props(hittest, layout)
 
 
-class Properties(shared.M3VolumePropertyGroup):
+class Properties(shared.M3PropertyGroup):
 
     def _get_identifier(self):
         return 'M3 Hit Test Volume'
 
     bone: bpy.props.PointerProperty(type=shared.M3BonePointerProp)
+    shape: bpy.props.EnumProperty(options=set(), items=bl_enum.volume_shape)
+    size: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0, default=(1, 1, 1))
+    location: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3)
+    rotation: bpy.props.FloatVectorProperty(options=set(), subtype='EULER', unit='ROTATION', size=3)
+    scale: bpy.props.FloatVectorProperty(options=set(), subtype='XYZ', size=3, min=0, default=(1, 1, 1))
+    mesh_object: bpy.props.PointerProperty(type=bpy.types.Object)
 
 
 class Menu(bpy.types.Menu):
