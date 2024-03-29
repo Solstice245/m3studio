@@ -967,12 +967,11 @@ class Importer:
                     processor = M3InputProcessor(self, starburst, m3_starburst)
                     io_shared.io_starburst(processor)
             elif m3_matref.type == 12:  # buffer (madd) materials
-                print(mat)
-                print(mat.texture_paths)
                 for schr in self.m3[m3_mat.texture_paths]:
-                    texture_path = mat.texture_paths.add()
-                    texture_path['name'] = self.m3[schr.path].content_to_string()
-                    print(texture_path)
+                    m3_texture_path = self.m3[schr.path]
+                    if m3_texture_path:
+                        texture_path = mat.texture_paths.add()
+                        texture_path['name'] = self.m3[schr.path].content_to_string()
 
             for layer_name in shared.material_type_to_layers[m3_matref.type]:
                 m3_layer_field = getattr(m3_mat, 'layer_' + layer_name, None)
