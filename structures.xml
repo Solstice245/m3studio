@@ -2218,7 +2218,8 @@
             <field name="matrix" type="Matrix44"/>
             <field name="radius" type="float"/>
             <field name="height" type="float"/>
-            <field name="bone" type="uint32"/>
+            <field name="bone" type="int16"/>
+            <field name="bone_fb" type="uint16"/>
         </fields>
     </structure>
 
@@ -2846,8 +2847,35 @@
             <field name="unknown3" type="Reference" ref_to="U32_" since_version="2"/>
             <field name="unknown4" type="Reference" ref_to="CHAR"/> <!-- some arbitrary binary data -->
             <field name="texture_paths" type="Reference" ref_to="SCHR"/>
-            <field name="unknown20b7712d" size="92"/>
-            <field name="unknownb9c70ff0" size="8" since_version="3"/>
+            <!--<field name="unknown20b7712d" size="92"/>-->
+            <field name="unknown_00" type="uint32"/>
+            <field name="unknown_01" type="uint32"/>
+            <field name="unknown_02" type="uint32"/>
+            <field name="unknown_03" type="uint32"/>
+            <field name="unknown_04" type="uint32"/>
+            <field name="unknown_05" type="uint32"/>
+            <field name="unknown_06" type="uint32"/>
+            <field name="unknown_07" type="uint32"/>
+            <field name="unknown_08" type="uint32"/>
+            <field name="unknown_09" type="uint32"/>
+            <field name="unknown_10" type="uint32"/>
+            <field name="unknown_11" type="uint32"/>
+            <field name="unknown_12" type="float"/>
+            <field name="unknown_13" type="float"/>
+            <field name="unknown_14" type="uint32"/>
+            <field name="unknown_150" type="uint16"/>
+            <field name="unknown_151" type="uint16"/>
+            <field name="unknown_16" type="uint32"/>
+            <field name="unknown_17" type="uint32"/>
+            <field name="unknown_18" type="uint32"/>
+            <field name="unknown_190" type="uint16"/>
+            <field name="unknown_191" type="uint16"/>
+            <field name="unknown_20" type="uint32"/>
+            <field name="unknown_21" type="uint32"/>
+            <field name="unknown_22" type="uint16"/>
+            <field name="unknown_23" type="uint16"/>
+            <field name="unknownb9c70ff0" type="int32" since_version="3"/>
+            <field name="unknownb9c70ff1" type="int32" since_version="3"/>
         </fields>
     </structure>
 
