@@ -292,8 +292,8 @@ def infer_data_path(ob, data_path):
 
     data = ob.path_resolve(inferred_data_path)
 
-    if type(data) == bpy.types.ArmatureBones or type(data) == bpy.types.ArmatureEditBones:
-        data = get_ob_bones(self.id_data)
+    if type(data.rna_type) == bpy.types.ArmatureBones or type(data.rna_type) == bpy.types.ArmatureEditBones:
+        data = get_ob_bones(ob.id_data)
 
     return data
 
@@ -311,10 +311,7 @@ def pointer_val_set(self, value, data_path, exclusive=False, to_armature=True):
 
     if value:
         data = infer_data_path(ob, data_path)
-        if type(data) == bpy.types.ArmatureBones:
-            m3_data_handles_verify(get_ob_bones(ob))
-        else:
-            m3_data_handles_verify(data)
+        m3_data_handles_verify(data)
 
         if exclusive:
 
@@ -328,15 +325,20 @@ def pointer_val_set(self, value, data_path, exclusive=False, to_armature=True):
             used_values = {getattr(item, self_propname).value for item in collection if getattr(item, self_propname) != self}
             # ensure unique value
             if value in used_values:
-                rsplit = value.rsplit('.', 1)
-                prefix = rsplit[0] if rsplit[-1].isdigit() else value
-                value = prefix
-                num = 1
-                while True:
-                    if value not in used_values:
-                        break
-                    value = prefix + '.' + ('0' if num < 100 else '') + ('0' if num < 10 else '') + str(num)
-                    num += 1
+                if type(data.rna_type) == bpy.types.ArmatureBones or type(data.rna_type) == bpy.types.ArmatureEditBones:
+                    value = None
+                    draw = lambda self, context: self.layout.label(text='This bone is already used by another item in this M3 data collection')
+                    bpy.context.window_manager.popup_menu(draw, title='Value Set Error', icon='ERROR')
+                else:
+                    rsplit = value.rsplit('.', 1)
+                    prefix = rsplit[0] if rsplit[-1].isdigit() else value
+                    value = prefix
+                    num = 1
+                    while True:
+                        if value not in used_values:
+                            break
+                        value = prefix + '.' + ('0' if num < 100 else '') + ('0' if num < 10 else '') + str(num)
+                        num += 1
 
         for item in data:
             if item.name == value:
@@ -348,7 +350,7 @@ def pointer_val_set(self, value, data_path, exclusive=False, to_armature=True):
     else:
         self['handle'] = ''
 
-    self['value'] = value
+    self['value'] = value or ''
 
 
 def pointer_get_args(*args):
@@ -363,10 +365,16 @@ class M3BonePointerProp(bpy.types.PropertyGroup):
     value: bpy.props.StringProperty(options=set(), get=pointer_get_args('data.bones'), set=pointer_set_args('data.bones', False))
     handle: bpy.props.StringProperty(options=set())
 
+    def __str__(self):
+        return 'Bone Pointer [' + self.name + ', ' + self.get('handle', '') + ', ' + self.get('value', '') + ']'
+
 
 class M3BonePointerPropExclusive(bpy.types.PropertyGroup):
     value: bpy.props.StringProperty(options=set(), get=pointer_get_args('data.bones'), set=pointer_set_args('data.bones', True))
     handle: bpy.props.StringProperty(options=set())
+
+    def __str__(self):
+        return 'Bone Pointer (Exclusive) [' + self.name + ', ' + self["handle"] + ', ' + self["value"] + ']'
 
 
 class M3MatRefPointerProp(bpy.types.PropertyGroup):
