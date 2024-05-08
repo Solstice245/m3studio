@@ -498,7 +498,7 @@ class Exporter():
     def __init__(self, bl_op=None):
         self.bl_op = bl_op
         self.warn_strings = []
-        self.abort = False
+        self.err_strings = []
 
     def scene_prepare(self, ob):
         self.ob = ob
@@ -557,15 +557,23 @@ class Exporter():
                 arm_mod = sc_ob.modifiers.new('Armature', 'ARMATURE')
                 arm_mod.object = self.ob
 
-    def report_warnings(self):
-        report_level = 'ERROR' if self.abort else 'WARNING'
-        report_level_str = 'errors' if self.abort else 'warnings'
-        if len(self.warn_strings):
-            warning = f'The following {report_level_str} were given during the M3 export operation of {self.ob.name}:\n' + '\n'.join(self.warn_strings)
-            print(warning)  # not for debugging
+    def op_report(self):
+        if len(self.err_strings) or len(self.warn_strings):
+            report_level = 'ERROR' if len(self.err_strings) else 'WARNING'
+            message = ''
+            if len(self.err_strings):
+                message = f'The following errors occurred during the M3 export operation of {self.ob.name}:\n' + '\n'.join(self.err_strings)
+            if len(self.warn_strings):
+                warning = f'The following warnings were given during the M3 export operation of {self.ob.name}:\n' + '\n'.join(self.warn_strings)
+                if message == '':
+                    message = warning
+                else:
+                    message = '\n'.join((message, warning))
+            print(message)  # not for debugging
             if self.bl_op:
-                self.bl_op.report({report_level}, warning)
+                self.bl_op.report({report_level}, message)
         self.warn_strings = []  # reset warnings
+        self.err_strings = []  # reset errors
 
     def get_validated_data(self, ob):
         # TODO look for duplicate animation header ids and warn that they need to be resolved
@@ -778,23 +786,27 @@ class Exporter():
 
         mesh_matrefs = set()
 
+        total_verts = 0
         for child in ob.children:
             if child.type == 'MESH' and (child.m3_mesh_export or child in required_regions):
                 child.data.calc_loop_triangles()
                 if len(child.data.loop_triangles) == 0:
-                    self.warn_strings.append(f'{str(child)} has no geometry data and will not ignored')
+                    self.warn_strings.append(f'{str(child)} has no geometry data and will be ignored')
                     continue
 
                 valid_mesh_batches = 0
                 for mesh_batch in child.m3_mesh_batches:
                     matref = shared.m3_pointer_get(ob.m3_materialrefs, mesh_batch.material)
                     if matref:
-                        required_material_references.add(matref)
-                        mesh_matrefs.add(matref)
-                        batch_bone = ob.pose.bones.get(mesh_batch.bone.value)
-                        if batch_bone:
-                            required_bones.add(batch_bone)
-                        valid_mesh_batches += 1
+                        if matref.mat_type == 'm3_materials_buffer':
+                            self.warn_strings.append(f'Material {matref.name} is using the Buffer (MADD) type, which is not supported')
+                        else:
+                            required_material_references.add(matref)
+                            mesh_matrefs.add(matref)
+                            batch_bone = ob.pose.bones.get(mesh_batch.bone.value)
+                            if batch_bone:
+                                required_bones.add(batch_bone)
+                            valid_mesh_batches += 1
 
                 if valid_mesh_batches == 0:
                     self.warn_strings.append(f'{str(child)} has no valid material assignments and will not be exported')
@@ -899,11 +911,7 @@ class Exporter():
         bpy.context.view_layer.objects.active = ob
         bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
 
-        for matref in valid_collections['material_references']:
-            if matref.mat_type == 'm3_materials_buffer':
-                self.warn_strings.append(f'Material {matref.name} is using the Buffer (MADD) type, which is not supported')
-                self.abort = True
-        if self.abort:
+        if self.err_strings:
             raise AssertionError()
 
         if not ob.animation_data:
@@ -1079,6 +1087,19 @@ class Exporter():
             self.matref_handle_indices[matref.bl_handle] = len(self.matref_handle_indices.keys())
 
         self.depsgraph = bpy.context.evaluated_depsgraph_get()
+
+        self.bmesh_objects = []
+        total_verts = 0
+        for ob in valid_collections['regions']:
+            bm = bmesh.new(use_operators=True)
+            bm.from_object(ob, self.depsgraph)
+            total_verts += len(bm.verts)
+            self.bmesh_objects.append(bm)
+
+        if total_verts > 65536:
+            self.err_strings.append(f'Overall vertex count ({total_verts}) exceeds the M3 format limit of 65536')
+
+        raise AssertionError()
 
         model_section = self.m3.section_for_reference(self.m3[0][0], 'model', version=self.ob.m3_model_version)
         model = model_section.content_add()
@@ -1573,9 +1594,7 @@ class Exporter():
 
         bone_bounding_points = {bone: [] for bone in bones}
 
-        for ob_index, ob in enumerate(mesh_objects):
-            bm = bmesh.new(use_operators=True)
-            bm.from_object(ob, self.depsgraph)
+        for ob_index, bm in enumerate(self.bmesh_objects):
             bmesh.ops.transform(bm, matrix=ob.matrix_local, verts=bm.verts, use_shapekey=False)
             bmesh.ops.triangulate(bm, faces=bm.faces)
 
@@ -2751,7 +2770,7 @@ def m3_export(ob, filename, bl_op=None, output_anims=None):
         io_m3.section_list_save(sections, filename)
     except Exception as e:
         if type(e) != AssertionError:
-            print(traceback.format_exc())
+            exporter.err_strings.append(traceback.format_exc())
     finally:
         exporter.scene_restore()
-        exporter.report_warnings()
+        exporter.op_report()
