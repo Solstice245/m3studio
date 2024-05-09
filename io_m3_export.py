@@ -941,6 +941,7 @@ class Exporter():
         self.action_abs_pose_matrices = {}
         self.action_to_stc = {}
         self.stc_to_anim_group = {}  # only have 'full' or primary anims as keys
+        self.stc_to_anim = {}
 
         # used to calculate exact positions of later sections in the section list
         self.stc_section = None  # defined in the sequence export
@@ -1099,8 +1100,6 @@ class Exporter():
         if total_verts > 65536:
             self.err_strings.append(f'Overall vertex count ({total_verts}) exceeds the M3 format limit of 65536')
 
-        raise AssertionError()
-
         model_section = self.m3.section_for_reference(self.m3[0][0], 'model', version=self.ob.m3_model_version)
         model = model_section.content_add()
 
@@ -1188,6 +1187,7 @@ class Exporter():
                 self.stc_to_name_section[m3_stc] = m3_stc_name_section
                 stc_name_sections.append(m3_stc_name_section)
                 self.stc_to_anim_group[m3_stc] = anim_group
+                self.stc_to_anim[m3_stc] = anim
 
                 m3_stc.concurrent = int(anim.concurrent)
                 m3_stc.priority = anim.priority
@@ -1260,7 +1260,7 @@ class Exporter():
                 evnt_name_sections = []
                 anim_group = self.stc_to_anim_group.get(stc)
 
-                if anim_group:
+                if anim_group and self.stc_to_anim.get(stc) == anim_group.animations[-1]:
                     self.action_to_anim_data[action]['SDEV'][EVNT_ANIM_ID] = [[], []]
                     evnt_data = self.action_to_anim_data[action]['SDEV'][EVNT_ANIM_ID]
 
@@ -1594,7 +1594,9 @@ class Exporter():
 
         bone_bounding_points = {bone: [] for bone in bones}
 
-        for ob_index, bm in enumerate(self.bmesh_objects):
+        for ob_index, ob in enumerate(mesh_objects):
+            bm = bmesh.new(use_operators=True)
+            bm.from_object(ob, self.depsgraph)
             bmesh.ops.transform(bm, matrix=ob.matrix_local, verts=bm.verts, use_shapekey=False)
             bmesh.ops.triangulate(bm, faces=bm.faces)
 
