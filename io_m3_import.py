@@ -706,7 +706,8 @@ class Importer:
                         if frame not in frames:
                             frames.append(frame)
                         else:
-                            ignored_indices.append(ii)
+                            frames[-1] = frame
+                            ignored_indices.append(ii - 1)
 
                     m3_keys = self.m3[m3_key_entries.keys]
                     keys = [m3_keys[ii] for ii in range(len(m3_keys)) if ii not in ignored_indices]
