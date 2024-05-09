@@ -25,6 +25,7 @@ from . import shared
 from . import bl_graphics_data as blgd
 from .io_shared import rot_fix_matrix_transpose
 
+POLYLINE_SHADER_ID = '3D_POLYLINE_UNIFORM_COLOR' if (4, 0, 0) > bpy.app.version else 'POLYLINE_UNIFORM_COLOR'
 
 def get_pb_from_handle(ob, bone_handle, handle_bone_dict):
 
@@ -56,7 +57,7 @@ def get_transformed_coords(coords, matrix):
     return new_coords
 
 
-uni_polyline_shader = gpu.shader.from_builtin('3D_POLYLINE_UNIFORM_COLOR')
+uni_polyline_shader = gpu.shader.from_builtin(POLYLINE_SHADER_ID)
 
 
 def batch_uni_polyline(coords, indices, color, line_width=0.35):
