@@ -22,6 +22,7 @@ import mathutils
 import os
 import traceback
 import math
+from . import bl_enum
 from . import io_m3
 from . import io_shared
 from . import shared
@@ -636,10 +637,24 @@ class Exporter():
         if self.is_m3a:
             required_bones = set(ob.pose.bones)
 
+        anim_group_names = []
+
         for anim_group in ob.m3_animation_groups:
-            # TODO all anim groups must have unique name.
             if not anim_group.m3_export:
                 continue
+
+            if anim_group.name in anim_group_names:
+                self.warn_strings.append(f'The animation group name "{anim_group.name}" is already used. Animation Group names should be unique')
+                continue
+            else:
+                anim_group_names.append(anim_group.name)
+
+            invalid_tokens = []
+            for word in anim_group.name.split(' '):
+                if word.lower() not in [token.lower() for token in bl_enum.anim_tokens]:
+                    invalid_tokens.append(word)
+            if invalid_tokens:
+                self.warn_strings.append(f'The tokens {invalid_tokens} in the animation group "{anim_group.name}" are invalid tokens, which may make the animation unusable')
 
             for anim in anim_group.animations:
                 if anim.action:

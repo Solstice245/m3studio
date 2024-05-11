@@ -22,6 +22,40 @@ anim_header_interp = (
     ('AUTO', 'Automatic', 'The exporter will determine this value based on the conventional configuration of this property'),
 )
 
+anim_tokens = {
+    # action
+    'Attack', 'Birth', 'Blink', 'Block', 'Build', 'Burrow', 'Channel', 'Cloak', 'Corrupted', 'Creep', 'Dance', 'Death',
+    'Detect', 'Dialogue', 'Fidget', 'Flail', 'Fling', 'Freeze', 'Gather', 'Jump', 'Kill', 'Land', 'Listen', 'Load',
+    'Morph', 'NearImpact', 'Penetrate', 'Pickup', 'Placement', 'Pose', 'Reload', 'Restart', 'Run', 'Shield',
+    'Spell', 'Stand', 'Standup', 'Talk', 'Taunt', 'Turn', 'Unburrow', 'Unload', 'Victory', 'Walk', 'Work',
+    # state
+    'Attached', 'Cover', 'Dead', 'Fly', 'Thrown', 'Ready', 'Unpowered', 'Wounded',
+    # death type
+    'Blast', 'Disintegrate', 'Eat', 'Electrocute', 'Eviscerate', 'Fire', 'Silentkill', 'Squish',
+    # directional
+    'Forward', 'Back', 'Left', 'Right', 'Inferior', 'Equal', 'Superior',
+    # emotional
+    'Angry', 'Dominant', 'Happy', 'Scared', 'AngryEyes', 'FearEyes', 'HappyEyes', 'SadEyes', 'SeriousEyes', 'SurpriseEyes',
+    # body
+    'Arm', 'Chest', 'Eye', 'Leg',
+    # character
+    'Adjutant', 'Dehaka', 'Evomaster', 'Horner', 'Kerrigan', 'Lasarra', 'Raynor', 'Stukov', 'Valerian', 'Zagara',
+    # interface
+    'Click', 'Highlight', 'Hover',
+    # miscellaneous
+    'Close', 'Far', 'Double', 'Alternate', 'Complex', 'Simple', 'Small', 'Medium',
+    'Large', 'Slow', 'Fast', 'Turbo', 'Enemy', 'Lighting', 'Glow', 'Portrait', 'Custom',
+    # global loops
+    'GLBirth', 'GLStand', 'GLDeath', 'GLDead',
+    #special
+    'Default', 'Protoss', 'Terran', 'Zerg', *[str(ii).zfill(2) for ii in range(1, 100)], 'Start', 'End',
+    *[chr(ii) for ii in range(ord('A'), ord('Z') + 1)], 'Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
+    # legacy
+    'Alternateex', 'Berserk', 'Bone', 'Chain', 'Complete', 'Critical', 'Decay', 'Defend', 'Drain', 'EatTree', 'Entangle',
+    'Fill', 'Flesh', 'Gold', 'Hit', 'Light', 'Looping', 'Lumber', 'Moderate', 'Off', 'Puke', 'Severe', 'Slam', 'Spiked',
+    'Spin', 'StageFirst', 'StageSecond', 'StageThird', 'StageFourth', 'StageFifth', 'Swim', 'Throw', 'Upgrade',
+}
+
 # these are based on the possible values given in the SC2 editor
 # this list should never be changed without consulting that list
 attachment_names = (
