@@ -1003,6 +1003,7 @@ class Exporter():
         self.physics_cloth_constraint_handle_to_volumes = {}
         for physics_cloth in valid_collections['physics_cloths']:
             valid_volumes = []
+            constraint_set = shared.m3_pointer_get(ob.m3_clothconstraintsets, physics_cloth.constraint_set)
             for constraint in constraint_set.constraints:
                 bone = shared.m3_pointer_get(ob.pose.bones, constraint.bone)
                 if constraint.m3_export and bone:
