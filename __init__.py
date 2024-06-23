@@ -102,7 +102,7 @@ class M3ImportOperator(bpy.types.Operator):
 
     def execute(self, context):
         opts = (self.get_rig, self.get_anims, self.get_mesh, self.get_effects)
-        io_m3_import.m3_import(filename=self.filepath, ob=bpy.data.objects.get(self.id_name), bl_op=self, opts=opts)
+        io_m3_import.m3_import(filepath=self.filepath, ob=bpy.data.objects.get(self.id_name), bl_op=self, opts=opts)
         return {'FINISHED'}
 
 
@@ -128,7 +128,7 @@ class M3ExportOperator(bpy.types.Operator):
         return {'RUNNING_MODAL'}
 
     def execute(self, context):
-        io_m3_export.m3_export(ob=context.active_object, filename=self.filepath, bl_op=self, output_anims=self.output_anims)
+        io_m3_export.m3_export(ob=context.active_object, filepath=self.filepath, bl_op=self, output_anims=self.output_anims)
         context.active_object.m3_filepath_export = self.filepath
         return {'FINISHED'}
 

@@ -333,14 +333,14 @@ def armature_object_new():
 class Importer:
 
     def __init__(self, bl_op=None):
-        self.filename = ''
+        self.filepath = ''
         self.bl_op = bl_op
         self.warn_strings = []
         self.exception_trace = ''
 
     def do_report(self):
         if len(self.warn_strings):
-            warning = f'The following warnings were given during the M3 import operation of {self.filename}:\n' + '\n'.join(self.warn_strings)
+            warning = f'The following warnings were given during the M3 import operation of {self.filepath}:\n' + '\n'.join(self.warn_strings)
             print(warning)  # not for debugging
             if self.bl_op:
                 self.bl_op.report({"WARNING"}, warning)
@@ -352,14 +352,14 @@ class Importer:
                 self.bl_op.report({"ERROR"}, self.exception_trace)
         self.exception_trace = ''
 
-    def m3_import(self, filename, ob=None, opts=None):
-        self.filename = filename
+    def m3_import(self, filepath, ob=None, opts=None):
+        self.filepath = filepath
         # TODO make fps an import option
         bpy.context.scene.render.fps = FRAME_RATE
 
         self.get_rig, self.get_anims, self.get_mesh, self.get_effects = opts if opts != None else [True] * 4
 
-        self.m3 = io_m3.section_list_load(filename)
+        self.m3 = io_m3.M3SectionList.load(filepath)
         self.m3_model = self.m3[self.m3[0][0].model][0]
         self.m3_division = self.m3[self.m3_model.divisions][0]
 
@@ -426,7 +426,7 @@ class Importer:
             bpy.ops.m3.material_remove('INVOKE_DEFAULT', quiet=True)
         self.ob.m3_materialrefs_index = user_matref_index
 
-    def m3a_import(self, filename, ob):
+    def m3a_import(self, filepath, ob):
 
         def get_m3_id_props():
             hex_id_to_props = {}
@@ -462,7 +462,7 @@ class Importer:
 
         self.is_new_object = False
         self.ob = ob
-        self.m3 = io_m3.section_list_load(filename)
+        self.m3 = io_m3.M3SectionList.load(filepath)
         self.m3_model = self.m3[self.m3[0][0].model][0]
         self.stc_id_data = {}
 
@@ -1811,15 +1811,15 @@ class Importer:
         return me_ob
 
 
-def m3_import(filename, ob=None, bl_op=None, opts=None):
+def m3_import(filepath, ob=None, bl_op=None, opts=None):
     importer = Importer(bl_op)
     try:
-        if ob and filename.endswith('.m3a'):
-            importer.m3a_import(filename, ob)
+        if ob and filepath.endswith('.m3a'):
+            importer.m3a_import(filepath, ob)
         elif ob:
-            importer.m3_import(filename, ob, opts=opts)
+            importer.m3_import(filepath, ob, opts=opts)
         else:
-            importer.m3_import(filename, ob)
+            importer.m3_import(filepath, ob)
     except Exception as e:
         if type(e) != AssertionError:
             importer.exception_trace = traceback.format_exc()

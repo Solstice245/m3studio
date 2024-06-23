@@ -41,7 +41,7 @@ def structures_from_tree():
     for xml_structure in ET.parse(path.join(path.dirname(__file__), 'structures.xml')).getroot().findall('structure'):
         xml_structure_name = xml_structure.get('name')
         xml_versions = xml_structure.findall('versions')[0].findall('version')
-        version_nums = set([int(xml_version.get('number')) for xml_version in xml_versions])
+        version_max = max(set([int(xml_version.get('number')) for xml_version in xml_versions]))
         version_to_size = {int(xml_version.get('number')): int(xml_version.get('size')) for xml_version in xml_versions}
 
         all_field_versions = []
@@ -90,7 +90,7 @@ def structures_from_tree():
                 field_desc = field_struct_history.get_version(field_version)
                 field = M3FieldStructure(str_name, field_desc, str_ref_to)
 
-            all_field_versions.append({ii: field for ii in range(since_version or 0, (till_version if till_version is not None else max(version_nums)) + 1)})
+            all_field_versions.append({ii: field for ii in range(since_version or 0, (till_version if till_version is not None else version_max) + 1)})
 
         histories[xml_structure_name] = M3StructureHistory(xml_structure_name, version_to_size, all_field_versions)
 
@@ -166,6 +166,10 @@ class M3StructureDescription:
         if self.history.primitive:
             self.fields['value'].content_validate(instance, instance_name + '.value')
         else:
+
+            if not self == instance.desc:
+                raise TypeError(f'M3 description of {instance_name} {instance} {instance.desc} does not match {self}')
+
             for field in self.fields.values():
                 field.content_validate(getattr(instance, field.name), instance_name + '.' + field.name)
 
@@ -196,6 +200,9 @@ class M3StructureData:
     def __str__(self):
         field_strings = list(f'{field_name}: {getattr(self, field_name)}' for field_name in self.desc.fields)
         return f'{self.desc.history.name}V{self.desc.version} fields: {field_strings}'
+
+    def __repr__(self):
+        return f'{self.desc.history.name}V{self.desc.version}'
 
     def from_buffer(self, buffer, offset):
         field_offset = offset
@@ -231,6 +238,9 @@ class M3Field:
     def __init__(self, name):
         self.name = name
 
+    def __repr__(self):
+        return self.__class__.__name__
+
     def default_set(self, data: M3StructureData):
         setattr(data, self.name, getattr(self, 'default_value', ''))
 
@@ -243,9 +253,14 @@ class M3FieldStructure(M3Field):
         self.size = desc.size
         self.ref_to = ref_to
 
+    def __repr__(self):
+        if self.ref_to:
+            return self.__class__.__name__ + '_' + str(self.desc) + '->' + self.ref_to
+        else:
+            return self.__class__.__name__ + '_' + str(self.desc)
+
     def from_buffer(self, data: M3StructureData, buffer, offset):
-        instance = self.desc.instance(buffer, offset)
-        setattr(data, self.name, instance)
+        setattr(data, self.name, self.desc.instance(buffer, offset))
 
     def to_buffer(self, data: M3StructureData, buffer, offset):
         instance = getattr(data, self.name)
@@ -255,8 +270,7 @@ class M3FieldStructure(M3Field):
             instance_offset += field.size
 
     def default_set(self, data: M3StructureData):
-        instance = self.desc.instance()
-        setattr(data, self.name, instance)
+        setattr(data, self.name, self.desc.instance())
 
     def content_validate(self, field_content, field_path):
         self.desc.instance_validate(field_content, field_path)
@@ -269,7 +283,6 @@ class M3FieldPrimitive(M3Field):
         M3Field.__init__(self, name)
         self.struct_format = struct.Struct('<' + primitive_field_info[type_str]['format'])
         self.size = self.struct_format.size
-        self.type_str = type_str
         self.default_value = default_value
         self.expected_value = expected_value
 
@@ -327,37 +340,120 @@ class M3FieldFloat(M3FieldPrimitive):
 class M3SectionList(list):
     ''' List object for M3Section instances '''
 
-    def __init__(self, init_header=True):
+    def __init__(self):
         list.__init__(self, [])
+        self.filepath = None
+        self.file = None
+        self.model = None
+        self.md_version = 34
 
-        if init_header:
-            section = M3Section(desc=structures['MD34'].get_version(11), index_entry=None, references=[], content=[])
-            section.content_add().tag = int.from_bytes(b'43DM', 'little')
-            self.append(section)
+    def __getitem__(self, key):
+        if type(key) == M3StructureData:
+            item = self[key.index] if key.index and key.entries else []
+        else:
+            item = super(M3SectionList, self).__getitem__(key)
 
-    def __getitem__(self, item):
-        return (self[item.index] if item.index and item.entries else []) if type(item) == M3StructureData else super(M3SectionList, self).__getitem__(item)
+            if item is None:
+                self[key] = self.section_from_index_entry(self.index_entries[key])
+                item = self[key]
+
+        return item
 
     def __setitem__(self, item, val):
         assert type(val.desc) == M3StructureDescription
         return super(M3SectionList, self).__setitem__(item, val)
 
     @classmethod
-    def from_index(cls, entry_desc, entry_buffers, md_version=34):
-        self = cls(init_header=False)
+    def new(cls, name, version):
+        self = cls()
 
-        for entry_buffer in entry_buffers:
-            index_entry = entry_desc.instance(entry_buffer)
-            tag_str = index_entry.tag.to_bytes(4, 'little').decode('ascii').replace('\x00', '')[::-1]
-            desc = structures[tag_str].get_version(index_entry.version, md_version)
-            section = M3Section(desc=desc, index_entry=index_entry, references=[], content=[])
+        section = M3Section(desc=structures['MD34'].get_version(11), index_entry=None, references=[], content=[])
+        section.content_add().tag = int.from_bytes(b'43DM', 'little')
+        self.append(section)
 
-            if section.desc is None:
-                stderr.write(f'Unknown section: {tag_str}V{index_entry.version} at offset {index_entry.offset}')
+        model_section = self.section_for_reference(self[0][0], 'model', version=version)
+        self.model = model_section.content_add()
 
-            self.append(section)
+        model_name_section = self.section_for_reference(self.model, 'model_name')
+        model_name_section.content_from_string(name)
 
         return self
+
+    @classmethod
+    def load(cls, filepath, lazy=False):
+        self = cls()
+        self.filepath = filepath
+        self.index_entries = []
+
+        f = open(filepath, 'rb')
+        md_tag = f.read(4)[::-1].decode('ascii')
+        self.md_version = int(md_tag[2:])
+        f.seek(0)
+        m3_header = structures[md_tag].get_version(11)
+        header = m3_header.instance(f.read(m3_header.size))
+        f.seek(header.index_offset)
+        mdie = structures['MDIndexEntry'].get_version(self.md_version)
+
+        self.file = f
+
+        for entry_buffer in [f.read(mdie.size) for ii in range(header.index_size)]:
+            index_entry = mdie.instance(entry_buffer)
+            tag_str = index_entry.tag.to_bytes(4, 'little').decode('ascii').replace('\x00', '')[::-1]
+            desc = structures[tag_str].get_version(index_entry.version, self.md_version)
+
+            if desc is None:
+                stderr.write(f'Unknown section: {tag_str}V{index_entry.version} at offset {index_entry.offset}')
+
+            self.index_entries.append(index_entry)
+            self.append(self.section_from_index_entry(index_entry) if not lazy else None)
+
+        if not lazy:
+            f.close()
+            self.file = None
+
+        self.model = self[self[0][0].model][0]
+
+        return self
+
+    def save(self, filepath=None):
+        buffer_offset = 0
+        for section in self:
+            section.index_entry = structures['MDIndexEntry'].get_version(34).instance()
+            section.index_entry.tag = int.from_bytes(section.desc.history.name[::-1].encode('ascii'), 'little')
+            section.index_entry.offset = buffer_offset
+            section.index_entry.repetitions = len(section)
+            section.index_entry.version = section.desc.version
+            section.raw_bytes = section.desc.instances_to_bytearray(section.content)
+            section.raw_bytes.extend([0xaa for ii in range(0, len(section.raw_bytes) % 16)])
+            buffer_offset += len(section.raw_bytes)
+
+        self[0][0].index_offset = buffer_offset
+        self[0][0].index_size = len(self)
+        self[0].raw_bytes = self[0].desc.instances_to_bytearray(self[0])
+        self[0].raw_bytes.extend([0xaa for ii in range(0, len(self[0].raw_bytes) % 16)])
+
+        if filepath is None:
+            filepath = self.filepath
+
+        with open(filepath, 'w+b') as f:
+            index_buffer = bytearray(16 * len(self))
+            prev_section = None
+            for ii, section in enumerate(self):
+                if section.index_entry.offset != f.tell():
+                    raise Exception(f'Section length: {prev_section.index_entry} with length {len(prev_section.raw_bytes)} followed by {section.index_entry}')
+                section.index_entry.to_buffer(index_buffer, 16 * ii)
+                f.write(section.raw_bytes)
+                prev_section = section
+            f.write(index_buffer)
+
+    def section_from_index_entry(self, index_entry):
+        tag_str = index_entry.tag.to_bytes(4, 'little').decode('ascii').replace('\x00', '')[::-1]
+        desc = structures[tag_str].get_version(index_entry.version, self.md_version)
+        self.file.seek(index_entry.offset)
+        section_buffer = self.file.read(index_entry.repetitions * desc.size)
+        section = M3Section(desc=desc, index_entry=index_entry, references=[], content=desc.instances(buffer=section_buffer, count=index_entry.repetitions))
+        section.raw_bytes = section_buffer
+        return section
 
     def section_for_reference(self, structure, field, version=0, pos=-1):
         ref_desc = structures[structure.desc.fields[field].ref_to].get_version(version)
@@ -389,23 +485,6 @@ class M3SectionList(list):
                 reference.index = ii
                 reference.entries = len(section)
 
-    def to_index(self):
-        buffer_offset = 0
-        for section in self:
-            section.index_entry = structures['MDIndexEntry'].get_version(34).instance()
-            section.index_entry.tag = int.from_bytes(section.desc.history.name[::-1].encode('ascii'), 'little')
-            section.index_entry.offset = buffer_offset
-            section.index_entry.repetitions = len(section)
-            section.index_entry.version = section.desc.version
-            section.raw_bytes = section.desc.instances_to_bytearray(section.content)
-            section.raw_bytes.extend([0xaa for ii in range(0, len(section.raw_bytes) % 16)])
-            buffer_offset += len(section.raw_bytes)
-
-        self[0][0].index_offset = buffer_offset
-        self[0][0].index_size = len(self)
-        self[0].raw_bytes = self[0].desc.instances_to_bytearray(self[0])
-        self[0].raw_bytes.extend([0xaa for ii in range(0, len(self[0].raw_bytes) % 16)])
-
 
 class M3Section:
     ''' Container for M3StructureData (or primitive) instances '''
@@ -421,7 +500,10 @@ class M3Section:
         if self.index_entry:
             return f'Section {self.index_entry}'
         if self.desc:
-            return f'Section {self.desc.history.name}V{self.desc.version}'
+            return f'Section {self.desc.history.name}V{self.desc.version} ({len(self.content)})'
+
+    def __repr__(self):
+        return self.__str__()
 
     def __iter__(self):
         return iter(self.content)
@@ -445,35 +527,5 @@ class M3Section:
         self.content = [ord(c) for c in string] + [0x00]
 
 
-def section_list_load(filepath):
-    with open(filepath, 'rb') as f:
-        md_tag = f.read(4)[::-1].decode('ascii')
-        md_version = int(md_tag[2:])
-        f.seek(0)
-        m3_header = structures[md_tag].get_version(11)
-        header = m3_header.instance(f.read(m3_header.size))
-        f.seek(header.index_offset)
-        mdie = structures['MDIndexEntry'].get_version(md_version)
-
-        for section in (sections := M3SectionList.from_index(mdie, [f.read(mdie.size) for ii in range(header.index_size)], md_version)):
-            f.seek(section.index_entry.offset)
-            section.raw_bytes = (buffer := f.read(section.index_entry.repetitions * section.desc.size))
-            section.content = section.desc.instances(buffer=buffer, count=section.index_entry.repetitions)
-
-    return sections
-
-
-def section_list_save(sections: M3SectionList, filepath):
-    with open(filepath, 'w+b') as f:
-        index_buffer = bytearray(16 * len(sections))
-        prev_section = None
-        for ii, section in enumerate(sections):
-            if section.index_entry.offset != f.tell():
-                raise Exception(f'Section length: {prev_section.index_entry} with length {len(prev_section.raw_bytes)} followed by {section.index_entry}')
-            section.index_entry.to_buffer(index_buffer, 16 * ii)
-            f.write(section.raw_bytes)
-            prev_section = section
-        f.write(index_buffer)
-
-
 structures = structures_from_tree()
+

@@ -921,7 +921,7 @@ class Exporter():
             'attachment_volumes': export_attachment_volumes, 'billboards': export_billboards, 'tmd': export_tmd_data
         }
 
-    def m3_export(self, ob, valid_collections, filename, output_anims):
+    def m3_export(self, ob, valid_collections, filepath, output_anims):
 
         bpy.context.view_layer.objects.active = ob
         bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
@@ -935,7 +935,7 @@ class Exporter():
         self.unused_val = -1
         self.unanimated_init = True
 
-        self.m3 = io_m3.M3SectionList()
+        self.m3 = io_m3.M3SectionList.new(os.path.basename(filepath), self.ob.m3_model_version)
         self.output_anims = output_anims
 
         self.anim_id_count = 0
@@ -1116,11 +1116,7 @@ class Exporter():
         if total_verts > 65536:
             self.err_strings.append(f'Overall vertex count ({total_verts}) exceeds the M3 format limit of 65536')
 
-        model_section = self.m3.section_for_reference(self.m3[0][0], 'model', version=self.ob.m3_model_version)
-        model = model_section.content_add()
-
-        model_name_section = self.m3.section_for_reference(model, 'model_name')
-        model_name_section.content_from_string(os.path.basename(filename))
+        model = self.m3.model
 
         self.bounds_min = mathutils.Vector((self.ob.m3_bounds.left, self.ob.m3_bounds.back, self.ob.m3_bounds.bottom))
         self.bounds_max = mathutils.Vector((self.ob.m3_bounds.right, self.ob.m3_bounds.front, self.ob.m3_bounds.top))
@@ -1157,7 +1153,7 @@ class Exporter():
 
         self.m3.validate()
         self.m3.resolve()
-        self.m3.to_index()
+        self.m3.save(filepath)
 
         return self.m3
 
@@ -2775,17 +2771,16 @@ class Exporter():
         return anim_ref
 
 
-def m3_export(ob, filename, bl_op=None, output_anims=None):
+def m3_export(ob, filepath, bl_op=None, output_anims=None):
     assert ob.type == 'ARMATURE'
-    if not (filename.endswith('.m3') or filename.endswith('.m3a')):
-        filename = filename.rsplit('.', 1)[0] + '.m3'
+    if not (filepath.endswith('.m3') or filepath.endswith('.m3a')):
+        filepath = filepath.rsplit('.', 1)[0] + '.m3'
     exporter = Exporter(bl_op=bl_op)
-    exporter.is_m3a = filename.endswith('m3a')
+    exporter.is_m3a = filepath.endswith('m3a')
     valid_collections = exporter.get_validated_data(ob)
     exporter.scene_prepare(ob)
     try:
-        sections = exporter.m3_export(ob, valid_collections, filename, output_anims)
-        io_m3.section_list_save(sections, filename)
+        exporter.m3_export(ob, valid_collections, filepath, output_anims)
     except Exception as e:
         if type(e) != AssertionError:
             exporter.err_strings.append(traceback.format_exc())
