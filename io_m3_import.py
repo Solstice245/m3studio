@@ -520,7 +520,6 @@ class Importer:
                 setattr(self.ob, version_attr, str(version_val))
 
     def m3_get_bone_name(self, bone_index):
-        final_bone_name = self.final_bone_names.get(m3_bone_name)
         return self.final_bone_names.get(bone_index)
 
     def animate_pose_bone(self, anim_ids, defaults, pose_bone, left_mat, right_mat):
@@ -807,7 +806,6 @@ class Importer:
 
                     if parent_child_vector.length < 0.000001:
                         edit_bone.use_connect = True
-                edit_bones.append(edit_bone)
 
             return edit_bones
 
