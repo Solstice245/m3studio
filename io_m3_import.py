@@ -520,9 +520,8 @@ class Importer:
                 setattr(self.ob, version_attr, str(version_val))
 
     def m3_get_bone_name(self, bone_index):
-        m3_bone_name = self.m3[self.m3[self.m3_model.bones][bone_index].name].content_to_string()
         final_bone_name = self.final_bone_names.get(m3_bone_name)
-        return final_bone_name or m3_bone_name
+        return self.final_bone_names.get(bone_index)
 
     def animate_pose_bone(self, anim_ids, defaults, pose_bone, left_mat, right_mat):
         id_data_loc = self.stc_id_data.get(anim_ids[0], {})
@@ -787,10 +786,15 @@ class Importer:
 
         def get_edit_bones(m3_bones, bone_heads, bone_tails, bone_rolls):
             edit_bones = []
+
             for index, m3_bone in enumerate(m3_bones):
                 m3_bone_name = self.m3[m3_bone.name].content_to_string()
                 edit_bone = self.ob.data.edit_bones.new(m3_bone_name)
-                self.final_bone_names[m3_bone_name] = edit_bone.name
+                self.final_bone_names[index] = edit_bone.name
+                edit_bones.append(edit_bone)
+
+            for index, m3_bone in enumerate(m3_bones):
+                edit_bone = edit_bones[index]
                 edit_bone.head = bone_heads[index]
                 edit_bone.tail = bone_tails[index]
                 edit_bone.roll = bone_rolls[index]
