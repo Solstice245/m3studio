@@ -1454,16 +1454,18 @@ class Importer:
         ob = self.ob
 
         m3_hittest_tight = self.m3_model.hittest_tight
-        pose_bone_name = self.m3_get_bone_name(m3_hittest_tight.bone)
-        pose_bone = ob.pose.bones.get(pose_bone_name)
-        ob.m3_hittest_tight.bone.handle = pose_bone.bl_handle if pose_bone else ''
-        ob.m3_hittest_tight.shape = ob.m3_hittest_tight.bl_rna.properties['shape'].enum_items[m3_hittest_tight.shape].identifier
-        ob.m3_hittest_tight.size = (m3_hittest_tight.size0, m3_hittest_tight.size1, m3_hittest_tight.size2)
-        md = to_bl_matrix(m3_hittest_tight.matrix).decompose()
-        ob.m3_hittest_tight.location = md[0]
-        ob.m3_hittest_tight.rotation = md[1].to_euler('XYZ')
-        ob.m3_hittest_tight.scale = md[2]
-        ob.m3_hittest_tight.mesh_object = self.gen_basic_volume_object(ob.m3_hittest_tight.name, m3_hittest_tight.vertices, m3_hittest_tight.face_data)
+
+        if m3_hittest_tight.bone >= 0:
+            pose_bone_name = self.m3_get_bone_name(m3_hittest_tight.bone)
+            pose_bone = ob.pose.bones.get(pose_bone_name)
+            ob.m3_hittest_tight.bone.handle = pose_bone.bl_handle if pose_bone else ''
+            ob.m3_hittest_tight.shape = ob.m3_hittest_tight.bl_rna.properties['shape'].enum_items[m3_hittest_tight.shape].identifier
+            ob.m3_hittest_tight.size = (m3_hittest_tight.size0, m3_hittest_tight.size1, m3_hittest_tight.size2)
+            md = to_bl_matrix(m3_hittest_tight.matrix).decompose()
+            ob.m3_hittest_tight.location = md[0]
+            ob.m3_hittest_tight.rotation = md[1].to_euler('XYZ')
+            ob.m3_hittest_tight.scale = md[2]
+            ob.m3_hittest_tight.mesh_object = self.gen_basic_volume_object(ob.m3_hittest_tight.name, m3_hittest_tight.vertices, m3_hittest_tight.face_data)
 
         for m3_hittest in self.m3[self.m3_model.hittests]:
             pose_bone_name = self.m3_get_bone_name(m3_hittest.bone)
