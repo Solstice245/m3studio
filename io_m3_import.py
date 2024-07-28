@@ -892,7 +892,12 @@ class Importer:
                     mat[ii] = -mat[ii]
 
             bl_irefs.append(mat)
-            bone_rests.append(mat.inverted() @ io_shared.rot_fix_matrix)
+
+            try:
+                bone_rests.append(mat.inverted() @ io_shared.rot_fix_matrix)
+            except ValueError:
+                bone_rests.append(mathutils.Matrix() @ io_shared.rot_fix_matrix)
+
             bind_scales.append((orig_mat @ io_shared.rot_fix_matrix_transpose).to_scale().yxz)
             bone_heads.append(bone_rests[-1].translation)
             bone_vectors.append(bone_rests[-1].col[1].to_3d().normalized())
