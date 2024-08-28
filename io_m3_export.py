@@ -1457,11 +1457,26 @@ class Exporter():
                 frame_to_bone_abs_pose_matrix = {frame: {} for frame in frames}
                 self.action_abs_pose_matrices[anim.action] = frame_to_bone_abs_pose_matrix
 
+                seq = list(range(4))
+
                 for frame in frames:
                     self.scene.frame_set(frame)
 
                     for pb in bones:
-                        bone_to_pose_matrices[pb].append(self.ob.convert_space(pose_bone=pb, matrix=pb.matrix, from_space='POSE', to_space='LOCAL'))
+                        pose_matrix = self.ob.convert_space(pose_bone=pb, matrix=pb.matrix, from_space='POSE', to_space='LOCAL')
+                        # for ii in range(4):  # fixes edge case where numbers ~ -0 should be interpreted as 0
+                        #     for jj in range(4):
+                        #         if abs(pose_matrix[ii][jj]) < 0.00001:
+                        #             pose_matrix[ii][jj] = 0
+                        # for row in pose_matrix:
+                        #     for col in row:
+                        #         if abs(col) < 0.00001:
+                        #             col = 0
+                        for ii in seq:
+                            for jj in seq:
+                                if abs(pose_matrix[ii][jj]) < 0.00001:
+                                    pose_matrix[ii][jj] = 0
+                        bone_to_pose_matrices[pb].append(pose_matrix)
 
                 bone_m3_pose_matrices = {bone: [] for bone in bones}
 
