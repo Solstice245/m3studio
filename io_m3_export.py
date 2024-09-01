@@ -1945,7 +1945,7 @@ class Exporter():
 
                             m3_layer.bit_set('flags', 'particle_uv_flipbook', m3_layer.uv_source == 6)
 
-                            if layer.color_bitmap.endswith('.ogg') and layer.color_type == 'BITMAP':
+                            if layer.color_bitmap.endswith('.ogv') and layer.color_type == 'BITMAP':
                                 m3_layer.bit_set('flags', 'video', True)
                             else:
                                 m3_layer.video_frame_rate = 0
