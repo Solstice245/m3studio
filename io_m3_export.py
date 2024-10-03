@@ -1395,7 +1395,7 @@ class Exporter():
             m3_bone.rotation.null.w = 1.0
             m3_bone.scale = self.init_anim_ref_vec3(anim_id=int(pose_bone.m3_scale_hex_id, 16))
             m3_bone.scale.null = to_m3_vec3((1.0, 1.0, 1.0))
-            m3_bone.batching = self.init_anim_ref_flag(pose_bone.m3_batching, anim_id=int(pose_bone.m3_batching_hex_id, 16))
+            m3_bone.batching = self.init_anim_ref_flag(pose_bone.m3_batching, interpolation=0, anim_id=int(pose_bone.m3_batching_hex_id, 16))
             m3_bone.batching.null = 1
 
             bone_to_m3_bone[pose_bone] = m3_bone
