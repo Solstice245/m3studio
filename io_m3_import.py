@@ -1239,7 +1239,10 @@ class Importer:
                 m3v1_lookup_id = (m3v1.lookup0, m3v1.lookup1, m3v1.lookup2, m3v1.lookup3, m3v1.weight0, m3v1.weight1, m3v1.weight2, m3v1.weight3)
 
                 if m3v0_lookup_id != m3v1_lookup_id:
-                    del doubles[origin]
+                    try:
+                        del doubles[origin]
+                    except KeyError:
+                        pass  # origin is somehow deleted sometimes?
             bmesh.ops.weld_verts(bm, targetmap=doubles)
 
             bm.to_mesh(mesh)
