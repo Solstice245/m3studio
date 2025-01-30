@@ -48,7 +48,7 @@ from . import bl_graphics_draw
 bl_info = {
     'name': 'M3: Used by Blizzard\'s StarCraft 2 and Heroes of the Storm',
     'author': 'Solstice245',
-    'version': (0, 2, 0),
+    'version': (0, 3, 0),
     'blender': (3, 0, 0),
     'location': 'Properties Editor -> Object Data -> M3 Panels',
     'description': 'Allows import and export of models in the M3 format.',
@@ -116,6 +116,13 @@ class M3ExportOperator(bpy.types.Operator):
     filepath: bpy.props.StringProperty(name='File Path', description='File path for export operation', maxlen=1023, default='')
 
     output_anims: bpy.props.BoolProperty(default=True, name='Output Animations', description='Include animations in the resulting m3 file. (Unchecked does not apply when exporting as m3a)')
+    section_reuse_mode: bpy.props.EnumProperty(default='EXPLICIT', name='Section Reuse', items=m3_object_armature.e_section_reuse_mode)
+    # ! disabling these next two options since I can't reliably make the output models stable
+    # face_storage_mode: bpy.props.EnumProperty(default='STANDARD', name='Face Output Mode', items=m3_object_armature.e_face_storage_mode)
+    # vert_format_lookup: bpy.props.EnumProperty(default='STANDARD', name='Lookups', items=m3_object_armature.e_vert_format_lookup)
+    cull_unused_bones: bpy.props.BoolProperty(default=True, name='Cull Unused Bones', description='Bones which the exporter determines will not be referenced in the m3 file are removed')
+    cull_material_layers: bpy.props.BoolProperty(default=True, name='Cull Material Layers', description='Fills all blank material layer slots with a reference to a single layer section, which reduces file size. When turned off, output will conform to Blizzard standards, where all available material layer slots are filled with a unique layer section.')
+    use_only_max_bounds: bpy.props.BoolProperty(default=False, name='Use Only Max Bounds', description='Rather than having multiple bounding box keys, animations will have exactly one bounding box key which has the maximum dimensions of all the keys there would have been. Can slightly reduce file size')
 
     @classmethod
     def poll(cls, context):
@@ -124,12 +131,19 @@ class M3ExportOperator(bpy.types.Operator):
     def invoke(self, context, event):
         if context.active_object.m3_filepath_export:
             self.filepath = context.active_object.m3_filepath_export
+        for key in type(context.active_object.m3_export_opts).__annotations__.keys():
+            prop = getattr(context.active_object.m3_export_opts, key)
+            setattr(self, key, prop)
+
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
 
     def execute(self, context):
-        io_m3_export.m3_export(ob=context.active_object, filepath=self.filepath, bl_op=self, output_anims=self.output_anims)
+        io_m3_export.m3_export(ob=context.active_object, filepath=self.filepath, bl_op=self)
         context.active_object.m3_filepath_export = self.filepath
+        for key in type(context.active_object.m3_export_opts).__annotations__.keys():
+            prop = getattr(self, key)
+            setattr(context.active_object.m3_export_opts, key, prop)
         return {'FINISHED'}
 
 

@@ -29,7 +29,7 @@ from . import shared
 from .m3_animations import ob_anim_data_set
 
 
-ANIM_DATA_SECTION_NAMES = ('SDEV', 'SD2V', 'SD3V', 'SD4Q', 'SDCC', 'SDR3', 'SD08', 'SDS6', 'SDU6', 'SDS3', 'SDU3', 'SDFG', 'SDMB')
+ANIM_DATA_SECTION_NAMES = ('SDEV', 'SD2V', 'SD3V', 'SD4Q', 'SDCC', 'SDR3', 'SDU8', 'SDS6', 'SDU6', 'SDS3', 'SDU3', 'SDFG', 'SDMB')
 BNDS_ANIM_ID = 0x001f9bd2
 EVNT_ANIM_ID = 0x65bd3215
 INT16_MIN = (-(1 << 15))
@@ -166,7 +166,7 @@ def float_interp(left, right, factor):
 
 
 def float_equal(val0, val1):
-    return abs(val0 - val1) < 0.0001
+    return abs(val0 - val1) < 0.0005
 
 
 def vec_interp(left, right, factor):
@@ -174,7 +174,7 @@ def vec_interp(left, right, factor):
 
 
 def vec_equal(val0, val1):
-    return (val0 - val1).length < 0.0001
+    return (val0 - val1).length < 0.0005
 
 
 def quat_interp(left, right, factor):
@@ -198,7 +198,7 @@ def simplify_anim_data_with_interp(keys, keyframes, vals, interp_func, equal_fun
     for right_key, right_val in zip(keys[2:], vals[2:]):
 
         # include key if it was manually set, even if it can be interpolated
-        if right_key in keyframes:
+        if curr_key in keyframes:
             new_keys.append(curr_key)
             new_vals.append(curr_val)
             left_key = curr_key
@@ -634,7 +634,7 @@ class Exporter():
         export_tmd_data = []  # handled specially
 
         # do not cull bones when exporting as m3a
-        if self.is_m3a:
+        if self.is_m3a or not self.bl_op.cull_unused_bones:
             required_bones = set(ob.pose.bones)
 
         anim_group_names = []
@@ -921,7 +921,7 @@ class Exporter():
             'attachment_volumes': export_attachment_volumes, 'billboards': export_billboards, 'tmd': export_tmd_data
         }
 
-    def m3_export(self, ob, valid_collections, filepath, output_anims):
+    def m3_export(self, ob, valid_collections, filepath):
 
         bpy.context.view_layer.objects.active = ob
         bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
@@ -936,7 +936,6 @@ class Exporter():
         self.unanimated_init = True
 
         self.m3 = io_m3.M3SectionList.new(os.path.basename(filepath), self.ob.m3_model_version)
-        self.output_anims = output_anims
 
         self.anim_id_count = 0
         self.uv_count = 1
@@ -1122,7 +1121,7 @@ class Exporter():
         self.bounds_max = mathutils.Vector((self.ob.m3_bounds.right, self.ob.m3_bounds.front, self.ob.m3_bounds.top))
         model.boundings = to_m3_bnds((self.bounds_min, self.bounds_max))
 
-        if self.output_anims or self.is_m3a:
+        if self.bl_op.output_anims or self.is_m3a:
             self.create_sequences(model, valid_collections['sequences'])
         self.create_bones(model, valid_collections['bones'], valid_collections['sequences'])
         self.create_division(model, valid_collections['regions'], valid_collections['bones'], regn_version=self.ob.m3_mesh_version)
@@ -1148,11 +1147,15 @@ class Exporter():
         self.create_billboards(model, valid_collections['billboards'])
         # self.create_tmd_data(model, valid_collections['tmd_data'])  # ! not supported in modern SC2 client
 
-        if self.output_anims or self.is_m3a:
+        if self.bl_op.output_anims or self.is_m3a:
             self.finalize_anim_data(model)
 
         self.m3.validate()
         self.m3.resolve()
+
+        if self.bl_op.section_reuse_mode == 'FACTORED':
+            self.m3.factor_sections()
+
         self.m3.save(filepath)
 
         return self.m3
@@ -1255,15 +1258,32 @@ class Exporter():
 
                 prev_min, prev_max = bounding_vectors_from_bones(self.bone_bound_vecs, self.action_abs_pose_matrices[action][init_frame])
 
-                bnds_data[0].append(init_frame)
-                bnds_data[1].append(to_m3_bnds((prev_min, prev_max)))
+                if self.bl_op.use_only_max_bounds:
+                    if not frame_list:
+                        continue
 
-                for frame in frame_list[0::3]:
-                    bnds_min, bnds_max = bounding_vectors_from_bones(self.bone_bound_vecs, self.action_abs_pose_matrices[action][frame])
-                    if (prev_min - bnds_min).length >= 0.03 or (prev_max - bnds_max).length >= 0.03:
-                        bnds_data[0].append(frame)
-                        bnds_data[1].append(to_m3_bnds((bnds_min, bnds_max)))
-                        prev_min, prev_max = bnds_min, bnds_max
+                    for frame in frame_list[1:]:
+                        bnds_min, bnds_max = bounding_vectors_from_bones(self.bone_bound_vecs, self.action_abs_pose_matrices[action][frame])
+
+                        for ii in range(3):
+                            prev_min[ii] = min(prev_min[ii], bnds_min[ii])
+
+                        for ii in range(3):
+                            prev_max[ii] = max(prev_max[ii], bnds_max[ii])
+
+                    bnds_data[0].append(init_frame)
+                    bnds_data[1].append(to_m3_bnds((prev_min, prev_max)))
+
+                else:
+                    bnds_data[0].append(init_frame)
+                    bnds_data[1].append(to_m3_bnds((prev_min, prev_max)))
+
+                    for frame in frame_list[0::3]:
+                        bnds_min, bnds_max = bounding_vectors_from_bones(self.bone_bound_vecs, self.action_abs_pose_matrices[action][frame])
+                        if (prev_min - bnds_min).length >= 0.03 or (prev_max - bnds_max).length >= 0.03:
+                            bnds_data[0].append(frame)
+                            bnds_data[1].append(to_m3_bnds((bnds_min, bnds_max)))
+                            prev_min, prev_max = bnds_min, bnds_max
 
             section_pos = self.m3.index(self.stc_to_name_section[stc_list[-1]])  # initially position behind name
 
@@ -1433,7 +1453,7 @@ class Exporter():
 
         calc_actions = []
 
-        if not (self.output_anims or self.is_m3a):
+        if not (self.bl_op.output_anims or self.is_m3a):
             return
 
         for anim_group in sequences:
@@ -1464,15 +1484,7 @@ class Exporter():
 
                     for pb in bones:
                         pose_matrix = self.ob.convert_space(pose_bone=pb, matrix=pb.matrix, from_space='POSE', to_space='LOCAL')
-                        # for ii in range(4):  # fixes edge case where numbers ~ -0 should be interpreted as 0
-                        #     for jj in range(4):
-                        #         if abs(pose_matrix[ii][jj]) < 0.00001:
-                        #             pose_matrix[ii][jj] = 0
-                        # for row in pose_matrix:
-                        #     for col in row:
-                        #         if abs(col) < 0.00001:
-                        #             col = 0
-                        for ii in seq:
+                        for ii in seq:  # fixes edge case where numbers ~ -0 should be interpreted as 0
                             for jj in seq:
                                 if abs(pose_matrix[ii][jj]) < 0.00001:
                                     pose_matrix[ii][jj] = 0
@@ -1571,7 +1583,7 @@ class Exporter():
         self.scene.frame_set(0)
 
     def create_division(self, model, mesh_objects, bones, regn_version):
-        model.bit_set('flags', 'has_mesh', len(mesh_objects) > 0)
+        model.bit_set('flags', 'e_mdAllowLocalLightShadows', len(mesh_objects) > 0)
 
         if not len(mesh_objects):
             model.skin_bone_count = 0
@@ -1585,24 +1597,54 @@ class Exporter():
             return
 
         model.skin_bone_count = max([self.bone_name_indices[bone.name] for bone in self.skinned_bones]) + 1
-        model.vertex_flags = 0x182007d
+        model.vertex_flags = 0x0180001D
 
-        model.bit_set('vertex_flags', 'use_uv0', self.uv_count > 1)
-        model.bit_set('vertex_flags', 'use_uv1', self.uv_count > 2)
-        model.bit_set('vertex_flags', 'use_uv2', self.uv_count > 3)
-        model.bit_set('vertex_flags', 'use_uv3', self.uv_count > 4)
+        model.bit_set('vertex_flags', 'pos', True)
 
-        vertex_rgba = False
+        # if self.bl_op.vert_format_lookup == 'STANDARD':
+        #     model.bit_set('vertex_flags', 'skin0', True)
+        #     model.bit_set('vertex_flags', 'skin1', True)
+        # elif self.bl_op.vert_format_lookup == 'REDUCED':
+        #     model.bit_set('vertex_flags', 'skin0', True)
+        model.bit_set('vertex_flags', 'skin0', True)
+        model.bit_set('vertex_flags', 'skin1', True)
+
+        export_uv_list = []
+
+        if self.uv_count > 0:
+            model.bit_set('vertex_flags', 'uv0', True)
+            export_uv_list.append('uv0')
+
+        if self.uv_count > 1:
+            model.bit_set('vertex_flags', 'uv1', True)
+            export_uv_list.append('uv1')
+
+        if self.uv_count > 2:
+            model.bit_set('vertex_flags', 'uv2', True)
+            export_uv_list.append('uv2')
+
+        if self.uv_count > 3:
+            model.bit_set('vertex_flags', 'uv3', True)
+            export_uv_list.append('uv3')
+
+        if self.uv_count > 4:
+            model.bit_set('vertex_flags', 'uv4', True)
+            export_uv_list.append('uv4')
+
+        export_normal = model.bit_get('vertex_flags', 'normal')
+        export_skin0 = model.bit_get('vertex_flags', 'skin0')
+        export_skin1 = model.bit_get('vertex_flags', 'skin1')
+        export_col = False
+
         for ob in mesh_objects:
             me = ob.data
-
             for vertex_col in me.vertex_colors:
                 if vertex_col.name in ['m3color', 'm3alpha']:
-                    vertex_rgba = True
+                    model.bit_set('vertex_flags', 'color', True)
+                    export_col = True
+                    break
 
-        model.bit_set('vertex_flags', 'has_vertex_colors', vertex_rgba)
-
-        m3_vertex_desc = io_m3.structures['VertexFormat' + hex(model.vertex_flags)].get_version(0)
+        m3_vertex_desc = io_m3.M3StructureDescription.get_vertex_description(model.vertex_flags)
 
         vertex_section = self.m3.section_for_reference(model, 'vertices', pos=None if self.is_m3a else -1)
 
@@ -1620,6 +1662,33 @@ class Exporter():
         m3_lookup = []
 
         bone_bounding_points = {bone: [] for bone in bones}
+
+        ob_to_regions = {}
+        region_to_batch_bone = {}
+        region_to_matref = {}
+
+        deformations_count = 0
+        if export_skin0:
+            deformations_count += 2
+        if export_skin1:
+            deformations_count += 2
+
+        m3_vert_id_eval = 'lambda m3v: (m3v.pos.x, m3v.pos.y, m3v.pos.z'
+        if export_normal:
+            m3_vert_id_eval += ', m3v.normal.x, m3v.normal.y, m3v.normal.z'
+        if deformations_count > 0:
+            m3_vert_id_eval += ', m3v.lookup0, m3v.lookup1, m3v.weight0, m3v.weight1'
+        if deformations_count > 2:
+            m3_vert_id_eval += ', m3v.lookup2, m3v.lookup3, m3v.weight2, m3v.weight3'
+        if export_col:
+            m3_vert_id_eval += ', m3v.col.r, m3v.col.g, m3v.col.b, m3v.col.a'
+        for ii in range(self.uv_count):
+            m3_vert_id_eval += f', m3v.uv{ii}.x, m3v.uv{ii}.y'
+        m3_vert_id_eval += ')'
+
+        # generating this lambda function to keep the conditional logic
+        # of which vert properties to get outside of the vert loop
+        m3_vert_id_get = eval(m3_vert_id_eval)
 
         for ob_index, ob in enumerate(mesh_objects):
             bm = bmesh.new(use_operators=True)
@@ -1643,9 +1712,6 @@ class Exporter():
 
             layers_uv = layers_uv[0:self.uv_count]
             layer_tan = layers_uv[0]
-
-            first_vertex_index = len(m3_vertices)
-            first_lookup_index = len(m3_lookup)
             vertex_lookups_used = 0
 
             region_vertices = []
@@ -1657,22 +1723,28 @@ class Exporter():
                     group_to_lookup_ii[ii] = len(region_lookup)
                     region_lookup.append(self.bone_name_indices[group.name])
 
+                    if not deformations_count:
+                        break
+
             region_vert_id_to_vert = {}
             region_vert_count = 0
 
             no_deform_verts = 0
 
             for face in bm.faces:
-                c1, c2, c3 = (L.vert.co for L in face.loops)
-                u1, u2, u3 = (L[layer_tan].uv[0] for L in face.loops)
-                v1, v2, v3 = (L[layer_tan].uv[1] for L in face.loops)
+                loops = face.loops
+
+                c1, c2, c3 = (L.vert.co for L in loops)
+                u1, u2, u3 = (L[layer_tan].uv[0] for L in loops)
+                v1, v2, v3 = (L[layer_tan].uv[1] for L in loops)
+
                 d = (v2 - v1) * (u3 - u1) - (u2 - u1) * (v3 - v1)
                 try:
                     tan = (((v3 - v1) * (c2 - c1) - (v2 - v1) * (c3 - c1)) / -d).normalized()
                 except ZeroDivisionError:
                     tan = mathutils.Vector((0, 0, 0))
 
-                for loop in face.loops:
+                for loop in loops:
                     co = loop.vert.co
                     m3_vert = m3_vertex_desc.instance()
                     m3_vert.pos = to_m3_vec3(co)
@@ -1685,31 +1757,43 @@ class Exporter():
                             deformations.append([lookup_ii, deformation[1]])
                             bone_bounding_points[bones[region_lookup[lookup_ii]]].append(co.copy())
 
-                    deformations.sort(key=lambda x: x[1])
-                    deformations = deformations[0:min(4, len(deformations))]
+                    if deformations_count:
 
-                    if not len(deformations):
-                        no_deform_verts += 1
+                        deformations.sort(key=lambda x: x[1])
+                        deformations = deformations[0:min(deformations_count, len(deformations))]
 
-                    # normalize the weights
-                    sum_weight = 0
-                    for index, weight in deformations:
-                        sum_weight += weight
+                        if not len(deformations):
+                            no_deform_verts += 1
 
-                    remaining_weight = 255
-                    for ii in range(len(deformations)):
-                        lookup = deformations[ii][0]
-                        weight = min(remaining_weight, round(deformations[ii][1] / sum_weight * 255))
-                        remaining_weight = max(0, remaining_weight - weight)
-                        if weight:
-                            setattr(m3_vert, 'lookup' + str(ii), lookup)
-                            setattr(m3_vert, 'weight' + str(ii), weight)
+                        # normalize the weights
+                        sum_weight = 0
+                        for index, weight in deformations:
+                            sum_weight += weight
 
-                    for ii in range(0, 4):
+                        remaining_weight = 255
+                        for ii in range(len(deformations)):
+                            lookup = deformations[ii][0]
+                            weight = min(remaining_weight, round(deformations[ii][1] / sum_weight * 255))
+                            remaining_weight = max(0, remaining_weight - weight)
+                            if weight > 0:
+                                setattr(m3_vert, 'lookup' + str(ii), lookup)
+                                setattr(m3_vert, 'weight' + str(ii), weight)
+
+                        # sometimes there is 1 remaining weight left due to rounding errors
+                        # so we just add it onto the first lookup to prevent model glitches
+                        setattr(m3_vert, 'weight0', m3_vert.weight0 + remaining_weight)
+
+                    for ii in range(self.uv_count):
                         uv_layer = layers_uv[ii] if ii < len(layers_uv) else None
-                        setattr(m3_vert, 'uv' + str(ii), to_m3_uv(loop[uv_layer].uv) if uv_layer else to_m3_uv((0, 0)))
+                        if uv_layer:
+                            uv = loop[uv_layer].uv
+                            setattr(m3_vert, 'uv' + str(ii), to_m3_uv(uv))
+                            # setattr(m3_vert, 'fuv' + str(ii), to_m3_vec2((uv[0] / 16, 1 - uv[1] / 16)))
+                        else:
+                            setattr(m3_vert, 'uv' + str(ii), to_m3_uv((0, 0)))
+                            # setattr(m3_vert, 'fuv' + str(ii), to_m3_vec2((0.0, 0.0)))
 
-                    if vertex_rgba:
+                    if export_col:
                         try:
                             m3_vert.col = to_m3_color((*loop[layer_color][0:3], sum(loop[layer_alpha][0:3]) / 3))
                         except AttributeError:
@@ -1719,19 +1803,7 @@ class Exporter():
                     m3_vert.tan = to_m3_vec3_uint8(tan)
                     m3_vert.sign = 0 if d < 0 else 255
 
-                    id_list = [
-                        m3_vert.pos.x, m3_vert.pos.y, m3_vert.pos.z, m3_vert.lookup0, m3_vert.lookup1, m3_vert.lookup2, m3_vert.lookup3, m3_vert.sign,
-                        m3_vert.weight0, m3_vert.weight1, m3_vert.weight2, m3_vert.weight3, m3_vert.normal.x, m3_vert.normal.y, m3_vert.normal.z,
-                    ]
-
-                    if vertex_rgba:
-                        id_list.extend((m3_vert.col.r, m3_vert.col.g, m3_vert.col.b, m3_vert.col.a))
-
-                    for ii in range(len(layers_uv)):
-                        uv = getattr(m3_vert, 'uv' + str(ii))
-                        id_list.extend((uv.x, uv.y))
-
-                    id_tuple = tuple(id_list)
+                    id_tuple = m3_vert_id_get(m3_vert)
                     id_index = region_vert_id_to_vert.get(id_tuple)
                     if id_index is None:
                         id_index = region_vert_count
@@ -1749,14 +1821,28 @@ class Exporter():
                 self.warn_strings.append(f'{str(ob)} has at least one vertex with no weight given to a valid bone and will not be exported')
                 continue
 
+            first_vertex_index = len(m3_vertices)
             m3_vertices.extend(region_vertices)
+
+            first_lookup_index = len(m3_lookup)
             m3_lookup.extend(region_lookup)
 
+            # if self.bl_op.face_storage_mode == 'COMPACT':
+            #     first_face_index = len(m3_faces)
+            #     m3_faces.extend(region_faces)
+
             # TODO mesh flags for versions 4+
-            for ii, batch in enumerate(ob.m3_mesh_batches):
+            for batch in ob.m3_mesh_batches:
 
                 if self.matref_handle_indices.get(batch.material.handle, None) == None:
                     continue
+
+                # if not self.bl_op.face_storage_mode == 'COMPACT':
+                #     first_face_index = len(m3_faces)
+                #     m3_faces.extend(region_faces)
+                #     region = region_section.content_add()
+                # else:
+                #     region = region_section.desc.instance()
 
                 first_face_index = len(m3_faces)
                 m3_faces.extend(region_faces)
@@ -1768,13 +1854,56 @@ class Exporter():
                 region.bone_count = len(region_lookup)
                 region.first_bone_lookup_index = first_lookup_index
                 region.bone_lookup_count = len(region_lookup)
-                region.vertex_lookups_used = vertex_lookups_used
+                region.vertex_lookups_used = vertex_lookups_used # if self.bl_op.vert_format_lookup != 'ROOTED' else 1
                 region.root_bone = region_lookup[0]
                 bone = shared.m3_pointer_get(self.ob.pose.bones, batch.bone)
+
+                # if not self.bl_op.face_storage_mode == 'COMPACT':
+                #     m3_batch = batch_section.content_add()
+                #     m3_batch.material_reference_index = self.matref_handle_indices[batch.material.handle]
+                #     m3_batch.region_index = len(region_section) - 1
+                #     m3_batch.bone = self.bone_name_indices[bone.name] if bone else -1
+                # else:
+                #     region_to_batch_bone[region] = self.bone_name_indices[bone.name] if bone else -1
+                #     region_to_matref[region] = self.matref_handle_indices[batch.material.handle]
+                #     try:
+                #         ob_to_regions[ob].append(region)
+                #     except KeyError:  # key for ob has not been generated yet
+                #         ob_to_regions[ob] = [region]
+
                 m3_batch = batch_section.content_add()
                 m3_batch.material_reference_index = self.matref_handle_indices[batch.material.handle]
                 m3_batch.region_index = len(region_section) - 1
                 m3_batch.bone = self.bone_name_indices[bone.name] if bone else -1
+
+        # if self.bl_op.face_storage_mode == 'COMPACT':
+        #     regions_total = 0
+        #     region_face_count_max = 0
+        #     region_first_face_index_max = 0
+        #     last_region_first_face_index = 0
+        #     regions_remain = True
+        #     while regions_remain:
+        #         regions_remain = False
+        #         for ob in ob_to_regions:
+        #             ob_regions = ob_to_regions[ob]
+        #             try:
+        #                 regions_total += 1
+        #                 region = ob_regions.pop(0)
+        #                 region_section.content_add(region)
+        #                 region_face_count_max = max(region_face_count_max, region.face_count)
+        #                 region_first_face_index_max = max(region_first_face_index_max, region.first_face_index)
+        #                 last_region_first_face_index = region.first_face_index
+        #                 m3_batch = batch_section.content_add()
+        #                 m3_batch.material_reference_index = region_to_matref[region]
+        #                 m3_batch.region_index = len(region_section) - 1
+        #                 m3_batch.bone = region_to_batch_bone[region]
+        #                 if len(ob_regions):
+        #                     regions_remain = True
+        #             except IndexError:
+        #                 pass  # no more regions to pop from list
+        #     if regions_total > len(mesh_objects):
+        #         # length of faces needs to be extended to prevent client crashes when rendering
+        #         m3_faces.extend([0] * (region_face_count_max + region_first_face_index_max))
 
         self.bone_bound_vecs = {}
 
@@ -1875,6 +2004,8 @@ class Exporter():
         null_layer_section = io_m3.M3Section(desc=layer_desc, index_entry=None, references=[], content=[])
         null_layer_section.content_add()
 
+        model_accept_splats = False
+
         matrefs_typed = {ii: [] for ii in range(0, 13)}
         for matref in matrefs:
             m3_matref = matref_section.content_add()
@@ -1907,7 +2038,14 @@ class Exporter():
                     layer = shared.m3_pointer_get(self.ob.m3_materiallayers, getattr(mat, layer_name_full))
 
                     if not layer:
-                        null_layer_section.references.append(m3_layer_ref)
+
+                        if self.bl_op.cull_material_layers and self.bl_op.section_reuse_mode != 'SINGLE':
+                            null_layer_section.references.append(m3_layer_ref)
+                        else:
+                            layer_section = self.m3.section_for_reference(m3_mat, layer_name_full, version=self.ob.m3_materiallayers_version)
+                            layer_section.content_add()
+                            m3_layer_bitmap_section = self.m3.section_for_reference(m3_layer, 'color_bitmap')
+
                     else:
 
                         if layer.video_channel != -1:
@@ -1916,7 +2054,7 @@ class Exporter():
                             except KeyError:  # invalid index given
                                 layer.video_channel = -1
 
-                        if layer.bl_handle in handle_to_layer_section.keys():
+                        if layer.bl_handle in handle_to_layer_section.keys() and self.bl_op.section_reuse_mode != 'SINGLE':
                             handle_to_layer_section[layer.bl_handle].references.append(m3_layer_ref)
                         else:
                             layer_section = self.m3.section_for_reference(m3_mat, layer_name_full, version=self.ob.m3_materiallayers_version)
@@ -1939,9 +2077,7 @@ class Exporter():
                                 m3_layer.uv_triplanar_scale.null = to_m3_vec3((1.0, 1.0, 1.0))
 
                             if int(self.ob.m3_materiallayers_version) >= 25:
-                                m3_layer.fresnel_inverted_mask_x = 1 - layer.fresnel_mask[0]
-                                m3_layer.fresnel_inverted_mask_y = 1 - layer.fresnel_mask[1]
-                                m3_layer.fresnel_inverted_mask_z = 1 - layer.fresnel_mask[2]
+                                m3_layer.fresnel_invert_mask = to_m3_vec3((1 - v for v in layer.fresnel_mask))
 
                             m3_layer.bit_set('flags', 'particle_uv_flipbook', m3_layer.uv_source == 6)
 
@@ -1970,6 +2106,9 @@ class Exporter():
                             m3_layer.unknowna44bf452.null = 1.0
 
                 if type_ii == 1:  # standard material
+
+                    if m3_mat.bit_get('flags', 'accept_splats') or m3_mat.bit_get('flags', 'accept_splats_only'):
+                        model_accept_splats = True
 
                     if int(versions[type_ii]) > 16:  # MAT_V17+ when unfogged AND transparent_shadows are checked, it crashes the game
                         if m3_mat.bit_get('flags', 'transparent_shadows'):
@@ -2000,6 +2139,9 @@ class Exporter():
                             m3_starburst = starburst_section.content_add()
                             processor = M3OutputProcessor(self, starburst, m3_starburst)
                             io_shared.io_starburst(processor)
+
+        if model_accept_splats:
+            model.bit_set('flags', 'e_mdModelAcceptsSplats', True)
 
         if len(null_layer_section.references):
             self.m3.append(null_layer_section)
@@ -2055,28 +2197,6 @@ class Exporter():
                 except ZeroDivisionError:
                     m3_system.uv_flipbook_col_fraction = float('inf')
                     m3_system.uv_flipbook_row_fraction = float('inf')
-
-            m3_system.unknowne0bd54c8 = self.init_anim_ref_float()
-            m3_system.unknowna2d44d80 = self.init_anim_ref_float()
-            m3_system.unknownf8e2b3d0 = self.init_anim_ref_float()
-            m3_system.unknown54f4ae30 = self.init_anim_ref_float()
-            m3_system.unknown5f54fb02 = self.init_anim_ref_float()
-            m3_system.unknown84d843d6 = self.init_anim_ref_float()
-            m3_system.unknown9cb3dd18 = self.init_anim_ref_float()
-            m3_system.unknown2e01be90 = self.init_anim_ref_float()
-            m3_system.unknownf6193fc0 = self.init_anim_ref_float()
-            m3_system.unknowna5e2260a = self.init_anim_ref_float()
-            m3_system.unknown485f7eea = self.init_anim_ref_float()
-            m3_system.unknown34b6f141 = self.init_anim_ref_float()
-            m3_system.unknown89cdf966 = self.init_anim_ref_float()
-            m3_system.unknown4eefdfc1 = self.init_anim_ref_float()
-            m3_system.unknownab37a1d5 = self.init_anim_ref_float()
-            m3_system.unknownbef7f4d3 = self.init_anim_ref_float()
-            m3_system.unknownb2dbf2f3 = self.init_anim_ref_float()
-            m3_system.unknown3c76d64c = self.init_anim_ref_float()
-            m3_system.unknownbc151e17 = self.init_anim_ref_float()
-            m3_system.unknown21ca0cea = self.init_anim_ref_float()
-            m3_system.unknown1e97145f = self.init_anim_ref_float(1.0)
 
             m3_system.color_init.null.a = 255
             m3_system.color_mid.null.a = 255
@@ -2167,6 +2287,9 @@ class Exporter():
             processor = M3OutputProcessor(self, particle_copy, m3_copy)
             io_shared.io_particle_copy(processor)
 
+            if particle_copy.emit_count_header.flags == -1:
+                m3_copy.emit_count.header.flags = 0x6
+
     def create_ribbons(self, model, ribbons, splines, version):
         ribbon_section = self.m3.section_for_reference(model, 'ribbons', version=version)
 
@@ -2193,7 +2316,7 @@ class Exporter():
                 m3_ribbon.bit_set('flags', 'unknown0x4000', True)
                 m3_ribbon.bit_set('flags', 'unknown0x8000', True)
 
-            if ribbon.spline.handle not in handle_to_spline_sections.keys():
+            if ribbon.spline.handle not in handle_to_spline_sections.keys() or self.bl_op.section_reuse_mode == 'SINGLE':
                 spline = shared.m3_pointer_get(self.ob.m3_ribbonsplines, ribbon.spline)
                 if spline in splines:
                     spline_section = self.m3.section_for_reference(m3_ribbon, 'spline', version=0)
@@ -2222,11 +2345,7 @@ class Exporter():
             m3_projection.material_reference_index = self.matref_handle_indices[projection.material.handle]
             processor = M3OutputProcessor(self, projection, m3_projection)
             io_shared.io_projection(processor)
-
-            m3_projection.unknown58ae2b94 = self.init_anim_ref_vec3()
-            m3_projection.unknownf1f7110b = self.init_anim_ref_float()
-            m3_projection.unknown2035f500 = self.init_anim_ref_float()
-            m3_projection.unknown80d8189b = self.init_anim_ref_float()
+            m3_projection.projection_type = 1  # no Blizzard model uses a different type, and 0 always crashes in my test cases
 
     def create_forces(self, model, forces, version):
         force_section = self.m3.section_for_reference(model, 'forces', version=version)
@@ -2261,7 +2380,7 @@ class Exporter():
             io_shared.io_rigid_body(processor)
 
             if physics_body.physics_shape.handle in self.physics_shape_handle_to_volumes.keys():
-                if not shape_to_section.get(physics_body.physics_shape.handle):
+                if not shape_to_section.get(physics_body.physics_shape.handle) or self.bl_op.section_reuse_mode == 'SINGLE':
                     shape_section = self.m3.section_for_reference(m3_physics_body, 'physics_shape', version=shape_version)
 
                     for volume in self.physics_shape_handle_to_volumes[physics_body.physics_shape.handle]:
@@ -2353,7 +2472,7 @@ class Exporter():
             vertex_bones_section = self.m3.section_for_reference(m3_physics_cloth, 'vertex_bones')
             vertex_weights_section = self.m3.section_for_reference(m3_physics_cloth, 'vertex_weights')
 
-            if physics_cloth.constraint_set.handle not in constraints_sections.keys():
+            if physics_cloth.constraint_set.handle not in constraints_sections.keys() or self.bl_op.section_reuse_mode == 'SINGLE':
                 constraints_section = self.m3.section_for_reference(m3_physics_cloth, 'constraints', version=0)
                 constraints_sections[physics_cloth.constraint_set.handle] = constraints_section
                 for volume in self.physics_cloth_constraint_handle_to_volumes[physics_cloth.constraint_set.handle]:
@@ -2604,7 +2723,7 @@ class Exporter():
                 tmd_vec_section.content_add(to_m3_vec3(vec_item.vector))
 
     def get_basic_volume_object(self, mesh_ob, m3):
-        if mesh_ob.name not in self.mesh_to_basic_volume_sections.keys():
+        if mesh_ob.name not in self.mesh_to_basic_volume_sections.keys() or self.bl_op.section_reuse_mode == 'SINGLE':
             bm = bmesh.new(use_operators=True)
             bm.from_object(mesh_ob, self.depsgraph)
             bmesh.ops.triangulate(bm, faces=bm.faces)
@@ -2627,7 +2746,7 @@ class Exporter():
             face_section.references.append(m3.face_data)
 
     def get_physics_volume_object(self, mesh_ob, m3):
-        if mesh_ob.name not in self.mesh_to_physics_volume_sections.keys():
+        if mesh_ob.name not in self.mesh_to_physics_volume_sections.keys() or self.bl_op.section_reuse_mode == 'SINGLE':
             bm = bmesh.new()
             bm.from_object(mesh_ob, self.depsgraph)
 
@@ -2786,7 +2905,7 @@ class Exporter():
         return anim_ref
 
 
-def m3_export(ob, filepath, bl_op=None, output_anims=None):
+def m3_export(ob, filepath, bl_op=None):
     assert ob.type == 'ARMATURE'
     if not (filepath.endswith('.m3') or filepath.endswith('.m3a')):
         filepath = filepath.rsplit('.', 1)[0] + '.m3'
@@ -2795,7 +2914,7 @@ def m3_export(ob, filepath, bl_op=None, output_anims=None):
     valid_collections = exporter.get_validated_data(ob)
     exporter.scene_prepare(ob)
     try:
-        exporter.m3_export(ob, valid_collections, filepath, output_anims)
+        exporter.m3_export(ob, valid_collections, filepath)
     except Exception as e:
         if type(e) != AssertionError:
             exporter.err_strings.append(traceback.format_exc())

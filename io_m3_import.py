@@ -255,16 +255,12 @@ def m3_key_collect_colo(key_frames, key_values):
     return ll
 
 
-def m3_key_collect_sd08(key_frames, key_values):
-    pass  # undefined
-
-
 def m3_key_collect_bnds(key_frames, key_values):
     pass  # handle these specially
 
 
 m3_key_type_collection_method = [
-    m3_key_collect_evnt, m3_key_collect_vec2, m3_key_collect_vec3, m3_key_collect_quat, m3_key_collect_colo, m3_key_collect_real, m3_key_collect_sd08,
+    m3_key_collect_evnt, m3_key_collect_vec2, m3_key_collect_vec3, m3_key_collect_quat, m3_key_collect_colo, m3_key_collect_real, m3_key_collect_real,
     m3_key_collect_real, m3_key_collect_real, m3_key_collect_real, m3_key_collect_real, m3_key_collect_real, m3_key_collect_bnds,
 ]
 
@@ -513,6 +509,10 @@ class Importer:
 
         if ref.index and ref.entries:
             version_val = self.m3[ref].desc.version
+            enum_vals = self.ob.bl_rna.properties[version_attr].enum_items
+
+            if str(version_val) not in enum_vals:
+                version_val = str(min(enum_vals, key=lambda x: abs(int(x)-version_val)))
 
             if not self.is_new_object:
                 setattr(self.ob, version_attr, str(max(int(getattr(self.ob, version_attr)), version_val)))
@@ -674,6 +674,9 @@ class Importer:
         if self.is_new_object:
             ob.m3_animations_default = bpy.data.actions.new(ob.name + '_DEFAULTS')
 
+        update_anim_lock = ob.m3_options.update_anim_data
+        ob.m3_options.update_anim_data = False
+
         for m3_seq, m3_stg in zip(self.m3[self.m3_model.sequences], self.m3[self.m3_model.sequence_transformation_groups]):
             anim_group_name = self.m3[m3_seq.name].content_to_string()
             anim_group = shared.m3_item_add(ob.m3_animation_groups, anim_group_name)
@@ -693,10 +696,10 @@ class Importer:
                 anim = shared.m3_item_add(anim_group.animations, anim_name)
                 anim['concurrent'] = m3_stc.concurrent
                 anim['priority'] = m3_stc.priority
-                anim['action'] = bpy.data.actions.new(f'{ob.name}_{anim_group.name}_{anim.name}')
+                anim.action = bpy.data.actions.new(f'{ob.name}_{anim_group.name}_{anim.name}')
 
                 m3_key_type_collection_list = [
-                    m3_stc.sdev, m3_stc.sd2v, m3_stc.sd3v, m3_stc.sd4q, m3_stc.sdcc, m3_stc.sdr3, m3_stc.sd08,
+                    m3_stc.sdev, m3_stc.sd2v, m3_stc.sd3v, m3_stc.sd4q, m3_stc.sdcc, m3_stc.sdr3, m3_stc.sdu8,
                     m3_stc.sds6, m3_stc.sdu6, m3_stc.sds3, m3_stc.sdu3, m3_stc.sdfg, m3_stc.sdmb,
                 ]
 
@@ -735,6 +738,8 @@ class Importer:
                                 anim_group['simulate_frame'] = frame
 
             anim_group['animations_index'] = len(anim_group.animations) - 1
+
+        ob.m3_options.update_anim_data = update_anim_lock
 
     def create_bones(self):
 
@@ -1016,9 +1021,9 @@ class Importer:
                 layer.fresnel_max = m3_layer.fresnel_min + m3_layer.fresnel_max_offset
 
                 if m3_layer.desc.version >= 25:
-                    layer.fresnel_mask[0] = 1.0 - m3_layer.fresnel_inverted_mask_x
-                    layer.fresnel_mask[1] = 1.0 - m3_layer.fresnel_inverted_mask_y
-                    layer.fresnel_mask[2] = 1.0 - m3_layer.fresnel_inverted_mask_z
+                    layer.fresnel_mask[0] = 1.0 - m3_layer.fresnel_invert_mask.x
+                    layer.fresnel_mask[1] = 1.0 - m3_layer.fresnel_invert_mask.y
+                    layer.fresnel_mask[2] = 1.0 - m3_layer.fresnel_invert_mask.z
 
                 layer_section_to_index[m3_layer_field.index] = len(ob.m3_materiallayers) - 1
                 setattr(mat, 'layer_' + layer_name, layer.bl_handle)
@@ -1042,20 +1047,18 @@ class Importer:
         self.m3_struct_version_set_from_ref('m3_mesh_version', self.m3_division.regions)
         m3_vertices = self.m3[self.m3_model.vertices]
 
-        if not self.m3_model.bit_get('vertex_flags', 'has_vertices'):
-            if len(self.m3_model.vertices):
-                raise Exception(f'Mesh claims to not have any vertices - expected buffer to be empty, but it isn\'t. size={len(m3_vertices)}')
-            return
-
-        v_colors = self.m3_model.bit_get('vertex_flags', 'has_vertex_colors')
-        v_class = 'VertexFormat' + hex(self.m3_model.vertex_flags)
-        if v_class not in io_m3.structures:
-            raise Exception(f'{v_class} structure is undefined. Buffer size={len(m3_vertices)}')
-
-        v_class_desc = io_m3.structures[v_class].get_version(0)
+        v_colors = self.m3_model.bit_get('vertex_flags', 'color')
+        v_class_desc = io_m3.M3StructureDescription.get_vertex_description(self.m3_model.vertex_flags)
         v_count = len(m3_vertices) // v_class_desc.size
         m3_vertices = v_class_desc.instances(buffer=m3_vertices.raw_bytes, count=v_count)
         bone_lookup_full = self.m3[self.m3_model.bone_lookup]
+
+        if self.m3_model.bit_get('vertex_flags', 'skin0') and self.m3_model.bit_get('vertex_flags', 'skin1'):
+            get_lookup_weights = lambda x: (x.lookup0, x.lookup1, x.lookup2, x.lookup3, x.weight0, x.weight1, x.weight2, x.weight3)
+        elif self.m3_model.bit_get('vertex_flags', 'skin0') ^ self.m3_model.bit_get('vertex_flags', 'skin1'):
+            get_lookup_weights = lambda x: (x.lookup0, x.lookup1, x.weight0, x.weight1)
+        else:
+            get_lookup_weights = lambda x: ()
 
         uv_props = []
         for uv_prop in ['uv0', 'uv1', 'uv2', 'uv3', 'uv4']:
@@ -1087,7 +1090,7 @@ class Importer:
 
             dups = 0
             for ii, v in enumerate(regn_m3_verts):
-                id_tuple = (*to_bl_vec3(v.pos), *to_bl_vec3(v.normal), v.lookup0, v.lookup1, v.lookup2, v.lookup3, v.weight0, v.weight1, v.weight2, v.weight3)
+                id_tuple = (*to_bl_vec3(v.pos), *to_bl_vec3(v.normal), *get_lookup_weights(v))
                 regn_m3_vert_to_id[ii] = id_tuple
                 if regn_m3_vert_ids.get(id_tuple) is None:
                     regn_m3_vert_ids[id_tuple] = ii - dups
@@ -1138,9 +1141,9 @@ class Importer:
                 vert_to_m3_vert[vert] = m3_vert
 
                 for ii in range(0, region.vertex_lookups_used):
-                    weight = getattr(m3_vert, 'weight' + str(ii))
+                    weight = getattr(m3_vert, 'weight' + str(ii), 255)
                     if weight:
-                        lookup_index = getattr(m3_vert, 'lookup' + str(ii))
+                        lookup_index = getattr(m3_vert, 'lookup' + str(ii), region.first_bone_lookup_index)
                         vertex_groups_used[lookup_index] = True
                         vert[layer_deform][lookup_index] = weight / 255
 
@@ -1235,8 +1238,8 @@ class Importer:
                 m3v0 = vert_to_m3_vert[origin]
                 m3v1 = vert_to_m3_vert[target]
 
-                m3v0_lookup_id = (m3v0.lookup0, m3v0.lookup1, m3v0.lookup2, m3v0.lookup3, m3v0.weight0, m3v0.weight1, m3v0.weight2, m3v0.weight3)
-                m3v1_lookup_id = (m3v1.lookup0, m3v1.lookup1, m3v1.lookup2, m3v1.lookup3, m3v1.weight0, m3v1.weight1, m3v1.weight2, m3v1.weight3)
+                m3v0_lookup_id = get_lookup_weights(m3v0)
+                m3v1_lookup_id = get_lookup_weights(m3v1)
 
                 if m3v0_lookup_id != m3v1_lookup_id:
                     try:

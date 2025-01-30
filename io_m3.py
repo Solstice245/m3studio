@@ -20,6 +20,7 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import struct
+import copy
 from os import path
 from sys import stderr
 from xml.etree import ElementTree as ET
@@ -139,6 +140,133 @@ class M3StructureHistory:
 class M3StructureDescription:
     ''' Container for information relating to a specific version of an M3 structure '''
 
+    @classmethod
+    def get_vertex_description(cls, vertex_flags):
+        size = 0
+        fields = []
+
+        if vertex_flags & 0x1:
+            fields.append({0: M3FieldStructure('pos', structures['VEC3'].get_version(0))})
+            size += 12
+
+        lookup_pairs = 0
+        if vertex_flags & 0x20:
+            lookup_pairs += 2
+        if vertex_flags & 0x40:
+            lookup_pairs += 2
+
+        for ii in range(lookup_pairs):
+            field_name = 'weight' + str(ii)
+            fields.append({0: M3FieldInt(field_name, 'uint8')})
+            size += 1
+
+        for ii in range(lookup_pairs):
+            field_name = 'lookup' + str(ii)
+            fields.append({0: M3FieldInt(field_name, 'uint8')})
+            size += 1
+
+        if vertex_flags & 0x80:
+            fields.append({0: M3FieldStructure('normalf', structures['VEC3'].get_version(0))})
+            size += 12
+
+        if vertex_flags & 0x0800000:
+            fields.append({0: M3FieldStructure('normal', structures['Vector3As3uint8'].get_version(0))})
+            fields.append({0: M3FieldInt('sign', 'uint8')})
+            size += 4
+
+        # must come before color component
+        if vertex_flags & 0x100:
+            fields.append({0: M3FieldInt('test100', 'uint32', 0)})
+            size += 4
+
+        if vertex_flags & 0x200:
+            fields.append({0: M3FieldStructure('col', structures['COL'].get_version(0))})
+            size += 4
+
+        if vertex_flags & 0x400:
+            fields.append({0: M3FieldInt('test400', 'uint32', 0x00000000)})
+            size += 4
+
+        if vertex_flags & 0x800:
+            fields.append({0: M3FieldInt('test800', 'uint32', 0xFFFFFFFF)})
+            size += 4
+
+        if vertex_flags & 0x1000:
+            fields.append({0: M3FieldInt('test1000', 'uint32', 0xFFFFFFFF)})
+            size += 4
+
+        uv_coords = 0
+        if vertex_flags & 0x00020000:
+            uv_coords += 1
+        if vertex_flags & 0x00040000:
+            uv_coords += 1
+        if vertex_flags & 0x00080000:
+            uv_coords += 1
+        if vertex_flags & 0x00100000:
+            uv_coords += 1
+        if vertex_flags & 0x40000000:
+            uv_coords += 1
+
+        if vertex_flags & 0x2000:
+            fields.append({0: M3FieldStructure('fuv0', structures['VEC2'].get_version(0))})
+            size += 8
+
+        if vertex_flags & 0x4000:
+            fields.append({0: M3FieldStructure('fuv1', structures['VEC2'].get_version(0))})
+            size += 8
+
+        if vertex_flags & 0x8000:
+            fields.append({0: M3FieldStructure('fuv2', structures['VEC2'].get_version(0))})
+            size += 8
+
+        if vertex_flags & 0x10000:
+            fields.append({0: M3FieldStructure('fuv3', structures['VEC2'].get_version(0))})
+            size += 8
+
+        for ii in range(uv_coords):
+            field_name = 'uv' + str(ii)
+            fields.append({0: M3FieldStructure(field_name, structures['Vector2As2int16'].get_version(0))})
+            size += 4
+
+        if vertex_flags & 0x200000:
+            fields.append({0: M3FieldStructure('normalf', structures['VEC3'].get_version(0))})
+            size += 12
+
+        if vertex_flags & 0x400000:
+            fields.append({0: M3FieldStructure('tanf', structures['VEC3'].get_version(0))})
+            size += 12
+
+        if vertex_flags & 0x1000000:
+            fields.append({0: M3FieldStructure('tan', structures['Vector3As3uint8'].get_version(0))})
+            fields.append({0: M3FieldInt('unused', 'uint8')})
+            size += 4
+
+        if vertex_flags & 0x2000000:
+            fields.append({0: M3FieldInt('test2000000', 'uint32', 10000)})
+            size += 4
+
+        if vertex_flags & 0x4000000:
+            fields.append({0: M3FieldInt('test4000000', 'uint32', 10000)})
+            fields.append({0: M3FieldInt('test4000001', 'uint32', 10000)})
+            fields.append({0: M3FieldInt('test4000002', 'uint32', 10000)})
+            size += 12
+
+        if vertex_flags & 0x8000000:
+            fields.append({0: M3FieldInt('test8000000', 'uint32', 10000)})
+            fields.append({0: M3FieldInt('test8000001', 'uint32', 10000)})
+            fields.append({0: M3FieldInt('test8000002', 'uint32', 10000)})
+            size += 12
+
+        if vertex_flags & 0x10000000:
+            fields.append({0: M3FieldInt('test10000000', 'uint32', 10000)})
+            size += 4
+
+        if vertex_flags & 0x20000000:
+            fields.append({0: M3FieldInt('test20000000', 'uint32', 10000)})
+            size += 4
+
+        return M3StructureHistory('VertexFormat'+hex(vertex_flags).zfill(8), {0: size}, fields).get_version(0)
+
     def __init__(self, history: M3StructureHistory, version, fields, size):
         self.history = history
         self.version = version
@@ -204,6 +332,15 @@ class M3StructureData:
     def __repr__(self):
         return f'{self.desc.history.name}V{self.desc.version}'
 
+    def copy(self):
+        data = copy.copy(self)
+
+        for field in self.desc.fields.values():
+            if type(field) == M3FieldStructure:
+                setattr(data, field.name, getattr(self, field.name).copy())
+
+        return data
+
     def from_buffer(self, buffer, offset):
         field_offset = offset
         for field in self.desc.fields.values():
@@ -247,7 +384,7 @@ class M3Field:
 
 class M3FieldStructure(M3Field):
 
-    def __init__(self, name, desc: M3StructureDescription, ref_to):
+    def __init__(self, name, desc: M3StructureDescription, ref_to=''):
         M3Field.__init__(self, name)
         self.desc = desc
         self.size = desc.size
@@ -279,7 +416,7 @@ class M3FieldStructure(M3Field):
 class M3FieldPrimitive(M3Field):
     ''' Base class for M3FieldBytes, M3FieldInt, M3FieldFloat '''
 
-    def __init__(self, name, type_str, default_value, expected_value):
+    def __init__(self, name, type_str, default_value=0, expected_value=None):
         M3Field.__init__(self, name)
         self.struct_format = struct.Struct('<' + primitive_field_info[type_str]['format'])
         self.size = self.struct_format.size
@@ -300,7 +437,7 @@ class M3FieldPrimitive(M3Field):
 class M3FieldBytes(M3FieldPrimitive):
     ''' Inherits methods from M3FieldPrimitive, but is initialized as an M3Field '''
 
-    def __init__(self, name, size, default_value, expected_value):
+    def __init__(self, name, size, default_value, expected_value=None):
         M3Field.__init__(self, name)
         self.size = size
         self.struct_format = struct.Struct(f'<{size}s')
@@ -314,7 +451,7 @@ class M3FieldBytes(M3FieldPrimitive):
 
 class M3FieldInt(M3FieldPrimitive):
 
-    def __init__(self, name, type_str, default_value, expected_value, bit_mask_map):
+    def __init__(self, name, type_str, default_value=0, expected_value=None, bit_mask_map=None):
         M3FieldPrimitive.__init__(self, name, type_str, default_value, expected_value)
         self.min_val = primitive_field_info[type_str]['min']
         self.max_val = primitive_field_info[type_str]['max']
@@ -329,7 +466,7 @@ class M3FieldInt(M3FieldPrimitive):
 
 class M3FieldFloat(M3FieldPrimitive):
 
-    def __init__(self, name, type_str, default_value, expected_value):
+    def __init__(self, name, type_str, default_value=0.0, expected_value=None):
         M3FieldPrimitive.__init__(self, name, type_str, default_value, expected_value)
 
     def content_validate(self, field_content, field_path):
@@ -485,6 +622,92 @@ class M3SectionList(list):
                 reference.index = ii
                 reference.entries = len(section)
 
+    def data_eq(self, data, other):
+        if type(data) != M3StructureData:
+            return data == other
+
+        for field in data.desc.fields.values():
+
+            if type(field) == M3FieldStructure:
+                if field.desc.history.name == 'Reference':
+                    data_index = getattr(data, field.name).index
+                    other_index = getattr(other, field.name).index
+
+                    if data_index == other_index:
+                        continue
+
+                    if data_index == 0 ^ other_index == 0:
+                        continue
+
+                    if not self.section_eq(self[data_index], self[other_index]):
+                        return False
+                else:
+                    if not self.data_eq(getattr(data, field.name), getattr(other, field.name)):
+                        return False
+            else:
+                if getattr(data, field.name, 'not attr 0') != getattr(other, field.name, 'not attr 1'):
+                    return False
+
+        return True
+
+    def section_eq(self, section, other):
+        if type(other) != M3Section:
+            return False
+        if section.desc != other.desc:
+            return False
+        if len(section.content) != len(other.content):
+            return False
+        for ii in range(len(section.content)):
+            if not self.data_eq(section.content[ii], other.content[ii]):
+                return False
+        return True
+
+    def factor_sections(self):
+        excluded_sections = []
+
+        if self.model and self.model.desc.version >= 23:  # using the same section for both of these breaks attachment volumes
+            excluded_sections.append(self[self.model.attachment_volumes_addon0])
+            excluded_sections.append(self[self.model.attachment_volumes_addon1])
+
+        matched_sections = []
+        matched_sections_map = {}
+        for ii, section in enumerate(self):
+
+            if section in matched_sections:
+                continue
+
+            matched_sections.append(section)
+            matched_sections_map[ii] = ii
+
+            if section in excluded_sections:
+                continue
+
+            for jj, section_comp in enumerate(self):
+                if section_comp in matched_sections:
+                    continue
+                if self.section_eq(section, section_comp):
+                    matched_sections.append(section_comp)
+                    matched_sections_map[jj] = ii
+
+        remaining_sections = sorted([key for key, val in matched_sections_map.items() if val == key])
+        sections_to_delete = sorted([key for key, val in matched_sections_map.items() if val != key], reverse=True)
+
+        if not len(sections_to_delete):
+            return
+
+        # resolve reference indexes again after determining the adjusted indexes
+        aggregate_references = set()
+        for ii, section in enumerate(self):
+            for reference in section.references:
+                if reference in aggregate_references:
+                    raise Exception('Cannot have reference index referenced by more than one section', reference, section.references)
+                aggregate_references.add(reference)
+                reference.index = remaining_sections.index(matched_sections_map[ii])
+                reference.entries = len(section)
+
+        for ii in sections_to_delete:
+            del self[ii]
+
 
 class M3Section:
     ''' Container for M3StructureData (or primitive) instances '''
@@ -528,4 +751,3 @@ class M3Section:
 
 
 structures = structures_from_tree()
-

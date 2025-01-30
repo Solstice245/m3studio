@@ -40,19 +40,12 @@ def draw_props(projection, layout):
     row.prop(projection, 'lod_reduce', text='LOD Reduction/Cutoff')
     row.prop(projection, 'lod_cut', text='')
     col = layout.column(align=True)
-    col.prop(projection, 'projection_type', text='Type')
-    if projection.projection_type == 'ORTHONORMAL':
-        shared.draw_prop_anim(col, projection, 'box_offset_z_bottom', text='Bottom')
-        shared.draw_prop_anim(col, projection, 'box_offset_z_top', text='Top')
-        shared.draw_prop_anim(col, projection, 'box_offset_x_left', text='Left')
-        shared.draw_prop_anim(col, projection, 'box_offset_x_right', text='Right')
-        shared.draw_prop_anim(col, projection, 'box_offset_y_front', text='Front')
-        shared.draw_prop_anim(col, projection, 'box_offset_y_back', text='Back')
-    elif projection.projection_type == 'PERSPECTIVE':
-        shared.draw_prop_anim(col, projection, 'field_of_view', text='Field of View')
-        shared.draw_prop_anim(col, projection, 'aspect_ratio', text='Aspect Ratio')
-        shared.draw_prop_anim(col, projection, 'near', text='Near')
-        shared.draw_prop_anim(col, projection, 'far', text='Far')
+    shared.draw_prop_anim(col, projection, 'box_offset_z_bottom', text='Bottom')
+    shared.draw_prop_anim(col, projection, 'box_offset_z_top', text='Top')
+    shared.draw_prop_anim(col, projection, 'box_offset_x_left', text='Left')
+    shared.draw_prop_anim(col, projection, 'box_offset_x_right', text='Right')
+    shared.draw_prop_anim(col, projection, 'box_offset_y_front', text='Front')
+    shared.draw_prop_anim(col, projection, 'box_offset_y_back', text='Back')
     shared.draw_prop_anim(layout, projection, 'active', text='Active')
     layout.separator()
     layout.prop(projection, 'attenuation_distance', text='Attenuation Distance')
@@ -85,15 +78,24 @@ class Properties(shared.M3PropertyGroup):
 
     bone: bpy.props.PointerProperty(type=shared.M3BonePointerProp)
     material: bpy.props.PointerProperty(type=shared.M3MatRefPointerProp)
-    projection_type: bpy.props.EnumProperty(options=set(), items=bl_enum.projection_type)
-    field_of_view: bpy.props.FloatProperty(name='M3 Splat Field Of View', default=45)
+    projection_type: bpy.props.EnumProperty(options=set(), items=bl_enum.projection_type)  # no UI, never known to not equal 1 in Blizz models
+    offset: bpy.props.FloatVectorProperty(name='M3 Splat Offset', size=3, subtype='XYZ')  # no UI
+    offset_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
+    pitch: bpy.props.FloatProperty(name='M3 Splat Pitch', unit='ROTATION')  # no UI
+    pitch_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
+    yaw: bpy.props.FloatProperty(name='M3 Splat Yaw', unit='ROTATION')  # no UI
+    yaw_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
+    roll: bpy.props.FloatProperty(name='M3 Splat Roll', unit='ROTATION')  # no UI
+    roll_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
+    field_of_view: bpy.props.FloatProperty(name='M3 Splat Field Of View', default=45)  # no UI
     field_of_view_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
-    aspect_ratio: bpy.props.FloatProperty(name='M3 Splat Aspect Ratio', default=1)
+    aspect_ratio: bpy.props.FloatProperty(name='M3 Splat Aspect Ratio', default=1)  # no UI
     aspect_ratio_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
-    near: bpy.props.FloatProperty(name='M3 Splat Near', default=0.5)
+    near: bpy.props.FloatProperty(name='M3 Splat Near', default=0.5)  # no UI
     near_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
-    far: bpy.props.FloatProperty(name='M3 Splat Far', default=10)
+    far: bpy.props.FloatProperty(name='M3 Splat Far', default=10)  # no UI
     far_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
+    falloff: bpy.props.FloatProperty(options=set())  # no UI
     box_offset_z_bottom: bpy.props.FloatProperty(name='M3 Splat Bottom', default=-0.25)
     box_offset_z_bottom_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     box_offset_z_top: bpy.props.FloatProperty(name='M3 Splat Top', default=0.25)
@@ -106,6 +108,7 @@ class Properties(shared.M3PropertyGroup):
     box_offset_y_front_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     box_offset_y_back: bpy.props.FloatProperty(name='M3 Splat Back', default=-2)
     box_offset_y_back_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
+    attenuation_distance: bpy.props.FloatProperty(options=set(), min=0, default=1)  # no UI
     alpha_init: bpy.props.FloatProperty(options=set(), min=0, max=1, subtype='FACTOR')
     alpha_mid: bpy.props.FloatProperty(options=set(), min=0, max=1, default=1, subtype='FACTOR')
     alpha_end: bpy.props.FloatProperty(options=set(), min=0, max=1, subtype='FACTOR')
@@ -115,7 +118,6 @@ class Properties(shared.M3PropertyGroup):
     lifetime_hold_to: bpy.props.FloatProperty(options=set(), min=0)
     lifetime_decay: bpy.props.FloatProperty(options=set(), min=0, default=1)
     lifetime_decay_to: bpy.props.FloatProperty(options=set(), min=0)
-    attenuation_distance: bpy.props.FloatProperty(options=set(), min=0, default=1)
     layer: bpy.props.EnumProperty(options=set(), items=bl_enum.projection_layer)
     lod_cut: bpy.props.EnumProperty(options=set(), items=bl_enum.lod)
     lod_reduce: bpy.props.EnumProperty(options=set(), items=bl_enum.lod)

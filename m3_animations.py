@@ -75,7 +75,7 @@ def set_default_value(action, path, index, value):
 
 
 def anim_update(self, context):
-    if context.object.m3_options.update_anim_data:
+    if context.object and context.object.m3_options.update_anim_data:
         anim = None
         if context.object.m3_animation_groups_index in range(len(context.object.m3_animation_groups)):
             anim_group = context.object.m3_animation_groups[context.object.m3_animation_groups_index]

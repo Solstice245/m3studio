@@ -31,10 +31,10 @@ def register_props():
 
 # TODO UI stuff
 ribbon_version = (
-    ('4', '4', 'Version 4'),
-    ('5', '5', 'Version 5'),
+    # ('4', '4 (SC2 Beta)', 'Version 4. SC2 Beta only'),
+    # ('5', '5 (SC2 Beta)', 'Version 5. SC2 Beta only'),
     ('6', '6', 'Version 6'),
-    ('7', '7', 'Version 7'),
+    # ('7', '7', 'Version 7'), # * not documented to exist
     ('8', '8', 'Version 8'),
     ('9', '9', 'Version 9'),
 )
@@ -148,20 +148,28 @@ class RibbonProperties(shared.M3PropertyGroup):
     lod_reduce: bpy.props.EnumProperty(options=set(), items=bl_enum.lod)
     active: bpy.props.BoolProperty(name='Active', default=True)
     active_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
-    lifespan: bpy.props.FloatProperty(name='Lifespan', min=0, default=5)
+    lifespan: bpy.props.FloatProperty(name='Lifespan', min=0.0, default=1.0)
     lifespan_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
-    divisions: bpy.props.FloatProperty(options=set(), min=0, default=20)
+    lifespan2: bpy.props.FloatProperty(name='Lifespan', min=0.0, default=1.0)
+    lifespan2_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
+    lifespan_randomize: bpy.props.BoolProperty(options=set())
+    divisions: bpy.props.FloatProperty(options=set(), min=0.0, default=20.0)
     sides: bpy.props.IntProperty(options=set(), min=3, default=5)
-    star_ratio: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0, max=1, default=0.5)
-    speed: bpy.props.FloatProperty(name='Speed', min=0)
+    star_ratio: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0.0, max=1.0, default=0.5)
+    speed: bpy.props.FloatProperty(name='Speed', min=0.0)
     speed_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
-    length: bpy.props.FloatProperty(name='Length', min=0)
+    speed_randomize: bpy.props.BoolProperty(options=set())
+    length: bpy.props.FloatProperty(name='Length', min=0.0)
     length_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
-    yaw: bpy.props.FloatProperty(name='Yaw')
+    yaw: bpy.props.FloatProperty(name='Yaw', unit='ROTATION')
     yaw_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
-    pitch: bpy.props.FloatProperty(name='Pitch')
+    pitch: bpy.props.FloatProperty(name='Pitch', unit='ROTATION')
     pitch_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
-    twist: bpy.props.FloatVectorProperty(name='Twist', subtype='XYZ', size=3)
+    spread_x: bpy.props.FloatProperty(name='Spread X', unit='ROTATION')
+    spread_x_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
+    spread_y: bpy.props.FloatProperty(name='Spread X', unit='ROTATION')
+    spread_y_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
+    twist: bpy.props.FloatVectorProperty(name='Twist', subtype='XYZ', size=3, unit='ROTATION')
     twist_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     scale: bpy.props.FloatVectorProperty(name='Scale', subtype='XYZ', size=3, default=(1, 1, 1))
     scale_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
@@ -179,8 +187,6 @@ class RibbonProperties(shared.M3PropertyGroup):
     scale_anim_mid_time: bpy.props.FloatProperty(options=set(), min=0)
     color_anim_mid_time: bpy.props.FloatProperty(options=set(), min=0)
     alpha_anim_mid_time: bpy.props.FloatProperty(options=set(), min=0)
-    scale_smoothing_fac: bpy.props.FloatProperty(options=set(), subtype='FACTOR', soft_min=0.0, soft_max=1.0, default=0.0)
-    color_smoothing_fac: bpy.props.FloatProperty(options=set(), subtype='FACTOR', soft_min=0.0, soft_max=1.0, default=0.0)
     scale_smoothing: bpy.props.EnumProperty(options=set(), items=bl_enum.anim_smoothing)
     color_smoothing: bpy.props.EnumProperty(options=set(), items=bl_enum.anim_smoothing)
     gravity: bpy.props.FloatProperty(options=set())
@@ -193,6 +199,7 @@ class RibbonProperties(shared.M3PropertyGroup):
     drag: bpy.props.FloatProperty(options=set())
     mass: bpy.props.FloatProperty(options=set(), default=1.0)
     mass2: bpy.props.FloatProperty(options=set())
+    mass_randomize: bpy.props.BoolProperty(options=set())
     local_forces: bpy.props.BoolVectorProperty(options=set(), subtype='LAYER', size=16)
     world_forces: bpy.props.BoolVectorProperty(options=set(), subtype='LAYER', size=16)
     world_space: bpy.props.BoolProperty(options=set())
@@ -310,7 +317,6 @@ class RibbonPanelEmitter(RibbonSubPanel, bpy.types.Panel):
         layout.prop(ribbon, 'simulate_init', text='Pre Pump')
         layout.separator()
         shared.draw_prop_anim(layout, ribbon, 'active', text='Active')
-        shared.draw_prop_anim(layout, ribbon, 'phase_shift', text='Phase Shift')
         layout.separator()
         layout.prop(ribbon, 'force_cpu_sim', text='Force CPU Simulation')
         layout.prop(ribbon, 'accurate_gpu_tangents', text='Accurate GPU Tangents')
@@ -355,13 +361,14 @@ class RibbonPanelInstance(RibbonSubPanel, bpy.types.Panel):
         shared.draw_op_anim_prop(sub, ribbon, 'parent_velocity')
         layout.separator()
         col = layout.column(align=True)
-        col.prop(ribbon, 'color_smoothing' if rib_ver >= 8 else 'color_smoothing_fac', text='Color Smoothing')
+        if rib_ver >= 8:
+            col.prop(ribbon, 'color_smoothing', text='Color Smoothing')
         row = col.row(align=True)
-        row.prop(ribbon, 'color_anim_mid', text='Color/Alpha Midpoint')
+        row.prop(ribbon, 'color_anim_mid', text='RGB/A Midpoint')
         row.prop(ribbon, 'alpha_anim_mid', text='')
         if ribbon.color_smoothing in ('LINEARHOLD', 'BEZIERHOLD') and rib_ver >= 8:
             row = col.row(align=True)
-            row.prop(ribbon, 'color_anim_mid_time', text='Color/Alpha Hold Time')
+            row.prop(ribbon, 'color_anim_mid_time', text='RGB/A Hold Time')
             row.prop(ribbon, 'alpha_anim_mid_time', text='')
         col = layout.column(align=True)
         shared.draw_prop_anim(col, ribbon, 'color_base', text='Base')
@@ -374,7 +381,8 @@ class RibbonPanelInstance(RibbonSubPanel, bpy.types.Panel):
         row = shared.draw_prop_split(layout, text='Scale Smoothing')
         sub = row.row(align=True)
         sub.ui_units_x = 1
-        sub.prop(ribbon, 'scale_smoothing' if rib_ver >= 8 else 'scale_smoothing_fac', text='')
+        if rib_ver >= 8:
+            sub.prop(ribbon, 'scale_smoothing', text='')
         row.separator(factor=0.325)
         sub = row.row(align=True)
         sub.ui_units_x = 1
@@ -404,7 +412,8 @@ class RibbonPanelInstanceVariation(RibbonSubPanel, bpy.types.Panel):
         layout.use_property_split = True
         layout.use_property_decorate = False
         ribbon = context.object.m3_ribbons[context.object.m3_ribbons_index]
-
+        shared.draw_prop_anim(layout, ribbon, 'phase_shift', text='Phase Shift')
+        layout.separator()
         shared.draw_var_props(layout, ribbon, 'yaw', text='Yaw')
         shared.draw_var_props(layout, ribbon, 'pitch', text='Pitch')
         shared.draw_var_props(layout, ribbon, 'length', text='Length')

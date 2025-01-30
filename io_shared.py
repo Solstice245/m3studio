@@ -71,6 +71,7 @@ def io_material_standard(processor):
     processor.bit('flags', 'no_highlighting')
     processor.bit('flags', 'clamp_output')
     processor.bit('flags', 'geometry_visible', since_version=17)
+    processor.integer('material_class')
     processor.enum('blend_mode')
     processor.integer('priority')
     processor.float('specularity')
@@ -81,13 +82,12 @@ def io_material_standard(processor):
     processor.float('hdr_envi_const', since_version=20)
     processor.float('hdr_envi_diff', since_version=20)
     processor.float('hdr_envi_spec', since_version=20)
-    # processor.integer('unknown2481ae8a')
     processor.enum('blend_mode_layer')
     processor.enum('blend_mode_emis1')
     processor.enum('blend_mode_emis2')
     processor.enum('spec_mode')
     processor.anim_float('parallax_height')
-    processor.anim_uint32('unknown_animation_ref')
+    processor.anim_float('motion_blur')
 
 
 def io_material_displacement(processor):
@@ -184,7 +184,7 @@ def io_material_buffer(processor):
 
 
 def io_material_layer(processor):
-    # processor.integer('unknown00')  # ! unknown
+    # processor.integer('id')  # ! unused
     processor.anim_color('color_value')
     processor.bit('flags', 'uv_wrap_x')
     processor.bit('flags', 'uv_wrap_y')
@@ -193,15 +193,15 @@ def io_material_layer(processor):
     # processor.bit('flags', 'particle_uv_flipbook') # ! handle manually
     # processor.bit('flags', 'video') # ! handled manually
     # processor.bit('flags', 'color') # ! handled manually
-    processor.bit('flags', 'ignored_fresnel_flag1')
-    processor.bit('flags', 'ignored_fresnel_flag2')
+    processor.bit('flags', 'fresnel_transform')
+    processor.bit('flags', 'fresnel_normalize')
     processor.bit('flags', 'fresnel_local_transform')
     processor.bit('flags', 'fresnel_do_not_mirror')
     processor.enum('uv_source')
     processor.enum('color_channels')
     processor.anim_float('color_multiply')
     processor.anim_float('color_add')
-    # processor.integer('unknown3b61017a')  # ! unknown
+    processor.integer('noise_type')
     processor.float('noise_amplitude', since_version=24)
     processor.float('noise_frequency', since_version=24)
     processor.integer('video_channel')
@@ -218,8 +218,8 @@ def io_material_layer(processor):
     processor.anim_vec2('uv_offset')
     processor.anim_vec3('uv_angle')
     processor.anim_vec2('uv_tiling')
-    # processor.anim_uint32('unknowna4ec0796')  # ! unknown
-    # processor.anim_float('unknowna44bf452')  # ! unknown
+    processor.anim_float('uv_w_translation')
+    processor.anim_float('uv_w_scale')
     processor.anim_float('color_brightness')
     processor.anim_vec3('uv_triplanar_offset', since_version=24)
     processor.anim_vec3('uv_triplanar_scale', since_version=24)
@@ -227,16 +227,12 @@ def io_material_layer(processor):
     processor.enum('fresnel_type')
     processor.float('fresnel_exponent')
     processor.float('fresnel_min')
+    processor.vec3('fresnel_translation', since_version=25)
     # processor.float('fresnel_max_offset') # ! handled manually
-    processor.float('fresnel_reflection')
-    # processor.integer('unknown16', since_version=25) # ! unknown
-    # processor.integer('unknown17', since_version=25) # ! unknown
-    # processor.float('fresnel_inverted_mask_x', since_version=25) # ! handled manually
-    # processor.float('fresnel_inverted_mask_y', since_version=25) # ! handled manually
-    # processor.float('fresnel_inverted_mask_z', since_version=25) # ! handled manually
+    # processor.vec3('fresnel_invert_mask', since_version=25) # ! handled manually
     processor.float('fresnel_yaw', since_version=25)
     processor.float('fresnel_pitch', since_version=25)
-    # processor.integer('unknowned0e748d', since_version=25, till_version=25) # ! unknown
+    # processor.integer('uv_density', till_version=25) # ! unused
 
 
 def io_light(processor):
@@ -321,12 +317,15 @@ def io_particle_system(processor):
     processor.anim_vec3('emit_shape_size_cutout')
     processor.anim_float('emit_shape_radius')
     processor.anim_float('emit_shape_radius_cutout')
+    processor.anim_float('spline_bounds_min')
+    processor.anim_float('spline_bounds_max')
     processor.enum('emit_type')
     processor.boolean('size_randomize')
     processor.anim_vec3('size2')
     processor.boolean('rotation_randomize')
     processor.anim_vec3('rotation2')
     processor.boolean('color_randomize')
+    processor.boolean('alpha_randomize')
     processor.anim_color('color2_init')
     processor.anim_color('color2_mid')
     processor.anim_color('color2_end')
@@ -486,12 +485,10 @@ def io_ribbon(processor):
     processor.bit('flags', 'simulate_init')
     processor.bit('flags', 'length_time')
     processor.bit('flags', 'accurate_gpu_tangents')
-    processor.float('scale_smoothing_fac', till_version=6)
-    processor.float('color_smoothing_fac', till_version=6)
     processor.enum('scale_smoothing', since_version=8)
     processor.enum('color_smoothing', since_version=8)
-    processor.float('friction', since_version=8)
-    processor.float('bounce', since_version=8)
+    processor.float('friction')
+    processor.float('bounce')
     processor.enum('lod_reduce')
     processor.enum('lod_cut')
     processor.enum('yaw_var_shape')
@@ -515,6 +512,10 @@ def io_ribbon(processor):
 
 def io_projection(processor):
     processor.enum('projection_type')
+    processor.anim_vec3('offset')
+    processor.anim_float('pitch')
+    processor.anim_float('yaw')
+    processor.anim_float('roll')
     processor.anim_float('field_of_view')
     processor.anim_float('aspect_ratio')
     processor.anim_float('near')
@@ -525,6 +526,7 @@ def io_projection(processor):
     processor.anim_float('box_offset_x_right')
     processor.anim_float('box_offset_y_front')
     processor.anim_float('box_offset_y_back')
+    processor.float('falloff')
     processor.float('alpha_init')
     processor.float('alpha_mid')
     processor.float('alpha_end')

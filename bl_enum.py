@@ -517,8 +517,8 @@ particle_sort_method = (
 )
 
 projection_type = (
-    ('ORTHONORMAL', 'Orthonormal', 'Makes the projector behave like a box. It will be the same width no matter how close it is to the target surface'),
     ('PERSPECTIVE', 'Perspective', 'Makes the projector behave like a camera. The closer the projector is to the surface, the smaller the effect will be'),
+    ('ORTHONORMAL', 'Orthonormal', 'Makes the projector behave like a box. It will be the same width no matter how close it is to the target surface'),
 )
 
 projection_layer = (

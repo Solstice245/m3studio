@@ -29,8 +29,8 @@ def register_props():
 
 
 layer_versions = (
-    ('20', '20', 'Version 20'),
-    ('21', '21', 'Version 21'),
+    # ('20', '20 (SC2 Beta)', 'Version 20. SC2 Beta only'),
+    # ('21', '21 (SC2 Beta)', 'Version 21. SC2 Beta only'),
     ('22', '22', 'Version 22'),
     ('23', '23', 'Version 23'),
     ('24', '24', 'Version 24'),
@@ -61,8 +61,9 @@ def draw_props(layer, layout):
 
     if is_bitmap:
         layout.separator()
-        layout.prop(layer, 'uv_source', text='UV Source')
-        layout.prop(layer, 'uv_source_related', text='Unknown Related')
+        col = layout.column(align=True)
+        col.prop(layer, 'uv_source', text='UV Source')
+        col.prop(layer, 'uv_source_related', text='Hint')
         row = layout.row(heading='Wrap')
         row.prop(layer, 'uv_wrap_x', text='U')
         row.prop(layer, 'uv_wrap_y', text='V')
@@ -81,11 +82,13 @@ def draw_props(layer, layout):
             layout.prop(layer, 'uv_triplanar_offset', text='Triplanar Offset')
             layout.prop(layer, 'uv_triplanar_scale', text='Triplanar Scale')
 
-        if version >= 24:
-            layout.separator()
-            col = layout.row(align=True)
-            col.prop(layer, 'noise_amplitude', text='Volume Noise Amp/Freq')
-            col.prop(layer, 'noise_frequency', text='')
+        layout.separator()
+        col = layout.column(align=True)
+        layout.prop(layer, 'noise_type', text='Noise Type')
+        if version >= 24 and layer.noise_type != 0:
+            row = col.row(align=True)
+            row.prop(layer, 'noise_amplitude', text='Amplitude/Frequency')
+            row.prop(layer, 'noise_frequency', text='')
 
     if layer.color_bitmap.endswith('.ogv'):
         layout.separator()
@@ -109,17 +112,20 @@ def draw_props(layer, layout):
     layout.prop(layer, 'fresnel_type', text='Fresel Mode')
     if layer.fresnel_type != 'DISABLED':
         layout.prop(layer, 'fresnel_exponent', text='Exponent')
-        layout.prop(layer, 'fresnel_reflection', text='Reflection')
-        col = layout.column(align=True)
-        col.prop(layer, 'fresnel_min', text='Minimum')
-        col.prop(layer, 'fresnel_max', text='Maximum')
+        row = shared.draw_prop_split(layout, text='Min/Max')
+        row.prop(layer, 'fresnel_min', text='')
+        row.prop(layer, 'fresnel_max', text='')
 
         if version >= 25:
-            layout.prop(layer, 'fresnel_mask', text='Mask')
-            col = layout.column(align=True)
-            col.prop(layer, 'fresnel_yaw', text='Yaw')
-            col.prop(layer, 'fresnel_pitch', text='Pitch')
+            shared.draw_prop_items(shared.draw_prop_split(layout, text='Translation'), layer, 'fresnel_translation')
+            shared.draw_prop_items(shared.draw_prop_split(layout, text='Mask'), layer, 'fresnel_mask')
+            row = shared.draw_prop_split(layout, text='Rotation')
+            row.prop(layer, 'fresnel_yaw', text='')
+            row.prop(layer, 'fresnel_pitch', text='')
 
+        row = layout.row()
+        row.prop(layer, 'fresnel_transform', text='Transform')
+        row.prop(layer, 'fresnel_normalize', text='Normalize')
         row = layout.row()
         row.prop(layer, 'fresnel_local_transform', text='Local Transform')
         row.prop(layer, 'fresnel_do_not_mirror', text='Don\'t Mirror')
@@ -156,6 +162,10 @@ class Properties(shared.M3PropertyGroup):
     uv_angle_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     uv_tiling: bpy.props.FloatVectorProperty(name='UV Tiling', default=(1.0, 1.0), size=2, subtype='XYZ', options={'ANIMATABLE'})
     uv_tiling_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
+    uv_w_translation: bpy.props.FloatProperty(name='W Translation', default=0.0, options={'ANIMATABLE'})  # no UI, not documented to work
+    uv_w_translation_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
+    uv_w_scale: bpy.props.FloatProperty(name='W Scale', default=1.0, options={'ANIMATABLE'})  # no UI, not documented to work
+    uv_w_scale_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     uv_flipbook_rows: bpy.props.IntProperty(name='Flipbook Rows', default=0, options=set())
     uv_flipbook_cols: bpy.props.IntProperty(name='Flipbook Columns', default=0, options=set())
     uv_flipbook_frame: bpy.props.IntProperty(name='Flipbook Frame', default=0, options={'ANIMATABLE'})
@@ -169,10 +179,12 @@ class Properties(shared.M3PropertyGroup):
     fresnel_exponent: bpy.props.FloatProperty(default=4.0, options=set())
     fresnel_min: bpy.props.FloatProperty(default=0.0, options=set())
     fresnel_max: bpy.props.FloatProperty(default=1.0, options=set())
-    fresnel_reflection: bpy.props.FloatProperty(default=1.0, options=set())
+    fresnel_translation: bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), size=3, subtype='XYZ', options=set())
     fresnel_mask: bpy.props.FloatVectorProperty(size=3, options=set(), subtype='XYZ', min=0, max=1)
     fresnel_yaw: bpy.props.FloatProperty(subtype='ANGLE', options=set())
     fresnel_pitch: bpy.props.FloatProperty(subtype='ANGLE', options=set())
+    fresnel_transform: bpy.props.BoolProperty(options=set())
+    fresnel_normalize: bpy.props.BoolProperty(options=set())
     fresnel_local_transform: bpy.props.BoolProperty(options=set(), default=False)
     fresnel_do_not_mirror: bpy.props.BoolProperty(options=set(), default=False)
     video_channel: bpy.props.IntProperty(options=set(), min=-1, max=6, default=-1)
@@ -185,11 +197,9 @@ class Properties(shared.M3PropertyGroup):
     video_play_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     video_restart: bpy.props.BoolProperty(name='Video Restart', options={'ANIMATABLE'}, default=False)
     video_restart_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
+    noise_type: bpy.props.IntProperty(options=set(), min=0)
     noise_amplitude: bpy.props.FloatProperty(options=set(), default=0.8)
     noise_frequency: bpy.props.FloatProperty(options=set(), default=0.5)
-    # unknowna44bf452: bpy.props.FloatProperty()
-    ignored_fresnel_flag1: bpy.props.BoolProperty(options=set())  # no UI
-    ignored_fresnel_flag2: bpy.props.BoolProperty(options=set())  # no UI
 
 
 class Menu(bpy.types.Menu):

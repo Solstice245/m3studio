@@ -105,8 +105,8 @@ def m3_handle_gen():
 
 def m3_anim_id_gen():
     # anim ids in list reserved for events and bounds
-    while (num := random.randint(1, 2 ** 32 - 1)) in (0x001f9bd2, 0x65bd3215):
-        num = random.randint(1, 2 ** 32 - 1)
+    while (num := random.randint(0x1, 0xFFFFFFFF)) in (0x001f9bd2, 0x65bd3215):
+        num = random.randint(0x1, 0xFFFFFFFF)
 
     return hex(num)[2:]
 
@@ -382,6 +382,11 @@ class M3MatRefPointerProp(bpy.types.PropertyGroup):
     handle: bpy.props.StringProperty(options=set())
 
 
+class M3ProjectionPointerProp(bpy.types.PropertyGroup):
+    value: bpy.props.StringProperty(options=set(), get=pointer_get_args('m3_projections'), set=pointer_set_args('m3_projections', False))
+    handle: bpy.props.StringProperty(options=set())
+
+
 def draw_prop_pointer_search(layout, data, search_data, search_prop, text='', icon=None):
     search_prop = 'edit_bones' if search_prop == 'bones' and getattr(search_data, 'is_editmode') else search_prop
     layout.prop_search(data, 'value', search_data, search_prop, text=text, icon=icon)
@@ -400,7 +405,12 @@ class M3BonePointerList(bpy.types.UIList):
 
 
 def hex_id_get(self):
-    return self['hex_id']
+    try:
+        return self['hex_id']
+    except KeyError:
+        new_id = m3_anim_id_gen()
+        hex_id_set(self, new_id)
+        return self['hex_id']
 
 
 def hex_id_set(self, value):
@@ -906,6 +916,7 @@ classes = (
     M3BonePointerProp,
     M3BonePointerPropExclusive,
     M3MatRefPointerProp,
+    M3ProjectionPointerProp,
     M3BonePointerList,
     M3AnimHeaderProp,
     M3PropertyGroup,

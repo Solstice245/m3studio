@@ -29,10 +29,9 @@ def register_props():
     bpy.types.Object.m3_particlecopies_index = bpy.props.IntProperty(options=set(), default=-1, update=update_copy_collection_index)
 
 
-# TODO UI stuff
 particle_system_versions = (
-    ('10', '10', 'Version 10'),
-    ('11', '11', 'Version 11'),
+    # ('10', '10 (SC2 Beta)', 'Version 10. SC2 Beta only'),
+    # ('11', '11 (SC2 Beta)', 'Version 11. SC2 Beta only'),
     ('12', '12', 'Version 12'),
     ('14', '14', 'Version 14'),
     ('17', '17', 'Version 17'),
@@ -136,8 +135,8 @@ class SystemProperties(shared.M3PropertyGroup):
     particle_type: bpy.props.EnumProperty(options=set(), items=bl_enum.particle_type)
     model_path: bpy.props.StringProperty(options=set(), description='Replaces the particle system\'s material with the m3 asset at the given path')
     instance_tail: bpy.props.FloatProperty(options=set(), default=1.0)
-    instance_yaw: bpy.props.FloatProperty(options=set(), default=0.0)
-    instance_pitch: bpy.props.FloatProperty(options=set(), default=0.0)
+    instance_direction: bpy.props.FloatVectorProperty(options=set(), size=3, subtype='XYZ', default=(0.0, 0.0, 1.0))
+    instance_offset: bpy.props.FloatProperty(options=set(), default=0.0)
     distance_limit: bpy.props.FloatProperty(options=set(), min=0)
     lod_cut: bpy.props.EnumProperty(options=set(), items=bl_enum.lod)
     lod_reduce: bpy.props.EnumProperty(options=set(), items=bl_enum.lod)
@@ -154,6 +153,10 @@ class SystemProperties(shared.M3PropertyGroup):
     emit_shape_radius_cutout_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     emit_shape_meshes: bpy.props.CollectionProperty(type=shared.M3ObjectPropertyGroup)
     emit_shape_spline: bpy.props.CollectionProperty(type=SplinePointProperties)
+    spline_bounds_min: bpy.props.FloatProperty(name='Spline Bounds Min', subtype='FACTOR', min=0.0, max=1.0)
+    spline_bounds_min_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
+    spline_bounds_max: bpy.props.FloatProperty(name='Spline Bounds Max', subtype='FACTOR', min=0.0, max=1.0, default=1.0)
+    spline_bounds_max_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     emit_max: bpy.props.IntProperty(options=set(), min=0, default=60)
     emit_rate: bpy.props.FloatProperty(name='Emission Rate', min=0)
     emit_rate_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
@@ -198,6 +201,7 @@ class SystemProperties(shared.M3PropertyGroup):
     color2_end: bpy.props.FloatVectorProperty(name='Final Color Random', subtype='COLOR', size=4, min=0, max=1, default=(1, 1, 1, 0))
     color2_end_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     color_randomize: bpy.props.BoolProperty(options=set())
+    alpha_randomize: bpy.props.BoolProperty(options=set())
     rotation: bpy.props.FloatVectorProperty(name='Rotation', subtype='EULER', size=3, unit='ROTATION')
     rotation_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     rotation2: bpy.props.FloatVectorProperty(name='Rotation Random', subtype='EULER', size=3, unit='ROTATION')
@@ -237,6 +241,14 @@ class SystemProperties(shared.M3PropertyGroup):
     uv_flipbook_end_init_index: bpy.props.IntProperty(options=set(), min=0, max=255)
     uv_flipbook_end_stop_index: bpy.props.IntProperty(options=set(), min=0, max=255)
     uv_flipbook_start_lifespan_factor: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0, max=1, default=1.0)
+    uv_ss_threshold: bpy.props.FloatProperty(name='Screen Space Threshold')
+    uv_ss_threshold_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
+    uv_ss_offset: bpy.props.FloatVectorProperty(name='Screen Space Offset', size=2, subtype='XYZ')
+    uv_ss_offset_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
+    uv_ss_angle: bpy.props.FloatVectorProperty(name='Screen Space Angle', size=3, subtype='EULER', unit='ROTATION')
+    uv_ss_angle_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
+    uv_ss_tiling: bpy.props.FloatVectorProperty(name='Screen Space Tiling', size=2, subtype='XYZ', default=(1.0, 1.0))
+    uv_ss_tiling_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     local_forces: bpy.props.BoolVectorProperty(options=set(), subtype='LAYER', size=16)
     world_forces: bpy.props.BoolVectorProperty(options=set(), subtype='LAYER', size=16)
     pitch_var_shape: bpy.props.EnumProperty(options=set(), items=bl_enum.ribbon_variation_shape)
@@ -264,6 +276,11 @@ class SystemProperties(shared.M3PropertyGroup):
     alpha_var_amplitude_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     alpha_var_frequency: bpy.props.FloatProperty(name='Alpha Variation Frequency')
     alpha_var_frequency_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
+    color_var_shape: bpy.props.EnumProperty(options=set(), items=bl_enum.ribbon_variation_shape)
+    color_var_amplitude: bpy.props.FloatProperty(name='Color Variation Amount')
+    color_var_amplitude_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
+    color_var_frequency: bpy.props.FloatProperty(name='Color Variation Frequency')
+    color_var_frequency_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     rotation_var_shape: bpy.props.EnumProperty(options=set(), items=bl_enum.ribbon_variation_shape)
     rotation_var_amplitude: bpy.props.FloatProperty(name='Rotation Variation Amount', subtype='ANGLE')
     rotation_var_amplitude_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
@@ -279,6 +296,7 @@ class SystemProperties(shared.M3PropertyGroup):
     spread_y_var_amplitude_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     spread_y_var_frequency: bpy.props.FloatProperty(name='Spread Y Variation Frequency')
     spread_y_var_frequency_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
+    phase_shift: bpy.props.FloatProperty(name='Phase Shift')
     parent_velocity: bpy.props.FloatProperty(name='Parent Velocity Factor', subtype='FACTOR', soft_min=0.0, soft_max=1.0, description='Determines how much the velocity of the emitter is transferred to particles')
     parent_velocity_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
     collide_system: bpy.props.PointerProperty(type=SystemPointerProp, description='Specifies a system to orphan for collision events. Leave blank to emit generic physics system particles')
@@ -287,6 +305,8 @@ class SystemProperties(shared.M3PropertyGroup):
     collide_emit_chance: bpy.props.FloatProperty(options=set(), subtype='FACTOR', min=0.0, max=1.0, default=1.0, description='The particles has the given chance to emit particles in a collision event')
     collide_emit_energy: bpy.props.FloatProperty(options=set(), subtype='FACTOR', soft_min=0.0, soft_max=1.0, description='A general factor applied to the emitted particle based on the speed of the colliding particle')
     collide_events_cull: bpy.props.IntProperty(options=set(), min=0, description='For non-zero values, the particle is destroyed after bouncing the given number of times')
+    collide_splat: bpy.props.PointerProperty(type=shared.M3ProjectionPointerProp, description='Specifies a splat projector to create on collision events')
+    collide_splat_chance: bpy.props.FloatProperty(options=set(), min=0.0, max=1.0, subtype='FACTOR', description='Determines the chance that a splat is created on collision')
     world_space: bpy.props.BoolProperty(options=set(), description='Makes it so that particles are not hosted to the emitter')
     sort_method: bpy.props.EnumProperty(options=set(), items=bl_enum.particle_sort_method, default='NONE', get=sort_method_get, set=sort_method_set)
     collide_terrain: bpy.props.BoolProperty(options=set(), description='Particle instances will collide with terrain')
@@ -435,6 +455,9 @@ class SystemPanelEmitterShape(SystemSubPanel, bpy.types.Panel):
 
             elif particle.emit_shape == 'SPLINE':
                 box = col.box()
+                row = shared.draw_prop_split(box, align=False, text='Spline Bounds Min/Max')
+                shared.draw_prop_anim(row, particle, 'spline_bounds_min')
+                shared.draw_prop_anim(row, particle, 'spline_bounds_max')
                 box.use_property_split = False
                 op = box.operator('m3.collection_add', text='Add Spline Point')
                 op.collection = particle.emit_shape_spline.path_from_id()
@@ -473,11 +496,10 @@ class SystemPanelInstance(SystemSubPanel, bpy.types.Panel):
         col.prop(particle, 'particle_type', text='Type')
 
         if particle.particle_type in ('WORLD', 'SINGLE'):
-            row = col.row(align=True)
-            row.prop(particle, 'instance_yaw', text='Instance Yaw/Pitch')
-            row.prop(particle, 'instance_pitch', text='')
-        elif particle.particle_type in ('GROUND'):
-            col.prop(particle, 'instance_pitch', text='Instance Pitch')
+            shared.draw_prop_items(shared.draw_prop_split(col, text='Instance Direction'), particle, 'instance_direction')
+            col.prop(particle, 'instance_offset', text='Offset')
+        elif particle.particle_type in ('GROUND', 'GROUND_TAIL'):
+            col.prop(particle, 'instance_offset', text='Offset')
 
         if particle.particle_type in ('TAIL', 'GROUND_TAIL', 'TAIL_ALT'):
             row = col.row(align=True)
@@ -534,9 +556,11 @@ class SystemPanelInstance(SystemSubPanel, bpy.types.Panel):
         shared.draw_op_anim_prop(sub, particle, 'color_mid')
         shared.draw_op_anim_prop(sub, particle, 'color_end')
         row.separator(factor=0.75)
-        row.prop(particle, 'color_randomize', text='')
+        sub = row.column()
+        sub.prop(particle, 'color_randomize', text='')
+        sub.prop(particle, 'alpha_randomize', text='')
         sub = row.column(align=True)
-        sub.active = particle.color_randomize
+        sub.active = particle.color_randomize or particle.alpha_randomize
         shared.draw_op_anim_prop(sub, particle, 'color2_init')
         shared.draw_op_anim_prop(sub, particle, 'color2_mid')
         shared.draw_op_anim_prop(sub, particle, 'color2_end')
@@ -600,7 +624,8 @@ class SystemPanelInstanceVariation(SystemSubPanel, bpy.types.Panel):
         layout.use_property_split = True
         layout.use_property_decorate = False
         particle = context.object.m3_particlesystems[context.object.m3_particlesystems_index]
-
+        shared.draw_prop_anim(layout, particle, 'phase_shift', text='Phase Shift')
+        layout.separator()
         shared.draw_var_props(layout, particle, 'yaw', text='Yaw')
         shared.draw_var_props(layout, particle, 'pitch', text='Pitch')
         shared.draw_var_props(layout, particle, 'spread_x', text='Spread X')
@@ -608,6 +633,7 @@ class SystemPanelInstanceVariation(SystemSubPanel, bpy.types.Panel):
         shared.draw_var_props(layout, particle, 'speed', text='Speed')
         shared.draw_var_props(layout, particle, 'size', text='Size')
         shared.draw_var_props(layout, particle, 'rotation', text='Rotation')
+        shared.draw_var_props(layout, particle, 'color', text='Color')
         shared.draw_var_props(layout, particle, 'alpha', text='Alpha')
 
 
@@ -648,6 +674,8 @@ class SystemPanelPhysics(SystemSubPanel, bpy.types.Panel):
         row.prop(particle, 'collide_emit_min', text='Quantity Min/Max')
         row.prop(particle, 'collide_emit_max', text='')
         col.prop(particle, 'collide_events_cull', text='Maximum Events')
+        shared.draw_prop_pointer_search(col, particle.collide_splat, particle.id_data, 'm3_projections', text='Collision Projector', icon='LINKED')
+        col.prop(particle, 'collide_splat_chance', text='Spawn Chance')
         layout.separator()
         col = shared.draw_prop_split(layout, text='Local Force Channels')
         col.prop(particle, 'local_forces', text='')
@@ -664,6 +692,7 @@ class SystemPanelFlipbook(SystemSubPanel, bpy.types.Panel):
         layout.use_property_split = True
         layout.use_property_decorate = False
         particle = context.object.m3_particlesystems[context.object.m3_particlesystems_index]
+        par_ver = int(context.object.m3_particlesystems_version)
 
         row = layout.row(align=True)
         row.prop(particle, 'uv_flipbook_cols', text='Flipbook Columns/Rows')
@@ -676,6 +705,13 @@ class SystemPanelFlipbook(SystemSubPanel, bpy.types.Panel):
         row = layout.row(align=True)
         row.prop(particle, 'uv_flipbook_end_init_index', text='Phase 2 Start/End')
         row.prop(particle, 'uv_flipbook_end_stop_index', text='')
+
+        if par_ver >= 17:
+            layout.separator()
+            shared.draw_prop_anim(layout, particle, 'uv_ss_threshold', text='Screen Space Threshold')
+            shared.draw_prop_anim(layout, particle, 'uv_ss_offset', text='Offset')
+            shared.draw_prop_anim(layout, particle, 'uv_ss_angle', text='Angle')
+            shared.draw_prop_anim(layout, particle, 'uv_ss_tiling', text='Tiling')
 
 
 class SystemPanelTrail(SystemSubPanel, bpy.types.Panel):

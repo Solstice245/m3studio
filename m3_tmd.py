@@ -79,6 +79,6 @@ class Panel(shared.ArmatureObjectPanel, bpy.types.Panel):
 classes = (
     VecProperties,
     Properties,
-    Menu,
-    Panel,
+    # Menu,
+    # Panel,
 )

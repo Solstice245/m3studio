@@ -19,9 +19,37 @@
 import bpy
 from . import shared
 
+e_section_reuse_mode = (
+    ('SINGLE', 'Single', 'Sections will always be used exactly once. Reused data will be duplicated until all are unique. The Blizzard standard setting'),
+    ('EXPLICIT', 'Explicit', 'Sections can be reused where references are explicitely set by the user'),
+    ('FACTORED', 'Factored', 'Sections will be reused in all possible cases, where sections exactly match other existing sections. Reduces file size')
+)
+
+e_face_storage_mode = (
+    ('STANDARD', 'Standard', 'Uses the Blizzard standard method for defining how mesh faces are stored and drawn'),
+    ('COMPACT', 'Compact (Experimental)', 'Uses a different method of storing and iterating over mesh faces that allows reuse of indices. Reduces file size compared to Standard when there are meshes with 2 or more material assignments.\n\nWARNING: The resulting model is known to cause graphical glitches and/or instability while in the Cutscene Editor, but has not been observed to cause similar problems in-game'),
+)
+
+e_vert_format_lookup = (
+    ('STANDARD', 'Standard', 'Allows 4 bone/weight pairs per vertex. The Blizzard standard setting'),
+    ('REDUCED', 'Reduced (Experimental)', 'Allows 2 bone/weight pairs per vertex. Reduced file size compared to Standard.\n\nWARNING: Is known to cause buggy behavior when selecting objects in the Cutscene Editor, or in some cases a crash'),
+    ('ROOTED', 'Rooted (Experimental)', 'No bone/weight pairs available. Meshes will be skinned only to their root bone, which will be defined as the mesh\'s first skinned vertex group. Further reduced file size.\n\nWARNING: Is known to cause buggy behavior when selecting objects in the Cutscene Editor, or in some cases a crash'),
+)
+
+class ExportOptionsGroup(bpy.types.PropertyGroup):
+    output_anims: bpy.props.BoolProperty(default=True, name='Output Animations', description='Include animations in the resulting m3 file. (Unchecked does not apply when exporting as m3a)')
+    section_reuse_mode: bpy.props.EnumProperty(default='EXPLICIT', name='Section Reuse', items=e_section_reuse_mode)
+    # ! disabling these next two options since I can't reliably make the output models stable
+    # face_storage_mode: bpy.props.EnumProperty(default='STANDARD', name='Face Output Mode', items=e_face_storage_mode)
+    # vert_format_lookup: bpy.props.EnumProperty(default='STANDARD', name='Lookups', items=e_vert_format_lookup)
+    cull_unused_bones: bpy.props.BoolProperty(default=True, name='Cull Unused Bones', description='Bones which the exporter determines will not be referenced in the m3 file are removed')
+    cull_material_layers: bpy.props.BoolProperty(default=True, name='Cull Material Layers', description='Fills all blank material layer slots with a reference to a single layer section, which reduces file size. When turned off, output will conform to Blizzard standards, where all available material layer slots are filled with a unique layer section.')
+    use_only_max_bounds: bpy.props.BoolProperty(default=False, name='Use Only Max Bounds', description='Rather than having multiple bounding box keys, animations will have exactly one bounding box key which has the maximum dimensions of all the keys there would have been. Can slightly reduce file size')
+
 
 def register_props():
     bpy.types.Object.m3_filepath_export = bpy.props.StringProperty(name='File Path', description='File path for export operation', maxlen=1023, default='')
+    bpy.types.Object.m3_export_opts = bpy.props.PointerProperty(type=ExportOptionsGroup)
     bpy.types.Object.m3_options = bpy.props.PointerProperty(type=OptionProperties)
     bpy.types.Object.m3_model_version = bpy.props.EnumProperty(options=set(), items=model_versions, default='29')
     bpy.types.Object.m3_mesh_version = bpy.props.EnumProperty(options=set(), items=mesh_versions, default='5')
@@ -37,11 +65,11 @@ model_versions = (
     ('26', '26', 'Version 26'),
     ('28', '28', 'Version 28'),
     ('29', '29', 'Version 29'),
-    ('30', '30', 'Version 30'),
+    ('30', '30 (HotS only)', 'Version 30. Is not supported by SC2'),
 )
 
 mesh_versions = (
-    ('2', '2', 'Version 2'),
+    # ('2', '2 (SC2 Beta)', 'Version 2. SC2 Beta only'),
     ('3', '3', 'Version 3'),
     ('4', '4', 'Version 4'),
     ('5', '5', 'Version 5'),
@@ -191,6 +219,7 @@ class BoundsPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
 
 
 classes = (
+    ExportOptionsGroup,
     OptionProperties,
     BoundingProperties,
     IOPanel,
