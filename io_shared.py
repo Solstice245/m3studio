@@ -565,7 +565,7 @@ def io_force(processor):
 
 def io_warp(processor):
     processor.anim_float('radius')
-    processor.anim_float('compression_strength')
+    processor.anim_float('strength')
     # processor.anim_float('unknown9306aac0')
     # processor.anim_float('unknown50c7f2b4')
     # processor.anim_float('unknown8d9c977c')

@@ -2414,7 +2414,7 @@
             <field name="unknowncf03b856" type="uint32" expected_value="0"/>
             <field name="radius" type="FloatAnimationReferenceV0"/>
             <field name="unknown9306aac0" type="FloatAnimationReferenceV0"/>
-            <field name="compression_strength" type="FloatAnimationReferenceV0"/>
+            <field name="strength" type="FloatAnimationReferenceV0"/>
             <field name="unknown50c7f2b4" type="FloatAnimationReferenceV0"/>
             <field name="unknown8d9c977c" type="FloatAnimationReferenceV0"/>
             <field name="unknownca6025a2" type="FloatAnimationReferenceV0"/>
