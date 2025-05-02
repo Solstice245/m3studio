@@ -117,7 +117,7 @@ def io_material_volume(processor):
 
 
 def io_material_volume_noise(processor):
-    processor.integer('unknown50762f82')
+    # processor.integer('unknown50762f82')  # ! not documented
     processor.bit('flags', 'draw_after_transparency')
     processor.anim_float('density')
     processor.anim_float('near_plane')
@@ -127,7 +127,7 @@ def io_material_volume_noise(processor):
     processor.anim_vec3('scale')
     processor.anim_vec3('rotation')
     processor.integer('alpha_treshold')
-    processor.integer('unknown1d13acfe')
+    # processor.integer('unknown1d13acfe')  # ! not documented
 
 
 def io_material_stb(processor):
