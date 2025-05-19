@@ -820,6 +820,11 @@ class Importer:
 
                     if parent_child_vector.length < 0.000001:
                         edit_bone.use_connect = True
+                    else:
+                        # fixes precision errors in applying roll caused by Blender
+                        for ii in range(0, 3):
+                            if abs(edit_bone.head[ii] - edit_bone.tail[ii]) < 0.00005:
+                                edit_bone.tail[ii] = edit_bone.head[ii]
 
             return edit_bones
 
@@ -878,7 +883,6 @@ class Importer:
 
         bpy.context.view_layer.objects.active = self.ob
 
-        bl_irefs = []
         bone_rests = []
         bind_scales = []
         bind_matrices = []
@@ -888,22 +892,29 @@ class Importer:
         m3_bones = self.m3[self.m3_model.bones]
 
         for iref, m3_bone in zip(self.m3[self.m3_model.bone_rests], m3_bones):
-            orig_mat = to_bl_matrix(iref.matrix)
-            mat = orig_mat.copy()
-
+            mat = to_bl_matrix(iref.matrix)
             mat_scale = mat.to_scale()
+
+            # TODO replace this with a correction on the pose data
             for ii in range(3):
                 if mat_scale[ii] < 0:
                     mat[ii] = -mat[ii]
-
-            bl_irefs.append(mat)
 
             try:
                 bone_rests.append(mat.inverted() @ io_shared.rot_fix_matrix)
             except ValueError:
                 bone_rests.append(mathutils.Matrix() @ io_shared.rot_fix_matrix)
 
-            bind_scales.append((orig_mat @ io_shared.rot_fix_matrix_transpose).to_scale().yxz)
+            # calculating scale vector manually since for some reason blender tends to come up with something else.
+            # still using blender's scale calculation to get the sign of the scale tho.
+            bind_scale = mathutils.Vector((
+                mathutils.Vector(mat[1][0:3]).length * (-1 if mat_scale[1] < 0 else 1),
+                mathutils.Vector(mat[0][0:3]).length * (-1 if mat_scale[0] < 0 else 1),
+                mathutils.Vector(mat[2][0:3]).length * (-1 if mat_scale[2] < 0 else 1)
+            ))
+
+            bind_scales.append(bind_scale)
+            bind_matrices.append(mathutils.Matrix.LocRotScale(None, None, bind_scale))
             bone_heads.append(bone_rests[-1].translation)
             bone_vectors.append(bone_rests[-1].col[1].to_3d().normalized())
 
@@ -913,37 +924,6 @@ class Importer:
         edit_bones = get_edit_bones(m3_bones, bone_heads, bone_tails, bone_rolls)
         edit_bone_relations = get_edit_bone_relations(m3_bones, edit_bones)
         bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
-
-        # this fixes the scale of bone rest matrices that use an unusual matrix form
-        for ii, m3_bone in enumerate(m3_bones):
-            db = self.ob.data.bones.get(self.m3[m3_bone.name].content_to_string())
-            bone_local_inv_matrix = (db.matrix_local @ io_shared.rot_fix_matrix_transpose).inverted()
-            iref = bl_irefs[ii]
-            out_iref = mathutils.Matrix.LocRotScale(None, None, bind_scales[ii]) @ bone_local_inv_matrix
-
-            # hacky solution for certain import problems, could cause problems elsewhere
-            sub_x = abs(abs(sum(iref[0])) - abs(sum(out_iref[0]))) + 1
-            sub_y = abs(abs(sum(iref[1])) - abs(sum(out_iref[1]))) + 1
-            sub_z = abs(abs(sum(iref[2])) - abs(sum(out_iref[2]))) + 1
-
-            div_x = sum(iref[0]) / sum(out_iref[0]) if (sum(iref[0]) and sum(out_iref[0])) else 1
-            div_y = sum(iref[1]) / sum(out_iref[1]) if (sum(iref[1]) and sum(out_iref[1])) else 1
-            div_z = sum(iref[2]) / sum(out_iref[2]) if (sum(iref[2]) and sum(out_iref[2])) else 1
-
-            if abs(sum((sub_x, sub_y, sub_z))) < abs(sum((div_x, div_y, div_z))):
-                bind_fac_x = abs(abs(sum(iref[0])) - abs(sum(out_iref[0]))) + 1
-                bind_fac_y = abs(abs(sum(iref[1])) - abs(sum(out_iref[1]))) + 1
-                bind_fac_z = abs(abs(sum(iref[2])) - abs(sum(out_iref[2]))) + 1
-            else:
-                bind_fac_x = abs(sum(iref[0]) / sum(out_iref[0])) if (sum(iref[0]) and sum(out_iref[0])) else 1
-                bind_fac_y = abs(sum(iref[1]) / sum(out_iref[1])) if (sum(iref[1]) and sum(out_iref[1])) else 1
-                bind_fac_z = abs(sum(iref[2]) / sum(out_iref[2])) if (sum(iref[2]) and sum(out_iref[2])) else 1
-
-            bind_scales[ii][0] = bind_scales[ii][0] * bind_fac_x
-            bind_scales[ii][1] = bind_scales[ii][1] * bind_fac_y
-            bind_scales[ii][2] = bind_scales[ii][2] * bind_fac_z
-
-            bind_matrices.append(mathutils.Matrix.LocRotScale(None, None, bind_scales[ii]))
 
         adjust_pose_bones(m3_bones, edit_bone_relations, bind_scales, bind_matrices)
 
