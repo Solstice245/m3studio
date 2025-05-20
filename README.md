@@ -30,8 +30,8 @@ This addon adds the following panels to the __Object__ tab of the properties edi
 
 #### M3 Animation Groups
 - Lists the animation groups of the M3 model. Each animation group should have at least one sub-animation, which can each be assigned an action.
-- Action group names must only contain words from a specific dictionary. This dictionary is defined in the `bl_enum.py` file.
-- Actions are referenced, but are not automatically generated when a new sub-animation is added to the list. Take care to create new actions rather than referencing an action from multiple sub-animations unless this is strictly intended.
+- Animation group names should only contain words from a specific dictionary. This dictionary is defined in the `bl_enum.py` file.
+- Actions are referenced, but are not automatically generated when a new sub-animation is added to a group. Take care to create new actions rather than referencing an action from multiple sub-animations unless this is strictly intended.
 
 #### M3 Material Layers
 - Lists the M3 material layers that are defined for the M3 model.
@@ -39,7 +39,7 @@ This addon adds the following panels to the __Object__ tab of the properties edi
 - Material layers can be referenced by multiple materials.
 
 #### M3 Materials
-- Lists the M3 materials of the M3 model. The material type is listed on the right side of each item.
+- Lists the M3 materials of the M3 model. The material type is displayed on the right side of each list item.
 - Layer slots are listed, with the option to assign an existing layer, create a new one, or duplicate the layer currently in the slot, if applicable.
 - Materials are assigned to meshes via the M3 Properties panel when a mesh object is selected.
 
@@ -50,7 +50,10 @@ This addon adds the following panels to the __Object__ tab of the properties edi
 - The Volume sub list allows definition of areas, generally used by Target and Shield attachments. It is recommended to only ever have 1 volume defined in this list for a given attachment point.
 
 #### M3 Hit Test Volumes
-- TODO
+- Contains the definition for the model's tight hit test volume, and lists the model's fuzzy hit test volumes.
+- "Tight" hit test volume determines the area by which an in-game unit can be selected via operations such as drag select or screen wide select.
+- "Fuzzy" hit test volumes determine which areas the mouse must hover over to allow a click based selection. If no fuzzy hit test volumes are defined, the entire unit model is used for click hit testing.
+- NOTE: Do not use the "Cylinder" volume shape for hit test volumes. While technically allowed by the game renderer, they will not function properly in-game.
 
 #### M3 Particle Systems
 - TODO
@@ -83,7 +86,9 @@ This addon adds the following panels to the __Object__ tab of the properties edi
 - TODO
 
 #### M3 Billboards
-- TODO
+- A list of bone names to be enlisted by the engine as billboards.
+- The given bones are aligned to the camera based on the type of alignment assiged.
+- Intended for elements where you want a consistent appearance from varying model angles and/or camera perspectives.
 
 #### M3 Turrets
 - TODO
@@ -94,26 +99,33 @@ This addon adds the following panels to the __Object__ tab of the properties edi
 #### M3 Cloths
 - TODO
 
-#### M3 Cloth COnstraint Sets
+#### M3 Cloth Constraint Sets
 - TODO
 
 #### M3 Inverse Kinematics
-- TODO
+- A list of bone names, which are the target bones of engine driven inverse kinematics. 
+- The target bone should be parented to the end point of a chain of bones which you wish to have procedurally transformed, so that the end is positioned on the terrain. (Such as Collosus legs while cliff walking.)
+- The "Joint Length" property should match the number of bones in the chain which you wish to be affected by the repositioning of the target bone.
 
 #### M3 Vertex Warpers
-- TODO
+- Lists the vertex warpers of the M3 model.
+- An experimental feature that was used exclusively for the Mothership Black Hole spell, where the mesh of units in the area are distorted based on proximity to the center. This visual effect applies only to the model of units with a behavior that enables the "Warpable" Modify Flag.
 
 #### M3 Shadow Boxes
-- TODO
-
-#### M3 TMD Data
-- TODO
+- Lists the shadow boxes of the M3 model.
+- Niche feature that affects how shadows are rendered on screen. When visible, shadows are rendered only in the box's defined area, and at a relatively higher quality. There should probably only be one shadow box in a given scene.
 <br><br>
 
 ## Advanced Topic Explainers
 
 ### Data Structure Versions
 - TODO
+
+### Bind Scale
+- Bind scale is an M3 specific property that exists on bones, and is accessible in the M3 Properties panel of the Bone Properties tab, or in the Item tab of the Context Menu while in Pose mode.
+- Affects the scaling of M3 defined elements such as attachment/hit test volumes, particles, ribbons, etc.
+- The scaling factor is applied as a denominator, rather than as a multiplier. `0.5` means twice as large, `2.0` means half as large.
+- When applied to attachment points that are used as turrets, it also influences the scale of any mesh which is weighted to a bone that is parented to the attachment point's bone.
 
 ### Animation Headers
 - All M3 properties which can be animated have an animation header.
@@ -123,4 +135,4 @@ This addon adds the following panels to the __Object__ tab of the properties edi
   - `Flags`: The functionality of this field is unknown
 - Animation headers should have an exact match between an M3 file and any M3A file applied to the model.
 - In the case you need to change an animation header ID, set the ID value to an empty string and a new random integer will be assigned.
-- To access animation IDs for bones, use the "Edit M3 Animation Headers" button in the Bone tab of the properties editor, or in the Item tab of the Context Menu while in Pose mode.
+- To access animation IDs for bones, use the "Edit M3 Animation Headers" button in the Bone Properties tab, or in the Item tab of the Context Menu while in Pose mode.
