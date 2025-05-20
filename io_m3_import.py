@@ -908,9 +908,9 @@ class Importer:
             # calculating scale vector manually since for some reason blender tends to come up with something else.
             # still using blender's scale calculation to get the sign of the scale tho.
             bind_scale = mathutils.Vector((
-                mathutils.Vector(mat[1][0:3]).length * (-1 if mat_scale[1] < 0 else 1),
                 mathutils.Vector(mat[0][0:3]).length * (-1 if mat_scale[0] < 0 else 1),
-                mathutils.Vector(mat[2][0:3]).length * (-1 if mat_scale[2] < 0 else 1)
+                mathutils.Vector(mat[1][0:3]).length * (-1 if mat_scale[1] < 0 else 1),
+                mathutils.Vector(mat[2][0:3]).length * (-1 if mat_scale[2] < 0 else 1),
             ))
 
             bind_scales.append(bind_scale)
