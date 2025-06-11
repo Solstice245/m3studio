@@ -946,6 +946,9 @@ class Importer:
         if hasattr(self.m3_model, 'materials_reflection'):
             self.m3_struct_version_set_from_ref('m3_materials_reflection_version', self.m3_model.materials_reflection)
 
+        if hasattr(self.m3_model, 'materials_lensflare'):
+            self.m3_struct_version_set_from_ref('m3_materials_lensflare_version', self.m3_model.materials_lensflare)
+
         layer_section_to_index = {}
         for m3_matref in self.m3[self.m3_model.material_references]:
             m3_mat = self.m3[getattr(self.m3_model, shared.material_type_to_model_reference[m3_matref.type])][m3_matref.material_index]

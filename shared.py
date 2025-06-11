@@ -50,6 +50,7 @@ m3_collections_suggested_names = {
     'points': ['Spline Point'],
     'parts': ['Turret Part'],
     'constraints': ['Cloth Constraint'],
+    'starbursts': ['Starburst'],
 }
 
 

@@ -1390,20 +1390,11 @@
             <field name="layer_color" type="Reference" ref_to="LAYR"/>
             <field name="layer_unknown" type="Reference" ref_to="LAYR"/>
             <field name="starbursts" type="Reference" ref_to="LFSB"/>
-            <field name="unknown7f492c0a" type="uint32" default_value="0x40000000" till_version="2"/>
-            <field name="unk00" type="uint32" till_version="2"/>
-            <field name="unk01" type="uint32" till_version="2"/>
-            <field name="unk02" type="uint32" till_version="2"/>
-            <field name="unk03" type="uint32" till_version="2"/>
-            <field name="unk04" type="uint32" till_version="2"/>
-            <field name="unk05" type="uint32" till_version="2"/>
-            <field name="unk06" type="uint32" till_version="2"/>
-            <!-- version 2 may have more fields with version 3 in common -->
-            <field name="uv_cols" type="uint32" default_value="0" since_version="3"/>
-            <field name="uv_rows" type="uint32" default_value="0" since_version="3"/>
-            <field name="render_distance" type="float" default_value="0.0" since_version="3"/>
+            <field name="uv_cols" type="uint32" default_value="0"/>
+            <field name="uv_rows" type="uint32" default_value="0"/>
+            <field name="render_distance" type="float"/>
             <field name="unknown_ref_char" type="Reference" ref_to="CHAR" since_version="3"/>
-            <field name="intensity" type="FloatAnimationReferenceV0" since_version="3"/>
+            <field name="intensity" type="FloatAnimationReferenceV0"/>
             <field name="color" type="ColorAnimationReferenceV0" since_version="3"/>
             <field name="intensity2" type="FloatAnimationReferenceV0" since_version="3"/>
             <field name="uniform_scale" type="FloatAnimationReferenceV0" since_version="3"/>

@@ -1088,7 +1088,7 @@ class Exporter():
             8: 0,
             9: 0,
             10: ob.m3_materials_reflection_version,
-            11: 3,
+            11: ob.m3_materials_lensflare_version,
             12: 1,
         }
 

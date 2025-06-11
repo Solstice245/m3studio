@@ -36,8 +36,7 @@ def register_props():
     bpy.types.Object.m3_materials_reflection = bpy.props.CollectionProperty(type=ReflectionProperties)
     bpy.types.Object.m3_materials_reflection_version = bpy.props.EnumProperty(options=set(), items=reflection_versions, default='2')
     bpy.types.Object.m3_materials_lensflare = bpy.props.CollectionProperty(type=LensFlareProperties)
-    # bpy.types.Object.m3_materials_lensflare_version = bpy.props.EnumProperty(options=set(), items=lensflare_versions)
-    # ^^ include this once LFLR version 2 is sufficiently documented
+    bpy.types.Object.m3_materials_lensflare_version = bpy.props.EnumProperty(options=set(), items=lensflare_versions, default='3')
     bpy.types.Object.m3_materials_buffer = bpy.props.CollectionProperty(type=BufferProperties)
 
 
@@ -282,7 +281,7 @@ class LensFlareStarburstProperties(shared.M3PropertyGroup):
     def _get_identifier(self):
         return 'M3 Lens Flare Material Starburst'
 
-    name: bpy.props.StringProperty(options=set(), get=get_material_name)
+    name: bpy.props.StringProperty(options=set())
     uv_index: bpy.props.IntProperty(options=set(), min=0)
     distance_factor: bpy.props.FloatProperty(options=set(), default=1)
     width: bpy.props.FloatProperty(options=set(), min=0, default=500)
@@ -305,16 +304,16 @@ class LensFlareProperties(shared.M3PropertyGroup):
     layer_unknown: bpy.props.StringProperty(options=set())
     starbursts: bpy.props.CollectionProperty(type=LensFlareStarburstProperties)
     starbursts_index: bpy.props.IntProperty(options=set(), default=-1)
-    uv_cols: bpy.props.IntProperty(options=set(), min=0)
-    uv_rows: bpy.props.IntProperty(options=set(), min=0)
-    render_distance: bpy.props.FloatProperty(options=set(), min=0)
-    intensity: bpy.props.FloatProperty(name='Intensity', min=0)
+    uv_cols: bpy.props.IntProperty(options=set(), min=1, default=1)
+    uv_rows: bpy.props.IntProperty(options=set(), min=1, default=1)
+    render_distance: bpy.props.FloatProperty(options=set(), min=0.0)
+    intensity: bpy.props.FloatProperty(name='Intensity', min=0.0, default=1.0)
     intensity_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
-    intensity2: bpy.props.FloatProperty(name='Intensity 2', min=0)
+    intensity2: bpy.props.FloatProperty(name='Intensity 2', min=0.0, default=1.0)
     intensity2_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
-    uniform_scale: bpy.props.FloatProperty(name='Uniform Scale', min=0, default=1)
+    uniform_scale: bpy.props.FloatProperty(name='Uniform Scale', min=0.0, default=1.0)
     uniform_scale_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
-    color: bpy.props.FloatVectorProperty(name='Color', subtype='COLOR', size=4, min=0, max=1, default=(1, 1, 1, 1))
+    color: bpy.props.FloatVectorProperty(name='Color', subtype='COLOR', size=4, min=0.0, max=1.0, default=(1.0, 1.0, 1.0, 1.0))
     color_header: bpy.props.PointerProperty(type=shared.M3AnimHeaderProp)
 
 
@@ -607,6 +606,8 @@ def draw_lensflare_starburst_props(starburst, layout):
 
 def draw_lensflare_props(matref, layout):
     material = m3_material_get(matref)
+    version = int(material.id_data.m3_materials_lensflare_version)
+
     draw_layer_pointer_prop(layout, material, 'layer_color', 'Color')
     draw_layer_pointer_prop(layout, material, 'layer_unknown', 'Unknown')
     layout.separator()
@@ -617,11 +618,14 @@ def draw_lensflare_props(matref, layout):
     layout.prop(material, 'render_distance', text='Render Distance')
     layout.separator()
     shared.draw_prop_anim(layout, material, 'intensity', text='Intensity')
-    shared.draw_prop_anim(layout, material, 'intensity2', text='Intensity 2')
-    layout.separator()
-    shared.draw_prop_anim(layout, material, 'uniform_scale', text='Uniform Scale')
-    layout.separator()
-    shared.draw_prop_anim(layout, material, 'color', text='Tint Color')
+
+    if version >= 3:
+        shared.draw_prop_anim(layout, material, 'intensity2', text='Intensity 2')
+        layout.separator()
+        shared.draw_prop_anim(layout, material, 'uniform_scale', text='Uniform Scale')
+        layout.separator()
+        shared.draw_prop_anim(layout, material, 'color', text='Tint Color')
+
     layout.separator()
     shared.draw_collection_list(layout.box(), material.starbursts, draw_lensflare_starburst_props, label='Starbursts:')
 

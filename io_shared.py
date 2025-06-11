@@ -169,11 +169,10 @@ def io_starburst(processor):
 
 
 def io_material_lens_flare(processor):
-    processor.integer('unknown7f492c0a', till_version=2)
-    processor.integer('uv_cols', since_version=3)
-    processor.integer('uv_rows', since_version=3)
-    processor.float('render_distance', since_version=3)
-    processor.anim_float('intensity', since_version=3)
+    processor.integer('uv_cols')
+    processor.integer('uv_rows')
+    processor.float('render_distance')
+    processor.anim_float('intensity')
     processor.anim_color('color', since_version=3)
     processor.anim_float('intensity2', since_version=3)
     processor.anim_float('uniform_scale', since_version=3)
