@@ -1512,6 +1512,7 @@ class Importer:
 
                     if m3_volume.desc.version == 1:
                         volume_mesh = self.gen_basic_volume_object(physics_shape.name, m3_volume.vertices, m3_volume.face_data)
+                        self.ob.m3_physicsshapes_version = '1'  # override even if it's a downgrade
                     else:
                         args = physics_shape.name, m3_volume.vertices, m3_volume.plane_equations, m3_volume.loops, m3_volume.polygons
                         volume_mesh = self.gen_rigidbody_volume_object(*args)
