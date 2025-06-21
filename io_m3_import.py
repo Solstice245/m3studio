@@ -1735,7 +1735,6 @@ class Importer:
         me_ob = bpy.data.objects.new(me.name, me)
         me_ob.display_type = 'WIRE'
         me_ob.parent = self.ob
-        me_ob.hide_viewport = True
         me_ob.hide_render = True
         me_ob.m3_mesh_export = False
         bpy.context.scene.collection.objects.link(me_ob)
@@ -1777,7 +1776,6 @@ class Importer:
         me_ob = bpy.data.objects.new(me.name, me)
         me_ob.display_type = 'WIRE'
         me_ob.parent = self.ob
-        me_ob.hide_viewport = True
         me_ob.hide_render = True
         me_ob.m3_mesh_export = False
         bpy.context.scene.collection.objects.link(me_ob)
