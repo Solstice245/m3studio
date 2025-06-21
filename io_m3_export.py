@@ -2390,12 +2390,7 @@ class Exporter():
                         m3_volume.matrix = to_m3_matrix(mathutils.Matrix.LocRotScale(volume.location, volume.rotation, volume.scale))
 
                         if m3_volume.shape >= 4:
-                            if int(shape_version) == 1:
-                                if m3_volume.shape == 4:
-                                    m3_volume.shape = 5  # TODO temporary solution while convex hull research is still needed
-                                self.get_basic_volume_object(volume.mesh_object, m3_volume)
-                            else:
-                                self.get_physics_volume_object(volume.mesh_object, m3_volume)
+                            self.get_physics_volume_object(volume.mesh_object, m3_volume, shape_version)
                 else:
                     shape_section = self.shape_to_section[physics_body.physics_shape.handle]
                     shape_section.references.append(m3_physics_body.physics_shape)
@@ -2745,77 +2740,112 @@ class Exporter():
             vert_section.references.append(m3.vertices)
             face_section.references.append(m3.face_data)
 
-    def get_physics_volume_object(self, mesh_ob, m3):
+    def get_physics_volume_object(self, mesh_ob, m3, version):
         if mesh_ob.name not in self.mesh_to_physics_volume_sections.keys() or self.bl_op.section_reuse_mode == 'SINGLE':
-            bm = bmesh.new()
+            bm = bmesh.new(use_operators=True)
             bm.from_object(mesh_ob, self.depsgraph)
 
             vert_data = [to_m3_vec3(vert.co) for vert in bm.verts]
             plane_equation_data = []
-            loop_data = []
-            polygon_data = []
-
-            loop_desc = io_m3.structures['DMSE'].get_version(0)
-
-            polygon_medians = []
-
-            for face in bm.faces:
-                polygon_data.append(face.loops[0].index)
-                loop_count = len(face.loops)
-                for ii, loop in enumerate(face.loops):
-                    next_loop = (ii + 1) if ii < loop_count - 1 else 0
-                    m3_loop = loop_desc.instance()
-                    m3_loop.unknown00 = 1
-                    m3_loop.vertex = loop.vert.index
-                    m3_loop.polygon = face.index
-                    m3_loop.loop = face.loops[next_loop].index
-                    loop_data.append(m3_loop)
-
-                # calculating plane equation
-                # simply taking first 3 verts since we assume that the face is planar
-                v0 = face.verts[0].co
-                v1 = face.verts[1].co
-                v2 = face.verts[2].co
-
-                a = v0 - v1
-                b = v0 - v2
-
-                r, s, t = a.cross(b)
-
-                k = ((r * v0[0]) + (s * v0[1]) + (t * v0[2]))
-
-                pe = mathutils.Vector((r, s, t, k))
-                pen = pe.normalized()
-                try:
-                    pen[3] = pe[3] * (pen[0] / pe[0])
-                except ZeroDivisionError:
-                    pass
-
-                vec = face.calc_center_bounds()
-                polygon_medians.append(vec)
-                plane_equation_data.append(to_m3_vec4(pen))
 
             vert_section = self.m3.section_for_reference(m3, 'vertices')
             vert_section.content_add(*vert_data)
-            plane_equation_section = self.m3.section_for_reference(m3, 'plane_equations')
-            plane_equation_section.content_add(*plane_equation_data)
-            loop_section = self.m3.section_for_reference(m3, 'loops')
-            loop_section.content_add(*loop_data)
-            polygon_section = self.m3.section_for_reference(m3, 'polygons')
-            polygon_section.content_add(*polygon_data)
 
-            m3.polygons_center = to_m3_vec3([(sum([poly_med[ii] for poly_med in polygon_medians]) / len(polygon_medians)) for ii in range(3)])
-            m3.vertices_count = len(vert_section)
-            m3.polygons_count = len(plane_equation_section)
-            m3.loops_count = len(loop_section)
+            if int(version) == 1:
+                bmesh.ops.triangulate(bm, faces=bm.faces)
 
-            self.mesh_to_physics_volume_sections[mesh_ob.name] = [vert_section, plane_equation_section, loop_section, polygon_section]
+                face_data = []
+                for face in bm.faces:
+                    for vert in face.verts:
+                        face_data.append(vert.index)
+
+                face_section = self.m3.section_for_reference(m3, 'face_data')
+                face_section.content_add(*face_data)
+
+            plane_equation_section = None
+
+            if m3.shape == 4:
+                bmesh.ops.delete(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:], context='EDGES_FACES')
+                geom = bmesh.ops.convex_hull(bm, input=bm.verts[:], use_existing_faces=False)
+                bmesh.ops.delete(bm, geom=geom['geom_interior'], context='VERTS')
+                bmesh.ops.dissolve_limit(bm, angle_limit=0.05, use_dissolve_boundaries=False, verts=bm.verts, edges=bm.edges)
+
+                for face in bm.faces:
+                    a = face.verts[1].co - face.verts[0].co
+                    b = face.verts[2].co - face.verts[0].co
+                    x, y, z = a.cross(b)
+                    k = x - (2 * y) + z
+                    plane_equation_data.append(to_m3_vec4((x, y, z, k)))
+
+                plane_equation_section = self.m3.section_for_reference(m3, 'plane_equations')
+                plane_equation_section.content_add(*plane_equation_data)
+
+            if int(version) != 1:
+
+                loop_desc = io_m3.structures['DMSE'].get_version(0)
+
+                loop_data = []
+                loop_data_count = 0
+                polygon_data = []
+                polygon_medians = []
+
+                bm.verts.ensure_lookup_table()
+                bm.edges.ensure_lookup_table()
+                bm.faces.ensure_lookup_table()
+
+                for face in bm.faces:
+                    polygon_data.append(loop_data_count)
+                    last_iter = len(face.loops) - 1
+                    for ii, loop in enumerate(face.loops):
+                        m3_loop = loop_desc.instance()
+                        m3_loop.unknown00 = 1
+                        m3_loop.vertex = loop.vert.index
+                        m3_loop.polygon = face.index
+
+                        loop_data_count += 1
+
+                        if ii != last_iter:
+                            m3_loop.loop = loop_data_count
+                        else:
+                            m3_loop.loop = loop_data_count - last_iter - 1
+
+                        loop_data.append(m3_loop)
+
+                    vec = face.calc_center_bounds()
+                    polygon_medians.append(vec)
+
+                loop_section = self.m3.section_for_reference(m3, 'loops')
+                loop_section.content_add(*loop_data)
+                polygon_section = self.m3.section_for_reference(m3, 'polygons')
+                polygon_section.content_add(*polygon_data)
+
+                m3.polygons_center = to_m3_vec3([(sum([poly_med[ii] for poly_med in polygon_medians]) / len(polygon_medians)) for ii in range(3)])
+                m3.vertices_count = len(vert_section)
+                m3.polygons_count = len(polygon_section)
+                m3.loops_count = len(loop_section)
+
+            if int(version) == 1:
+                self.mesh_to_physics_volume_sections[mesh_ob.name] = [vert_section, face_data, plane_equation_section, None, None]
+            else:
+                self.mesh_to_physics_volume_sections[mesh_ob.name] = [vert_section, plane_equation_section, loop_section, polygon_section]
         else:
-            vert_section, plane_equation_section, loop_section, polygon_section = self.mesh_to_physics_volume_sections[mesh_ob.name]
-            vert_section.references.append(m3.vertices)
-            plane_equation_section.references.append(m3.plane_equations)
-            loop_section.references.append(m3.loops)
-            polygon_section.references.append(m3.polygons)
+
+            if int(version) == 1:
+                vert_section, face_section, plane_equation_section = self.mesh_to_physics_volume_sections[mesh_ob.name]
+
+                vert_section.references.append(m3.vertices)
+                face_section.ferences.append(m3.face_data)
+
+                if plane_equation_section != None:
+                    plane_equation_section.references.append(m3.plane_equations)
+
+            else:
+                vert_section, plane_equation_section, loop_section, polygon_section = self.mesh_to_physics_volume_sections[mesh_ob.name]
+
+                vert_section.references.append(m3.vertices)
+                plane_equation_section.references.append(m3.plane_equations)
+                loop_section.references.append(m3.loops)
+                polygon_section.references.append(m3.polygons)
 
     def init_anim_header(self, interpolation, flags, anim_id):
         anim_ref_header = io_m3.structures['AnimationReferenceHeader'].get_version(0).instance()
