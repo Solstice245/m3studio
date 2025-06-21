@@ -926,59 +926,60 @@
     </structure>
 
     <structure name="DMMN">
-        <description>DMMN</description>
+        <description>
+            DMMN contains information relating to mesh formats of PHSH versions 2 and 3.
+
+            Version 0 is used with PHSH version 2, version 1 is used with PHSH version 3.
+        </description>
         <versions>
             <version number="0" size="12"/>
             <version number="1" size="8"/>
         </versions>
         <fields>
-            <field name="unknownff79a800" type="uint8"/>
-            <field name="unknownff79a801" type="uint8"/>
-            <field name="unknownff79a802" type="uint8"/>
-            <field name="unknownff79a803" type="uint8"/>
-            <field name="unknownff79a804" type="uint8"/>
-            <field name="unknownff79a805" type="uint8"/>
-            <field name="unknownff79a806" type="uint8"/>
-            <field name="unknownff79a807" type="uint8"/>
-            <field name="unknownff79a808" type="uint8" till_version="0"/>
-            <field name="unknownff79a809" type="uint8" till_version="0"/>
-            <field name="unknownff79a810" type="uint8" till_version="0"/>
-            <field name="unknownff79a811" type="uint8" till_version="0"/>
+            <field name="dmmt_index" type="uint32" till_version="0"/> <!-- not 100% on this but numbers seemed roughly right -->
+            <field name="dmmnunknown_00" type="uint8"/> <!-- doesn't seem to be a float or 32b int -->
+            <field name="dmmnunknown_01" type="uint8"/> <!-- doesn't seem to be a float or 32b int -->
+            <field name="dmmnunknown_02" type="uint8"/> <!-- doesn't seem to be a float or 32b int -->
+            <field name="dmmnunknown_03" type="uint8"/> <!-- doesn't seem to be a float or 32b int -->
+            <field name="dmmnunknown_04" type="uint8"/> <!-- doesn't seem to be a float or 32b int -->
+            <field name="dmmnunknown_05" type="uint8"/> <!-- doesn't seem to be a float or 32b int -->
+            <field name="dmmnunknown_06" type="uint8"/> <!-- doesn't seem to be a float or 32b int -->
+            <field name="dmmnunknown_07" type="uint8"/> <!-- doesn't seem to be a float or 32b int -->
         </fields>
     </structure>
 
     <structure name="DMMT">
-        <description>DMMT</description>
+        <description>DMMT. Pertains to the mesh format of PHSH version 2.</description>
         <versions>
             <version number="0" size="28"/>
         </versions>
         <fields>
-            <field name="unknown00" type="uint32"/>
-            <field name="unknown01" type="uint32"/>
-            <field name="unknown02" type="uint32"/>
-            <field name="unknown03" type="uint32"/>
-            <field name="unknown04" type="uint32"/>
-            <field name="unknown05" type="uint32"/>
-            <field name="unknown06" type="uint32"/>
+            <field name="vertex_index_0" type="uint32"/>
+            <field name="vertex_index_1" type="uint32"/>
+            <field name="vertex_index_2" type="uint32"/>
+            <field name="dmme_index_0" type="uint32"/>
+            <field name="dmme_index_1" type="uint32"/>
+            <field name="dmme_index_2" type="uint32"/>
+            <field name="dmmt_float" type="float"/> <!-- not sure what this is for -->
         </fields>
     </structure>
 
     <structure name="DMME">
-        <description>DMME</description>
+        <description>DMME. Pertains to the mesh format of PHSH version 2.</description>
         <versions>
             <version number="0" size="20"/>
         </versions>
         <fields>
-            <field name="unknown00" type="uint32"/>
-            <field name="unknown01" type="uint32"/>
-            <field name="unknown02" type="uint32"/>
-            <field name="unknown03" type="uint32"/>
-            <field name="unknown04" type="uint32"/>
+            <field name="vertex_index_0" type="uint32"/>
+            <field name="vertex_index_1" type="uint32"/>
+            <field name="vertex_index_2" type="uint32"/>
+            <field name="dmmt_index_0" type="uint32"/>
+            <field name="dmmt_index_1" type="uint32"/>
         </fields>
     </structure>
 
     <structure name="MT16">
-        <description>MT16</description>
+        <description>MT16. Pertains to the mesh format of PHSH version 3.</description>
         <versions>
             <version number="0" size="14"/>
         </versions>
@@ -994,7 +995,7 @@
     </structure>
 
     <structure name="MT32">
-        <description>MT32</description>
+        <description>MT32. Pertains to the mesh format of PHSH version 3.</description>
         <versions>
             <version number="0" size="28"/>
         </versions>
@@ -1876,7 +1877,7 @@
             <field name="vertices" type="Reference" ref_to="VEC3" till_version="1"/>
             <field name="unknown84" type="Reference" ref_to="U8__" till_version="1"/>
             <field name="face_data" type="Reference" ref_to="U16_" till_version="1"/>
-            <field name="plane_equations" type="Reference" ref_to="VEC4" till_version="1"/> <!-- Bounding planes used for convex hull shapes? (may include extra radius value?) -->
+            <field name="plane_equations" type="Reference" ref_to="VEC4" till_version="1"/>
 
             <field name="unknown66ce545e" size="20" expected_value="0x0000000000000000000000000000000000000000" since_version="2"/>
             <field name="unknown66ce545e_b" type="uint32" default_value="0" since_version="2"/>
