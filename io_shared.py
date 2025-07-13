@@ -126,7 +126,7 @@ def io_material_volume_noise(processor):
     processor.anim_vec3('translation')
     processor.anim_vec3('scale')
     processor.anim_vec3('rotation')
-    processor.integer('alpha_treshold')
+    processor.integer('alpha_threshold')
     # processor.integer('unknown1d13acfe')  # ! not documented
 
 
