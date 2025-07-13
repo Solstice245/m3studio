@@ -25,7 +25,7 @@ from .shared import material_type_to_layers, material_collections
 def register_props():
     bpy.types.Object.m3_materiallayers = bpy.props.CollectionProperty(type=Properties)
     bpy.types.Object.m3_materiallayers_index = bpy.props.IntProperty(options=set(), default=-1)
-    bpy.types.Object.m3_materiallayers_version = bpy.props.EnumProperty(options=set(), items=layer_versions, default='25')
+    bpy.types.Object.m3_materiallayers_version = bpy.props.EnumProperty(options=set(), items=layer_versions, default='26')
 
 
 layer_versions = (
