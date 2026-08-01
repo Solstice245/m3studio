@@ -1185,6 +1185,7 @@ class Exporter():
 
             m3_seq.anim_ms_start = to_m3_ms(anim_group.frame_start)
             m3_seq.anim_ms_end = to_m3_ms(anim_group.frame_end)
+            m3_seq.bounding_sphere = model.boundings
 
             m3_stg = stg_section.content_add()
             m3_stg_name_section = self.m3.section_for_reference(m3_stg, 'name', pos=None)
