@@ -1244,6 +1244,7 @@ class Importer:
         bounds = ob.m3_bounds
         bounds.left, bounds.back, bounds.bottom = to_bl_vec3(self.m3_model.boundings.min)
         bounds.right, bounds.front, bounds.top = to_bl_vec3(self.m3_model.boundings.max)
+        bounds.radius = self.m3_model.boundings.radius
 
     def create_attachments(self):
         ob = self.ob

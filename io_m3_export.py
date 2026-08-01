@@ -1120,6 +1120,8 @@ class Exporter():
         self.bounds_min = mathutils.Vector((self.ob.m3_bounds.left, self.ob.m3_bounds.back, self.ob.m3_bounds.bottom))
         self.bounds_max = mathutils.Vector((self.ob.m3_bounds.right, self.ob.m3_bounds.front, self.ob.m3_bounds.top))
         model.boundings = to_m3_bnds((self.bounds_min, self.bounds_max))
+        if self.ob.m3_bounds.radius:  # keep the radius of imported models; fall back to the computed value otherwise
+            model.boundings.radius = self.ob.m3_bounds.radius
 
         if self.bl_op.output_anims or self.is_m3a:
             self.create_sequences(model, valid_collections['sequences'])
