@@ -2303,11 +2303,6 @@ class Exporter():
             processor = M3OutputProcessor(self, ribbon, m3_ribbon)
             io_shared.io_ribbon(processor)
 
-            m3_ribbon.unknown75e0b576 = self.init_anim_ref_float()
-            m3_ribbon.unknownee00ae0a = self.init_anim_ref_float()
-            m3_ribbon.unknown1686c0b7 = self.init_anim_ref_float()
-            m3_ribbon.unknown9eba8df8 = self.init_anim_ref_float()
-
             m3_ribbon.color_base.null.a = 0xFF
             m3_ribbon.color_mid.null.a = 0xFF
             m3_ribbon.color_tip.null.a = 0xFF
