@@ -486,7 +486,20 @@ class M3SectionList(list):
 
     def __getitem__(self, key):
         if type(key) == M3StructureData:
-            item = self[key.index] if key.index and key.entries else []
+            # its a bad code smell to ever return empty list, should there be a "falsy" M3Section to return here?
+
+            # some (unidentified) other exporter writes empty CHAR refs as the containing structure index + 1 with 0 entries.
+            # consider instead of this fix here, making a script users can use to fix a model such as the one these changes are made to handle.
+            try:
+                item = self[key.index] if key.index else []
+
+                if (key.entries != len(item)):
+                    section = self[key.index]
+                    item = M3Section(desc=section.desc, index_entry=None, references=[], content=section.content[0:min(key.entries, len(section.content))])
+
+            except IndexError:
+                item = []
+
         else:
             item = super(M3SectionList, self).__getitem__(key)
 
