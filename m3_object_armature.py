@@ -127,6 +127,7 @@ class BoundingProperties(bpy.types.PropertyGroup):
     right: bpy.props.FloatProperty(options=set(), default=2)
     front: bpy.props.FloatProperty(options=set(), default=2)
     back: bpy.props.FloatProperty(options=set(), default=-2)
+    radius: bpy.props.FloatProperty(options=set(), default=0)
 
 
 class IOPanel(shared.ArmatureObjectPanel, bpy.types.Panel):

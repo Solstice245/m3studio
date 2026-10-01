@@ -1120,6 +1120,8 @@ class Exporter():
         self.bounds_min = mathutils.Vector((self.ob.m3_bounds.left, self.ob.m3_bounds.back, self.ob.m3_bounds.bottom))
         self.bounds_max = mathutils.Vector((self.ob.m3_bounds.right, self.ob.m3_bounds.front, self.ob.m3_bounds.top))
         model.boundings = to_m3_bnds((self.bounds_min, self.bounds_max))
+        if self.ob.m3_bounds.radius:  # keep the radius of imported models; fall back to the computed value otherwise
+            model.boundings.radius = self.ob.m3_bounds.radius
 
         if self.bl_op.output_anims or self.is_m3a:
             self.create_sequences(model, valid_collections['sequences'])
@@ -1183,6 +1185,7 @@ class Exporter():
 
             m3_seq.anim_ms_start = to_m3_ms(anim_group.frame_start)
             m3_seq.anim_ms_end = to_m3_ms(anim_group.frame_end)
+            m3_seq.bounding_sphere = model.boundings
 
             m3_stg = stg_section.content_add()
             m3_stg_name_section = self.m3.section_for_reference(m3_stg, 'name', pos=None)
