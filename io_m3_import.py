@@ -19,6 +19,7 @@
 import math
 import traceback
 import bpy
+from .bl_compat import action_fcurves, fcurve_new, action_assign
 import bmesh
 import mathutils
 from . import io_m3
@@ -305,7 +306,7 @@ def key_fcurves(stc_dict, bl, field, header, default):
 
         key_sel_seq = [False] * points_len
         for index, index_data in enumerate(anim_id_action_data):
-            fcurves = bpy.data.actions.get(action_name).fcurves
+            fcurves = action_fcurves(bpy.data.actions.get(action_name))
             fcurve = fcurves.new(path, index=index)
             fcurve.select = False
             fcurve.keyframe_points.add(points_len)
@@ -565,12 +566,12 @@ class Importer:
             # we put in original data first so that we can evaluate the fcurves.
             # blender interpolates the data we need to apply the correction matrices for us.
             # * can we interpolate based on interpolation of m3 anim header?
-            fcurves = bpy.data.actions.get(action_name).fcurves
+            fcurves = action_fcurves(bpy.data.actions.get(action_name))
             # store fcurve references so that we don't have to find them later
             fcurves_loc = []
             for index, index_data in enumerate(anim_data_loc):
                 points_len = len(index_data) // 2
-                fcurve = fcurves.new(pose_bone.path_from_id('location'), index=index, action_group=pose_bone.name)
+                fcurve = fcurve_new(fcurves, pose_bone.path_from_id('location'), index=index, group=pose_bone.name)
                 fcurve.select = False
                 fcurve.keyframe_points.add(points_len)
                 fcurve.keyframe_points.foreach_set('co', index_data)
@@ -583,7 +584,7 @@ class Importer:
             fcurves_rot = []
             for index, index_data in enumerate(anim_data_rot):
                 points_len = len(index_data) // 2
-                fcurve = fcurves.new(pose_bone.path_from_id('rotation_quaternion'), index=index, action_group=pose_bone.name)
+                fcurve = fcurve_new(fcurves, pose_bone.path_from_id('rotation_quaternion'), index=index, group=pose_bone.name)
                 fcurve.select = False
                 fcurve.keyframe_points.add(points_len)
                 fcurve.keyframe_points.foreach_set('co', index_data)
@@ -596,7 +597,7 @@ class Importer:
             fcurves_scl = []
             for index, index_data in enumerate(anim_data_scl):
                 points_len = len(index_data) // 2
-                fcurve = fcurves.new(pose_bone.path_from_id('scale'), index=index, action_group=pose_bone.name)
+                fcurve = fcurve_new(fcurves, pose_bone.path_from_id('scale'), index=index, group=pose_bone.name)
                 fcurve.select = False
                 fcurve.keyframe_points.add(points_len)
                 fcurve.keyframe_points.foreach_set('co', index_data)
@@ -662,7 +663,7 @@ class Importer:
                 action = bpy.data.actions.get(action_name)
                 key_frame_points_len = len(id_data_render[action_name][0]) // 2
 
-                fcurve = action.fcurves.new(pose_bone.path_from_id('m3_batching'), action_group=pose_bone.name)
+                fcurve = fcurve_new(action_fcurves(action), pose_bone.path_from_id('m3_batching'), group=pose_bone.name)
                 fcurve.select = False
                 fcurve.keyframe_points.add(key_frame_points_len)
                 fcurve.keyframe_points.foreach_set('co', id_data_render[action_name][0])

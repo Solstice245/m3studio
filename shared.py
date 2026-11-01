@@ -17,6 +17,7 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import bpy
+from .bl_compat import action_fcurves, fcurve_new, action_assign
 import random
 from . import bl_enum
 
@@ -204,7 +205,7 @@ def m3_item_duplicate(collection, src, dup_action_keyframes, dst_collection=None
 
             for action in dup_actions:
                 for ii in range(max(1, rna_props.array_length)):
-                    src_fcurve = action.fcurves.find(src_path, index=ii)
+                    src_fcurve = action_fcurves(action).find(src_path, index=ii)
                     if src_fcurve is None or src_fcurve.is_empty:
                         continue
 
@@ -213,7 +214,7 @@ def m3_item_duplicate(collection, src, dup_action_keyframes, dst_collection=None
                     src_fcurve.keyframe_points.foreach_get('interpolation', src_interps := [0] * points)
                     src_fcurve.keyframe_points.foreach_get('type', src_types := [0] * points)
 
-                    dst_fcurve = action.fcurves.new(dst_path, index=ii)
+                    dst_fcurve = action_fcurves(action).new(dst_path, index=ii)
                     dst_fcurve.select = False
                     dst_fcurve.keyframe_points.add(points)
                     dst_fcurve.keyframe_points.foreach_set('co', src_coords)
@@ -225,7 +226,7 @@ def m3_item_duplicate(collection, src, dup_action_keyframes, dst_collection=None
 
     if dup_action_keyframes:
         # for some reason fcurve values are only properly displayed once animation view is updated manually
-        collection.id_data.animation_data.action = collection.id_data.animation_data.action
+        action_assign(collection.id_data.animation_data, collection.id_data.animation_data.action)
 
     return dst
 
@@ -872,8 +873,8 @@ def remove_m3_action_keyframes(ob, prefix, index):
 
     for action in update_actions:
         path = f'{prefix}[{index}]'
-        for fcurve in [fcurve for fcurve in action.fcurves if prefix in fcurve.data_path and path in fcurve.data_path]:
-            action.fcurves.remove(fcurve)
+        for fcurve in [fcurve for fcurve in action_fcurves(action) if prefix in fcurve.data_path and path in fcurve.data_path]:
+            action_fcurves(action).remove(fcurve)
 
 
 def shift_m3_action_keyframes(ob, prefix, index, offset=-1):
@@ -886,7 +887,7 @@ def shift_m3_action_keyframes(ob, prefix, index, offset=-1):
 
     for action in update_actions:
         path = f'{prefix}[{index}]'
-        for fcurve in [fcurve for fcurve in action.fcurves if prefix in fcurve.data_path and path in fcurve.data_path]:
+        for fcurve in [fcurve for fcurve in action_fcurves(action) if prefix in fcurve.data_path and path in fcurve.data_path]:
             fcurve.data_path = fcurve.data_path.replace(path, f'{prefix}[{index + offset}]')
 
 
@@ -903,8 +904,8 @@ def swap_m3_action_keyframes(ob, prefix, old, new):
         path = f'{prefix}[{old}]'
         path_new = f'{prefix}[{new}]'
 
-        fcurves = [fcurve for fcurve in action.fcurves if path in fcurve.data_path]
-        fcurves_new = [fcurve for fcurve in action.fcurves if path_new in fcurve.data_path]
+        fcurves = [fcurve for fcurve in action_fcurves(action) if path in fcurve.data_path]
+        fcurves_new = [fcurve for fcurve in action_fcurves(action) if path_new in fcurve.data_path]
 
         for fcurve in fcurves:
             fcurve.data_path = fcurve.data_path.replace(path, path_new)

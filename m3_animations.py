@@ -17,6 +17,7 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import bpy
+from .bl_compat import action_fcurves, fcurve_new, action_assign
 from . import shared
 
 
@@ -37,9 +38,9 @@ def ob_anim_data_set(scene, ob, new_action=None):
     if ob.m3_animations_default is None:
         ob.m3_animations_default = bpy.data.actions.new(ob.name + '_DEFAULTS')
 
-    dft_props = set([(fcurve.data_path, fcurve.array_index) for fcurve in ob.m3_animations_default.fcurves])
-    old_props = set([(fcurve.data_path, fcurve.array_index) for fcurve in ob.animation_data.action.fcurves]) if ob.animation_data.action else set()
-    new_props = set([(fcurve.data_path, fcurve.array_index) for fcurve in new_action.fcurves]) if new_action else set()
+    dft_props = set([(fcurve.data_path, fcurve.array_index) for fcurve in action_fcurves(ob.m3_animations_default)])
+    old_props = set([(fcurve.data_path, fcurve.array_index) for fcurve in action_fcurves(ob.animation_data.action)]) if ob.animation_data.action else set()
+    new_props = set([(fcurve.data_path, fcurve.array_index) for fcurve in action_fcurves(new_action)]) if new_action else set()
 
     for prop in new_props.difference(old_props):
         try:
@@ -59,18 +60,18 @@ def ob_anim_data_set(scene, ob, new_action=None):
         except ValueError:
             pass  # fcurve data path is invalid
 
-    ob.animation_data.action = ob.m3_animations_default
+    action_assign(ob.animation_data, ob.m3_animations_default)
 
     if new_action:
         scene.frame_set(scene.frame_current)
-        ob.animation_data.action = new_action
+        action_assign(ob.animation_data, new_action)
     else:
         scene.frame_set(0)
 
 
 # this function is exported to io_m3_import.py
 def set_default_value(action, path, index, value):
-    fcurve = action.fcurves.find(path, index=index) or action.fcurves.new(path, index=index)
+    fcurve = action_fcurves(action).find(path, index=index) or action_fcurves(action).new(path, index=index)
     fcurve.keyframe_points.insert(0, value)
 
 

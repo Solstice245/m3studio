@@ -17,6 +17,7 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import bpy
+from .bl_compat import action_fcurves, fcurve_new, action_assign
 import bmesh
 import mathutils
 import os
@@ -266,7 +267,7 @@ class M3OutputProcessor:
 
         is_animated = False
         for action in self.exporter.action_to_anim_data:
-            fcurve = action.fcurves.find(self.bl.path_from_id(field))
+            fcurve = action_fcurves(action).find(self.bl.path_from_id(field))
             frames = get_fcurve_anim_frames(fcurve)
 
             if not frames:
@@ -289,7 +290,7 @@ class M3OutputProcessor:
             animated = False
             fcurves = []
             for ii in range(vec_data_settings['length']):
-                fcurve = action.fcurves.find(self.bl.path_from_id(field), index=ii)
+                fcurve = action_fcurves(action).find(self.bl.path_from_id(field), index=ii)
 
                 if fcurve:
                     fcurves.append(fcurve)
@@ -537,7 +538,7 @@ class Exporter():
             pass
 
         self.ob.data.pose_position = self.user_armature_position
-        self.ob.animation_data.action = self.user_action
+        action_assign(self.ob.animation_data, self.user_action)
         self.scene.frame_current = self.user_frame
 
         # animation data is exported much faster while no armature modifiers point to them.
@@ -1501,7 +1502,7 @@ class Exporter():
                     anim_rots = []
                     anim_scls = []
 
-                    loc_fcurves = [anim.action.fcurves.find(pose_bone.path_from_id('location'), index=ii) for ii in range(3)]
+                    loc_fcurves = [action_fcurves(anim.action).find(pose_bone.path_from_id('location'), index=ii) for ii in range(3)]
                     loc_keyframes = []
                     for ii, fcurve in enumerate(loc_fcurves):
                         if fcurve:
@@ -1509,7 +1510,7 @@ class Exporter():
                             loc_keyframes.extend(coords[0::1])
                     loc_keyframes = set(loc_keyframes)
 
-                    rot_fcurves = [anim.action.fcurves.find(pose_bone.path_from_id('rotation_quaternion'), index=ii) for ii in range(4)]
+                    rot_fcurves = [action_fcurves(anim.action).find(pose_bone.path_from_id('rotation_quaternion'), index=ii) for ii in range(4)]
                     rot_keyframes = []
                     for ii, fcurve in enumerate(rot_fcurves):
                         if fcurve:
@@ -1517,7 +1518,7 @@ class Exporter():
                             rot_keyframes.extend(coords[0::1])
                     rot_keyframes = set(rot_keyframes)
 
-                    scl_fcurves = [anim.action.fcurves.find(pose_bone.path_from_id('scale'), index=ii) for ii in range(3)]
+                    scl_fcurves = [action_fcurves(anim.action).find(pose_bone.path_from_id('scale'), index=ii) for ii in range(3)]
                     scl_keyframes = []
                     for ii, fcurve in enumerate(scl_fcurves):
                         if fcurve:
@@ -1556,7 +1557,7 @@ class Exporter():
                         m3_bone.bit_set('flags', 'animated', True)
 
                     # export animated batching property
-                    m3_batching_fcurve = anim.action.fcurves.find(pose_bone.path_from_id('m3_batching'))
+                    m3_batching_fcurve = action_fcurves(anim.action).find(pose_bone.path_from_id('m3_batching'))
                     m3_batching_frames = get_fcurve_anim_frames(m3_batching_fcurve)
 
                     if m3_batching_frames:
