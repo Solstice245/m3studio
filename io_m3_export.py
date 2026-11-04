@@ -2938,11 +2938,14 @@ def m3_export(ob, filepath, bl_op=None):
     exporter.is_m3a = filepath.endswith('m3a')
     valid_collections = exporter.get_validated_data(ob)
     exporter.scene_prepare(ob)
+    succeeded = False
     try:
         exporter.m3_export(ob, valid_collections, filepath)
+        succeeded = not exporter.err_strings
     except Exception as e:
         if type(e) != AssertionError:
             exporter.err_strings.append(traceback.format_exc())
     finally:
         exporter.scene_restore()
         exporter.op_report()
+    return succeeded
