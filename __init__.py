@@ -191,13 +191,13 @@ class M3PreviewOperator(bpy.types.Operator):
         try:
             root = Path(tempfile.gettempdir()) / 'm3preview'
             root.mkdir(parents=True, exist_ok=True)
-            directory = Path(tempfile.mkdtemp(prefix='request-', dir=root))
+            directory = root
             scene_name = Path(bpy.data.filepath).stem if bpy.data.filepath else 'Untitled'
             cutscene = directory / (scene_name + '.SC2Cutscene')
             models = []
             try:
                 for number, ob in enumerate(armatures, start=1):
-                    model = directory / f'model-{number}.m3'
+                    model = directory / f'{scene_name}-{number}.m3'
                     options = ob.m3_export_opts
                     if not export_m3_model(ob, str(model), self, options):
                         raise RuntimeError(f'M3 export failed for {ob.name}.')
@@ -210,7 +210,7 @@ class M3PreviewOperator(bpy.types.Operator):
                     models.append((model, scene_name, animation or "Stand"))
             finally:
                 context.view_layer.objects.active = active_object
-            sc2_scene_preview.write_cutscene(cutscene, models)
+            sc2_scene_preview.write_cutscene(cutscene, models, append=self.add_to_scene)
             mapping = sc2_scene_preview.send_preview(cutscene, add_to_scene=self.add_to_scene)
 
             def release_mapping():

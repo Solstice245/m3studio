@@ -11,12 +11,21 @@ MAPPING_NAME = 'StarCraft II Editor File'
 MAPPING_SIZE = 512
 
 
-def write_cutscene(path, models):
+def write_cutscene(path, models, *, append=False):
     def guid():
         return str(uuid.uuid4().int & ((1 << 64) - 1))
 
-    root = ET.Element('CutsceneState', cutsceneVersion='1.200000')
+    path = Path(path)
+    if append and path.exists():
+        root = ET.parse(path).getroot()
+    else:
+        root = ET.Element('CutsceneState', cutsceneVersion='1.200000')
+
     for model_path, model_name, animation in models:
+        for actor in list(root.findall('CCutsceneNodeActor')):
+            if actor.get('name') == model_name:
+                root.remove(actor)
+
         actor = ET.SubElement(
             root, 'CCutsceneNodeActor', guid=guid(), name=model_name,
             position='0.0 ,0.0 ,0.0', modelPath=str(model_path),
@@ -30,8 +39,8 @@ def write_cutscene(path, models):
                 layer, 'CCutsceneElementAnim', guid=guid(), duration='10000',
                 lockedToEnd='1', anim=animation, originalDuration='10000',
             )
-    Path(path).write_bytes(b'\xef\xbb\xbf' + ET.tostring(root, encoding='utf-8', xml_declaration=True))
 
+    path.write_bytes(b'\xef\xbb\xbf' + ET.tostring(root, encoding='utf-8', xml_declaration=True))
 
 def send_preview(cutscene_path, *, add_to_scene=False):
     filename = str(Path(cutscene_path).resolve(strict=True)).encode('utf-8')
