@@ -43,6 +43,7 @@ from . import m3_shadowboxes
 from . import m3_tmd
 from . import io_m3_import
 from . import io_m3_export
+from . import sc2_scene_preview
 from . import bl_graphics_draw
 
 bl_info = {
@@ -106,6 +107,18 @@ class M3ImportOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 
+def export_m3_model(ob, filepath, operator, options):
+    from types import SimpleNamespace
+
+    settings = {
+        key: getattr(options, key)
+        for key in type(ob.m3_export_opts).__annotations__
+    }
+    return io_m3_export.m3_export(
+        ob=ob, filepath=filepath, bl_op=SimpleNamespace(report=operator.report, **settings),
+    )
+
+
 class M3ExportOperator(bpy.types.Operator):
     '''Saves an M3 file from an armature'''
     bl_idname = 'm3.export'
@@ -139,11 +152,81 @@ class M3ExportOperator(bpy.types.Operator):
         return {'RUNNING_MODAL'}
 
     def execute(self, context):
-        io_m3_export.m3_export(ob=context.active_object, filepath=self.filepath, bl_op=self)
+        if not export_m3_model(context.active_object, self.filepath, self, self):
+            return {'CANCELLED'}
         context.active_object.m3_filepath_export = self.filepath
         for key in type(context.active_object.m3_export_opts).__annotations__.keys():
             prop = getattr(self, key)
             setattr(context.active_object.m3_export_opts, key, prop)
+        return {'FINISHED'}
+
+
+class M3PreviewOperator(bpy.types.Operator):
+    """Export the M3 models in the current view layer to the open SC2 Cutscene Previewer"""
+
+    bl_idname = 'm3.preview_sc2'
+    bl_label = 'Preview in SC2'
+
+    add_to_scene: bpy.props.BoolProperty(default=False, options={'SKIP_SAVE'})
+
+    @classmethod
+    def poll(cls, context):
+        import sys
+
+        return (
+            sys.platform == 'win32' and context.active_object is not None
+            and context.active_object.type == 'ARMATURE'
+        )
+
+    def execute(self, context):
+        from pathlib import Path
+        import shutil
+        import tempfile
+
+        active_object = context.view_layer.objects.active
+        armatures = [ob for ob in context.view_layer.objects if ob.type == 'ARMATURE']
+
+        directory = None
+        mapping = None
+        try:
+            root = Path(tempfile.gettempdir()) / 'm3preview'
+            root.mkdir(parents=True, exist_ok=True)
+            directory = root
+            scene_name = Path(bpy.data.filepath).stem if bpy.data.filepath else 'Untitled'
+            cutscene = directory / (scene_name + '.SC2Cutscene')
+            models = []
+            try:
+                for number, ob in enumerate(armatures, start=1):
+                    model = directory / f'{scene_name}-{number}.m3'
+                    options = ob.m3_export_opts
+                    if not export_m3_model(ob, str(model), self, options):
+                        raise RuntimeError(f'M3 export failed for {ob.name}.')
+                    animation = None
+                    index = ob.m3_animation_groups_index
+                    if options.output_anims and 0 <= index < len(ob.m3_animation_groups):
+                        group = ob.m3_animation_groups[index]
+                        if group.m3_export:
+                            animation = group.name
+                    models.append((model, scene_name, animation or "Stand"))
+            finally:
+                context.view_layer.objects.active = active_object
+            sc2_scene_preview.write_cutscene(cutscene, models, append=self.add_to_scene)
+            mapping = sc2_scene_preview.send_preview(cutscene, add_to_scene=self.add_to_scene)
+
+            def release_mapping():
+                mapping.close()
+                return None
+
+            bpy.app.timers.register(release_mapping, first_interval=2.0, persistent=True)
+        except Exception as exc:
+            if mapping is not None:
+                mapping.close()
+            elif directory is not None:
+                shutil.rmtree(directory, ignore_errors=True)
+            self.report({'ERROR'}, f'SC2 preview failed: {exc}')
+            return {'CANCELLED'}
+
+        self.report({'INFO'}, 'Preview request sent. Check the SC2 Cutscene Previewer.')
         return {'FINISHED'}
 
 
@@ -198,6 +281,7 @@ classes = (
     *m3_module_classes(),
     M3ImportOperator,
     M3ExportOperator,
+    M3PreviewOperator,
 )
 
 

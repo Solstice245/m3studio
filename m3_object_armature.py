@@ -144,6 +144,9 @@ class IOPanel(shared.ArmatureObjectPanel, bpy.types.Panel):
         layout.separator()
         op = layout.operator('m3.export')
         op.filepath = 'C:\\Users\\John Wharton\\Documents\\M3Test_studio.m3'
+        row = layout.row(align=True)
+        row.operator('m3.preview_sc2', text='Preview').add_to_scene = False
+        row.operator('m3.preview_sc2', text='Preview Add').add_to_scene = True
         layout.separator()
 
         col = layout.column()
