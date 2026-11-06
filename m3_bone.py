@@ -52,7 +52,7 @@ bone_anim_props = ['m3_location_hex_id', 'm3_rotation_hex_id', 'm3_scale_hex_id'
 
 
 def get_bone_loc_id(self):
-    return self['m3_location_hex_id']
+    return self.get('m3_location_hex_id', '')
 
 
 def set_bone_loc_id(self, value):
@@ -60,7 +60,7 @@ def set_bone_loc_id(self, value):
 
 
 def get_bone_rot_id(self):
-    return self['m3_rotation_hex_id']
+    return self.get('m3_rotation_hex_id', '')
 
 
 def set_bone_rot_id(self, value):
@@ -68,7 +68,7 @@ def set_bone_rot_id(self, value):
 
 
 def get_bone_scl_id(self):
-    return self['m3_scale_hex_id']
+    return self.get('m3_scale_hex_id', '')
 
 
 def set_bone_scl_id(self, value):
@@ -76,7 +76,7 @@ def set_bone_scl_id(self, value):
 
 
 def get_bone_bat_id(self):
-    return self['m3_batching_hex_id']
+    return self.get('m3_batching_hex_id', '')
 
 
 def set_bone_bat_id(self, value):

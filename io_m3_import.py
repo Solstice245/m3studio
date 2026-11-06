@@ -819,7 +819,10 @@ class Importer:
                     edit_bone.parent = parent_edit_bone
                     parent_child_vector = parent_edit_bone.tail - edit_bone.head
 
-                    if parent_child_vector.length < 0.000001:
+                    # a connected bone ignores its location channel, so a bone whose location is animated stays unconnected
+                    location_animated = m3_bone.location.header.id in self.stc_id_data
+
+                    if parent_child_vector.length < 0.000001 and not location_animated:
                         edit_bone.use_connect = True
                     else:
                         # fixes precision errors in applying roll caused by Blender
